@@ -259,11 +259,14 @@ def auth_headers(api_client):
 
 @pytest.fixture
 def operator_headers(api_client):
-    """Registers a throwaway user, flips is_operator=True directly via the
-    DB (there's no admin UI/endpoint that grants this yet — same documented
-    approach used to verify hardware-control auth manually), and returns a
-    ready-to-use Authorization header dict for operator-gated endpoints
-    (hardware control, policy proposal approve/reject)."""
+    """Registers a throwaway user and flips is_operator=True directly via
+    the DB — a real admin endpoint exists now (aerofleet/api/routes/admin.py,
+    Phase AI), but tests still go straight to the DB here to avoid coupling
+    every operator-gated test's setup to a second, unrelated admin flow; the
+    admin endpoint itself has its own dedicated tests
+    (tests/integration/test_admin_api.py). Returns a ready-to-use
+    Authorization header dict for operator-gated endpoints (hardware
+    control, policy proposal approve/reject)."""
     import uuid
 
     from aerofleet.data.database import get_db_session
@@ -284,6 +287,37 @@ def operator_headers(api_client):
     )
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_headers(api_client):
+    """Registers a throwaway user, flips is_admin=True directly via the DB
+    (this is the fixture's job specifically so admin-panel tests don't
+    depend on the admin panel to create their own first admin — that's
+    exactly the bootstrapping problem AEROFLEET_BOOTSTRAP_ADMIN_USERNAME
+    solves in real deployments, tested separately). Returns
+    (headers, user_id)."""
+    import uuid
+
+    from aerofleet.data.database import get_db_session
+    from aerofleet.data.models.models import User
+
+    username = f"admin_{uuid.uuid4().hex[:8]}"
+    api_client.post(
+        "/api/v1/auth/register",
+        json={"username": username, "email": f"{username}@example.com", "password": "TestPass123!"},
+    )
+    with get_db_session() as db:
+        user = db.query(User).filter(User.username == username).first()
+        user.is_admin = True
+        user_id = user.id
+
+    resp = api_client.post(
+        "/api/v1/auth/login",
+        data={"username": username, "password": "TestPass123!"},
+    )
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}, user_id
 
 
 # Skip markers for conditional tests

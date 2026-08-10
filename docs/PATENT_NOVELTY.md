@@ -429,12 +429,24 @@ decentralized safety guarantees provably, not just empirically,
 equivalent whenever step (a)'s broadcast data is not stale. Where it *is*
 stale (packet loss, broadcast-interval gaps), the two determinations can
 diverge; `scenario_engine/d2d_degradation_study.py` quantifies that
-divergence rate directly (99.68% verdict agreement across 5,000 simulated
-trials at 20% packet loss / 1s broadcast interval — see
-`scenario_reports/d2d_degradation_study_20260809_171005.json` — rather
-than asserting equivalence without a measured bound on it) — the honest,
-falsifiable claim is "provably identical logic, empirically bounded
-divergence under realistic loss," not "always identical."
+divergence rate directly, rather than asserting equivalence without a
+measured bound on it — the honest, falsifiable claim is "provably identical
+logic, empirically bounded divergence under realistic loss," not "always
+identical." Two figures are reported, not blended into one: a natural-rate
+verdict-agreement of 99.68% from the original 5,000-trial run at 20% packet
+loss / 1s broadcast interval (`python -m scenario_engine.d2d_degradation_study
+--trials 5000 --seed 42`, Phase AD), and — added in Phase AL specifically to
+answer a reviewer-grade objection that the original run's true-conflict count
+(8 out of 5,000 trials) was too small to put a defensible confidence interval
+on the D2D catch-rate metric — an importance-sampled run
+(`--stress-fraction 0.5`) that deliberately oversamples near-miss/violation
+geometries: 454 true conflicts, 79.5% catch rate, 95% Wilson CI [0.76, 0.83].
+The natural-rate and stress-sampled numbers are reported as two separate,
+labeled figures because they're drawn from different distributions — see
+`scenario_engine/d2d_degradation_study.py`'s module docstring and
+`run_study()`'s `metric_3` vs `metric_3b` for exactly how the two are kept
+distinct, and both `--trials`/`--seed`/`--stress-fraction` are reproducible
+inputs, not one-off numbers — regenerate either at any time.
 
 *Reference implementation:* `aerofleet/safety/d2d_mesh.py`
 (`D2DBasicSafetyMessage`, `D2DLinkStateMachine`, `D2DTransceiver` — steps

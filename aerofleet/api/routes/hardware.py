@@ -12,6 +12,7 @@ endpoints here are for connection lifecycle and direct operator overrides
 from __future__ import annotations
 
 import asyncio
+import os
 from dataclasses import asdict
 from typing import List, Optional
 
@@ -24,6 +25,7 @@ from aerofleet.city.registry import DEFAULT_CITY
 from aerofleet.data.database import get_db_session
 from aerofleet.data.models.models import User
 from aerofleet.event_bus.async_bus import AsyncEventBus
+from aerofleet.event_bus.redis_bus import RedisEventBridge
 from aerofleet.hardware.mavlink_link import MAVLinkCommandError, MAVLinkConnectionError
 from aerofleet.hardware.telemetry_service import get_drone_link_registry
 from aerofleet.utils.logging import get_logger
@@ -33,7 +35,10 @@ router = APIRouter()
 
 # Single event bus shared by the background telemetry poll loop (started
 # in app.py's startup hook via start_background_polling()) and this
-# module's WebSocket broadcaster.
+# module's WebSocket broadcaster. redis_bridge additively relays every
+# telemetry.update event to every other worker process via Redis pub/sub
+# when AEROFLEET_REDIS_URL is set (Phase AH) — a no-op pass-through
+# otherwise, so single-process behavior is unchanged.
 event_bus = AsyncEventBus()
 registry = get_drone_link_registry(event_bus)
 
@@ -57,7 +62,24 @@ def _on_telemetry_event(event) -> None:
     # event loop (via registry.run_forever()'s drain() call) — safe to
     # schedule the actual send as a task from here.
     asyncio.create_task(_broadcast({"type": "telemetry.update", "drone_id": event.source, **event.payload}))
+    # Fan this event out to every other worker process (no-op if Redis
+    # isn't configured) — this is the only place a LIVE telemetry event is
+    # generated, since it always originates from this same registry's own
+    # run_forever() poll loop, whether or not this process owns hardware.
+    asyncio.create_task(redis_bridge.relay_to_redis(event))
 
+
+def _on_redis_relayed_event(event) -> None:
+    # Fired when listen_forever() delivers an event that arrived from
+    # ANOTHER worker process's registry — same handling as a locally-
+    # generated one, so a WS client connected to a non-hardware-owner
+    # worker still sees live telemetry. Deliberately bypasses event_bus
+    # entirely (see RedisEventBridge's docstring) so this can't loop back
+    # into relay_to_redis().
+    asyncio.create_task(_broadcast({"type": "telemetry.update", "drone_id": event.source, **event.payload}))
+
+
+redis_bridge = RedisEventBridge(on_relayed_event=_on_redis_relayed_event)
 
 event_bus.subscribe("telemetry.update", _on_telemetry_event)
 
@@ -191,15 +213,58 @@ async def telemetry_stream(websocket: WebSocket, token: Optional[str] = None):
 
 
 _polling_task: Optional[asyncio.Task] = None
+_redis_listener_task: Optional[asyncio.Task] = None
+
+
+def hardware_owner_enabled() -> bool:
+    """Whether THIS process is allowed to own real MAVLink connections and
+    run the telemetry poll loop (Phase AH). Defaults to true — an unset
+    AEROFLEET_HARDWARE_OWNER means "single-process deployment," which
+    behaves exactly as every version of this app before Phase AH did. In a
+    real multi-worker deployment, exactly one worker's process env should
+    set this to "0"/"false" for every worker except the one designated as
+    the hardware owner — see docs/MULTI_WORKER_ARCHITECTURE.md for why a
+    MAVLink link can't safely be owned by more than one process regardless
+    of what else is shared via Redis."""
+    return os.environ.get("AEROFLEET_HARDWARE_OWNER", "1").lower() not in ("0", "false", "no")
 
 
 def start_background_polling() -> None:
     """Called once from app.py's startup event to kick off the telemetry
-    poll loop as a background asyncio task on the running event loop."""
+    poll loop as a background asyncio task on the running event loop —
+    only on the process that owns real hardware (hardware_owner_enabled());
+    every other worker still serves WS/REST traffic normally, receiving
+    telemetry via the Redis relay instead of running its own MAVLink polls."""
     global _polling_task
+    if not hardware_owner_enabled():
+        logger.info("AEROFLEET_HARDWARE_OWNER=0 — this process will not poll MAVLink hardware directly")
+        return
     if _polling_task is None:
         _polling_task = asyncio.create_task(registry.run_forever(poll_interval_s=0.5))
 
 
 def stop_background_polling() -> None:
+    global _polling_task
     registry.stop()
+    # Previously missing (same class of bug fixed in explanation_worker.py /
+    # policy_review_worker.py / incident_forensics_worker.py, Phase AF) —
+    # without resetting _polling_task, a second startup_event within the
+    # same process (e.g. across TestClient contexts in one pytest session)
+    # would see _polling_task already set and silently never restart
+    # telemetry polling.
+    _polling_task = None
+
+
+def start_background_redis_listener() -> None:
+    """Runs on every worker (owner or not) so relayed telemetry from
+    whichever worker owns hardware reaches this worker's own WS clients.
+    No-op if AEROFLEET_REDIS_URL isn't set."""
+    global _redis_listener_task
+    if _redis_listener_task is None and redis_bridge.redis_enabled:
+        _redis_listener_task = asyncio.create_task(redis_bridge.listen_forever())
+
+
+def stop_background_redis_listener() -> None:
+    global _redis_listener_task
+    redis_bridge.stop()
+    _redis_listener_task = None

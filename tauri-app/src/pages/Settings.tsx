@@ -19,6 +19,18 @@ interface OllamaStatus {
   version: string | null
 }
 
+interface UserDto {
+  id: number
+  username: string
+  email: string
+  is_active: boolean
+  is_operator: boolean
+  is_admin: boolean
+  created_at: string
+}
+
+type Tab = ConnectionMode | 'admin'
+
 // Mirrors aerofleet/agents/factory.py's DEFAULT_MODEL_MAP roster — the
 // same 5 distinct tags across all 11+5 agents (Phase Q).
 const ROSTER_MODELS = [
@@ -51,10 +63,17 @@ async function tauriListen(event: string, handler: (payload: any) => void): Prom
 export default function SettingsPage() {
   const { apiUrl, llmConnectionMode, setLlmConnectionMode } = useAppStore()
 
-  const [activeTab, setActiveTab] = useState<ConnectionMode>(llmConnectionMode)
+  const [activeTab, setActiveTab] = useState<Tab>(llmConnectionMode)
   const [current, setCurrent] = useState<LLMSettingsDto | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+
+  // Admin tab state (Phase AI)
+  const [selfIsAdmin, setSelfIsAdmin] = useState(false)
+  const [selfId, setSelfId] = useState<number | null>(null)
+  const [adminUsers, setAdminUsers] = useState<UserDto[] | null>(null)
+  const [adminError, setAdminError] = useState<string | null>(null)
+  const [adminBusyKey, setAdminBusyKey] = useState<string | null>(null)
 
   // Local Ollama tab state
   const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null)
@@ -84,6 +103,59 @@ export default function SettingsPage() {
   }, [apiUrl, setLlmConnectionMode])
 
   useEffect(() => { loadCurrent() }, [loadCurrent])
+
+  useEffect(() => {
+    fetch(`${apiUrl}/api/v1/auth/me`, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me: UserDto | null) => {
+        if (me) {
+          setSelfIsAdmin(me.is_admin)
+          setSelfId(me.id)
+        }
+      })
+      .catch(() => {})
+  }, [apiUrl])
+
+  const loadAdminUsers = useCallback(() => {
+    setAdminError(null)
+    fetch(`${apiUrl}/api/v1/admin/users`, { headers: authHeaders() })
+      .then(async (r) => {
+        if (r.status === 403) {
+          setAdminError('Your account does not have admin access.')
+          setAdminUsers(null)
+          return
+        }
+        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
+        setAdminUsers(await r.json())
+      })
+      .catch((e) => setAdminError(e instanceof Error ? e.message : String(e)))
+  }, [apiUrl])
+
+  useEffect(() => {
+    if (activeTab === 'admin') loadAdminUsers()
+  }, [activeTab, loadAdminUsers])
+
+  async function handleTogglePermission(userId: number, field: 'is_operator' | 'is_admin', value: boolean) {
+    const key = `${userId}-${field}`
+    setAdminBusyKey(key)
+    setAdminError(null)
+    try {
+      const res = await fetch(`${apiUrl}/api/v1/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ [field]: value }),
+      })
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null)
+        throw new Error(detail?.detail || `${res.status} ${res.statusText}`)
+      }
+      loadAdminUsers()
+    } catch (e) {
+      setAdminError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setAdminBusyKey(null)
+    }
+  }
 
   const refreshOllamaStatus = useCallback(async () => {
     try {
@@ -238,6 +310,11 @@ export default function SettingsPage() {
           <button className={`tab ${activeTab === 'openrouter' ? 'active' : ''}`} onClick={() => setActiveTab('openrouter')}>
             API (OpenRouter)
           </button>
+          {selfIsAdmin && (
+            <button className={`tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+              Admin
+            </button>
+          )}
         </div>
 
         {activeTab === 'local_ollama' && (
@@ -380,6 +457,63 @@ export default function SettingsPage() {
                 {busy === 'save' ? 'Saving...' : 'Use OpenRouter'}
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'admin' && (
+          <div className="card">
+            <div className="card__header">
+              <span className="card__title">User Permissions</span>
+              <span className="text-sm text-muted">{adminUsers?.length ?? 0} accounts</span>
+            </div>
+            {adminError && (
+              <div style={{ color: 'var(--status-red)', marginBottom: '12px' }}>&#9888; {adminError}</div>
+            )}
+            {!adminUsers && !adminError && <div className="text-muted">Loading...</div>}
+            {adminUsers && (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Operator</th>
+                    <th>Admin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminUsers.map((u) => (
+                    <tr key={u.id}>
+                      <td className="text-primary" style={{ color: 'var(--text-primary)' }}>
+                        {u.username}
+                        {!u.is_active && <span className="tag-chip" style={{ marginLeft: '6px' }}>inactive</span>}
+                      </td>
+                      <td>{u.email}</td>
+                      <td>
+                        <button
+                          className={`btn ${u.is_operator ? 'btn--primary' : 'btn--ghost'}`}
+                          style={{ padding: '4px 10px', fontSize: '12px' }}
+                          disabled={adminBusyKey === `${u.id}-is_operator`}
+                          onClick={() => handleTogglePermission(u.id, 'is_operator', !u.is_operator)}
+                        >
+                          {u.is_operator ? 'Operator' : 'Grant'}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className={`btn ${u.is_admin ? 'btn--primary' : 'btn--ghost'}`}
+                          style={{ padding: '4px 10px', fontSize: '12px' }}
+                          disabled={adminBusyKey === `${u.id}-is_admin` || (u.is_admin && u.id === selfId)}
+                          title={u.is_admin && u.id === selfId ? "You can't revoke your own admin access" : undefined}
+                          onClick={() => handleTogglePermission(u.id, 'is_admin', !u.is_admin)}
+                        >
+                          {u.is_admin ? 'Admin' : 'Grant'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 

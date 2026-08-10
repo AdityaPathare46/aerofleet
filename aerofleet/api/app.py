@@ -21,6 +21,7 @@ from aerofleet.agents.policy_review_worker import (
 )
 from aerofleet.api.rate_limit import limiter
 from aerofleet.api.routes import (
+    admin,
     agents,
     auth,
     cities,
@@ -35,7 +36,7 @@ from aerofleet.api.routes import (
     safety,
     settings,
 )
-from aerofleet.data.database import init_db
+from aerofleet.data.database import get_db_session, init_db
 from aerofleet.utils.config import get_config
 from aerofleet.utils.logging import get_logger
 
@@ -76,8 +77,13 @@ async def startup_event():
     logger.info("Starting AeroFleet API")
     init_db()
     logger.info("Database initialized")
+    with get_db_session() as db:
+        auth.ensure_bootstrap_admin(db)
     hardware.start_background_polling()
     logger.info("Hardware telemetry poll loop started")
+    hardware.start_background_redis_listener()
+    if hardware.redis_bridge.redis_enabled:
+        logger.info("Redis event relay active — telemetry fanout works across multiple workers")
     start_background_explanation_worker()
     logger.info("Council explanation worker started (async, never on the dispatch critical path)")
     start_background_policy_review_worker()
@@ -91,6 +97,7 @@ async def shutdown_event():
     """Cleanup on shutdown."""
     logger.info("Shutting down AeroFleet API")
     hardware.stop_background_polling()
+    hardware.stop_background_redis_listener()
     stop_background_explanation_worker()
     stop_background_incident_forensics_worker()
     stop_background_policy_review_worker()
@@ -115,6 +122,7 @@ async def health_check():
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(orders.router, prefix="/api/v1/orders", tags=["orders"])
 app.include_router(routes.router, prefix="/api/v1/routes", tags=["routing"])
 app.include_router(fleet.router, prefix="/api/v1/fleet", tags=["fleet"])

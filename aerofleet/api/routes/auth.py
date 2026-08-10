@@ -1,5 +1,6 @@
 """Authentication and user management API endpoints."""
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -78,11 +79,42 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 async def get_current_operator_user(current_user: User = Depends(get_current_active_user)):
     """Gate for endpoints that command real hardware (arm/disarm/emergency-
     stop). Deliberately narrower than get_current_active_user — being able
-    to log in shouldn't be enough to fly a real drone. No admin UI exists to
-    grant this yet; flip a user's `is_operator` column directly in the DB."""
+    to log in shouldn't be enough to fly a real drone. Granted via the
+    admin panel (aerofleet/api/routes/admin.py, Phase AI)."""
     if not current_user.is_operator:
         raise HTTPException(status_code=403, detail="This action requires an operator account")
     return current_user
+
+async def get_current_admin_user(current_user: User = Depends(get_current_active_user)):
+    """Gate for the admin panel itself (listing users, granting/revoking
+    is_operator/is_admin on other accounts)."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="This action requires an admin account")
+    return current_user
+
+def ensure_bootstrap_admin(db: Session) -> None:
+    """Called once from app.py's startup event. AEROFLEET_BOOTSTRAP_ADMIN_USERNAME
+    is the one deliberate exception to "no raw SQL for granting privileges" —
+    every admin system needs *some* way to mint the very first admin, and an
+    env var set by whoever controls the deployment is the standard, safe way
+    to do it (as opposed to, say, an unauthenticated "make me admin" endpoint,
+    which would be a real vulnerability). Idempotent — safe to run on every
+    startup; does nothing if the var is unset or the named user doesn't exist
+    yet (e.g. before they've registered)."""
+    username = os.environ.get("AEROFLEET_BOOTSTRAP_ADMIN_USERNAME")
+    if not username:
+        return
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        logger.warning(
+            f"AEROFLEET_BOOTSTRAP_ADMIN_USERNAME='{username}' does not match any registered "
+            "user yet — register that account, then restart the API to grant it admin."
+        )
+        return
+    if not user.is_admin:
+        user.is_admin = True
+        db.commit()
+        logger.info(f"Bootstrap admin granted to '{username}'")
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")

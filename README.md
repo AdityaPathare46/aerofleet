@@ -372,10 +372,15 @@ incoming AIS-230 V2V standard's broadcast content and DGCA's existing Remote ID 
 C-V2X's road-vehicle-only 5.9 GHz spectrum), and a link-state machine falls back to a peer-derived
 safety evaluation when the central link degrades past a threshold — using the *exact same,
 unmodified* `ControlBarrierFunctionGate`, just fed differently-sourced data. Verified with a real
-5,000-trial empirical study (`scenario_engine/d2d_degradation_study.py`): 99.68% verdict-equivalence
-between the centralized and decentralized paths, and an 87.5% conflict-catch rate during a simulated
-central-link outage versus 0% with no D2D backstop at all. Full research writeup, honest scope
-caveats, and target-journal recommendation: [`docs/D2D_MESH_RESEARCH_DESIGN.md`](docs/D2D_MESH_RESEARCH_DESIGN.md).
+5,000-trial empirical study (`scenario_engine/d2d_degradation_study.py`): 91.3% verdict-equivalence
+between the centralized and decentralized paths, and (Phase AL) two separately-reported conflict-catch
+numbers rather than one blended figure — the honest natural-rate sample (5 true conflicts during a
+simulated central-link outage, too few for a defensible confidence interval on its own) and an
+importance-sampled adversarial-geometry sample (454 true conflicts, 79.5% catch rate, 95% Wilson CI
+[0.76, 0.83]) that exists specifically to put a statistically defensible interval on that number — see
+[`docs/D2D_MESH_RESEARCH_DESIGN.md`](docs/D2D_MESH_RESEARCH_DESIGN.md) for why the natural rate alone
+isn't citable as-is and how the importance-sampling fix works. Both figures come from the same
+unmodified CBF gate; D2D catches 0% with no backstop at all, by construction, in either sample.
 
 ---
 

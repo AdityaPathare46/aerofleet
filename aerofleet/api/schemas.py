@@ -28,10 +28,19 @@ class UserResponse(UserBase):
     id: int
     is_active: bool
     is_operator: bool
+    is_admin: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class UserPermissionsUpdate(BaseModel):
+    """Admin-only patch to another user's flags — every field optional so a
+    caller only sends what it actually wants to change."""
+    is_operator: Optional[bool] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────

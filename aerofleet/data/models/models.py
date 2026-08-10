@@ -20,9 +20,17 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
     # Gates hardware-control endpoints (arm/disarm/emergency-stop) — being
-    # able to log in shouldn't be enough to command a real drone. No admin
-    # UI grants this yet; flip it directly in the DB for a demo account.
+    # able to log in shouldn't be enough to command a real drone. Grant via
+    # the admin panel (Phase AI, aerofleet/api/routes/admin.py) rather than
+    # raw SQL — the one exception is bootstrapping the very first admin,
+    # see AEROFLEET_BOOTSTRAP_ADMIN_USERNAME in auth.py.
     is_operator = Column(Boolean, default=False, nullable=False)
+    # Gates the admin panel itself (user list, granting/revoking
+    # is_operator and is_admin on other accounts) — deliberately separate
+    # from is_operator: flying a drone and managing user permissions are
+    # different privilege types, and conflating them would mean any
+    # operator could silently mint more operators.
+    is_admin = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -795,6 +795,9 @@ discoveries from reading the actual codebase, not assumptions.
   questioning the baseline). Honestly noted: n=8 true-conflict events is a small sample; a larger
   or adversarially-sampled trial set would be needed for a tighter confidence interval, which is
   exactly the kind of thing to do before a real journal submission, not before this snapshot.
+  **Update, Phase AL**: exactly this fix — adversarial/importance-sampled trials — is now built into
+  `scenario_engine/d2d_degradation_study.py` (`--stress-fraction`); see §14e below for the real
+  re-run and its numbers.
 - Minimal frontend: `d2d_link_state` surfaced on `GET /fleet/drones` and shown as a badge next to a
   LIVE drone's status in `tauri-app/src/pages/HardwarePanel.tsx` (only rendered when non-NOMINAL,
   keeping the UI quiet in the common case).
@@ -1094,6 +1097,45 @@ synchronized view." That's what this phase ships, additively and env-gated
 See `aerofleet/event_bus/redis_bus.py` and `docs/MULTI_WORKER_ARCHITECTURE.md` for the concrete
 design, what's implemented vs. documented-as-future-work, and how to verify it.
 
+## 14b2. Phase AI — Admin Panel for Operator/Admin Grants
+
+**Why**: the same review flagged that granting a user `is_operator` (hardware-control authority)
+required raw SQL directly against the database — no admin UI existed. True: `get_current_operator_user`
+in `aerofleet/api/routes/auth.py` had said exactly that in its own docstring since the endpoint was
+first built.
+
+**What changed**: added a genuine second privilege tier, `User.is_admin`, deliberately kept separate
+from `is_operator` — flying a drone and managing other users' permissions are different privilege
+types, and reusing one flag for both would let any operator silently mint more operators. New
+`aerofleet/api/routes/admin.py`: `GET /admin/users` (list all users, no password hashes) and
+`PATCH /admin/users/{id}` (set `is_operator`/`is_admin`/`is_active`), both gated by a new
+`get_current_admin_user` dependency. A safety check blocks an admin from revoking their own
+`is_admin` — there's no recovery path from an empty admin table short of raw SQL again, so this is
+blocked outright rather than trying to detect "are you the last admin" races.
+
+**The bootstrapping problem, solved honestly**: every admin system needs *some* way to mint the
+very first admin. The safe answer is `AEROFLEET_BOOTSTRAP_ADMIN_USERNAME` — an env var read once at
+startup (`auth.ensure_bootstrap_admin()`), idempotent, granting `is_admin=True` to that username if
+it's already registered. This is the one deliberate, narrow exception to "no more raw SQL for
+privileges" — an env var set by whoever controls the deployment, not an unauthenticated
+"make me admin" endpoint, which would be a real vulnerability. Confirmed live: registered a user,
+restarted the API with `AEROFLEET_BOOTSTRAP_ADMIN_USERNAME` set to that username, confirmed the log
+line `Bootstrap admin granted to '<user>'`, and confirmed a second restart correctly logs nothing
+(idempotent — `is_admin` was already `True`).
+
+**Frontend**: `tauri-app/src/pages/Settings.tsx` gained a fourth "Admin" tab, visible only to users
+whose `/auth/me` response has `is_admin: true`. Shows every registered user with per-row
+Operator/Admin toggle buttons; the current admin's own Admin button is disabled with a
+`"You can't revoke your own admin access"` tooltip, mirroring the backend's block.
+
+**Verification**: `tests/integration/test_admin_api.py` (13 tests) — anonymous/regular-user/
+operator-without-admin all correctly rejected (403), admin can list/grant/revoke, self-revocation
+blocked, unknown-user 404, and three bootstrap-flow tests. Live end-to-end: started a real API
+process with a bootstrap admin, logged into the actual Tauri dev UI, confirmed the Admin tab
+appears only for that account, clicked "Grant" on the Operator column, watched it flip to a filled
+"Operator" badge in the browser, and independently confirmed via a direct API call that
+`is_operator: true` actually persisted server-side.
+
 ## 14c. Phase AJ — Removing the Legacy Deep-Space Subpackages
 
 **Why**: the same review called out `ssa/`, `rl_trajectory/`, and `robotics/` by name as "bloated
@@ -1164,6 +1206,44 @@ unrecognized-city-name fallback sanity check. Also manually confirmed live: Pune
 lat range now spans 18.42–18.62° (previously ~18.52–18.54°) and correctly contains both Pune Airport
 and Pune Cantonment; Mumbai's grid is centered near 19.08°N/72.88°E (Mumbai's real coordinates), not
 18.52°N (Pune's). `pytest tests/` → 203 passed, the same 1 pre-existing unrelated failure.
+
+## 14e. Phase AL — D2D Sample-Size Fix and Regulatory-Framing Audit
+
+**Sample size**: `scenario_engine/d2d_degradation_study.py` gained a `stress_fraction` parameter
+(default `0.0` — reproduces Phase AD's original numbers bit-for-bit for the same seed, verified by
+a dedicated regression test). When set, that fraction of trials use *importance sampling*: instead
+of the original random-walk peer placement (which naturally produces a true conflict only rarely —
+honestly, this is real drone behavior, not a simulation bug), an adversarial trial directly draws a
+target true-separation biased toward small values and back-solves the peer's start position so a
+straight-line constant-velocity track reaches exactly that separation at the trial's evaluation
+instant. This is standard rare-event/importance-sampling practice, not cherry-picking: every trial —
+adversarial or not — still runs through the exact same unmodified `ControlBarrierFunctionGate`, and
+the two results are reported as **separate, labeled numbers** (`metric_3` natural-rate,
+`metric_3b_stress` importance-sampled) rather than blended into one misleadingly-precise rate. Added
+a Wilson score interval (`_wilson_ci`) for both — the right choice over a normal approximation for a
+small-n or near-0/1 proportion, both of which describe the original n=8 sample.
+
+A real re-run (`--trials 5000 --seed 42 --stress-fraction 0.5`) confirms the honest scarcity problem
+is real (natural rate: **5 true conflicts** out of 2,534 non-adversarial trials, 60% catch rate, 95%
+Wilson CI **[0.23, 0.88]** — genuinely too wide to defend) and that the fix works (stress rate: **454
+true conflicts** out of 2,466 adversarial trials, 79.5% catch rate, 95% Wilson CI **[0.76, 0.83]** —
+comfortably tight). `tests/unit/test_d2d_degradation_study.py` gained 6 new tests covering exactly
+this: bit-for-bit reproduction at `stress_fraction=0.0`, the stress mode producing far more
+conflicts than natural, CI presence/tightness, `None` CI on zero conflicts, determinism given a
+seed, and natural+stress trial counts summing to the total. `README.md` and `docs/PATENT_NOVELTY.md`
+updated to cite both figures instead of the old single 87.5%/n=8 number.
+
+**Regulatory framing**: audited every V2V/5.9GHz/C-V2X mention across `docs/D2D_MESH_RESEARCH_DESIGN.md`,
+`docs/PATENT_NOVELTY.md`, and `README.md`. Finding: **this was already correctly hedged**, dated
+2026-08-09 (Phase AD) — `docs/D2D_MESH_RESEARCH_DESIGN.md` has an explicit "Honesty note on scope"
+paragraph stating DGCA has not authorized UAV use of the 5.9 GHz C-V2X band, that AeroFleet does not
+propose transmitting on it, and that what's actually borrowed from the V2V mandate is the
+*architectural pattern* (periodic kinematic broadcast enabling peer-local hazard detection), applied
+to the regulatory basis that genuinely does apply to Indian UAVs — DGCA's Digital Sky/Remote ID
+mandate. `docs/PATENT_NOVELTY.md`'s Claim 10 and `README.md`'s D2D section both already carry the
+same "architectural, not spectral" caveat. No changes were needed here beyond the sample-size-driven
+number updates above — reported as a negative finding rather than fabricating a fix for a problem
+that, on inspection, didn't exist in the form described.
 
 ## 15. Suggested Next Steps
 
