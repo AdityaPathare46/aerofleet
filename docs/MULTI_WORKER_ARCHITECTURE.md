@@ -96,6 +96,31 @@ scenario a multi-`TestClient` pytest session creates) would then see
 This phase's audit of the hardware-owner logic surfaced it; fixed the same
 way as the other three.
 
+### 4. Request-level enforcement on mutating endpoints (follow-up)
+
+The first version of this phase left dispatch/hardware mutations to
+deployment-level routing alone — no in-app check stopped a non-owner
+worker from accepting `POST /orders/{id}/dispatch` or
+`POST /hardware/vehicles/{id}/arm` and silently mutating its own
+uninitialized `FleetState`/`registry` (or, worse, `emergency_stop_all`
+looking like a 200-success while RTLing zero vehicles, because a non-owner
+worker's `registry._links` is always empty).
+
+`require_hardware_owner()` (`aerofleet/api/routes/hardware.py`) closes that
+gap: a FastAPI dependency, applied to every mutating hardware endpoint
+(`connect_vehicle`, `disconnect_vehicle`, `arm_vehicle`, `disarm_vehicle`,
+`emergency_stop_all`) and called directly at the top of `orders.py`'s
+`dispatch_order`, that raises `HTTPException(503, ...)` whenever
+`hardware_owner_enabled()` is false. Deliberately **not** applied to
+read-only endpoints (`GET /hardware/vehicles`) — those still return
+whatever this worker's own state happens to be, which is the accepted,
+documented read-mirror gap below, not something this check tries to fix.
+
+The 503 is the right status here, not 403/409: it's not an auth failure or
+a conflict with existing state, it's "this specific server instance can't
+service this request type right now, ask a different one" — the same
+semantic a load balancer already uses to mean "try another backend."
+
 ## What's deliberately NOT built (and why)
 
 - **No cross-worker FleetState read-mirror.** A non-owner worker's
@@ -110,16 +135,8 @@ way as the other three.
   reverse proxy / load balancer's session affinity, and use the extra
   workers only for the async LLM council/explanation/policy/incident-
   forensics background work, which already doesn't touch `FleetState`
-  directly on the request path.
-- **No distributed locking for dispatch/hardware mutations.** `POST
-  /orders/{id}/dispatch`, `POST /hardware/vehicles/{id}/arm`, etc. must
-  only ever be accepted by the owner worker. This phase doesn't add
-  request-level enforcement of that (e.g. rejecting a dispatch call on a
-  non-owner worker with a clear error) — it relies on deployment-level
-  routing instead. A follow-up could add an explicit check using
-  `hardware_owner_enabled()` to fail fast with a clear error rather than
-  silently mutating a `FleetState` copy nobody else can see, which would be
-  a worthwhile small addition if this were taken further.
+  directly on the request path. (Mutations, unlike reads, now fail loudly
+  instead of silently — see §4 above.)
 
 ## Verification
 
@@ -139,5 +156,12 @@ way as the other three.
   the same origin id and the self-relay guard would suppress it — correct
   for the real deployment, but it means the cross-process path specifically
   needed a real multi-process check, not just mocks).
+- `tests/integration/test_hardware_owner_gate.py` (11 tests, follow-up) —
+  every mutating hardware endpoint and dispatch itself 503 when
+  `AEROFLEET_HARDWARE_OWNER=0`; all work normally when unset or `"1"`;
+  read-only `GET /hardware/vehicles` is confirmed NOT gated; a non-operator
+  request against a non-owner worker is confirmed to never succeed (403 or
+  503, never 200) so the new gate can't be used to bypass the existing
+  operator check.
 - `pytest tests/` full suite: no regressions, same pre-existing
   `test_config.py` failure as every prior phase.

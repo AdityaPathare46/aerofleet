@@ -132,7 +132,19 @@ async def dispatch_order(
     decision made here afterward, asynchronously, via
     POST /{order_id}/request-explanation — it never runs synchronously as
     part of this endpoint. See aerofleet/agents/explanation_worker.py.
+
+    In a multi-worker deployment, this must only be accepted by the
+    process that owns FleetState/hardware (see
+    docs/MULTI_WORKER_ARCHITECTURE.md) — a non-owner worker's FleetState
+    is a separate, uninitialized copy nobody else can see, so silently
+    mutating it here would be worse than failing loudly.
     """
+    # Local import, same pattern already used elsewhere in this route
+    # package (aerofleet/api/routes/safety.py imports from fleet.py the
+    # same way) — avoids a module-level cross-route-module import cycle.
+    from aerofleet.api.routes.hardware import require_hardware_owner
+
+    require_hardware_owner()
     order = db.query(Order).filter(Order.order_id == order_id, Order.user_id == current_user.id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

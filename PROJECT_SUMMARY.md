@@ -74,13 +74,15 @@ safety layer, is directly applicable to drone dispatch.
   **`docker-compose.yml`**, **`k8s/deployment.yaml`**, **`config/default.yaml`** — renamed and
   updated for the new package (`space_mission_architect` -> `aerofleet`) and model roster.
 
-### Left untouched (legacy, out of scope for this pivot)
-`src/` (v1 Streamlit monolith — never wired into Docker/pyproject) is the one remaining holdover.
-**Update, Phase AJ**: every deep-space-specific `aerofleet/` subpackage this section used to list
-(`ssa/`, `rl_trajectory/`, `planning/`, `robotics/`, `knowledge/`, `evaluation/`, plus `cislunar/`,
-`core/`, `digital_twin/`, `explainability/`, `simulation/`, `stm/`, `ui/`) has since been deleted
-outright — see §14c below for the live-import-trace method used to confirm each was truly
-unreferenced before removal, not just assumed dead.
+### Left untouched (legacy, out of scope for this pivot) — since removed
+This section originally listed `src/` (v1 Streamlit monolith) and every deep-space-specific
+`aerofleet/` subpackage (`ssa/`, `rl_trajectory/`, `planning/`, `robotics/`, `knowledge/`,
+`evaluation/`, `cislunar/`, `core/`, `digital_twin/`, `explainability/`, `simulation/`, `stm/`,
+`ui/`) as untouched legacy. **Update, Phase AJ**: every `aerofleet/` subpackage in that list was
+deleted outright (see §14c below for the live-import-trace method used to confirm each was truly
+unreferenced before removal, not just assumed dead). **Update, follow-up to Phase AJ**: `src/`
+(~20 files, never wired into Docker/pyproject, confirmed by the same grep-based check as the
+`aerofleet/` subpackages) was deleted too — nothing legacy remains in the repo.
 
 ## 3. Verification Status
 
@@ -1156,9 +1158,11 @@ was a WebXR *solar-system* planet-texture endpoint, not drone-related at all), a
 `tests/integration/test_v2_pipeline.py`, whose 12 test classes covered exclusively this now-deleted
 code.
 
-**Deliberately left alone**: `src/` (the original v1 Streamlit monolith at the repo root, ~20
-files) is a much larger, separate legacy codebase than what was named — flagged to the user rather
-than deleted unilaterally, since it's a bigger blast radius than the request scoped. The
+**Deliberately left alone at the time**: `src/` (the original v1 Streamlit monolith at the repo
+root, ~20 files) was a much larger, separate legacy codebase than what was named — flagged to the
+user rather than deleted unilaterally in this phase, since it was a bigger blast radius than the
+request scoped. **Update, follow-up**: the user asked for it explicitly after being flagged, and it
+was confirmed still fully unreferenced (same grep-based check) and removed — see §14f below. The
 `fault_tolerance/` package's other v2.0-era siblings (`predictive_diagnostics.py`,
 `xai_fault_analysis.py`, `ppo_fault_recovery.py`, `distributed_recovery.py`, `edge_ai_optimizer.py`,
 `sim2real.py`, `online_adaptation.py`) are equally unreferenced by the live app, but they live
@@ -1245,14 +1249,46 @@ same "architectural, not spectral" caveat. No changes were needed here beyond th
 number updates above — reported as a negative finding rather than fabricating a fix for a problem
 that, on inspection, didn't exist in the form described.
 
+## 14f. Follow-Up — Removing `src/` and Closing the Mutation-Routing Gap
+
+Two items were flagged (not built) at the end of the AG-AL batch, then fixed on request rather than
+left as permanent caveats:
+
+**`src/` removal**: the original v1 Streamlit monolith (~20 files: `mission_agent.py`,
+`council.py`, `trajectory_engine.py`, a `pages/` subdirectory, etc.) was confirmed still fully
+unreferenced by the live app — the same grep-based check used for the `aerofleet/` subpackages in
+Phase AJ (`aerofleet/`, `tauri-app/`, `tests/`, `scenario_engine/`, `tools/`, every shell/config
+file) — then deleted. `pytest.ini`'s `testpaths = tests` and `pyproject.toml` never referenced it
+either. Nothing legacy remains in the repository root.
+
+**Mutation-routing gap**: Phase AH's own documentation flagged that dispatch/hardware mutations on
+a non-owner worker relied on deployment-level routing alone, with no in-app check — a follow-up "if
+this were taken further." Built now: `require_hardware_owner()`
+(`aerofleet/api/routes/hardware.py`), a dependency raising `HTTPException(503, ...)` whenever
+`hardware_owner_enabled()` is false, applied to `connect_vehicle`, `disconnect_vehicle`,
+`arm_vehicle`, `disarm_vehicle`, `emergency_stop_all`, and called directly inside `orders.py`'s
+`dispatch_order`. Deliberately includes `emergency_stop_all` — the kill switch — because the failure
+mode without the guard is worse than with it: a non-owner worker's `registry._links` is always
+empty, so an unguarded emergency-stop call would return a 200 while silently RTLing zero vehicles,
+which is more dangerous than a loud 503 telling the operator to hit the actual owner worker.
+Read-only endpoints (`GET /hardware/vehicles`) are deliberately NOT gated — that's the separate,
+still-open "no cross-worker FleetState read-mirror" gap, unaffected by this fix.
+
+**Verification**: `tests/integration/test_hardware_owner_gate.py` (11 tests) — every mutating
+endpoint 503s under `AEROFLEET_HARDWARE_OWNER=0` and works normally when unset/`"1"`; the read-only
+endpoint is confirmed unguarded; a non-operator request against a non-owner worker is confirmed to
+never return 200 (403 or 503 only), so the new gate can't be used to bypass the existing operator
+auth check. `pytest tests/` → 248 passed, the same 1 pre-existing unrelated failure, 2
+hardware-marked deselected.
+
 ## 15. Suggested Next Steps
 
 - Run the full scenario suite against live Ollama models and record real pass/fail numbers —
   do **not** reuse any numbers from the old README's SpacePlanBench-100 table, they were
   measured against the orbital system and do not apply here.
-- Decide whether to delete the top-level `src/` v1 Streamlit monolith (Phase AJ left it in place —
-  see §14c) and the still-unwired `fault_tolerance/` v2.0 siblings, or keep them for architecture
-  history.
+- Decide whether to delete the still-unwired `fault_tolerance/` v2.0 siblings
+  (`predictive_diagnostics.py`, `xai_fault_analysis.py`, etc. — see §14c) or keep them for
+  architecture history. (`src/` itself was removed — see §14f.)
 - Add more cities by extending `CITY_REGISTRY` in `aerofleet/city/registry.py`.
 - If pursuing the patent angle, take `docs/PATENT_NOVELTY.md` to your institution's TTO or a
   patent professional before filing anything.

@@ -283,14 +283,12 @@ council + safety-gate system that happens to also talk MAVLink to real hardware.
 is a soft off-white "fresh ops console" palette (teal accent, 6-16px rounded corners, single-layer
 shadows), not the generic dark-navy-and-electric-blue template most AI products ship with.
 
-**Legacy, not part of the active pipeline:** `src/` (v1 Streamlit monolith) is the one remaining
-holdover from the original project — kept only as architecture history, not wired into the drone
-app in any way, and safe to delete if not needed for the report. Phase AJ confirmed and removed
-every space-domain-only `aerofleet/` subpackage inherited from the original project
-(`cislunar/`, `core/`, `digital_twin/`, `evaluation/`, `explainability/`, `knowledge/`, `planning/`,
-`rl_trajectory/`, `robotics/`, `simulation/`, `ssa/`, `stm/`, `ui/`, plus the three route files that
-mounted none of them) — each was checked against a live import trace of the running FastAPI app
-before deletion, not assumed dead.
+**Legacy code removal:** every space-domain-only holdover from the original pre-pivot project has
+now been removed — the top-level `src/` v1 Streamlit monolith (~20 files), and every space-domain-only
+`aerofleet/` subpackage (`cislunar/`, `core/`, `digital_twin/`, `evaluation/`, `explainability/`,
+`knowledge/`, `planning/`, `rl_trajectory/`, `robotics/`, `simulation/`, `ssa/`, `stm/`, `ui/`, plus
+the three route files that mounted none of them). Each was checked against a live import trace of
+the running FastAPI app before deletion, not assumed dead.
 
 ---
 

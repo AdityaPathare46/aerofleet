@@ -84,6 +84,30 @@ redis_bridge = RedisEventBridge(on_relayed_event=_on_redis_relayed_event)
 event_bus.subscribe("telemetry.update", _on_telemetry_event)
 
 
+def require_hardware_owner() -> None:
+    """FastAPI dependency guarding every request that would mutate this
+    process's own `registry`/FleetState — connect/disconnect/arm/disarm/
+    emergency-stop, and (imported into orders.py) dispatch itself. Phase AH
+    documented this gap explicitly rather than building it: a non-owner
+    worker has an empty, uninitialized `registry`/FleetState, so accepting
+    one of these requests wouldn't corrupt anything shared — it would
+    silently do nothing (connect_vehicle would still succeed since it
+    doesn't check ownership; emergency_stop_all would silently RTL zero
+    vehicles because this worker's registry never has any LIVE links),
+    which is a worse failure mode for an operator than a loud, immediate
+    error telling them to route the request to the actual owner."""
+    if not hardware_owner_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "This server instance is not the hardware owner "
+                "(AEROFLEET_HARDWARE_OWNER=0) and cannot accept dispatch or "
+                "hardware-control requests — route this request to the "
+                "worker configured as the hardware owner."
+            ),
+        )
+
+
 class ConnectRequest(BaseModel):
     connection_string: str
     city: str = DEFAULT_CITY
@@ -96,6 +120,7 @@ async def connect_vehicle(
     drone_id: str,
     body: ConnectRequest,
     current_user: User = Depends(get_current_operator_user),
+    _owner: None = Depends(require_hardware_owner),
 ):
     try:
         telemetry = registry.register(drone_id, body.city, body.connection_string)
@@ -110,6 +135,7 @@ async def connect_vehicle(
 async def disconnect_vehicle(
     drone_id: str,
     current_user: User = Depends(get_current_operator_user),
+    _owner: None = Depends(require_hardware_owner),
 ):
     registry.unregister(drone_id)
     return {"drone_id": drone_id, "link_mode": "SIMULATED"}
@@ -130,7 +156,12 @@ async def list_vehicles(current_user: User = Depends(get_current_active_user)):
 
 @router.post("/vehicles/{drone_id}/arm")
 @limiter.limit("20/minute")
-async def arm_vehicle(request: Request, drone_id: str, current_user: User = Depends(get_current_operator_user)):
+async def arm_vehicle(
+    request: Request,
+    drone_id: str,
+    current_user: User = Depends(get_current_operator_user),
+    _owner: None = Depends(require_hardware_owner),
+):
     link = registry.get_link(drone_id)
     if link is None:
         raise HTTPException(status_code=404, detail=f"'{drone_id}' is not a LIVE vehicle")
@@ -145,7 +176,12 @@ async def arm_vehicle(request: Request, drone_id: str, current_user: User = Depe
 
 @router.post("/vehicles/{drone_id}/disarm")
 @limiter.limit("20/minute")
-async def disarm_vehicle(request: Request, drone_id: str, current_user: User = Depends(get_current_operator_user)):
+async def disarm_vehicle(
+    request: Request,
+    drone_id: str,
+    current_user: User = Depends(get_current_operator_user),
+    _owner: None = Depends(require_hardware_owner),
+):
     link = registry.get_link(drone_id)
     if link is None:
         raise HTTPException(status_code=404, detail=f"'{drone_id}' is not a LIVE vehicle")
@@ -160,7 +196,11 @@ async def disarm_vehicle(request: Request, drone_id: str, current_user: User = D
 
 @router.post("/emergency-stop-all")
 @limiter.limit("30/minute")
-async def emergency_stop_all(request: Request, current_user: User = Depends(get_current_operator_user)):
+async def emergency_stop_all(
+    request: Request,
+    current_user: User = Depends(get_current_operator_user),
+    _owner: None = Depends(require_hardware_owner),
+):
     """Kill switch — RTL every LIVE vehicle immediately, independent of the
     normal dispatch/CBF path. The desktop app requires an explicit user
     confirmation before calling this; the endpoint itself executes
@@ -168,7 +208,15 @@ async def emergency_stop_all(request: Request, current_user: User = Depends(get_
     the whole system meant to bypass every other gate. Rate-limited against
     accidental/malicious spam, not against legitimate emergency use — the
     limit is generous (30/min) precisely because this must never be the
-    thing standing between an operator and stopping a fleet."""
+    thing standing between an operator and stopping a fleet.
+
+    Guarded by require_hardware_owner() same as the other mutating
+    endpoints here — deliberately, even though it's a kill switch: on a
+    non-owner worker, registry._links is always empty (this process never
+    ran register() for any drone), so an unguarded call would silently RTL
+    zero vehicles while looking like a 200 success. A loud 503 telling the
+    operator to hit the actual owner worker is the safer failure mode for
+    a kill switch than a silent no-op that looks like it worked."""
     results = registry.emergency_stop_all()
     return {"results": results}
 
