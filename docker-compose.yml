@@ -1,0 +1,86 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: aerofleet_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aerofleet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-aerofleet}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aerofleet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aerofleet_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: aerofleet_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aerofleet_network
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: aerofleet_api
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://aerofleet:changeme@postgres:5432/aerofleet
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./datasets:/app/datasets:ro
+      - ./logs:/app/logs
+      # Persists the OSM city-graph cache (aerofleet/city/graph.py) across
+      # container restarts — without this, every restart re-fetches Pune/
+      # Mumbai's street graph from the public Overpass API from scratch.
+      - ./data:/app/data
+    networks:
+      - aerofleet_network
+    restart: unless-stopped
+    # Uncomment to give this container access to a real flight-controller
+    # connected over USB/serial (see docs/HARDWARE_SETUP.md). The exact
+    # device path varies by OS/board — check `ls /dev/tty*` (Linux) or
+    # `ls /dev/cu.*` (macOS) before and after plugging in the vehicle to
+    # find it. Not needed for UDP connections (SITL, telemetry radios
+    # bridged over network) — only for a flight controller wired directly
+    # into the machine running this container.
+    # devices:
+    #   - "/dev/ttyACM0:/dev/ttyACM0"
+    # privileged: true   # only if the above alone isn't enough for your OS/driver
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  aerofleet_network:
+    driver: bridge

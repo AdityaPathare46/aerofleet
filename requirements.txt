@@ -1,0 +1,59 @@
+# Core
+fastapi>=0.100.0
+uvicorn>=0.23.0
+sqlalchemy>=2.0.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+colorlog>=6.7.0
+
+# City & airspace modeling
+osmnx>=1.9.0
+geopandas>=0.14.0
+shapely>=2.0.0
+networkx>=3.0.0
+scikit-learn>=1.3.0  # required by osmnx.distance.nearest_nodes for lat/lon graphs
+scipy>=1.11.0
+numpy>=1.24.0
+
+# Safety gate
+cvxpy>=1.4.0
+
+# LLM
+requests>=2.31.0
+httpx>=0.24.0
+
+# Auth
+bcrypt>=4.0.0
+python-jose>=3.3.0
+python-multipart>=0.0.6
+slowapi>=0.1.9
+
+# UI
+streamlit>=1.28.0
+
+# Database
+psycopg2-binary>=2.9.0
+redis>=4.6.0
+
+# Monitoring
+prometheus-client>=0.17.0
+
+# Dev
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+
+# v2.0 Enhancements
+scikit-learn>=1.3.0
+lime>=0.2.0.1
+filterpy>=1.4.5
+plotly>=5.18.0
+
+# v3.0 — Persistent Memory & Scenario Engine
+chromadb>=0.5.0
+ollama>=0.3.0
+
+# Real drone hardware (MAVLink)
+pymavlink>=2.4.49

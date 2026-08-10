@@ -1,0 +1,44 @@
+# Development Dependencies
+# Includes all production dependencies plus testing and quality tools
+
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+
+# Code Formatting & Linting
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+autopep8==2.0.4
+
+# Type Checking
+mypy==1.7.1
+types-pyyaml==6.0.12.12
+types-requests==2.31.0.10
+
+# Code Quality
+pylint==3.0.3
+bandit==1.7.5
+
+# Pre-commit Hooks
+pre-commit==3.5.0
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# API Development (optional)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+alembic==1.12.1
+redis==5.0.1
+psycopg2-binary==2.9.9
+
+# Jupyter (for exploration)
+jupyter==1.0.0
+ipython==8.18.1

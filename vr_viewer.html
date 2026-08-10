@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SMA-X | Mission VR Viewer</title>
+    <meta name="description" content="VR Viewer for Space Mission Architect JSON exports">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <style>
+      #ui {
+        position: absolute; top: 20px; left: 20px; z-index: 1000;
+        background: rgba(0, 20, 40, 0.8); color: #7eb8f7;
+        padding: 20px; border-radius: 12px; border: 1px solid #1e3a5f;
+        font-family: 'Inter', sans-serif; backdrop-filter: blur(5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 300px;
+      }
+      h1 { font-size: 18px; margin: 0 0 10px 0; color: #fff; }
+      p { font-size: 13px; color: #a0c4ff; margin-bottom: 15px; }
+      input[type="file"] { display: none; }
+      .btn {
+        display: block; background: #0d6efd; color: white; padding: 10px;
+        text-align: center; border-radius: 6px; cursor: pointer;
+        font-weight: bold; transition: background 0.2s;
+      }
+      .btn:hover { background: #0056b3; }
+      #status { margin-top: 10px; font-size: 12px; font-style: italic; }
+      .controls { margin-top: 20px; font-size: 11px; color: #888; }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <h1>🚀 Mission VR Viewer</h1>
+      <p>Upload your mission JSON file (e.g., GSAT-11_vr.json) to visualize the trajectory in 3D/VR.</p>
+      <label for="file-input" class="btn">📂 LOAD MISSION JSON</label>
+      <input type="file" id="file-input" accept=".json">
+      <div id="status">Waiting for data...</div>
+      <div class="controls">
+        <b>CONTROLS:</b><br>
+        • WASD / Arrows: Move<br>
+        • Mouse Drag: Look<br>
+        • VR Button (Bottom Right): Entry VR
+      </div>
+    </div>
+
+    <a-scene background="color: #00050a">
+      <!-- Lighting -->
+      <a-entity light="type: ambient; color: #444"></a-entity>
+      <a-entity id="sunlight" light="type: point; intensity: 1.5; distance: 1000; decay: 1" position="0 0 0"></a-entity>
+
+      <!-- Starfield -->
+      <a-sky color="#000" radius="500"></a-sky>
+      <a-entity star-system="count: 5000; radius: 450; depth: 0"></a-entity>
+
+      <!-- Earth (Reference) -->
+      <a-entity id="earth-container">
+        <a-sphere id="earth" radius="0.5" color="#1E90FF" 
+                  material="roughness: 0.5; metalness: 0.2"
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear">
+        </a-sphere>
+        <a-ring color="#333" radius-inner="0.6" radius-outer="0.61" rotation="-90 0 0"></a-ring>
+      </a-entity>
+
+      <!-- Dynamic Mission Content -->
+      <a-entity id="mission-content"></a-entity>
+
+      <!-- Camera -->
+      <a-entity position="0 2 5">
+        <a-camera look-controls wasd-controls></a-camera>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      const fileInput = document.getElementById('file-input');
+      const status = document.getElementById('status');
+      const content = document.getElementById('mission-content');
+
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        status.innerText = "Parsing mission data...";
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+          try {
+            const data = JSON.parse(event.target.result);
+            renderScene(data);
+            status.innerText = "Mission: " + (data.mission.name || "Loaded");
+          } catch (err) {
+            console.error(err);
+            status.innerText = "Error parsing JSON.";
+          }
+        };
+        
+        reader.readAsText(file);
+      });
+
+      function renderScene(data) {
+        // Clear previous content
+        content.innerHTML = '';
+
+        const spacecraft = data.spacecraft;
+        const planets = data.solar_system || {};
+
+        // 1. Create Target Body if it's not Earth
+        if (data.mission.target && data.mission.target !== "EARTH") {
+          const target = data.mission.target;
+          const planetData = planets[target] || { color: "#C1440E", position: {x: 10, y: 0, z: 0} };
+          
+          const planetEl = document.createElement('a-sphere');
+          planetEl.setAttribute('radius', '0.4');
+          planetEl.setAttribute('color', planetData.color || '#f00');
+          planetEl.setAttribute('position', `${planetData.position.x} ${planetData.position.y} ${planetData.position.z}`);
+          
+          // Name tag
+          const textEl = document.createElement('a-text');
+          textEl.setAttribute('value', target);
+          textEl.setAttribute('position', `${planetData.position.x} ${planetData.position.y + 0.6} ${planetData.position.z}`);
+          textEl.setAttribute('align', 'center');
+          textEl.setAttribute('scale', '0.5 0.5 0.5');
+
+          content.appendChild(planetEl);
+          content.appendChild(textEl);
+        }
+
+        // 2. Create Spacecraft
+        if (spacecraft) {
+          const scEl = document.createElement('a-entity');
+          const pos = spacecraft.position || {x: 1, y: 0, z: 0};
+          scEl.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+          
+          // Simple spacecraft model (Box + Wings)
+          const body = document.createElement('a-box');
+          body.setAttribute('width', '0.1');
+          body.setAttribute('height', '0.1');
+          body.setAttribute('depth', '0.1');
+          body.setAttribute('color', '#888');
+          
+          const wing1 = document.createElement('a-plane');
+          wing1.setAttribute('width', '0.4');
+          wing1.setAttribute('height', '0.1');
+          wing1.setAttribute('position', '0.25 0 0');
+          wing1.setAttribute('color', '#004488');
+          wing1.setAttribute('material', 'side: double');
+          
+          const wing2 = document.createElement('a-plane');
+          wing2.setAttribute('width', '0.4');
+          wing2.setAttribute('height', '0.1');
+          wing2.setAttribute('position', '-0.25 0 0');
+          wing2.setAttribute('color', '#004488');
+          wing2.setAttribute('material', 'side: double');
+
+          scEl.appendChild(body);
+          scEl.appendChild(wing1);
+          scEl.appendChild(wing2);
+          
+          content.appendChild(scEl);
+
+          // 3. Orbit Path
+          if (spacecraft.orbit_path) {
+            const lineEl = document.createElement('a-entity');
+            const pts = spacecraft.orbit_path.map(p => `${p.x} ${p.y} ${p.z}`).join(', ');
+            lineEl.setAttribute('line', `path: ${pts}; color: #7eb8f7; opacity: 0.5`);
+            content.appendChild(lineEl);
+          }
+        }
+
+        // 4. Trajectory (Interplanetary)
+        if (data.trajectory && data.trajectory.spline_bezier_points) {
+          const trajEl = document.createElement('a-entity');
+          const pts = data.trajectory.spline_bezier_points.map(p => `${p.x} ${p.y} ${p.z}`).join(', ');
+          trajEl.setAttribute('line', `path: ${pts}; color: #ffaa00; opacity: 0.8`);
+          content.appendChild(trajEl);
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+id: "SYN-002"
+name: "Rush-hour dispatch with another drone nearby"
+type: "synthetic"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  Peak ordering window: the destination route passes within the
+  conflict-screening radius of another active drone at a similar ETA,
+  so airspace pre-screening should flag a conflict and the Conflict
+  Avoidance Planner specialist agent should activate before the CBF
+  gate is checked.
+
+parameters:
+  priority: "EXPRESS"
+  outbound_km: 3.1
+  return_km: 3.1
+  payload_kg: 2.0
+  battery_capacity_wh: 500
+  battery_soc: 0.95
+  reserve_margin: 0.20
+  wind_speed_mps: 4.0
+  visibility_m: 7000
+  zone_colour: "GREEN"
+  altitude_m: 80
+  min_separation_m: 15.0
+  active_drones:
+    - drone_id: "DEPOT-2-D3"
+      distance_to_route_m: 40.0
+      eta_s: 265.0
+
+expected_outputs:
+  eta_minutes: 4.7
+  eta_tolerance_pct: 10.0
+  battery_margin_wh: 346.8
+  battery_margin_tolerance_wh: 25.0
+  cost_usd: 0.82
+  cost_tolerance_pct: 20.0
+  cbf_all_pass: true
+  dgca_compliant: true
+  safety_flags: ["conflict_avoidance_triggered"]
+
+tags: ["rush_hour", "conflict_avoidance", "multi_drone"]
+difficulty: "intermediate"
+max_retries: 20

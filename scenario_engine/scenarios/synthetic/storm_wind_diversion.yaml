@@ -1,0 +1,29 @@
+id: "SYN-004"
+name: "High wind exceeds operating envelope"
+type: "edge_case"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  Wind speed exceeds the airframe's certified operating limit. This is a
+  negative test: the Weather Agent and the CBF gate's wind_limit
+  constraint must both catch it and refuse to dispatch, rather than the
+  council optimistically approving a flight into unsafe conditions.
+
+parameters:
+  priority: "STANDARD"
+  outbound_km: 3.0
+  return_km: 3.0
+  payload_kg: 1.0
+  battery_capacity_wh: 500
+  battery_soc: 1.0
+  wind_speed_mps: 14.0
+  max_wind_mps: 10.0
+  visibility_m: 6000
+
+expected_outputs:
+  cbf_all_pass: false
+  dgca_compliant: true
+  safety_flags: ["weather_abort"]
+
+tags: ["weather", "edge_case", "negative_test"]
+difficulty: "advanced"
+max_retries: 20

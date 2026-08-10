@@ -1,0 +1,46 @@
+# Production Configuration for Space Mission Architect
+# Overrides for production environment
+
+environment: production
+debug: false
+log_level: WARNING
+
+# Use environment variables for secrets in production
+# secret_key: ${SECRET_KEY}
+
+# ========================================
+# LLM Configuration
+# ========================================
+llm:
+  ollama_timeout: 180  # Reduced timeout for production
+
+# ========================================
+# Database Configuration
+# ========================================
+database:
+  # Use PostgreSQL in production
+  # database_url: ${DATABASE_URL}
+  pool_size: 20
+  max_overflow: 40
+  echo: false
+
+# ========================================
+# API Configuration
+# ========================================
+api:
+  reload: false
+  workers: 8
+  rate_limit_per_minute: 100
+  cors_origins:
+    - https://your-production-domain.com
+
+# ========================================
+# Simulation Settings
+# ========================================
+simulation:
+  enable_anomaly_injection: false  # Disable for predictable production runs
+
+# ========================================
+# Performance
+# ========================================
+enable_metrics: true

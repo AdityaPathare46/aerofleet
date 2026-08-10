@@ -1,0 +1,128 @@
+# Default Configuration for AeroFleet
+# This file contains sensible defaults for development
+
+# ========================================
+# Application Settings
+# ========================================
+environment: development
+debug: true
+log_level: INFO
+secret_key: development-secret-key-change-in-production
+
+# ========================================
+# Feature Flags
+# ========================================
+enable_knowledge_base: true
+enable_rl_optimizer: false
+enable_report_generation: true
+enable_3d_visualization: true
+enable_metrics: true
+
+# v2.0 Enhancements Feature Flags
+enable_distributed_aco: true
+enable_hybrid_planner: true
+enable_predictive_diagnostics: true
+enable_ppo_fault_recovery: true
+enable_multi_sensor_fusion: true
+enable_rl_cam: true
+enable_digital_twins: true
+enable_async_event_bus: true
+enable_safe_rl_shield: true
+
+# ========================================
+# LLM Configuration
+# ========================================
+llm:
+  # ollama_host is intentionally NOT set here — it is read from OLLAMA_HOST
+  # environment variable (set in .env) so the remote server address can be
+  # changed without touching this file.
+  ollama_model: llama3.2
+  ollama_timeout: 300
+  # openrouter_api_key is intentionally NOT set here — read from
+  # OPENROUTER_API_KEY env var, or set at runtime via the Settings panel
+  # (aerofleet.agents.runtime_settings), same reasoning as ollama_host above.
+  openrouter_api_key: null
+  openrouter_model: meta-llama/llama-4-scout
+
+# ========================================
+# Database Configuration
+# ========================================
+database:
+  # database_url intentionally omitted: an explicit value here would shadow
+  # the DATABASE_URL env var for every environment that falls back to this
+  # file (development, test — see tests/conftest.py's sqlite:///:memory:),
+  # since YAML-provided nested values take priority over env vars in
+  # aerofleet/utils/config.py's Config.load_from_yaml(). Falls back to
+  # DatabaseConfig's own field default (sqlite:///./aerofleet.db) when
+  # DATABASE_URL isn't set, same effective value as before.
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+# ========================================
+# Redis Cache
+# ========================================
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: null
+  cache_ttl_trajectory: 3600
+  cache_ttl_llm_response: 7200
+
+# ========================================
+# API Configuration
+# ========================================
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1  # module-level singleton state isn't shared across workers — see Dockerfile CMD comment
+  reload: true
+  cors_origins:
+    - http://localhost:3000
+    - http://localhost:8501
+    - http://localhost:1420
+    - tauri://localhost
+  cors_allow_credentials: true
+  rate_limit_per_minute: 60
+
+# ========================================
+# Paths
+# (These will be auto-detected if not set)
+# ========================================
+paths:
+  project_root: .
+
+# ========================================
+# Simulation Settings
+# ========================================
+simulation:
+  max_duration_hours: 24
+  time_step_seconds: 10
+  enable_anomaly_injection: true
+  anomaly_probability: 0.15
+
+# ========================================
+# Agent Configuration
+# ========================================
+agent:
+  max_agents: 12
+  timeout: 60
+  enable_council_debate: true
+  use_mock_agents: false
+
+# ========================================
+# City / Airspace Configuration
+# ========================================
+city:
+  demo_city: "Pune, Maharashtra, India"
+  regulatory_framework: DGCA_2021
+
+# ========================================
+# Fleet & Battery Defaults
+# ========================================
+fleet:
+  battery_capacity_wh: 500.0
+  battery_reserve_margin: 0.20
+  drone_payload_kg: 5.0
+  depot_count: 6

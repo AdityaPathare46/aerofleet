@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aerofleet-tauri",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "tauri-app"],
+      "port": 1420
+    },
+    {
+      "name": "aerofleet-api",
+      "url": "http://localhost:8000",
+      "port": 8000
+    }
+  ]
+}

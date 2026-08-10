@@ -1,0 +1,180 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aerofleet"
+version = "1.0.0"
+description = "A neuro-symbolic multi-agent AI framework for city-scale drone fleet dispatch and formally-verified airspace deconfliction"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "AeroFleet Team"}
+]
+keywords = ["drone", "UTM", "fleet management", "last-mile delivery", "AI agents", "airspace", "DGCA"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "numpy>=1.24.0,<2.0.0",
+    "pandas>=2.0.0",
+    "ollama>=0.1.0",
+    "streamlit>=1.28.0",
+    "plotly>=5.17.0",
+    "networkx>=3.0",
+    "osmnx>=1.9.0",
+    "geopandas>=0.14.0",
+    "shapely>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "scipy>=1.11.0",
+    "fpdf>=1.7.2",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+    "redis>=5.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "python-multipart>=0.0.6",
+    "slowapi>=0.1.9",
+]
+
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.10.0",
+    "flake8>=6.1.0",
+    "mypy>=1.6.0",
+    "pre-commit>=3.5.0",
+    "types-pyyaml>=6.0.0",
+    "types-redis>=4.6.0",
+]
+
+deployment = [
+    "gunicorn>=21.2.0",
+    "prometheus-client>=0.18.0",
+    "psycopg2-binary>=2.9.0",
+]
+
+knowledge = [
+    "langchain-community>=0.0.10",
+    "sentence-transformers>=2.2.0",
+    "chromadb>=0.4.0",
+]
+
+hardware = [
+    "pymavlink>=2.4.49",
+]
+
+all = [
+    "aerofleet[api,dev,deployment,knowledge,hardware]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/aerofleet"
+Documentation = "https://github.com/yourusername/aerofleet/docs"
+Repository = "https://github.com/yourusername/aerofleet"
+Issues = "https://github.com/yourusername/aerofleet/issues"
+
+[project.scripts]
+aerofleet = "aerofleet.cli:main"
+aerofleet-dashboard = "aerofleet.ui.dashboard:main"
+aerofleet-api = "aerofleet.api.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aerofleet*"]
+exclude = ["tests*", "docs*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | \.eggs
+  | build
+  | dist
+  | datasets
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=aerofleet --cov-report=html --cov-report=term-missing -m \"not hardware\""
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "requires_ollama: Tests requiring Ollama server",
+    "requires_osm: Tests requiring live OpenStreetMap/Overpass access",
+    "hardware: Tests exercising the real MAVLink wire protocol (spawns tools/mock_mavlink_vehicle.py); excluded from the default fast run",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "ollama.*",
+    "osmnx.*",
+    "geopandas.*",
+    "shapely.*",
+    "networkx.*",
+    "fpdf.*",
+    "streamlit.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["aerofleet"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/datasets/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

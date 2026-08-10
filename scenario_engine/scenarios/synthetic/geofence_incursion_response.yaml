@@ -1,0 +1,30 @@
+id: "SYN-006"
+name: "Proposed route crosses a DGCA Red Zone"
+type: "edge_case"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  The shortest-path route to the destination clips a DGCA Red Zone
+  (airport ATZ). This is a negative test for the whole safety stack: the
+  Airspace Safety Officer, the DGCA Compliance Advisor, and the CBF
+  gate's geofence_exclusion constraint must all independently refuse
+  this plan — it should never reach "GOOD TO GO" regardless of what any
+  single agent says.
+
+parameters:
+  priority: "EXPRESS"
+  outbound_km: 6.0
+  return_km: 6.0
+  payload_kg: 1.5
+  in_red_zone: true
+  zone_colour: "RED"
+  uin_registered: true
+  altitude_m: 60
+
+expected_outputs:
+  cbf_all_pass: false
+  dgca_compliant: false
+  safety_flags: ["geofence_violation_detected"]
+
+tags: ["geofence", "dgca", "edge_case", "negative_test"]
+difficulty: "advanced"
+max_retries: 20

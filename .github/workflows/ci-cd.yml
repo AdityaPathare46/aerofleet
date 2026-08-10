@@ -1,0 +1,235 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  # build/deploy only ever run on this trigger — see the comment on those
+  # jobs below for why they're not wired to push/PR yet.
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'  # matches Dockerfile's python:3.10-slim
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    # Hard gate: real syntax errors / undefined names. Verified clean locally.
+    - name: Lint with flake8 (syntax errors only)
+      run: |
+        flake8 aerofleet/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    # Informational, not blocking: this codebase predates a consistent
+    # style convention (718 pre-existing violations locally — mostly line
+    # length over the configured 100 chars and blank-line spacing) and
+    # doesn't have the SQLAlchemy mypy plugin configured, which is most of
+    # mypy's 185 pre-existing errors (Column[T] vs T false positives on
+    # every ORM model field access). Neither is something this pass
+    # introduced or is in scope to fix wholesale — surfaced here for
+    # visibility rather than silently dropped, but not blocking merges on
+    # debt this pipeline has never actually been clean of.
+    - name: Style lint with flake8 (informational)
+      continue-on-error: true
+      run: |
+        flake8 aerofleet/ --count --max-line-length=100 --statistics
+
+    - name: Type check with mypy (informational)
+      continue-on-error: true
+      run: |
+        mypy aerofleet/ --ignore-missing-imports
+
+    - name: Run tests (fast suite — hardware-marked tests run separately below)
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        ENVIRONMENT: test
+      run: |
+        pytest tests/ -v --cov=aerofleet --cov-report=xml --cov-report=html
+
+    - name: Run hardware wire-protocol tests
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        ENVIRONMENT: test
+      run: |
+        pytest tests/ -m hardware -v
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tauri-app
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: tauri-app/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Type check
+      run: npx tsc --noEmit
+
+    - name: Build
+      run: npm run build
+
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tauri-app/src-tauri
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Tauri 2's Linux build depends on GTK/WebKitGTK dev headers — see
+    # https://v2.tauri.app/start/prerequisites/#linux. Without this,
+    # `cargo test` fails on a bare ubuntu-latest runner even though the
+    # same command succeeds on macOS (confirmed locally; not yet confirmed
+    # against an actual GitHub-hosted Linux runner — see PROJECT_SUMMARY.md).
+    - name: Install Linux system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+    - name: Cache cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          tauri-app/src-tauri/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('tauri-app/src-tauri/Cargo.lock') }}
+
+    - name: Run tests
+      run: cargo test
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install bandit safety
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r aerofleet/ -f json -o bandit-report.json
+
+    - name: Check dependencies for vulnerabilities
+      run: |
+        safety check --json
+
+  # build/deploy are manual-trigger-only (workflow_dispatch), not wired to
+  # push/PR: they need REGISTRY_URL/REGISTRY_USERNAME/REGISTRY_PASSWORD and
+  # KUBECONFIG repository secrets that are not configured for this project.
+  # Running them on every push would just fail on every commit rather than
+  # silently — this way the workflow tells the truth about what's actually
+  # wired up. Trigger manually from the Actions tab once those secrets
+  # exist. Image tag and k8s namespace below match k8s/deployment.yaml's
+  # actual `aerofleet`/`aerofleet-api` naming; you'll still need to replace
+  # deployment.yaml's `your-registry` placeholder with a real registry.
+  build:
+    needs: [test, frontend, rust, security]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ secrets.REGISTRY_URL }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.REGISTRY_URL }}/aerofleet-api:latest
+          ${{ secrets.REGISTRY_URL }}/aerofleet-api:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Set up kubeconfig
+      env:
+        KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      run: |
+        echo "$KUBECONFIG_DATA" | base64 -d > kubeconfig
+        echo "KUBECONFIG=$(pwd)/kubeconfig" >> "$GITHUB_ENV"
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl rollout status deployment/aerofleet-api -n aerofleet

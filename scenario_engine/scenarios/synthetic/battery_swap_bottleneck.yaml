@@ -1,0 +1,35 @@
+id: "SYN-005"
+name: "Long-range order requires an intermediate battery swap"
+type: "synthetic"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  The direct route's energy requirement exceeds the drone's available
+  battery margin, so the Battery Swap Planner specialist agent should
+  activate, select an intermediate depot, and the Ops Scheduler should
+  confirm that depot's swap-station queue can accommodate the stop
+  without breaching the order's deadline.
+
+parameters:
+  priority: "STANDARD"
+  outbound_km: 9.5
+  return_km: 9.5
+  payload_kg: 3.0
+  battery_capacity_wh: 500
+  battery_soc: 0.6
+  reserve_margin: 0.20
+  requires_battery_swap: true
+  candidate_depots: ["DEPOT-2", "DEPOT-4"]
+  swap_time_minutes: 3.0
+
+expected_outputs:
+  eta_minutes: 17.25
+  eta_tolerance_pct: 20.0
+  cost_usd: 1.6
+  cost_tolerance_pct: 25.0
+  cbf_all_pass: true
+  dgca_compliant: true
+  safety_flags: ["battery_swap_required"]
+
+tags: ["battery_swap", "long_range", "ops_scheduler"]
+difficulty: "advanced"
+max_retries: 20

@@ -1,0 +1,30 @@
+id: "SYN-007"
+name: "Mid-flight motor fault triggers automated emergency landing"
+type: "edge_case"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  A MOTOR fault (highest priority in the fault hierarchy) occurs mid-route.
+  This tests the contingency-management pipeline end-to-end: the
+  MultiFaultHandler must classify it as flight-critical, and the
+  EmergencyLandingPlanner must divert to the nearest pre-mapped safe zone
+  rather than attempting a normal return-to-home — exercising the HOD's
+  "automated landing protocols at pre-mapped safe zones" requirement.
+
+parameters:
+  priority: "STANDARD"
+  outbound_km: 4.0
+  return_km: 4.0
+  payload_kg: 1.0
+  fault_type: "MOTOR"
+  fault_severity: 0.8
+  current_lat: 18.53
+  current_lon: 73.86
+
+expected_outputs:
+  cbf_all_pass: true
+  dgca_compliant: true
+  safety_flags: ["emergency_landing_triggered"]
+
+tags: ["contingency", "fault_tolerance", "emergency_landing", "edge_case"]
+difficulty: "extreme"
+max_retries: 20

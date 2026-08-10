@@ -1,0 +1,30 @@
+[package]
+name = "aerofleet"
+version = "1.0.0"
+description = "AeroFleet — neuro-symbolic drone fleet dispatch desktop app"
+authors = ["AeroFleet Team"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Ollama detection + Windows/macOS installer automation (aerofleet.hardware
+# Rust-side counterpart — see src/ollama_installer.rs).
+reqwest = { version = "0.12", features = ["stream", "json"] }
+tokio = { version = "1", features = ["fs", "process", "rt-multi-thread", "macros"] }
+sha2 = "0.10"
+futures-util = "0.3"
+zip = "2"
+dirs = "5"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

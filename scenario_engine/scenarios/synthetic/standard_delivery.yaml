@@ -1,0 +1,39 @@
+id: "SYN-001"
+name: "Standard delivery, clear weather"
+type: "synthetic"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  Baseline single-order dispatch: short round trip, light payload, no
+  weather or airspace complications. Establishes the nominal-case ground
+  truth that every other scenario is a variation of.
+
+parameters:
+  priority: "STANDARD"
+  outbound_km: 4.2
+  return_km: 4.2
+  payload_kg: 1.5
+  battery_capacity_wh: 500
+  battery_soc: 1.0
+  reserve_margin: 0.20
+  wind_speed_mps: 3.0
+  visibility_m: 8000
+  zone_colour: "GREEN"
+  atc_permission: false
+  altitude_m: 60
+
+expected_outputs:
+  eta_minutes: 6.3
+  eta_tolerance_pct: 10.0
+  battery_margin_wh: 364.0
+  battery_margin_tolerance_wh: 25.0
+  cost_usd: 0.86
+  cost_tolerance_pct: 20.0
+  comm_link_margin_db: 28.4
+  comm_tolerance_db: 3.0
+  cbf_all_pass: true
+  dgca_compliant: true
+  safety_flags: ["nominal"]
+
+tags: ["standard", "baseline", "clear_weather"]
+difficulty: "baseline"
+max_retries: 20

@@ -1,0 +1,24 @@
+{
+    "power": {
+        "GENERIC_SOLAR": {"name": "Standard Rigid Array", "mass_kg": 50, "power_w": 500, "cost_m": 5},
+        "ULTRAFLEX": {"name": "UltraFlex Solar Array (Orbital ATK)", "mass_kg": 35, "power_w": 400, "cost_m": 12},
+        "ROSA": {"name": "ROSA (Roll-Out Solar Array)", "mass_kg": 30, "power_w": 1000, "cost_m": 25},
+        "MMRTG": {"name": "MMRTG (Nuclear Battery)", "mass_kg": 45, "power_w": 110, "cost_m": 45},
+        "ASRG": {"name": "ASRG (Stirling Radioisotope)", "mass_kg": 32, "power_w": 130, "cost_m": 60},
+        "KILOPOWER": {"name": "Kilopower Reactor (KRUSTY)", "mass_kg": 1500, "power_w": 10000, "cost_m": 250}
+    },
+    "propulsion": {
+        "GENERIC_CHEM": {"name": "Bi-Propellant Main Engine", "mass_kg": 100, "isp_s": 320, "thrust_n": 400, "cost_m": 15},
+        "R_4D": {"name": "Aerojet R-4D (Hi-Biprop)", "mass_kg": 4, "isp_s": 312, "thrust_n": 490, "cost_m": 8},
+        "NSTAR": {"name": "NSTAR Ion Engine (Deep Space 1)", "mass_kg": 8, "isp_s": 3100, "thrust_n": 0.09, "cost_m": 20},
+        "NEXT_C": {"name": "NEXT-C Gridded Ion", "mass_kg": 13, "isp_s": 4190, "thrust_n": 0.23, "cost_m": 35},
+        "NERVA": {"name": "NERVA Nuclear Thermal (Historic)", "mass_kg": 3500, "isp_s": 850, "thrust_n": 33000, "cost_m": 500}
+    },
+    "instruments": {
+        "GENERIC_CAM": {"name": "Standard Optical Camera", "mass_kg": 5, "power_w": 10, "cost_m": 2},
+        "HIRISE": {"name": "HiRISE (High Res Imager)", "mass_kg": 65, "power_w": 60, "cost_m": 40},
+        "THEMIS": {"name": "THEMIS (Thermal Emission)", "mass_kg": 11, "power_w": 13, "cost_m": 15},
+        "MAGNETOMETER": {"name": "Fluxgate Magnetometer", "mass_kg": 2, "power_w": 5, "cost_m": 5},
+        "RADAR": {"name": "SHARAD (Subsurface Radar)", "mass_kg": 15, "power_w": 25, "cost_m": 20}
+    }
+}

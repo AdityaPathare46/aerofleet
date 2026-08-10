@@ -1,0 +1,32 @@
+id: "SYN-003"
+name: "Origin depot at full landing-pad capacity"
+type: "edge_case"
+source: "AeroFleet synthetic scenario generator"
+description: >
+  The nearest depot's landing-pad queue is already at (and this scenario
+  pushes it one over) capacity. This is a negative test for the CBF gate's
+  depot_capacity constraint: the system does not implement automatic
+  cross-depot rerouting today, so the correct behaviour is for the CBF
+  gate to withhold the dispatch rather than silently overbook the pad —
+  a human/ops-scheduler decision (send to a different depot, or queue)
+  is required before this order can proceed.
+
+parameters:
+  priority: "STANDARD"
+  outbound_km: 5.6
+  return_km: 5.6
+  payload_kg: 1.0
+  battery_capacity_wh: 500
+  battery_soc: 1.0
+  reserve_margin: 0.20
+  depot_pad_slots: 4
+  depot_queue_length: 5
+
+expected_outputs:
+  cbf_all_pass: false
+  dgca_compliant: true
+  safety_flags: ["nominal"]
+
+tags: ["depot_capacity", "edge_case", "negative_test", "ops_scheduler"]
+difficulty: "intermediate"
+max_retries: 20
