@@ -1,8 +1,9 @@
 # AeroFleet
 
-**A neuro-symbolic multi-agent AI framework for city-scale drone fleet dispatch —
-LLM agents reason about tradeoffs, a formally-verified Control Barrier Function
-gate has final, non-negotiable say over every safety-critical action.**
+**A deterministic, formally-verified drone-fleet dispatch and safety system for city airspace,
+with an asynchronous LLM advisory layer — architecturally excluded from every safety-critical
+decision, not merely outranked by one — confined to explanation, slow-cadence policy tuning, and
+post-hoc incident forensics.**
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?style=for-the-badge)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg?style=for-the-badge)](https://fastapi.tiangolo.com/)
@@ -10,17 +11,29 @@ gate has final, non-negotiable say over every safety-critical action.**
 [![Tauri 2](https://img.shields.io/badge/Tauri-2.0-ffc131.svg?style=for-the-badge)](https://tauri.app/)
 [![OSMnx](https://img.shields.io/badge/OSMnx-real%20city%20data-7cb342.svg?style=for-the-badge)](https://osmnx.readthedocs.io/)
 [![DGCA 2021](https://img.shields.io/badge/Regulatory-DGCA%202021-orange.svg?style=for-the-badge)]()
-[![Patent Draft](https://img.shields.io/badge/Patent-Draft-gold.svg?style=for-the-badge)](docs/PATENT_NOVELTY.md)
+[![Patent Draft — unreviewed](https://img.shields.io/badge/Patent-Draft%20(unreviewed)-gold.svg?style=for-the-badge)](docs/PATENT_NOVELTY.md)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ---
 
 ## Executive Summary
 
+**What this actually is, stated first and plainly:** dispatch itself — which drone flies, what
+route, whether it's allowed to launch — is decided entirely by deterministic code (a greedy
+candidate ranking plus a Control Barrier Function safety gate). There is no learning, no
+training, no model fine-tuning anywhere in this system. The LLM council never selects a drone,
+never computes a route or battery margin, and never overrides or is consulted by the safety gate.
+Its job, in full, is: write a natural-language explanation of a decision that has already
+happened, draft a slow-cadence (6-hour) suggestion for a human to review, and auto-investigate a
+rejection after the fact. If that sounds like a smaller claim than "AI runs the fleet," that's
+deliberate — it's also the true one, and it's the one this codebase actually enforces
+structurally rather than by convention. See [Use of LLMs](#the-11-agent-fleet-dispatch-council)
+below for exactly where the line is drawn and why.
+
 Real drone-delivery and UTM systems already exist (Zipline, Wing, Matternet). AeroFleet isn't
-trying to out-build them on delivery logistics — it targets a narrower, more defensible gap:
-**how do you get the reasoning quality of an LLM council without ever trusting an LLM's
-arithmetic for something safety-critical?**
+trying to out-build them on delivery logistics — it targets a narrower, more defensible
+engineering question: **how do you get the reasoning quality of an LLM council without ever
+trusting an LLM's arithmetic for something safety-critical?**
 
 > LLM agents propose. A deterministic, formally-checkable Control Barrier Function gate
 > disposes. Every dispatch action — regardless of which agent or model produced it — is
@@ -39,7 +52,11 @@ that moment, before a synthesis agent combines their findings into a structured 
 report and, only when the evidence supports it, a proposed safety-threshold adjustment that a
 human operator must explicitly approve before it ever takes effect. This is the same job a
 mixed panel of specialists does after a real incident review — see **Incident Forensics**
-below for the design and the real precedent it's grounded in.
+below for the design and the real precedent it's grounded in. Worth stating honestly: the CBF
+gate's own certificate already names which constraint failed and by how much, so the council's
+value here is *synthesizing a coherent narrative and cross-domain judgment call* (a systemic
+factor, a recommended action) from that structured data — not discovering a hidden cause the
+gate didn't already know. It is a reporting and judgment layer, not a detective story.
 
 This project began as **Space Mission Architect**, a 17-agent LLM council for space mission
 planning. Faculty feedback identified two problems: (1) orbital trajectory math needs ~10-digit
@@ -48,9 +65,14 @@ that had to be dropped. The pivot to **city-scale drone fleet dispatch**, sugges
 keeps the exact same answer to problem (1) — the CBF gate was always the thing making numerical
 guarantees, not the LLMs — and gave a clean opportunity to fix problem (2): every model in the
 default roster is now open-weight and non-Chinese (Meta Llama, Mistral AI, Google Gemma,
-Microsoft Phi).
+Microsoft Phi). "City-scale" describes the architecture's design target (multi-city registry,
+real street-graph routing, real DGCA zone data per city) — the demo fleet itself is intentionally
+small (a handful of depots, ~18 drones) for a runnable local dev environment, not a claim of
+tested behavior at real metro-area drone counts.
 
-See [`docs/PATENT_NOVELTY.md`](docs/PATENT_NOVELTY.md) for the full novelty/claims writeup.
+See [`docs/PATENT_NOVELTY.md`](docs/PATENT_NOVELTY.md) for the full novelty/claims writeup —
+an unreviewed student draft, not filed, not reviewed by patent counsel; treat every claim in it
+as a novelty argument to be stress-tested, not a settled fact.
 
 ---
 
@@ -173,9 +195,24 @@ module docstring has the complete rationale and citations.
 | 10 | **Autonomy Validator** | Cross-checks every other agent's numbers | `llama4:scout` | Meta |
 | 11 | **Payload / Delivery Specialist** | Delivery objectives, release mechanism | `phi4-reasoning:plus` | Microsoft |
 
-**Specialist agents** (trigger-based, run only when needed): Conflict Avoidance Planner,
-Battery Swap Planner, AI Governance Validator (MAD-BAD-SAD framework), Cyber Security Auditor,
-Edge Compute Feasibility Agent.
+**Specialist agents** (trigger-based — only invoked when a condition in that debate actually
+warrants it, not on every dispatch): Conflict Avoidance Planner, Battery Swap Planner, AI
+Governance Validator (MAD-BAD-SAD framework), Cyber Security Auditor, Edge Compute Feasibility
+Agent. The Cyber Security Auditor in particular is grounded in a real, cited vulnerability
+taxonomy (Breda et al. 2023) retargeted at drone C2/GNSS links — GNSS spoofing and unencrypted
+command links are genuine, documented BVLOS threat vectors, not a leftover from the project's
+original space-mission domain.
+
+**Why route each domain through an LLM at all, rather than just print the number `agents/tools.py`
+already computed?** Every core agent above is fed real, deterministic telemetry from `tools.py`
+(route distance, battery margin, DGCA zone lookups, cost) — the LLM's job is synthesis and
+judgment across that data, not recomputing it. That's a real, honestly-scoped value only for
+*non-critical* narrative and cross-domain reasoning (the CBF gate never depends on any of it) — a
+fair question to ask, and the honest answer, is whether that synthesis is worth the latency and
+inference cost versus a human just reading the raw structured numbers directly. This project's
+position is that it's worth it specifically for the two async, non-blocking use cases (explanation,
+incident forensics) where a written narrative for a human reader has real value, and not worth it
+anywhere the gate itself needs an answer, which is why it never touches the gate at all.
 
 All models are configurable per-agent via `AGENT_MODEL_<ID>` environment variables. Set
 `USE_MOCK_AGENTS=true` to run the whole pipeline against a deterministic rule-based backend
@@ -371,13 +408,21 @@ C-V2X's road-vehicle-only 5.9 GHz spectrum), and a link-state machine falls back
 safety evaluation when the central link degrades past a threshold — using the *exact same,
 unmodified* `ControlBarrierFunctionGate`, just fed differently-sourced data. Verified with a real
 5,000-trial empirical study (`scenario_engine/d2d_degradation_study.py`): 91.3% verdict-equivalence
-between the centralized and decentralized paths, and (Phase AL) two separately-reported conflict-catch
-numbers rather than one blended figure — the honest natural-rate sample (5 true conflicts during a
-simulated central-link outage, too few for a defensible confidence interval on its own) and an
-importance-sampled adversarial-geometry sample (454 true conflicts, 79.5% catch rate, 95% Wilson CI
-[0.76, 0.83]) that exists specifically to put a statistically defensible interval on that number — see
-[`docs/D2D_MESH_RESEARCH_DESIGN.md`](docs/D2D_MESH_RESEARCH_DESIGN.md) for why the natural rate alone
-isn't citable as-is and how the importance-sampling fix works. Both figures come from the same
+between the centralized and decentralized paths.
+
+**On the conflict-catch rate specifically, read this before citing a number.** The
+*operationally-relevant* figure is the natural-rate sample: only 5 true conflicts occurred during
+the simulated outage window out of 5,000 trials — genuine drone-separation events are rare, which
+is realistic, but too few to state a catch-rate with any statistical confidence (60% catch rate,
+95% CI a practically-useless [0.23, 0.88]). **We do not currently have a statistically defensible
+estimate of the real-world catch rate.** A second, separately-reported number exists specifically
+to demonstrate the *methodology* for getting one: importance-sampled trials that deliberately bias
+geometry toward near-miss/violation encounters (standard rare-event sampling practice) produce 454
+true conflicts and a 79.5% catch rate, 95% Wilson CI [0.76, 0.83] — but that number describes
+performance under an artificially adversarial distribution, not expected real-flight performance,
+and should never be quoted as the latter. See
+[`docs/D2D_MESH_RESEARCH_DESIGN.md`](docs/D2D_MESH_RESEARCH_DESIGN.md) for the full methodology.
+Both figures come from the same
 unmodified CBF gate; D2D catches 0% with no backstop at all, by construction, in either sample.
 
 ---

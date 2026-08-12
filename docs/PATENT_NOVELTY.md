@@ -5,6 +5,14 @@ starting point for a provisional patent application, not a filed patent and
 not legal advice. **Have a patent professional or your institution's
 Technology Transfer Office (TTO) review this before any filing.**
 
+**Unreviewed student draft — read every claim below as a novelty argument to be stress-tested,
+not a settled fact.** No prior-art clearance search beyond the authors' own literature review has
+been performed. Two claims in particular (5 and 4 — see "Strongest Claim & Filing Recommendation"
+below) rest on engineering patterns (pluggable LLM backends, telemetry visualization in VR/AR)
+that are common enough elsewhere that a real clearance search may well turn up prior art
+narrowing or eliminating them; they're presented here as honest novelty arguments, not confident
+claims.
+
 ---
 
 ## Title
@@ -566,11 +574,19 @@ than an architectural assertion alone. **Claim 5** reinforces Claim 1 at a
 different layer: it doesn't just assert the safety gate is independent
 once, it asserts that independence survives an axis of variation (which
 inference backend produced the proposal) that most comparable systems
-don't even expose as a runtime choice. **Claim 4** is the most visually
+don't even expose as a runtime choice. Flagged honestly as the **weakest
+claim of the set on novelty grounds**: pluggable/runtime-swappable LLM
+backends are now table stakes in most agent frameworks (LangChain and
+similar already expose this as a config choice), so the actual novel
+kernel here is narrow — that the *safety boundary specifically* is proven
+invariant across that swap, not the swap mechanism itself, which is
+unlikely to be patentable alone. **Claim 4** is the most visually
 compelling for a demo/viva but the narrowest in scope — its defensibility
 rests on "formal-safety-gate-as-3D-geometry" being distinct from ordinary
 telemetry visualization, which is true but should be argued carefully
-against any prior AR/VR drone-monitoring art a clearance search turns up.
+against any prior AR/VR drone-monitoring art a clearance search turns up;
+treat it as a strong demo feature and a weak claim until that search is
+actually done.
 
 Recommended next steps:
 1. Have this reviewed by a patent professional or your institution's TTO

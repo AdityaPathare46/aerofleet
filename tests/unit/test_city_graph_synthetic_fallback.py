@@ -16,11 +16,16 @@ pytestmark = pytest.mark.unit
 
 
 def _force_synthetic(graph: CityGraph):
-    """osmnx isn't installed in this environment, so load() already falls
-    back naturally — this just makes that fact explicit/asserted rather
-    than assumed."""
-    graph.load()
-    assert graph.is_synthetic, "expected the OSM fetch to fail and fall back to synthetic in this env"
+    """Deterministically exercises the synthetic-grid fallback regardless of
+    whether osmnx/network access happens to be available in this environment
+    — earlier versions of this helper relied on load() failing naturally
+    (true when osmnx wasn't installed), which made these tests flaky against
+    an environment where osmnx became available and real OSM/Overpass
+    access started succeeding. Building the synthetic grid directly, the
+    same way load()'s except branch does, tests the fallback itself without
+    depending on a real network call succeeding or failing."""
+    graph._graph = graph._build_synthetic_grid()
+    graph.is_synthetic = True
     return graph
 
 

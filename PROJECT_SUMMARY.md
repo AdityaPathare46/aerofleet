@@ -1281,6 +1281,75 @@ never return 200 (403 or 503 only), so the new gate can't be used to bypass the 
 auth check. `pytest tests/` → 248 passed, the same 1 pre-existing unrelated failure, 2
 hardware-marked deselected.
 
+## 14g. Phase AM — Critique-Driven Narrative Restructuring
+
+Requested directly: "be an open critic, find as many problems as you can, starting from the
+problem statement or ideology." The critique produced covered five tiers — problem-statement/
+ideological, architectural coherence, scientific/statistical rigor, business viability (Lean
+Canvas), and presentation/narrative — and this phase acted on the actionable subset.
+
+**What changed, and why:**
+
+- **README executive summary reframed.** The old opening led with "neuro-symbolic multi-agent AI
+  framework for city-scale drone fleet dispatch" — a title that overclaims what's actually AI-
+  driven, since dispatch itself is 100% deterministic code and there is no learning/training
+  component anywhere in the system. The new opening states the smaller, true claim first:
+  deterministic dispatch + safety gate, with an LLM layer structurally confined to explanation,
+  policy-tuning, and post-hoc forensics. Also added an explicit statement that "city-scale"
+  describes the architecture's design target (multi-city registry, real routing/zone data), not a
+  tested claim about real metro-area drone counts — the actual demo fleet is ~18 drones.
+- **D2D catch-rate presentation restructured.** Previously the natural-rate caveat and the
+  importance-sampled 79.5% figure appeared in one dense sentence, risking the adversarial number
+  being read as an operational estimate. Now the natural-rate scarcity (n=5, CI [0.23, 0.88],
+  "we do not currently have a statistically defensible estimate of the real-world catch rate") is
+  stated plainly and first, with the importance-sampled figure explicitly labeled as demonstrating
+  methodology, not real-flight performance.
+- **Patent framing de-emphasized.** README badge now reads "Patent Draft (unreviewed)" instead of
+  just "Patent Draft"; the link-through sentence now states directly that it's an unreviewed
+  student draft, not filed, not reviewed by counsel. `docs/PATENT_NOVELTY.md` itself gained the
+  same caveat at the top plus explicit flags on its two weaker claims (see below).
+- **Agent-roster rationale added — and one honest self-correction.** The critique's draft
+  originally singled out the Cyber Security Auditor and Cost Economist as the two weakest,
+  most space-mission-leftover-feeling agents on the roster, worth cutting. Before acting on
+  that, the actual implementation was checked rather than assumed: `CyberSecurityAuditorAgent`
+  (`agents/specialist_agents.py`) turns out to cite a real vulnerability taxonomy (Breda et al.
+  2023) retargeted specifically at drone C2/GNSS links — GNSS spoofing and unencrypted command
+  links are genuine, well-documented BVLOS threat vectors, not a leftover — and it's one of five
+  genuinely trigger-based specialists (`council.py`'s per-specialist `result.get("skipped")` gate),
+  not always-on. The Cost Economist's pattern (LLM reasons over a real number
+  `AgentTools.cost_estimation_parametric` already computed) turns out to be identical to how every
+  other core agent works, not a unique flaw of that one agent. **Neither callout survived contact
+  with the actual code**, so no agents were removed. What *was* added: an honest README paragraph
+  directly addressing "why route each domain through an LLM instead of just printing the number
+  `tools.py` already computed" — the real, defensible answer (cross-domain narrative synthesis for
+  the two async use cases, never for anything the gate depends on) rather than silence on the
+  question. Documented here in full rather than quietly dropped, consistent with this project's
+  standing rule: verify before acting, and show the work either way.
+- **New: `docs/GPU_LIVE_TESTING_GUIDE.md`** — supersedes the narrower
+  `docs/GPU_LIVE_DEMO_RUNBOOK.md` (kept for its VRAM-sizing detail) with a single checklist-format
+  file covering all three live-LLM use cases (explanation, auto-triggered incident forensics,
+  manual policy-review trigger) plus both evaluation harnesses, each with an explicit pass/fail
+  signal — written to actually be run on the college GPU PC, not just read.
+- **New: `docs/DEFENSE_PREP.md`** — the hardest questions from the critique with rehearsed, honest
+  answers, for viva/review preparation.
+
+**What was deliberately not done**: no code was deleted or restructured (no agents removed, no
+architecture changed) — this phase is a narrative/documentation and honesty-of-presentation pass,
+not a re-engineering pass, made on purpose given the imminent live-hardware test session; a
+structural rewrite carries real regression risk that isn't worth taking on the day before a demo.
+
+**One real bug found by this phase's own verification pass, unrelated to the narrative changes**:
+`osmnx` became importable in this sandbox mid-session (it wasn't earlier — every prior "OSM graph
+unavailable" log line in this document was genuine), which flipped `CityGraph.load()` from its
+synthetic fallback to real OpenStreetMap/Overpass fetches for Pune and Mumbai. Phase AK's own
+tests (`tests/unit/test_city_graph_synthetic_fallback.py`) assumed the fallback would always be
+exercised because osmnx would always be absent — a real environmental-flakiness bug in the test
+design, not the production code. Fixed by having `_force_synthetic()` build the synthetic grid
+directly (the same call `load()`'s except branch makes) instead of hoping a real network call
+fails. `pytest tests/` → 248 passed again, confirming the fix, with the same 1 pre-existing
+unrelated failure. Practical upshot for the GPU-PC test: real street-graph data may now be used
+automatically instead of the synthetic grid, which is a genuine improvement, not a regression.
+
 ## 15. Suggested Next Steps
 
 - Run the full scenario suite against live Ollama models and record real pass/fail numbers —
