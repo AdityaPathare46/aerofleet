@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppStore } from './store/appStore'
 
 // Page imports
@@ -61,7 +61,24 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
 }
 
 export default function App() {
-  const { activePage, setActivePage, apiConnected } = useAppStore()
+  const { activePage, setActivePage, apiConnected, setApiConnected, apiUrl } = useAppStore()
+
+  // Real reachability check — previously nothing in the app ever called
+  // setApiConnected, so the header badge stayed permanently "Offline" even
+  // when every actual API call was succeeding. Pings the root endpoint on
+  // mount and every 10s afterward so the badge reflects the real backend
+  // state, including recovering if the API restarts mid-session.
+  useEffect(() => {
+    let cancelled = false
+    const check = () => {
+      fetch(`${apiUrl}/`)
+        .then((r) => { if (!cancelled) setApiConnected(r.ok) })
+        .catch(() => { if (!cancelled) setApiConnected(false) })
+    }
+    check()
+    const interval = setInterval(check, 10000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [apiUrl, setApiConnected])
 
   const ActivePage = PAGE_COMPONENTS[activePage] || DashboardPage
 
