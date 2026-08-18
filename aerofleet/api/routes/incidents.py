@@ -59,6 +59,52 @@ async def get_incident(
     return incident
 
 
+@router.get("/{incident_id}/vr-scene")
+async def get_incident_vr_scene(
+    incident_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Reshapes an incident's frozen_context into exactly what
+    VRSafetyView.tsx's Incident Replay mode needs to spatially reconstruct
+    the rejection — the same real coordinates, violated-constraint list,
+    and CBF certificate the Incident Forensics Council itself investigated,
+    not a re-derived approximation. This is the endpoint that lets an
+    operator verify the council's narrative against the actual geometry
+    that caused the rejection, in 3D, rather than trusting the text report
+    alone — see docs/PATENT_NOVELTY.md Claim 4 for why that verification
+    role is the actual justification for rendering this in VR specifically,
+    not just as a visualization preference."""
+    incident = db.query(IncidentReport).filter(IncidentReport.incident_id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    ctx = incident.frozen_context or {}
+    plan = ctx.get("dispatch_plan", {}) or {}
+    candidate = ctx.get("candidate", {}) or {}
+    certificate = ctx.get("cbf_certificate", {}) or {}
+    violations = (incident.trigger_detail or {}).get("violations", [])
+
+    return {
+        "incident_id": incident.incident_id,
+        "city": incident.city,
+        "drone_id": candidate.get("drone_id"),
+        "trigger_type": incident.trigger_type,
+        "status": incident.status,
+        "position": {"lat": plan.get("dest_lat"), "lon": plan.get("dest_lon")},
+        "origin": {"lat": ctx.get("origin_lat"), "lon": ctx.get("origin_lon")},
+        "altitude_m": plan.get("altitude_m"),
+        "max_altitude_m": plan.get("max_altitude_m"),
+        "in_red_zone": plan.get("in_red_zone", False),
+        "in_yellow_zone": plan.get("in_yellow_zone", False),
+        "safety_margins": certificate.get("safety_margins", {}),
+        "violations": violations,
+        "root_cause_summary": incident.root_cause_summary,
+        "systemic_factor_note": incident.systemic_factor_note,
+        "recommended_action": incident.recommended_action,
+    }
+
+
 @router.post("/{incident_id}/promote-to-policy-proposal", response_model=IncidentReportResponse)
 async def promote_to_policy_proposal(
     incident_id: str,

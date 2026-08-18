@@ -288,15 +288,39 @@ autonomous UAV dispatch system to a human supervisor, comprising:
 (e) repeating steps (a)-(d) at a polling interval independent of, and
     without altering, the evaluation of Claim 1(c) that gates dispatch
     execution — the rendering is a read-only supervisory display, not an
-    input to the safety-authority determination.
+    input to the safety-authority determination;
+
+(f) alternatively to steps (a)-(e)'s live polling, retrieving a
+    previously-frozen constraint-evaluation record associated with a
+    specific rejected dispatch decision — comprising the rejected
+    trajectory's spatial coordinates, the identity and signed margin value
+    of each violated constraint, and a natural-language root-cause
+    narrative produced by a multi-agent large-language-model
+    investigation of that same rejected decision — and rendering that
+    frozen record via steps (b)-(d) alongside the natural-language
+    narrative presented as adjacent text within the same session, such
+    that a human supervisor can visually compare the spatial rendering of
+    the recorded constraint violation against the language model's
+    textual claim about what occurred, thereby providing a
+    human-verification mechanism for auditing a large-language-model
+    output against the deterministic safety record it purports to
+    describe, rather than presenting live telemetry alone.
 
 *Reference implementation:* `aerofleet/api/routes/safety.py`'s
-`GET /live-margins` endpoint (re-evaluates the same
+`GET /live-margins` endpoint (steps (a)-(e); re-evaluates the same
 `aerofleet.safety.cbf_gate` used by Claim 1(c), read-only, against live
-fleet telemetry) and `tauri-app/src/pages/VRSafetyView.tsx` (the WebXR
-scene — separation margin as a sphere, altitude-ceiling margin as a
-plane, battery-reserve margin as a gauge, remaining constraints as HUD
-panels via `@react-three/xr`).
+fleet telemetry); `aerofleet/api/routes/incidents.py`'s
+`GET /{incident_id}/vr-scene` endpoint (step (f); reshapes the
+`IncidentReport.frozen_context` and `trigger_detail` populated by the
+Fleet Incident Forensics Council — see Claim 11 — into the frozen
+coordinates/violations/narrative the replay renders); and
+`tauri-app/src/pages/VRSafetyView.tsx` (the WebXR scene, with a Live/
+Incident-Replay mode toggle — Live renders separation margin as a
+sphere, altitude-ceiling margin as a plane, battery-reserve margin as a
+gauge, remaining constraints as HUD panels via `@react-three/xr`; Replay
+renders the frozen rejection geometry with violated constraints
+highlighted and the council's `root_cause_summary`/`recommended_action`
+shown in an adjacent panel).
 
 ## Independent Claim 5 — Deployment-Flexible LLM Connection Architecture with an Independent Safety Boundary
 
@@ -581,12 +605,23 @@ similar already expose this as a config choice), so the actual novel
 kernel here is narrow — that the *safety boundary specifically* is proven
 invariant across that swap, not the swap mechanism itself, which is
 unlikely to be patentable alone. **Claim 4** is the most visually
-compelling for a demo/viva but the narrowest in scope — its defensibility
-rests on "formal-safety-gate-as-3D-geometry" being distinct from ordinary
-telemetry visualization, which is true but should be argued carefully
-against any prior AR/VR drone-monitoring art a clearance search turns up;
-treat it as a strong demo feature and a weak claim until that search is
-actually done.
+compelling for a demo/viva. Step (f) (Incident Replay) is the part worth
+defending on its own merits: it's not "drones plotted in VR" — the thing
+several consumer drone apps already do, and the thing a live-telemetry-only
+version of this claim would reduce to — it's using VR's spatial affordance
+specifically to let a human check an LLM's natural-language claim against
+a frozen deterministic record, which is a narrower and more defensible
+combination than "safety data in a headset." Steps (a)-(e) (Live mode)
+remain the weaker half of the claim on their own: "formal-safety-gate-as-
+3D-geometry" is distinct from ordinary telemetry visualization, but that
+alone should still be argued carefully against any prior AR/VR
+drone-monitoring art a clearance search turns up. Treat (a)-(e) as a
+strong demo feature and a claim that needs that search before relying on
+it, and treat (f) as the more defensible half — though still unproven
+until the same search is done for AI-output-verification-in-VR/AR prior
+art specifically (a smaller, newer literature than drone AR/VR generally,
+but not zero — surgical and industrial-inspection VR review tools use a
+similar pattern outside the UAV/LLM context).
 
 Recommended next steps:
 1. Have this reviewed by a patent professional or your institution's TTO
@@ -597,7 +632,9 @@ Recommended next steps:
    dependent claims can be folded in on the non-provisional filing.
 3. Document the specific prior-art comparison (Zipline/Wing/Matternet
    patents and public UTM literature for Claims 1-3; consumer drone-AR
-   apps and enterprise XR-monitoring platforms for Claim 4; multi-cloud
+   apps and enterprise XR-monitoring platforms for Claim 4 steps (a)-(e),
+   plus surgical/industrial VR-review and AI-explainability-visualization
+   literature for step (f) specifically; multi-cloud
    LLM orchestration frameworks for Claim 5; decentralized/cooperative UAV
    detect-and-avoid literature, and India's AIS-230 V2V standard as the
    design inspiration to distinguish from rather than infringe, for Claim

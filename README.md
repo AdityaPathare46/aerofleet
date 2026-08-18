@@ -245,14 +245,30 @@ switching inference backend cannot alter or weaken the safety-authority boundary
 
 ## VR Safety View
 
-Beyond the flat 2D/3D Airspace Map, `tauri-app/src/pages/VRSafetyView.tsx` renders the CBF gate's
-**live, per-drone safety margins as literal 3D geometry** in a WebXR scene (put on a headset via
-the in-app "Enter VR" button, or just orbit it on a regular screen) — a translucent separation
-envelope around each flying drone, an altitude-ceiling plane, a battery-reserve gauge, with the
-remaining constraints shown as spatial HUD labels. This isn't "drones plotted in VR" (several
-consumer drone apps already do that); it's the formally-verified safety gate itself made
-perceptible in space, polled from `GET /api/v1/safety/live-margins` — a read-only supervisory
-view that never influences the actual gate. See Claim 4 in the patent doc.
+`tauri-app/src/pages/VRSafetyView.tsx` is a WebXR scene (headset via the in-app "Enter VR" button,
+or orbit it on a flat screen) with two modes, because "put drones in VR" on its own isn't a
+justification — several consumer drone apps already do that. The two modes are the actual answer
+to *why VR specifically, not just a 3D chart*:
+
+- **Live** — the CBF gate's per-drone safety margins as literal 3D geometry: a translucent
+  separation envelope around each flying drone, an altitude-ceiling plane, a battery-reserve
+  gauge, polled from `GET /api/v1/safety/live-margins` (a read-only supervisory view that never
+  influences the actual gate). The justification here is ordinary but real: stereoscopic depth is
+  a genuine perceptual advantage over a flat projection for judging *how close* two 3D points
+  actually are near a separation boundary — a monoscopic screen collapses exactly the depth axis
+  that matters for that judgment.
+- **Incident Replay** — the mode built specifically to give VR a job a 2D dashboard can't do as
+  well. Every CBF rejection auto-triggers the Fleet Incident Forensics Council (multi-agent LLM
+  investigation, see below), which produces a natural-language root-cause narrative. Incident
+  Replay pulls that incident's `frozen_context` (`GET /api/v1/incidents/{id}/vr-scene`) — the real
+  origin/destination coordinates and the exact CBF constraint violations recorded at rejection
+  time — and reconstructs the rejection geometry in 3D, with the council's own summary and
+  recommended action shown alongside it. The point: an operator can spatially walk through what
+  actually happened and check it against what the LLM *said* happened, rather than trusting a
+  paragraph of AI-generated text on faith. That verification role — using VR to audit an AI
+  system's claims against ground truth, not just to visualize live telemetry — is the load-bearing
+  part of this feature. See Claim 4 in the patent doc for the honest scope of what is and isn't
+  novel about that.
 
 ---
 

@@ -192,6 +192,14 @@ async def dispatch_order(
         "max_altitude_m": fleet.airspace.altitude_ceiling_m_at(dest_lat, dest_lon),
         "in_red_zone": dest_zone == ZoneColor.RED,
         "in_yellow_zone": dest_zone == ZoneColor.YELLOW,
+        # Not previously captured, even though already computed above —
+        # frozen_context (below) needs real coordinates to spatially
+        # reconstruct a rejected dispatch's geometry (VR Safety View's
+        # Incident Replay mode); every other dispatch_plan field already
+        # flowed into the CBF certificate/incident record, only these two
+        # were silently dropped.
+        "dest_lat": dest_lat,
+        "dest_lon": dest_lon,
     }
 
     # The ONLY decision path. No LLM call sits anywhere between a dispatch
@@ -273,6 +281,18 @@ async def dispatch_order(
             new_incident_id,
         )
 
+        # Origin depot coordinates, best-effort — lets the VR Safety View's
+        # Incident Replay mode draw the full attempted route, not just the
+        # rejection point. Never blocks the incident from being recorded if
+        # this lookup fails for any reason.
+        origin_lat, origin_lon = None, None
+        try:
+            origin_depot = fleet.depots.get(candidate.depot_id)
+            if origin_depot is not None:
+                origin_lat, origin_lon = fleet.graph.node_lat_lon(origin_depot.node)
+        except Exception:
+            pass
+
         get_incident_forensics_worker().enqueue(IncidentJob(
             incident_id=new_incident_id(),
             city=order.city,
@@ -292,6 +312,8 @@ async def dispatch_order(
                 "cbf_certificate": cbf_certificate,
                 "dispatch_plan": dispatch_plan,
                 "candidate": candidate.__dict__,
+                "origin_lat": origin_lat,
+                "origin_lon": origin_lon,
             },
         ))
 

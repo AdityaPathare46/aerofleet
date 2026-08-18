@@ -134,3 +134,56 @@ class TestPromoteToPolicyProposal:
     def test_unknown_incident_404s(self, api_client, operator_headers, fresh_fleet_state):
         resp = api_client.post("/api/v1/incidents/INC-DOESNOTEXIST/promote-to-policy-proposal", headers=operator_headers)
         assert resp.status_code == 404
+
+
+class TestVRScene:
+    """The VR Safety View's Incident Replay mode needs real frozen coordinates
+    and violation detail, not a re-derived approximation — this is what
+    justifies rendering the replay in VR (spatially verifying the council's
+    narrative against the actual rejection geometry) rather than it being a
+    generic visualization choice. See docs/PATENT_NOVELTY.md Claim 4."""
+
+    def test_requires_auth(self, api_client, fresh_fleet_state):
+        resp = api_client.get("/api/v1/incidents/INC-DOESNOTEXIST/vr-scene")
+        assert resp.status_code == 401
+
+    def test_unknown_incident_404s(self, api_client, auth_headers, fresh_fleet_state):
+        resp = api_client.get("/api/v1/incidents/INC-DOESNOTEXIST/vr-scene", headers=auth_headers)
+        assert resp.status_code == 404
+
+    def test_scene_carries_the_real_frozen_geometry_and_violations(self, api_client, auth_headers, fresh_fleet_state):
+        from aerofleet.fleet.state import get_fleet_state
+
+        fleet = get_fleet_state("pune")
+        depot_id = next(iter(fleet.depots))
+        depot = fleet.depots[depot_id]
+        depot_lat, depot_lon = fleet.graph.node_lat_lon(depot.node)
+
+        order_id = _create_order(api_client, auth_headers)
+        _force_cbf_rejection(api_client, auth_headers, order_id)
+
+        incidents = api_client.get("/api/v1/incidents/?city=pune", headers=auth_headers).json()
+        incident_id = incidents[0]["incident_id"]
+
+        resp = api_client.get(f"/api/v1/incidents/{incident_id}/vr-scene", headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        scene = resp.json()
+
+        assert scene["incident_id"] == incident_id
+        assert scene["trigger_type"] == "CBF_REJECTION"
+
+        # Destination is the real requested point (depot + 0.01, per _create_order,
+        # snapped to the nearest graph node by dispatch_order), not a placeholder —
+        # this is the coordinate capture fixed in orders.py specifically so this
+        # endpoint would have real geometry to serve. Tolerance covers node-snapping,
+        # not just floating-point noise.
+        assert scene["position"]["lat"] == pytest.approx(depot_lat + 0.01, abs=0.01)
+        assert scene["position"]["lon"] == pytest.approx(depot_lon + 0.01, abs=0.01)
+
+        # Origin depot coordinates, best-effort captured alongside the destination.
+        assert scene["origin"]["lat"] == pytest.approx(depot_lat, abs=1e-6)
+        assert scene["origin"]["lon"] == pytest.approx(depot_lon, abs=1e-6)
+
+        assert len(scene["violations"]) == 1
+        assert scene["violations"][0]["constraint_name"] == "battery_reserve_margin"
+        assert scene["violations"][0]["violation_magnitude"] == pytest.approx(5.0)
