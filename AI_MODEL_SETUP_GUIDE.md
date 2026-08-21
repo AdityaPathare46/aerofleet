@@ -106,7 +106,7 @@ ollama pull gemma4:12b
 
 ```bash
 # Model 4: Mistral Large 3 (Mistral AI) — Powers the COMPLIANCE agent (regulatory citation accuracy)
-ollama pull mistral-small3.2
+ollama pull mistral-large-3
 
 # Model 5: Llama 4 Scout (109B total / 17B active, MoE, Meta) — Powers the DISPATCHER,
 # AIRSPACE_SAFETY, AI_VALIDATOR agents
@@ -129,7 +129,7 @@ NAME                     SIZE
 phi4-reasoning:plus      11 GB
 mistral-small3.2         15 GB
 gemma4:12b               7.6 GB
-mistral-small3.2          (varies)
+mistral-large-3          (varies)
 llama4:scout             67 GB
 ```
 
@@ -241,24 +241,33 @@ If he gets a JSON response listing your models, **you're connected!** 🎉
 
 ## 🗺️ Which AI Model Powers Which Agent
 
-Here's why we need 7 different models — each agent has a different specialization:
+AeroFleet's actual 16-agent roster (`aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`) — only 5
+distinct model tags across all 16 agents, since several agents in the same domain family share a
+model:
 
-| # | Agent | What It Does | AI Model on Your PC |
-|---|-------|-------------|-------------------|
-| 1 | **Mission Architect** | Chief planner, synthesizes everything | Qwen2.5-72B |
-| 2 | **Orbital Specialist** | Calculates orbits, trajectories | Qwen2.5-Coder-14B |
-| 3 | **Propulsion Manager** | Fuel, engines, delta-V budgets | DeepSeek-R1-14B |
-| 4 | **Safety Officer** | Risk assessment, failure analysis | Llama-3.3-70B |
-| 5 | **Power Engineer** | Solar panels, batteries, power budget | DeepSeek-R1-14B |
-| 6 | **Comms Planner** | Antenna design, link budgets | Mistral-Small-24B |
-| 7 | **Navigation Expert** | Guidance, attitude control | Qwen2.5-Coder-14B |
-| 8 | **Cost Economist** | Mission cost estimation | Phi-4-14B |
-| 9 | **Ops Coordinator** | Timeline, scheduling, operations | Gemma-2-27B |
-| 10 | **Legal Advisor** | Space law, regulations, compliance | Mistral-Small-24B |
-| 11 | **AI Validator** | Checks other agents for errors | Llama-3.3-70B |
-| 12 | **Science Specialist** | Instruments, scientific objectives | Qwen2.5-72B |
+| # | Agent | Domain | AI Model on Your PC |
+|---|-------|--------|-------------------|
+| 1 | Fleet Dispatcher | dispatch | `llama4:scout` |
+| 2 | Route Planner | route | `mistral-small3.2` |
+| 3 | Battery & Power Engineer | battery | `phi4-reasoning:plus` |
+| 4 | Airspace Safety Officer | safety | `llama4:scout` |
+| 5 | Weather Agent | weather | `gemma4:12b` |
+| 6 | Comms / RF Link Agent | comms | `mistral-small3.2` |
+| 7 | Cost Economist | cost | `phi4-reasoning:plus` |
+| 8 | Ops Scheduler | operations | `gemma4:12b` |
+| 9 | DGCA Compliance Advisor | compliance | `mistral-large-3` |
+| 10 | Autonomy Validator | validation | `llama4:scout` |
+| 11 | Payload / Delivery Specialist | payload | `phi4-reasoning:plus` |
+| 12 | Conflict Avoidance Planner | conflict_avoidance | `llama4:scout` |
+| 13 | Battery Swap Planner | battery_swap_planning | `phi4-reasoning:plus` |
+| 14 | AI Governance Validator | governance_legal | `llama4:scout` |
+| 15 | Cyber Security Auditor | cybersecurity | `llama4:scout` |
+| 16 | Edge Compute Feasibility Agent | edge_compute | `phi4-reasoning:plus` |
 
-> Models are loaded **one at a time** — Ollama swaps them automatically. Your GPU runs one model, finishes, then loads the next.
+> Models are loaded **one at a time** — Ollama swaps them automatically. Your GPU runs one model,
+> finishes, then loads the next. (This table previously listed the pre-pivot Space Mission
+> Architect's 12-agent roster and Qwen/DeepSeek/Llama-3.3 model names — stale from before the
+> project's pivot to drone-fleet dispatch and corrected here.)
 
 ---
 

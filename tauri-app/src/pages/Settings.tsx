@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+import { ROSTER_MODEL_TAGS } from '../lib/rosterModels'
+import { tauriInvoke, tauriListen } from '../lib/tauriBridge'
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -33,35 +35,15 @@ type Tab = ConnectionMode | 'admin'
 
 // Mirrors aerofleet/agents/factory.py's DEFAULT_MODEL_MAP roster — the
 // same 5 distinct tags across all 11+5 agents (Phase Q).
-const ROSTER_MODELS = [
-  'llama4:scout',
-  'mistral-small3.2',
-  'mistral-small3.2',
-  'gemma4:12b',
-  'phi4-reasoning:plus',
-]
+const ROSTER_MODELS: readonly string[] = ROSTER_MODEL_TAGS
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('aerofleet_token') || ''
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-/** Tauri's IPC bridge (window.__TAURI_INTERNALS__) only exists inside the
- * native app window, not a plain browser tab — these helpers no-op/throw
- * gracefully outside it so the Local Ollama tab degrades instead of
- * crashing when previewed in an ordinary browser. */
-async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const { invoke } = await import('@tauri-apps/api/core')
-  return invoke<T>(cmd, args)
-}
-
-async function tauriListen(event: string, handler: (payload: any) => void): Promise<() => void> {
-  const { listen } = await import('@tauri-apps/api/event')
-  return listen(event, (e) => handler(e.payload))
-}
-
 export default function SettingsPage() {
-  const { apiUrl, llmConnectionMode, setLlmConnectionMode } = useAppStore()
+  const { apiUrl, llmConnectionMode, setLlmConnectionMode, setSetupWizardCompleted } = useAppStore()
 
   const [activeTab, setActiveTab] = useState<Tab>(llmConnectionMode)
   const [current, setCurrent] = useState<LLMSettingsDto | null>(null)
@@ -319,7 +301,14 @@ export default function SettingsPage() {
 
         {activeTab === 'local_ollama' && (
           <div className="card">
-            <div className="card__header"><span className="card__title">Local Ollama</span></div>
+            <div className="card__header">
+              <span className="card__title">Local Ollama</span>
+              {tauriAvailable && (
+                <button className="btn btn--ghost" style={{ padding: '4px 10px', fontSize: '12px' }} onClick={() => setSetupWizardCompleted(false)}>
+                  Re-run guided setup
+                </button>
+              )}
+            </div>
 
             {!tauriAvailable ? (
               <div style={{ color: 'var(--text-muted)' }}>

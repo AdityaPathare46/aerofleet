@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useAppStore } from './store/appStore'
+import logo from './assets/logo.png'
 
 // Page imports
 import DashboardPage from './pages/Dashboard'
@@ -16,6 +17,7 @@ import IncidentForensicsPage from './pages/IncidentForensics'
 
 // Component imports
 import RightPanel from './components/RightPanel'
+import SetupWizard from './components/SetupWizard'
 
 // Icons (inline SVG)
 const Icons = {
@@ -87,13 +89,7 @@ export default function App() {
       {/* ── Top Header ── */}
       <header className="app-header">
         <div className="app-header__logo">
-          <svg className="app-header__logo-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="16" cy="16" r="13" strokeOpacity="0.35" />
-            <circle cx="16" cy="16" r="8.5" strokeOpacity="0.6" />
-            <circle cx="16" cy="16" r="1.8" fill="currentColor" stroke="none" />
-            <path d="M16 16 L16 3" strokeOpacity="0.9" />
-            <circle cx="23.5" cy="9" r="1.4" fill="currentColor" stroke="none" />
-          </svg>
+          <img src={logo} alt="AeroFleet" className="app-header__logo-icon" />
           <div>
             <div className="app-header__title">AeroFleet</div>
             <div className="app-header__subtitle">11-Agent Council · CBF-Gated Dispatch</div>
@@ -138,6 +134,8 @@ export default function App() {
       <aside className="right-panel">
         <RightPanel />
       </aside>
+
+      <SetupWizard />
     </div>
   )
 }

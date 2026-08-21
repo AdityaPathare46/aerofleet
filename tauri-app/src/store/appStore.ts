@@ -72,6 +72,13 @@ interface AppState {
   llmConnectionMode: 'local_ollama' | 'tailscale_ollama' | 'openrouter'
   setLlmConnectionMode: (mode: AppState['llmConnectionMode']) => void
 
+  // Whether the first-run local-model Setup Wizard has been completed (or
+  // explicitly dismissed) on this machine — persisted so it doesn't
+  // reappear on every launch once Ollama + the roster models are in place.
+  // See components/SetupWizard.tsx.
+  setupWizardCompleted: boolean
+  setSetupWizardCompleted: (v: boolean) => void
+
   // Static agent roster (who's configured, which model) — display only.
   // No live per-agent status exists: the council never runs synchronously
   // as part of a request, so there's nothing to "watch" in real time
@@ -131,6 +138,10 @@ export const useAppStore = create<AppState>()(
   llmConnectionMode: 'local_ollama',
   setLlmConnectionMode: (mode) => set({ llmConnectionMode: mode }),
 
+  // Setup Wizard
+  setupWizardCompleted: false,
+  setSetupWizardCompleted: (v) => set({ setupWizardCompleted: v }),
+
   // Agent roster (static)
   agentRoster: DEFAULT_AGENTS,
 
@@ -155,7 +166,11 @@ export const useAppStore = create<AppState>()(
       // Only persist small, non-secret display state — everything else
       // (debate messages, agent roster, scenario results) stays ephemeral
       // and resets to defaults on reload, same as before this change.
-      partialize: (s) => ({ apiUrl: s.apiUrl, llmConnectionMode: s.llmConnectionMode }),
+      partialize: (s) => ({
+        apiUrl: s.apiUrl,
+        llmConnectionMode: s.llmConnectionMode,
+        setupWizardCompleted: s.setupWizardCompleted,
+      }),
     }
   )
 )

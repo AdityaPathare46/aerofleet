@@ -4,14 +4,18 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
+/build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Anchored to repo root — unanchored `lib/`/`lib64/` here would also match
+# legitimate source directories anywhere in the tree (it did: silently
+# swallowed tauri-app/src/lib/ until this was caught before a commit).
+# These two only ever meant a top-level build/lib(64)/ from `setup.py build`.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
