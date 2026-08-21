@@ -1,8 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
    AeroFleet — Global Design System
-   Theme: Fresh Ops Console — soft off-white surfaces, teal accent,
-   rounded corners, gentle single-layer shadows. Status colors (safe/
-   caution/danger) remain the only saturated colors on screen.
+   Theme: Ops Console — soft off-white surfaces, navy accent sampled
+   from the AeroFleet logo mark, rounded corners, gentle single-layer
+   shadows. Status colors (safe/caution/danger) remain the only
+   saturated colors on screen — the navy accent is deliberately
+   restrained rather than the teal/glow palette common to AI-product
+   dashboards.
    ═══════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -18,11 +21,11 @@
   --bg-elevated:      #F1F5F9;
   --bg-hover:         #F1F5F9;
 
-  /* Accent — welcoming teal-blue (primary brand color) */
-  --accent:          #0D9488;
-  --accent-dim:      #0F766E;
-  --accent-subtle:   #CCFBF1;
-  --accent-ring:     rgba(13, 148, 136, 0.30);
+  /* Accent — navy sampled directly from the AeroFleet logo mark */
+  --accent:          #244975;
+  --accent-dim:      #1C385B;
+  --accent-subtle:   #D3DAE3;
+  --accent-ring:     rgba(36, 73, 117, 0.30);
 
   /* Secondary informational tone — warm amber, used sparingly (CTAs/highlights) */
   --info:            #F59E0B;
@@ -44,7 +47,7 @@
 
   /* Borders — soft slate, no glow */
   --border:          #E2E8F0;
-  --border-active:   rgba(13, 148, 136, 0.45);
+  --border-active:   rgba(36, 73, 117, 0.45);
   --border-hover:    #CBD5E1;
 
   /* Shadow — soft, single-layer, welcoming */
@@ -137,9 +140,9 @@ body {
 }
 
 .app-header__logo-icon {
-  width: 22px;
-  height: 22px;
-  color: var(--accent);
+  height: 26px;
+  width: auto;
+  object-fit: contain;
 }
 
 .app-header__title {

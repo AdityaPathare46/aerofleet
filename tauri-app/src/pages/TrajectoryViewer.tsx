@@ -303,7 +303,7 @@ export default function FleetMapPage() {
           // LIVE drones (real MAVLink telemetry) get a thicker amber ring
           // so they read as distinct from simulated ones at a glance.
           'circle-stroke-width': ['case', ['get', 'live'], 2.5, 1],
-          'circle-stroke-color': ['case', ['get', 'live'], '#0D9488', '#1E293B'],
+          'circle-stroke-color': ['case', ['get', 'live'], '#244975', '#1E293B'],
         },
       })
     }
@@ -311,7 +311,7 @@ export default function FleetMapPage() {
     if (!map.getLayer('depot-towers-fill')) {
       map.addLayer({
         id: 'depot-towers-fill', type: 'fill-extrusion', source: 'depot-towers',
-        paint: { 'fill-extrusion-color': '#0D9488', 'fill-extrusion-height': 15, 'fill-extrusion-opacity': 0.85 },
+        paint: { 'fill-extrusion-color': '#244975', 'fill-extrusion-height': 15, 'fill-extrusion-opacity': 0.85 },
         layout: { visibility: 'none' },
       })
     }

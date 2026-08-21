@@ -127,7 +127,7 @@ function AltitudeCeiling({ span }: { span: number }) {
   return (
     <mesh position={[0, ALTITUDE_CEILING_M, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[span, span]} />
-      <meshBasicMaterial color="#0D9488" transparent opacity={0.05} side={THREE.DoubleSide} depthWrite={false} />
+      <meshBasicMaterial color="#244975" transparent opacity={0.05} side={THREE.DoubleSide} depthWrite={false} />
     </mesh>
   )
 }
