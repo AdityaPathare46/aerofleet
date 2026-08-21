@@ -234,3 +234,63 @@ class TestDispatchAuthAndNotFound:
     def test_dispatch_unknown_order_404s(self, api_client, auth_headers, fresh_fleet_state):
         resp = api_client.post("/api/v1/orders/ORD-DOES-NOT-EXIST/dispatch", headers=auth_headers)
         assert resp.status_code == 404
+
+
+class TestMissionPlannerWaypointExport:
+    """GET /orders/{id}/mission-planner-waypoints — see
+    aerofleet/integrations/mission_planner.py. Only a CBF-approved
+    dispatch has a real route worth exporting."""
+
+    def test_approved_order_exports_a_real_qgc_wpl_file(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers)
+        dispatch = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        assert dispatch.json()["verdict"] == "APPROVED"
+
+        resp = api_client.get(f"/api/v1/orders/{order_id}/mission-planner-waypoints", headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        assert resp.headers["content-disposition"] == f'attachment; filename="{order_id}.waypoints"'
+
+        lines = resp.text.strip().split("\n")
+        assert lines[0] == "QGC WPL 110"
+        assert len(lines) == 5  # header + home + takeoff + waypoint + RTL
+        # Row 2 (index 2, the actual destination waypoint) carries the real
+        # dispatched coordinates (the same node-snapped point _create_order's
+        # requested destination resolves to), not placeholders.
+        dest_row = lines[3].split("\t")
+        fleet = get_fleet_state("pune")
+        live_order = fleet.orders[order_id]
+        expected_lat, expected_lon = fleet.graph.node_lat_lon(live_order.destination_node)
+        assert float(dest_row[8]) == pytest.approx(expected_lat)
+        assert float(dest_row[9]) == pytest.approx(expected_lon)
+
+        # Home row (index 0) carries the real origin depot, not (0, 0).
+        home_row = lines[1].split("\t")
+        assert float(home_row[8]) != 0.0
+        assert float(home_row[9]) != 0.0
+
+    def test_rejected_order_has_nothing_to_export(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers)
+        failing_result = MagicMock(
+            passed=False, safety_margin_summary={"battery_reserve_margin": -5.0}, execution_time_ms=0.1,
+            violations=[MagicMock(constraint_name="battery_reserve_margin", violation_magnitude=5.0, required_correction=5.0)],
+        )
+        with patch("aerofleet.safety.cbf_gate.build_cbf_gate") as mock_gate:
+            mock_gate.return_value.evaluate_trajectory.return_value = failing_result
+            dispatch = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        assert dispatch.json()["verdict"] == "REJECTED_BY_CBF_GATE"
+
+        resp = api_client.get(f"/api/v1/orders/{order_id}/mission-planner-waypoints", headers=auth_headers)
+        assert resp.status_code == 409
+
+    def test_undispatched_order_has_nothing_to_export(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers)
+        resp = api_client.get(f"/api/v1/orders/{order_id}/mission-planner-waypoints", headers=auth_headers)
+        assert resp.status_code == 409
+
+    def test_requires_auth(self, api_client, fresh_fleet_state):
+        resp = api_client.get("/api/v1/orders/NONEXISTENT/mission-planner-waypoints")
+        assert resp.status_code == 401
+
+    def test_unknown_order_404s(self, api_client, auth_headers, fresh_fleet_state):
+        resp = api_client.get("/api/v1/orders/ORD-DOES-NOT-EXIST/mission-planner-waypoints", headers=auth_headers)
+        assert resp.status_code == 404

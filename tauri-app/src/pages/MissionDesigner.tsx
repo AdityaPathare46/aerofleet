@@ -39,6 +39,7 @@ export default function DispatchDesignerPage() {
   const [depots, setDepots] = useState<DepotDto[]>([])
   const [result, setResult] = useState<DispatchResult | null>(null)
   const [requestingExplanation, setRequestingExplanation] = useState(false)
+  const [exportingWaypoints, setExportingWaypoints] = useState(false)
 
   function update<K extends keyof DispatchPlan>(key: K, value: DispatchPlan[K]) {
     setForm(f => ({ ...f, [key]: value }))
@@ -134,6 +135,41 @@ export default function DispatchDesignerPage() {
     }
   }
 
+  /** Downloads the CBF-approved route as a standard QGC WPL 110 .waypoints
+   * file — openable directly in ArduPilot Mission Planner or
+   * QGroundControl's Flight Plan view. See
+   * aerofleet/integrations/mission_planner.py for why this is a file
+   * export rather than vendoring Mission Planner's own codebase in. Fetch
+   * + Blob rather than a plain <a href> since the endpoint needs the
+   * Bearer auth header, which a navigated link can't carry. */
+  async function handleExportWaypoints() {
+    if (!result) return
+    setExportingWaypoints(true)
+    try {
+      const res = await fetch(`${apiUrl}/api/v1/orders/${result.order_id}/mission-planner-waypoints`, {
+        headers: authHeaders(),
+      })
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null)
+        throw new Error(detail?.detail || `${res.status} ${res.statusText}`)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${result.order_id}.waypoints`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Failed to export waypoints:', e)
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setExportingWaypoints(false)
+    }
+  }
+
   return (
     <div style={{ overflow: 'auto', flex: 1 }}>
       <div className="page-header">
@@ -190,20 +226,27 @@ export default function DispatchDesignerPage() {
               </div>
             </div>
 
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: '60ch' }}>
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: '52ch' }}>
                 This decision is already final — the council never influences it. Optionally ask the
                 council to explain it in natural language; generated asynchronously, never blocking.
               </div>
-              {result.explanation_status === 'NOT_REQUESTED' ? (
-                <button id="btn-request-explanation" className="btn btn--ghost" onClick={handleRequestExplanation} disabled={requestingExplanation}>
-                  {requestingExplanation ? <><div className="spinner" style={{ width: 12, height: 12 }} /> Requesting...</> : 'Request Explanation'}
-                </button>
-              ) : (
-                <button id="btn-view-explanation" className="btn btn--ghost" onClick={() => setActivePage('council')}>
-                  View in Council Room ({result.explanation_status})
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: 10 }}>
+                {result.verdict === 'APPROVED' && (
+                  <button id="btn-export-waypoints" className="btn btn--ghost" onClick={handleExportWaypoints} disabled={exportingWaypoints} title="Download a QGC WPL 110 .waypoints file — open it in ArduPilot Mission Planner's Flight Plan tab">
+                    {exportingWaypoints ? <><div className="spinner" style={{ width: 12, height: 12 }} /> Exporting...</> : 'Export for Mission Planner'}
+                  </button>
+                )}
+                {result.explanation_status === 'NOT_REQUESTED' ? (
+                  <button id="btn-request-explanation" className="btn btn--ghost" onClick={handleRequestExplanation} disabled={requestingExplanation}>
+                    {requestingExplanation ? <><div className="spinner" style={{ width: 12, height: 12 }} /> Requesting...</> : 'Request Explanation'}
+                  </button>
+                ) : (
+                  <button id="btn-view-explanation" className="btn btn--ghost" onClick={() => setActivePage('council')}>
+                    View in Council Room ({result.explanation_status})
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

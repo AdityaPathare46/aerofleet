@@ -411,6 +411,20 @@ RC override and the flight controller's own failsafes remain mandatory — this 
 coordinates the fleet, it doesn't replace them). `tools/mock_mavlink_vehicle.py` lets you exercise
 the entire pipeline without real hardware.
 
+### ArduPilot Mission Planner export
+
+AeroFleet doesn't vendor Mission Planner's codebase (a full Windows-native C#/.NET application —
+merging it into this Python/TypeScript stack wouldn't build or run as one thing). Instead, an
+approved dispatch can be exported as a standard **QGC WPL 110** `.waypoints` file — the same format
+Mission Planner and QGroundControl both read — via `GET /api/v1/orders/{id}/mission-planner-waypoints`
+or the Dispatch Console's **Export for Mission Planner** button, once the CBF gate has approved the
+route (only an approved dispatch has a real route worth exporting). `aerofleet/hardware/mavlink_link.py`
+already speaks the exact same MAVLink connection-string format
+(`udp:`/`tcp:`/serial) Mission Planner uses, so the two tools can point at the same vehicle. AeroFleet
+still makes the only decision that matters (the CBF gate); Mission Planner is downstream
+flight-planning/monitoring tooling, not a second decision-maker. See
+`aerofleet/integrations/mission_planner.py`.
+
 ---
 
 ## Decentralized Safety Mesh (D2D)

@@ -171,8 +171,25 @@ async def dispatch_order(
     dest_zone = fleet.airspace.zone_at(dest_lat, dest_lon)
     altitude_band = fleet.airspace.assign_altitude_band(live_order.priority, dest_lat, dest_lon)
 
+    # Origin depot coordinates, best-effort — needed for both the VR Safety
+    # View's Incident Replay geometry (on rejection) and Mission Planner
+    # waypoint export (on approval, see aerofleet/integrations/
+    # mission_planner.py): a mission needs a real launch point, not just a
+    # destination. Captured once here rather than separately per branch.
+    origin_lat, origin_lon = None, None
+    try:
+        origin_depot = fleet.depots.get(candidate.depot_id)
+        if origin_depot is not None:
+            origin_lat, origin_lon = fleet.graph.node_lat_lon(origin_depot.node)
+    except Exception:
+        pass
+
     dispatch_plan = {
         "order_id": order_id,
+        "drone_id": candidate.drone_id,
+        "origin_depot_id": candidate.depot_id,
+        "origin_lat": origin_lat,
+        "origin_lon": origin_lon,
         "distance_km": candidate.outbound_km + candidate.return_km,
         "deadline_minutes": live_order.deadline_minutes,
         "payload_kg": live_order.payload_kg,
@@ -281,18 +298,6 @@ async def dispatch_order(
             new_incident_id,
         )
 
-        # Origin depot coordinates, best-effort — lets the VR Safety View's
-        # Incident Replay mode draw the full attempted route, not just the
-        # rejection point. Never blocks the incident from being recorded if
-        # this lookup fails for any reason.
-        origin_lat, origin_lon = None, None
-        try:
-            origin_depot = fleet.depots.get(candidate.depot_id)
-            if origin_depot is not None:
-                origin_lat, origin_lon = fleet.graph.node_lat_lon(origin_depot.node)
-        except Exception:
-            pass
-
         get_incident_forensics_worker().enqueue(IncidentJob(
             incident_id=new_incident_id(),
             city=order.city,
@@ -312,8 +317,8 @@ async def dispatch_order(
                 "cbf_certificate": cbf_certificate,
                 "dispatch_plan": dispatch_plan,
                 "candidate": candidate.__dict__,
-                "origin_lat": origin_lat,
-                "origin_lon": origin_lon,
+                "origin_lat": dispatch_plan["origin_lat"],
+                "origin_lon": dispatch_plan["origin_lon"],
             },
         ))
 
@@ -366,6 +371,44 @@ async def request_explanation(
     )
     db.refresh(order)
     return {"order_id": order_id, "council_explanation_status": order.council_explanation_status}
+
+
+@router.get("/{order_id}/mission-planner-waypoints")
+async def get_mission_planner_waypoints(
+    order_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Exports this order's CBF-approved dispatch as a standard QGC WPL 110
+    `.waypoints` file — the format ArduPilot Mission Planner and
+    QGroundControl both read directly (Flight Plan tab -> Open). AeroFleet
+    still made the only decision that matters before this file can exist;
+    Mission Planner is downstream flight-planning/monitoring tooling, not
+    a second decision-maker. See aerofleet/integrations/mission_planner.py.
+    """
+    from fastapi.responses import PlainTextResponse
+
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+
+    order = db.query(Order).filter(Order.order_id == order_id, Order.user_id == current_user.id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.council_verdict != "APPROVED":
+        raise HTTPException(
+            status_code=409,
+            detail="Only a CBF-approved dispatch has a real route to export — this order's verdict is "
+                   f"{order.council_verdict or 'not dispatched yet'}.",
+        )
+
+    waypoints = build_waypoint_file(order.dispatch_plan or {})
+    if waypoints is None:
+        raise HTTPException(status_code=422, detail="This order's dispatch_plan is missing coordinates needed to build a route")
+
+    return PlainTextResponse(
+        content=waypoints,
+        media_type="text/plain",
+        headers={"Content-Disposition": f'attachment; filename="{order_id}.waypoints"'},
+    )
 
 
 @router.delete("/{order_id}", status_code=204)
