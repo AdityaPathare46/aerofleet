@@ -60,7 +60,7 @@ python -m scenario_engine.runner --type all --continuous
 
 ## Sequence for tomorrow
 
-1. Clone the repo (see the main README for the clone URL once it's pushed).
+1. Clone the repo: `git clone https://github.com/AdityaPathare46/aerofleet.git`
 2. Install Ollama + the 5 roster models — either via the desktop app's **Setup Wizard** (opens
    automatically on first launch; see below) or manually per `AI_MODEL_SETUP_GUIDE.md`.
 3. `pytest tests/ -q` — confirms the deterministic safety layer is intact (~2 min, no GPU needed).
@@ -68,10 +68,37 @@ python -m scenario_engine.runner --type all --continuous
 5. `python -m scenario_engine.runner --type all` — the real accuracy run against live models.
    Screenshot the terminal summary and keep the `scenario_reports/*.json` file it writes — that's
    your actual, non-fabricated evidence for tomorrow.
-6. Start the desktop app (`npm run tauri dev` inside `tauri-app/`, or the built installer once
-   packaged) and demo the VR Safety View's two modes — Live and Incident Replay (dispatch an order
-   into a real DGCA red zone to generate an incident to replay, per
+6. Build and install the real desktop app (see **Building a real installer** below) rather than
+   running the dev server, then demo the VR Safety View's two modes — Live and Incident Replay
+   (dispatch an order into a real DGCA red zone to generate an incident to replay, per
    `docs/PATENT_NOVELTY.md`'s Claim 4 reference implementation).
+
+## Building a real installer
+
+`npm run tauri dev` (what runs during development) is a dev server, not an installable app. For an
+actual `.exe`/`.msi` installer:
+
+```bash
+cd tauri-app
+npm install
+npm run tauri build
+```
+
+This must run **on the target OS** — a Windows build has to run on Windows, a macOS build on macOS.
+Tauri does not reliably cross-compile a Windows installer from a Mac (or vice versa), so building it
+once on this Mac only produces a macOS `.app`/`.dmg`, not something installable on the college PC.
+
+On Windows, this produces (under `tauri-app/src-tauri/target/release/bundle/`):
+- `nsis/AeroFleet_<version>_x64-setup.exe` — a normal double-click installer (NSIS-based).
+- `msi/AeroFleet_<version>_x64_en-US.msi` — an MSI package, if your institution's policy prefers
+  those for install tracking.
+
+First build compiles the whole Rust dependency tree from scratch and can take 10–20+ minutes
+depending on the PC; rebuilds after that are much faster. Requires the Rust toolchain
+(`rustup.rs`) and, on Windows, the "Desktop development with C++" Visual Studio Build Tools
+workload — both one-time installs, see
+[Tauri's prerequisites guide](https://tauri.app/start/prerequisites/) if `npm run tauri build`
+errors out asking for them.
 
 ## The Setup Wizard (new)
 
