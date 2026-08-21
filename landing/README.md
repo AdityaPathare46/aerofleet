@@ -24,16 +24,25 @@ vercel --prod
 Either way, Vercel needs your own account/login — this is a one-time step only you can do (a
 browser-based Vercel login), not something that can be scripted on your behalf.
 
-## Before the download buttons actually work
+## How the download buttons work
 
-The buttons link to `https://github.com/AdityaPathare46/aerofleet/releases/latest/download/<file>`
-— GitHub's stable "always get the newest release's asset with this exact filename" URL pattern.
-Nothing resolves there until a Release actually exists with matching asset names:
+The buttons link to `downloads/AeroFleet-macOS.dmg` and `downloads/AeroFleet-Windows-Setup.exe` —
+plain files served as part of this same Vercel deployment, not GitHub Releases. Deliberate choice:
+this repo is private, and a private GitHub repo's release assets 404 for anyone without repo
+access — the download button would only work for you, logged in, never for an actual visitor.
+Vercel serves whatever's in this deployment publicly through its own URL regardless of whether the
+source repo on GitHub is private, since Vercel only needs *build* access, which is separate from
+public visibility. So the repo stays private and downloads still work for everyone.
 
-1. On GitHub → **Releases** → **Draft a new release** (tag e.g. `v1.0.0`).
-2. Attach the macOS installer, renamed exactly to **`AeroFleet-macOS.dmg`**
-   (already built — `AeroFleet_1.0.0_aarch64.dmg`, delivered separately; just rename on upload).
-3. Once the Windows installer is built (`npm run tauri build` run **on Windows**, see
-   `docs/COLLEGE_PC_TEST_RUNBOOK.md`), attach it too, renamed to **`AeroFleet-Windows-Setup.exe`**.
-4. Publish the release. Both landing-page buttons resolve immediately — no code change needed,
-   since the URL pattern always points at whatever the latest release's matching filename is.
+`downloads/AeroFleet-macOS.dmg` is already committed. To add the Windows build once it's built at
+college (`npm run tauri build` run **on Windows** — see `docs/COLLEGE_PC_TEST_RUNBOOK.md`):
+
+```bash
+cp path/to/AeroFleet_1.0.0_x64-setup.exe landing/downloads/AeroFleet-Windows-Setup.exe
+git add landing/downloads/AeroFleet-Windows-Setup.exe
+git commit -m "Add Windows installer to the landing page"
+git push
+```
+
+Vercel redeploys automatically on push — the Windows button starts working within a minute or two
+of that push, no dashboard steps needed.

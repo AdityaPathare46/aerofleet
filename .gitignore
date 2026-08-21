@@ -7,15 +7,19 @@ __pycache__/
 /build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
-# Anchored to repo root — unanchored `lib/`/`lib64/` here would also match
-# legitimate source directories anywhere in the tree (it did: silently
-# swallowed tauri-app/src/lib/ until this was caught before a commit).
-# These two only ever meant a top-level build/lib(64)/ from `setup.py build`.
+# Anchored to repo root — these entries describe top-level Python
+# packaging-build artifacts (setup.py build/develop), not a name convention
+# safe to blanket-ignore anywhere in the tree. Unanchored `lib/`/`lib64/`
+# already silently swallowed tauri-app/src/lib/ once, and unanchored
+# `downloads/` did the same to landing/downloads/ — both caught only
+# because a real file failed to show up in `git status` before a commit.
+# `dist/` stays unanchored on purpose: tauri-app/dist/ (the Vite build
+# output) already relies on it being ignored at that depth too.
 /lib/
 /lib64/
+/downloads/
 parts/
 sdist/
 var/
