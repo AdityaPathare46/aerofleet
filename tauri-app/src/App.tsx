@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAppStore } from './store/appStore'
 import logo from './assets/logo.png'
+import { tauriListen } from './lib/tauriBridge'
 
 // Page imports
 import DashboardPage from './pages/Dashboard'
@@ -64,6 +65,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
 
 export default function App() {
   const { activePage, setActivePage, apiConnected, setApiConnected, apiUrl } = useAppStore()
+  const [backendError, setBackendError] = useState<string | null>(null)
 
   // Real reachability check — previously nothing in the app ever called
   // setApiConnected, so the header badge stayed permanently "Offline" even
@@ -74,13 +76,27 @@ export default function App() {
     let cancelled = false
     const check = () => {
       fetch(`${apiUrl}/`)
-        .then((r) => { if (!cancelled) setApiConnected(r.ok) })
+        .then((r) => { if (!cancelled) { setApiConnected(r.ok); if (r.ok) setBackendError(null) } })
         .catch(() => { if (!cancelled) setApiConnected(false) })
     }
     check()
     const interval = setInterval(check, 10000)
     return () => { cancelled = true; clearInterval(interval) }
   }, [apiUrl, setApiConnected])
+
+  // src-tauri/src/backend_launcher.rs auto-starts the backend on launch
+  // and emits this event with either success or — critically — the exact
+  // reason it couldn't (missing project checkout, missing Python venv,
+  // etc.). Without this, a failed auto-launch just looks identical to
+  // "still connecting": the header badge stays red forever with no way
+  // to tell why. Native-app only (no-ops in a plain browser preview).
+  useEffect(() => {
+    let unlisten: (() => void) | undefined
+    tauriListen('backend-status', (payload: { ok: boolean; error?: string }) => {
+      if (!payload.ok && payload.error) setBackendError(payload.error)
+    }).then((fn) => { unlisten = fn }).catch(() => {})
+    return () => unlisten?.()
+  }, [])
 
   const ActivePage = PAGE_COMPONENTS[activePage] || DashboardPage
 
@@ -108,6 +124,19 @@ export default function App() {
 
         <div className="app-header__status-dot" style={{ marginLeft: 16 }} />
       </header>
+
+      {backendError && !apiConnected && (
+        <div style={{
+          gridColumn: '1 / -1', gridRow: 2, background: 'var(--status-red-subtle)', color: 'var(--status-red)',
+          padding: '10px 24px', fontSize: '13px', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid var(--border)',
+        }}>
+          <span>&#9888; Backend didn't start: {backendError}</span>
+          <button className="btn btn--ghost" style={{ padding: '4px 10px', fontSize: '12px', flexShrink: 0 }} onClick={() => setBackendError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ── Left Sidebar ── */}
       <nav className="sidebar">
