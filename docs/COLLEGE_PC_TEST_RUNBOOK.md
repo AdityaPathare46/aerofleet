@@ -100,6 +100,13 @@ workload — both one-time installs, see
 [Tauri's prerequisites guide](https://tauri.app/start/prerequisites/) if `npm run tauri build`
 errors out asking for them.
 
+**Expect a SmartScreen warning on first run** — the build isn't code-signed (needs a paid Windows
+code-signing certificate, not set up), so Windows will show "Windows protected your PC" the first
+time the installer or the app itself runs. Click **More info** → **Run anyway**. This is normal for
+an unsigned build, not a sign anything actually failed — same underlying cause as the macOS
+build needing `xattr -cr` on first launch there (see `landing/README.md`'s Gatekeeper section for
+the full explanation, since both installers on the landing page hit the same class of issue).
+
 ## The Setup Wizard (new)
 
 The desktop app now shows a guided setup screen automatically the first time it launches on a

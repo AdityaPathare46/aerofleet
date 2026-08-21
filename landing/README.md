@@ -46,3 +46,22 @@ git push
 
 Vercel redeploys automatically on push — the Windows button starts working within a minute or two
 of that push, no dashboard steps needed.
+
+## Unsigned build — expect an OS warning on first launch
+
+Neither installer is code-signed (that needs a paid Apple Developer ID Program membership — $99/yr
+— and, separately, a Windows code-signing certificate; neither is set up, and enrolling is a real
+account/cost decision only the repo owner can make). Concretely, this means:
+
+- **macOS**: a browser download gets Gatekeeper's quarantine flag, and an ad-hoc-signed
+  (not Developer-ID-signed, not notarized) app downloaded with that flag gets flatly rejected —
+  confirmed directly with `spctl -a -vv` against the built app, not just macOS's own wording, which
+  unhelpfully says "AeroFleet is damaged and should be moved to the Trash." It isn't damaged.
+  One-time fix per machine: `xattr -cr /Applications/AeroFleet.app` in Terminal, then open normally.
+- **Windows**: SmartScreen shows "Windows protected your PC" for the same unsigned-build reason —
+  milder than Gatekeeper, doesn't require Terminal. Click **More info** → **Run anyway**.
+
+Both are now called out directly on the landing page, right under the download buttons, so a
+visitor doesn't hit a dead end. The only way to remove the warning entirely (not just explain it)
+is actual code signing + notarization — worth doing before wider distribution, not required for a
+college demo.

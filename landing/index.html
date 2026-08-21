@@ -54,6 +54,14 @@
           </a>
         </div>
         <div class="hero__note">Free, open source. macOS (Apple Silicon) and Windows (10/11) installers below.</div>
+        <div class="gatekeeper-note">
+          <strong>macOS first launch:</strong> unsigned build, so macOS will say the app "is
+          damaged" — that's Gatekeeper blocking an unnotarized download, not a bad file. Fix once:
+          <code>xattr -cr /Applications/AeroFleet.app</code> in Terminal, then open normally.
+          <br /><strong>Windows first launch:</strong> unsigned build there too — SmartScreen will
+          say "Windows protected your PC". Click <strong>More info</strong>, then
+          <strong>Run anyway</strong>.
+        </div>
       </div>
 
       <div class="hero__mock" aria-hidden="true">
