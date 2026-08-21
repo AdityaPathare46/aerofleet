@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AeroFleet — 11-Agent Council, CBF-Gated Drone Dispatch</title>
-  <meta name="description" content="AeroFleet plans city-scale drone deliveries with a 16-agent LLM council. A deterministic Control-Barrier-Function gate — not the council — decides whether a dispatch actually happens." />
+  <meta name="description" content="AeroFleet plans city-scale drone deliveries with a 16-agent LLM roster built around an 11-agent core council. A deterministic Control-Barrier-Function gate — not the council — decides whether a dispatch actually happens." />
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -34,11 +34,12 @@
         <div class="eyebrow">11-Agent Council &middot; CBF-Gated Dispatch</div>
         <h1>The council proposes.<br />The gate disposes.</h1>
         <p class="hero__sub">
-          AeroFleet plans city-scale drone deliveries with a 16-agent LLM council — dispatch,
-          routing, battery, weather, compliance, and more, each grounded in its own domain. But no
-          council output ever moves a drone. A deterministic Control-Barrier-Function gate,
-          evaluated in under a millisecond, is the only thing that can approve or reject a
-          dispatch — and it can't be talked into an exception.
+          AeroFleet plans city-scale drone deliveries with a 16-agent roster — an 11-agent core
+          council (dispatch, routing, battery, weather, compliance, and more) plus 5 specialists
+          triggered only when relevant, each grounded in its own domain. But no council output
+          ever moves a drone. A deterministic Control-Barrier-Function gate, evaluated in under a
+          millisecond, is the only thing that can approve or reject a dispatch — and it can't be
+          talked into an exception.
         </p>
         <div class="hero__ctas" id="download">
           <a href="downloads/AeroFleet-macOS.dmg" download
@@ -74,9 +75,9 @@
           <div class="mock__body">
             <div class="mock__cards">
               <div class="mock__card">
-                <div class="mock__card-label">Council</div>
+                <div class="mock__card-label">Agent Roster</div>
                 <div class="mock__card-value">16</div>
-                <div class="mock__card-foot">agents configured</div>
+                <div class="mock__card-foot">11 council + 5 specialists</div>
               </div>
               <div class="mock__card mock__card--green">
                 <div class="mock__card-label">API Link</div>
@@ -108,10 +109,11 @@
       <div class="grid-3">
         <div class="feature">
           <div class="feature__num">01</div>
-          <h3>16-agent council</h3>
-          <p>Dispatch, route, battery, weather, comms, cost, compliance, cybersecurity, and more —
-             each a specialist LLM agent reasoning over its own domain, running open-weight,
-             non-Chinese-origin models (Llama, Mistral, Gemma, Phi) end to end.</p>
+          <h3>16-agent roster</h3>
+          <p>An 11-agent core council (dispatch, route, battery, weather, comms, cost, compliance,
+             and more) plus 5 situational specialists — each a specialist LLM agent reasoning over
+             its own domain, running open-weight, non-Chinese-origin models (Llama, Mistral, Gemma,
+             Phi) end to end.</p>
         </div>
         <div class="feature">
           <div class="feature__num">02</div>

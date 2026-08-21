@@ -83,11 +83,17 @@ ollama --version
 
 ---
 
-## Step 2 — Download All 5 AI Models
+## Step 2 — Download All 4 AI Models
 
 Open a terminal and run these commands **one by one**. Each model downloads and stays on your disk permanently.
 
-All five are open-weight and non-Chinese-origin (Meta / Mistral AI / Google / Microsoft).
+All four are open-weight and non-Chinese-origin (Meta / Mistral AI / Google / Microsoft).
+
+> Note: an earlier version of this guide listed a 5th model, `mistral-large-3`, for the
+> COMPLIANCE agent. That tag isn't actually locally-pullable — Ollama's `mistral-large-3` is a
+> 675B-parameter *cloud-only* model, not something any local GPU runs (see
+> `aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`, which already assigns COMPLIANCE to
+> `mistral-small3.2` for exactly this reason). Corrected here — only 4 models are actually needed.
 
 ### Small/Medium Models (Download First — Fastest)
 
@@ -95,20 +101,17 @@ All five are open-weight and non-Chinese-origin (Meta / Mistral AI / Google / Mi
 # Model 1: Phi-4-reasoning-plus (14B, Microsoft) — Powers the BATTERY, COST, PAYLOAD agents
 ollama pull phi4-reasoning:plus
 
-# Model 2: Mistral-Small 3.2 (24B, Mistral AI) — Powers the ROUTE, COMMS agents
+# Model 2: Mistral-Small 3.2 (24B, Mistral AI) — Powers the ROUTE, COMMS, COMPLIANCE agents
 ollama pull mistral-small3.2
 
 # Model 3: Gemma 4 (12B, Google) — Powers the WEATHER, OPS agents
 ollama pull gemma4:12b
 ```
 
-### Large Models (Longest Download — Be Patient!)
+### Large Model (Longest Download — Be Patient!)
 
 ```bash
-# Model 4: Mistral Large 3 (Mistral AI) — Powers the COMPLIANCE agent (regulatory citation accuracy)
-ollama pull mistral-large-3
-
-# Model 5: Llama 4 Scout (109B total / 17B active, MoE, Meta) — Powers the DISPATCHER,
+# Model 4: Llama 4 Scout (109B total / 17B active, MoE, Meta) — Powers the DISPATCHER,
 # AIRSPACE_SAFETY, AI_VALIDATOR agents
 # ~67 GB download — will take 30-90 minutes
 ollama pull llama4:scout
@@ -122,14 +125,13 @@ ollama pull llama4:scout
 ollama list
 ```
 
-You should see **all 5 models** listed:
+You should see **all 4 models** listed:
 
 ```
 NAME                     SIZE
 phi4-reasoning:plus      11 GB
 mistral-small3.2         15 GB
 gemma4:12b               7.6 GB
-mistral-large-3          (varies)
 llama4:scout             67 GB
 ```
 
@@ -241,7 +243,7 @@ If he gets a JSON response listing your models, **you're connected!** 🎉
 
 ## 🗺️ Which AI Model Powers Which Agent
 
-AeroFleet's actual 16-agent roster (`aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`) — only 5
+AeroFleet's actual 16-agent roster (`aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`) — only 4
 distinct model tags across all 16 agents, since several agents in the same domain family share a
 model:
 
@@ -255,7 +257,7 @@ model:
 | 6 | Comms / RF Link Agent | comms | `mistral-small3.2` |
 | 7 | Cost Economist | cost | `phi4-reasoning:plus` |
 | 8 | Ops Scheduler | operations | `gemma4:12b` |
-| 9 | DGCA Compliance Advisor | compliance | `mistral-large-3` |
+| 9 | DGCA Compliance Advisor | compliance | `mistral-small3.2` |
 | 10 | Autonomy Validator | validation | `llama4:scout` |
 | 11 | Payload / Delivery Specialist | payload | `phi4-reasoning:plus` |
 | 12 | Conflict Avoidance Planner | conflict_avoidance | `llama4:scout` |

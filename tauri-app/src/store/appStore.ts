@@ -111,7 +111,7 @@ const DEFAULT_AGENTS: AgentStatus[] = [
   { id: 'COMMS', name: 'Comms / RF Link Agent', domain: 'comms', model: 'mistral-small3.2', status: 'idle' },
   { id: 'COST', name: 'Cost Economist', domain: 'cost', model: 'phi4-reasoning:plus', status: 'idle' },
   { id: 'OPS', name: 'Ops Scheduler', domain: 'operations', model: 'gemma4:12b', status: 'idle' },
-  { id: 'COMPLIANCE', name: 'DGCA Compliance Advisor', domain: 'compliance', model: 'mistral-large-3', status: 'idle' },
+  { id: 'COMPLIANCE', name: 'DGCA Compliance Advisor', domain: 'compliance', model: 'mistral-small3.2', status: 'idle' },
   { id: 'AI_VALIDATOR', name: 'Autonomy Validator', domain: 'validation', model: 'llama4:scout', status: 'idle' },
   { id: 'PAYLOAD', name: 'Payload / Delivery Specialist', domain: 'payload', model: 'phi4-reasoning:plus', status: 'idle' },
   { id: 'conflict_avoidance', name: 'Conflict Avoidance Planner', domain: 'conflict_avoidance', model: 'llama4:scout', status: 'idle' },

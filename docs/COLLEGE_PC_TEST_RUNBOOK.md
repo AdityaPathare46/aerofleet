@@ -61,7 +61,7 @@ python -m scenario_engine.runner --type all --continuous
 ## Sequence for tomorrow
 
 1. Clone the repo: `git clone https://github.com/AdityaPathare46/aerofleet.git`
-2. Install Ollama + the 5 roster models — either via the desktop app's **Setup Wizard** (opens
+2. Install Ollama + the 4 roster models — either via the desktop app's **Setup Wizard** (opens
    automatically on first launch; see below) or manually per `AI_MODEL_SETUP_GUIDE.md`.
 3. `pytest tests/ -q` — confirms the deterministic safety layer is intact (~2 min, no GPU needed).
 4. `python -m scenario_engine.runner --dry-run` — confirms scenario files load (~seconds).
@@ -103,8 +103,8 @@ errors out asking for them.
 ## The Setup Wizard (new)
 
 The desktop app now shows a guided setup screen automatically the first time it launches on a
-machine that's missing Ollama or any roster model — it installs Ollama and pulls each of the 5
-models one at a time, with a live progress list, instead of requiring five separate manual
+machine that's missing Ollama or any roster model — it installs Ollama and pulls each of the 4
+models one at a time, with a live progress list, instead of requiring four separate manual
 `ollama pull` commands. See `tauri-app/src/components/SetupWizard.tsx`.
 
 One correction to plan around: **Ollama's own Windows/macOS installer does a per-user install and

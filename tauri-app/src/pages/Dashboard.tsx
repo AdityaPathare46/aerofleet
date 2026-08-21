@@ -57,10 +57,10 @@ export default function DashboardPage() {
         {/* Stat cards */}
         <div className="grid-3" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
           <StatCard
-            label="Council"
+            label="Agent Roster"
             value={String(rosterSize)}
             color="blue"
-            sublabel="agents configured (async, advisory-only)"
+            sublabel="11-agent council + 5 specialists (async, advisory-only)"
           />
           <StatCard
             label="API Link"
