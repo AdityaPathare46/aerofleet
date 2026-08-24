@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities for the main AeroFleet window — core defaults plus the dialog plugin's open-folder-picker, used exactly once by backend_launcher.rs's 'Locate my AeroFleet folder' fallback (App.tsx).",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default"
+  ]
+}

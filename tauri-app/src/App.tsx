@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAppStore } from './store/appStore'
 import logo from './assets/logo.png'
-import { tauriListen } from './lib/tauriBridge'
+import { tauriInvoke, tauriListen } from './lib/tauriBridge'
 
 // Page imports
 import DashboardPage from './pages/Dashboard'
@@ -66,6 +66,29 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
 export default function App() {
   const { activePage, setActivePage, apiConnected, setApiConnected, apiUrl } = useAppStore()
   const [backendError, setBackendError] = useState<string | null>(null)
+  const [locating, setLocating] = useState(false)
+
+  // backend_launcher.rs prefixes this specific failure so the UI can offer
+  // a real fix (a folder picker) instead of a dead-end error message — see
+  // its module docs for why automatic discovery can legitimately fail for
+  // a real installed app.
+  const needsProjectRoot = backendError?.startsWith('NEEDS_PROJECT_ROOT:')
+  const backendErrorMessage = needsProjectRoot ? backendError!.replace('NEEDS_PROJECT_ROOT: ', '') : backendError
+
+  async function handleLocateFolder() {
+    setLocating(true)
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog')
+      const picked = await open({ directory: true, title: 'Select your AeroFleet checkout' })
+      if (!picked || Array.isArray(picked)) return
+      await tauriInvoke('set_project_root_and_launch', { path: picked })
+      setBackendError(null)
+    } catch (e) {
+      setBackendError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLocating(false)
+    }
+  }
 
   // Real reachability check — previously nothing in the app ever called
   // setApiConnected, so the header badge stayed permanently "Offline" even
@@ -131,10 +154,23 @@ export default function App() {
           padding: '10px 24px', fontSize: '13px', display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid var(--border)',
         }}>
-          <span>&#9888; Backend didn't start: {backendError}</span>
-          <button className="btn btn--ghost" style={{ padding: '4px 10px', fontSize: '12px', flexShrink: 0 }} onClick={() => setBackendError(null)}>
-            Dismiss
-          </button>
+          <span>&#9888; Backend didn't start: {backendErrorMessage}</span>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            {needsProjectRoot && (
+              <button
+                id="btn-locate-project-root"
+                className="btn btn--primary"
+                style={{ padding: '4px 10px', fontSize: '12px' }}
+                onClick={handleLocateFolder}
+                disabled={locating}
+              >
+                {locating ? 'Starting…' : 'Locate my AeroFleet folder…'}
+              </button>
+            )}
+            <button className="btn btn--ghost" style={{ padding: '4px 10px', fontSize: '12px' }} onClick={() => setBackendError(null)}>
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 

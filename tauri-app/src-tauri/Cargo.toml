@@ -11,6 +11,9 @@ tauri-build = { version = "2.0", features = [] }
 [dependencies]
 tauri = { version = "2.0", features = [] }
 tauri-plugin-shell = "2.0"
+# Native folder-picker — used exactly once, when backend_launcher.rs can't
+# find the user's AeroFleet checkout on its own (see its module docs).
+tauri-plugin-dialog = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Ollama detection + Windows/macOS installer automation (aerofleet.hardware
