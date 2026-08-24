@@ -277,11 +277,28 @@ export default function FleetMapPage() {
     if (!map.getLayer('zones-fill')) {
       map.addLayer({
         id: 'zones-fill', type: 'fill', source: 'zones',
-        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.16 },
+        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.22 },
+      })
+      // A thin, translucent line all but disappears against real satellite
+      // photography (buildings, roads, vegetation all fight for the same
+      // contrast) — a dark casing underneath the colored line is standard
+      // cartography practice for exactly this: it guarantees the boundary
+      // reads against *any* basemap content, not just plain colors.
+      map.addLayer({
+        id: 'zones-line-halo', type: 'line', source: 'zones',
+        paint: {
+          'line-color': '#0B1220',
+          'line-width': ['match', ['get', 'zone_type'], 'RED', 5.5, 'YELLOW', 4.5, 3.5],
+          'line-opacity': 0.55,
+        },
       })
       map.addLayer({
         id: 'zones-line', type: 'line', source: 'zones',
-        paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.7 },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': ['match', ['get', 'zone_type'], 'RED', 3, 'YELLOW', 2.5, 2],
+          'line-opacity': 1,
+        },
       })
     }
 
