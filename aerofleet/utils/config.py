@@ -75,7 +75,15 @@ class APIConfig(BaseSettings):
     reload: bool = Field(default=True)
     
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8501", "http://localhost:1420", "tauri://localhost"]
+        default=[
+            "http://localhost:3000",
+            "http://localhost:8501",
+            "http://localhost:1420",
+            "http://127.0.0.1:1420",
+            "tauri://localhost",
+            "http://tauri.localhost",
+            "https://tauri.localhost",
+        ]
     )
     cors_allow_credentials: bool = Field(default=True)
     

@@ -58,6 +58,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.api.cors_origins,
+    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1|tauri\.localhost)(:\d+)?|tauri://.+)$",
     allow_credentials=config.api.cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
