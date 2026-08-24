@@ -368,10 +368,17 @@ uvicorn aerofleet.api.app:app --reload --port 8000
 ```
 
 ```bash
-# Run the drone-delivery scenario suite
-python -m scenario_engine.runner --type synthetic --dry-run   # validate YAMLs only
-python -m scenario_engine.runner --type synthetic             # run against the council
+# Deterministic decision layer at scale — 3,000+ generated cases, no LLM needed
+pytest tests/property/test_dispatch_invariants.py -q -m property
+
+# The LLM agents' own reasoning quality — needs Ollama + the roster models running
+python -m scenario_engine.incident_forensics_evaluation
 ```
+
+(`scenario_engine.runner` still exists but evaluates the council's output against hand-labeled
+values from back when the council made dispatch decisions — it doesn't anymore, the CBF gate does,
+deterministically, before the council ever runs. See `docs/TESTING_STRATEGY.md` for the full
+picture of what's actually worth running and why.)
 
 ```bash
 # Desktop app — web dev server (view in any browser at http://localhost:1420)

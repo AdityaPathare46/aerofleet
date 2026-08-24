@@ -9,54 +9,39 @@ AeroFleet doesn't have a single "accuracy %" the way a classifier does. There ar
 different things worth measuring, and they need different tools:
 
 1. **Does the CBF safety gate ever approve something it shouldn't, or reject something safe?**
-   This is deterministic code (`aerofleet/safety/cbf_gate.py`) — it's covered by the existing
-   pytest suite (`tests/`, 252 tests) and is either correct or not; there's no "accuracy percentage"
-   to measure, it's pass/fail per test case. Run `pytest tests/ -q` to check this — takes under two
-   minutes, no LLM/GPU needed.
+   Deterministic, no LLM involved — covered by the existing pytest suite (`tests/`, 252+ tests)
+   plus a new property-based suite generating 3,000+ real, distinct dispatch cases from real city
+   zone data (`tests/property/test_dispatch_invariants.py`). Both run in well under a minute
+   combined, no GPU needed.
 
-2. **Does the 16-agent LLM council make sound recommendations under realistic operating
-   conditions?** This is the part that actually needs the GPU and real models, and it's what
-   `scenario_engine/` already exists to measure — see below.
+2. **Are the LLM agents themselves reasoning well?** The part that actually needs the GPU and real
+   models — `scenario_engine/incident_forensics_evaluation.py`.
 
-## Running the scenario suite (the real accuracy test)
+**Full detail, including exactly why the old `scenario_engine.runner` suite mentioned in earlier
+versions of this doc is no longer the right tool, is in `docs/TESTING_STRATEGY.md` — read that
+first if anything below is unclear.** Short version: that suite evaluates the council's output
+against hand-labeled numbers, which was correct back when the council made decisions; it doesn't
+anymore (the CBF gate does, deterministically, before the council ever runs) — so it's now testing
+a role the council doesn't have.
 
-The 7 scenarios in `scenario_engine/scenarios/synthetic/` (`standard_delivery`,
-`rush_hour_multi_order`, `battery_swap_bottleneck`, `depot_outage_reroute`,
-`geofence_incursion_response`, `motor_failure_emergency_landing`, `storm_wind_diversion`) are
-realistic dispatch conditions with expected-value checks. This is what the Ops Center dashboard's
-"Scenario Suite" tile (`X/7 passed`) reflects — it reads `0/7` on a fresh session simply because
-nothing has been run yet that session, not because anything is failing.
-
-```bash
-# From the project root, with Ollama running and the roster models pulled
-# (see AI_MODEL_SETUP_GUIDE.md, or use the desktop app's guided Setup Wizard):
-python -m scenario_engine.runner --type all
-```
-
-This calls the real council for each scenario, evaluates the output against expected values, and
-retries failed scenarios with corrective prompts (up to each scenario's configured `max_retries`).
-Results:
-
-- Print live to the terminal as each scenario runs (pass/fail, which metrics failed, how long each
-  attempt took — this is your real evidence of LLM inference latency on that PC's GPU too).
-- Land in `scenario_reports/` as dated JSON — this is the artifact worth keeping/screenshotting,
-  since it's gitignored and won't survive a fresh clone.
-- A final summary: `passed`, `failed`, `pass_rate_pct` — this is the number to report as "system
-  accuracy" honestly, since it's a real evaluation against defined expected values, not a made-up
-  metric.
-
-Useful variants:
+## Running the real tests
 
 ```bash
-# Validate scenario files load correctly without spending any GPU time — do this FIRST
-python -m scenario_engine.runner --dry-run
+# 1. Deterministic safety layer — pytest, no LLM needed
+pytest tests/ -q
 
-# Just one scenario, e.g. to debug a specific failure
-python -m scenario_engine.runner --id <scenario_id>
+# 2. Deterministic decision layer at scale — 3,000+ generated cases, no LLM needed
+pytest tests/property/test_dispatch_invariants.py -q -m property
 
-# Keep retraining/re-running until every scenario passes (can take a while — real LLM calls)
-python -m scenario_engine.runner --type all --continuous
+# 3. The actual LLM-dependent measurement — needs Ollama + the 4 roster models running
+python -m scenario_engine.incident_forensics_evaluation
 ```
+
+That third command writes a JSON report to `scenario_reports/` with per-factor precision/recall/F1
+— **read the module's own docstring before citing a number from it**: run with
+`USE_MOCK_AGENTS=true` it's a pipeline sanity check only (scores perfectly by construction on the
+regex-mappable factors), and the number worth keeping is from re-running it with that env var
+unset, against the real models.
 
 ## Sequence for tomorrow
 
@@ -64,10 +49,11 @@ python -m scenario_engine.runner --type all --continuous
 2. Install Ollama + the 4 roster models — either via the desktop app's **Setup Wizard** (opens
    automatically on first launch; see below) or manually per `AI_MODEL_SETUP_GUIDE.md`.
 3. `pytest tests/ -q` — confirms the deterministic safety layer is intact (~2 min, no GPU needed).
-4. `python -m scenario_engine.runner --dry-run` — confirms scenario files load (~seconds).
-5. `python -m scenario_engine.runner --type all` — the real accuracy run against live models.
-   Screenshot the terminal summary and keep the `scenario_reports/*.json` file it writes — that's
-   your actual, non-fabricated evidence for tomorrow.
+4. `pytest tests/property/test_dispatch_invariants.py -q -m property` — 3,000+ generated cases
+   against real city zone data, still no GPU needed (~1 min).
+5. `python -m scenario_engine.incident_forensics_evaluation` — the real, GPU-dependent measurement
+   of the LLM agents' own reasoning. Keep the JSON it writes to `scenario_reports/` — that's your
+   actual, non-fabricated evidence for tomorrow.
 6. Build and install the real desktop app (see **Building a real installer** below) rather than
    running the dev server, then demo the VR Safety View's two modes — Live and Incident Replay
    (dispatch an order into a real DGCA red zone to generate an incident to replay, per
