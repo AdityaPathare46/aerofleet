@@ -15,7 +15,9 @@ different things worth measuring, and they need different tools:
    combined, no GPU needed.
 
 2. **Are the LLM agents themselves reasoning well?** The part that actually needs the GPU and real
-   models — `scenario_engine/incident_forensics_evaluation.py`.
+   models — `scenario_engine/incident_forensics_evaluation.py` (12 cases, minutes) for a quick
+   check, or `scenario_engine/mass_forensics_evaluation.py` (5,000 cases, batched across multiple
+   days) for a real, citable, publication-quality number.
 
 **Full detail, including exactly why the old `scenario_engine.runner` suite mentioned in earlier
 versions of this doc is no longer the right tool, is in `docs/TESTING_STRATEGY.md` — read that
@@ -33,15 +35,25 @@ pytest tests/ -q
 # 2. Deterministic decision layer at scale — 3,000+ generated cases, no LLM needed
 pytest tests/property/test_dispatch_invariants.py -q -m property
 
-# 3. The actual LLM-dependent measurement — needs Ollama + the 4 roster models running
+# 3. The actual LLM-dependent measurement (12 cases, minutes) — needs Ollama + the 4 roster models
 python -m scenario_engine.incident_forensics_evaluation
+
+# 4. The publication-scale version (5,000 cases, batched — run this, then re-run the SAME
+#    command again on later days to continue where it left off; safe to Ctrl-C any time)
+python -m scenario_engine.mass_forensics_evaluation
 ```
 
-That third command writes a JSON report to `scenario_reports/` with per-factor precision/recall/F1
-— **read the module's own docstring before citing a number from it**: run with
-`USE_MOCK_AGENTS=true` it's a pipeline sanity check only (scores perfectly by construction on the
-regex-mappable factors), and the number worth keeping is from re-running it with that env var
-unset, against the real models.
+Command 3 writes a JSON report to `scenario_reports/` with per-factor precision/recall/F1 — **read
+the module's own docstring before citing a number from it**: run with `USE_MOCK_AGENTS=true` it's
+a pipeline sanity check only (scores perfectly by construction on the regex-mappable factors), and
+the number worth keeping is from re-running it with that env var unset, against the real models.
+
+Command 4 writes batch reports plus a running `index.html` to `scenario_reports/mass_forensics/` —
+same mock-mode caveat applies, and it's enforced structurally (a study's ledger refuses to mix
+mock and real results). At 8 LLM calls per incident across 4 models, 5,000 incidents is tens of
+GPU-hours — this will **not** finish in one sitting even on the 5090. That's expected: it's built
+to be killed and resumed across as many days as it takes. See `docs/TESTING_STRATEGY.md`'s section
+2 for the full design (category taxonomy, batching, checkpoint format).
 
 ## Sequence for tomorrow
 
@@ -54,7 +66,12 @@ unset, against the real models.
 5. `python -m scenario_engine.incident_forensics_evaluation` — the real, GPU-dependent measurement
    of the LLM agents' own reasoning. Keep the JSON it writes to `scenario_reports/` — that's your
    actual, non-fabricated evidence for tomorrow.
-6. Build and install the real desktop app (see **Building a real installer** below) rather than
+6. Kick off `python -m scenario_engine.mass_forensics_evaluation` (no `--dry-run`, `USE_MOCK_AGENTS`
+   unset) and let it run in the background — this is the 5,000-case publication number, and it
+   won't finish tonight. Re-run the exact same command on later days to keep going from where it
+   stopped; `scenario_reports/mass_forensics/index.html` shows real progress at any point, even
+   partway through.
+7. Build and install the real desktop app (see **Building a real installer** below) rather than
    running the dev server, then demo the VR Safety View's two modes — Live and Incident Replay
    (dispatch an order into a real DGCA red zone to generate an incident to replay, per
    `docs/PATENT_NOVELTY.md`'s Claim 4 reference implementation).

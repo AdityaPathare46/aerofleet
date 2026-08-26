@@ -79,14 +79,52 @@ Ollama backend** — unset `USE_MOCK_AGENTS`, make sure the 4 roster models are 
 `docs/COLLEGE_PC_TEST_RUNBOOK.md`), then run the same command. That's where a language model's
 actual judgment is being scored, the same way the precedent paper's number was.
 
-12 labeled incidents today — a real, honest starting set, not artificially padded to look like
-more. Real LLM inference makes each one several actual model calls; unlike the property suite
-above, there's no honest way to make this one "1000 cases" in an evening without either faking the
-labels or burning hours of GPU time for a still-small marginal gain in statistical confidence.
-Extending `LABELED_DATASET` in that file with more combinations is worth doing over time — safer
-to do carefully, checking each new case's ground truth against `aerofleet/agents/
-incident_taxonomy.py`'s actual factor definitions, than to bulk-generate labels that might be
-wrong.
+12 labeled incidents today in the base script — a real, honest starting set, not artificially
+padded to look like more. Real LLM inference makes each one 8 sequential model calls (one per
+domain factor plus one regulatory call, across 4 different models), so there's no honest way to
+make this "1000+ cases" *in an evening* without either faking the labels or a GPU that doesn't
+exist. There is, however, an honest way to make it 1000+ cases over several evenings — see below.
+
+### Scaling this to 5,000 cases — `scenario_engine/mass_forensics_evaluation.py`
+
+For a genuinely large, citable sample (built for a publication-quality accuracy claim, not just a
+sanity check), `scenario_engine/mass_forensics_dataset.py` extends the exact same ground-truth
+derivation (`_labeled()`/`_cert()`, imported, not copied) to 5,000 systematically generated
+incidents — full combinatorial coverage (arity 1 through 4) across the 5 real, CBF-margin-grounded
+factors, each single-factor case sweeping a real magnitude range from borderline to extreme rather
+than repeating one hardcoded value, plus two control categories (no violation at all, and a
+near-zero-*positive*-margin stress test for false-positive robustness). The other 4 real CBF
+constraints (`altitude_ceiling`, `payload_weight_limit`, `noise_limit`, `collision_probability`)
+have no forensics-factor mapping in the existing taxonomy and are deliberately left out — a
+payload/noise/altitude rejection is a trivial pre-flight rejection, not incident-forensics
+material worth an LLM investigation.
+
+At 8 calls/incident, 5,000 incidents is ~40,000 real Ollama calls — tens of GPU-hours even on a
+high-end card, genuinely not an evening's work. `scenario_engine/mass_forensics_evaluation.py` is
+built around that reality: batched (default 250/batch) and fully resumable — every individual
+result is flushed to `results.jsonl` immediately, so killing the process at any point loses at
+most one in-flight incident, and re-running picks up exactly where it left off, across as many
+days as it takes. Each batch gets its own self-contained HTML report (no CDN, opens offline); a
+top-level `index.html` shows pooled precision/recall/F1 across every batch completed so far,
+recomputed from raw confusion counts each time — never averaged per-batch F1s, matching how the
+12-case script already scores. `IncidentForensicsWorker` itself is never modified — no concurrency
+added, calls happen exactly the way the 12-case script already calls them, just orchestrated at
+scale.
+
+```bash
+# No-GPU pipeline check (this only proves the mechanics work — mock mode's
+# regex-based "reasoning" is not a capability measurement, see above):
+USE_MOCK_AGENTS=true python -m scenario_engine.mass_forensics_evaluation --dry-run
+
+# The real, citable run (needs Ollama + the roster pulled):
+python -m scenario_engine.mass_forensics_evaluation
+# ...next day, and the day after, just re-run the same command to continue:
+python -m scenario_engine.mass_forensics_evaluation
+```
+
+A study's `results.jsonl` is refused from mixing mock-mode and real-mode rows into one pool (a
+hard error unless `--allow-mixed-mode-report` is explicitly passed) — a "citable" bar means never
+accidentally citing a mock-mode number, structurally, not just via a banner.
 
 ## 3. Everything with a screen, VR included — manual QA, checklist below
 
