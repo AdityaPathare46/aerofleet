@@ -331,6 +331,7 @@ def run_study(
             "batch_number": batch_number, "first_case_id": batch_ids[0], "last_case_id": batch_ids[-1],
             "n_in_batch": len(batch_cases), "n_attempted": len(completed_batch_rows), "n_skipped": n_already_complete,
             "n_excluded": n_excl, "macro_f1": scores["macro_f1"],
+            "macro_precision": scores["macro_precision"], "macro_recall": scores["macro_recall"],
         }
         report_path = study_dir / "reports" / f"batch_{batch_number:04d}.html"
         _write_text(report_path, render_batch_report(batch_meta, scores, mock_mode))
