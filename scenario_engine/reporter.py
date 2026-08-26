@@ -77,7 +77,7 @@ class ScenarioReporter:
         # Write to file
         report_path = _REPORTS_DIR / f"run_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.txt"
         try:
-            with open(report_path, "w") as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
                 f.write(f"\nPassed IDs: {self._passes}\n")
                 f.write(f"Exhausted IDs: {self._exhausted}\n")

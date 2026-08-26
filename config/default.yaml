@@ -37,7 +37,7 @@ llm:
   # environment variable (set in .env) so the remote server address can be
   # changed without touching this file.
   ollama_model: llama3.2
-  ollama_timeout: 300
+  ollama_timeout: 1200
   # openrouter_api_key is intentionally NOT set here — read from
   # OPENROUTER_API_KEY env var, or set at runtime via the Settings panel
   # (aerofleet.agents.runtime_settings), same reasoning as ollama_host above.

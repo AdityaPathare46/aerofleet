@@ -42,7 +42,7 @@ class ScenarioRegistry:
             if path.name.startswith("._"):
                 continue
             try:
-                with open(path, "r") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if not data or "id" not in data:
                     logger.warning(f"Skipping invalid scenario file (no 'id'): {path}")
