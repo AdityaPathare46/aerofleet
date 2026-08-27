@@ -203,25 +203,23 @@ this writing.
 
 ---
 
-## 3. Reference docs (for the manual HFACS-to-AeroFleet-taxonomy mapping) ⛔ both blocked
+## 3. Reference docs (for the manual HFACS-to-AeroFleet-taxonomy mapping) ✅ downloaded (added manually)
 
-Both attempted directly and both refused automated access — real bot-detection
-(Akamai/Edgesuite on the .mil sites, Cloudflare-style blocking on MDPI), not broken
-links. Open these in an actual browser and save manually; a script can't get past
-this kind of protection, and shouldn't try to spoof its way past it either.
+Both were bot-blocked for automated download (real bot-detection — Akamai/Edgesuite
+on the .mil sites, Cloudflare-style blocking on MDPI, not broken links) and were
+fetched manually instead, then verified in place.
 
 - **DAF HFACS 8.0 Guide** (official Air Force Safety Center document, the current
   DoD-endorsed taxonomy version the labeled dataset in §1 uses):
   [safety.af.mil — DAF HFACS 8 Guide, 1 April 2023 (PDF)](https://www.safety.af.mil/Portals/71/documents/Human%20Factors/DAF%20HFACS%208%20Guide%201%20April%202023.pdf)
-  — `.mil` returned HTTP 403 (Akamai Edgesuite bot block) on every attempt,
-  including a mirror at `navalsafetycommand.navy.mil`. → save as
-  `aerofleet_data/reference_docs/hfacs_8_0_guide.pdf`
+  → `aerofleet_data/reference_docs/hfacs_8_0_guide.pdf` (32 pages, verified).
 - **The precedent paper itself** (methodology, category definitions, scoring
   approach): [doi.org/10.3390/drones9100704](https://doi.org/10.3390/drones9100704)
-  — MDPI returned HTTP 403 on the article page and the direct PDF link alike. Note:
-  the cloned dataset repo (§1) already includes the paper's *appendix* materials
-  under `05_Paper/Appendix/`, just not the full paper PDF itself. → save as
-  `aerofleet_data/reference_docs/uav_hfacs_llm_paper.pdf`
+  → `aerofleet_data/reference_docs/uav_hfacs_llm_paper.pdf` (33 pages, verified —
+  the PDF's own title metadata is an exact match: "UAV Accident Forensics via
+  HFACS-LLM Reasoning: Low-Altitude Safety Insights"). The cloned dataset repo
+  (§1) already had the paper's *appendix* materials under `05_Paper/Appendix/`;
+  this is the full paper itself, alongside that.
 
 ---
 
@@ -288,8 +286,6 @@ might work — each was tried and the specific failure is noted.
 |---|---|---|---|
 | §2a | NASA ASRS raw exports | Interactive search form only, no bulk URL; also mostly not drone data (see §2 note) — not recommended unless truly stuck for volume | [asrs.arc.nasa.gov](https://asrs.arc.nasa.gov/) |
 | §2b | NTSB CAROL bulk accident data | Two guessed direct URLs both failed (404 / wrong content); real link needs the site's own UI; also mostly not drone data — not recommended unless truly stuck for volume | [data.ntsb.gov/carol-main-public](https://data.ntsb.gov/carol-main-public/) |
-| §3 | DAF HFACS 8.0 Guide (PDF) | `.mil` sites returned HTTP 403 — Akamai/Edgesuite bot protection, on two different `.mil` mirrors | [safety.af.mil PDF](https://www.safety.af.mil/Portals/71/documents/Human%20Factors/DAF%20HFACS%208%20Guide%201%20April%202023.pdf) |
-| §3 | The precedent paper PDF | MDPI returned HTTP 403 on both the article page and the direct PDF link | [doi.org/10.3390/drones9100704](https://doi.org/10.3390/drones9100704) |
 | §4 | Mistral Small 3.2, Phi-4-reasoning-plus, Gemma 4 12B weights | Not attempted deliberately — 80-150GB combined, and Gemma requires a personal HF account clicking through a license first | commands given in §4 |
 | §4 | Llama 4 Scout weights | Not attempted deliberately — excluded from fine-tuning entirely (needs ~71GB VRAM, exceeds the target 5090) | not recommended to download at all |
 
@@ -300,10 +296,11 @@ might work — each was tried and the specific failure is noted.
 - [x] ~~Clone the labeled HFACS-UAV dataset (§1)~~ — done, 200 verified records
 - [x] ~~Pull FAA UAS Sightings Report (§2c)~~ — done, 22 quarterly files, 10,552
       records, FY2021 Q2 through FY26 Q3, added manually
+- [x] ~~HFACS 8.0 guide + precedent paper PDF (§3)~~ — done, both bot-blocked
+      automatically but fetched manually and verified (32pp / 33pp, title metadata
+      matches exactly)
 - [ ] NASA ASRS / NTSB CAROL (§2a/§2b) — not recommended (see table above); only
       chase these if genuinely stuck for volume
-- [ ] HFACS 8.0 guide + precedent paper PDF (§3) — manual, both bot-blocked (see
-      table above)
 - [ ] Download weights for Mistral Small 3.2, Phi-4-reasoning-plus, and Gemma 4
       12B only (§4) — skip Llama 4 Scout, deliberately not done here
 - [ ] Install the fine-tuning stack + llama.cpp (§5)
