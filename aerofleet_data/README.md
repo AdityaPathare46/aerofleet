@@ -140,9 +140,19 @@ paper's own numbers came from.
 
 ## 2. Supplementary real incident sources (optional — only if 200 cases isn't enough)
 
-Not HFACS-labeled out of the box — useful for expanding the training set with more
-raw narratives, at the cost of needing to hand-label them yourself against
-AeroFleet's taxonomy.
+**Read this before chasing any of these**: not HFACS-labeled out of the box, so all
+three need hand-labeling before they're usable — and two of the three are mostly
+*not* drone data, which changes whether that labeling effort is worth it.
+
+- **2c (FAA UAS Sightings) is the only one that's actually drone-native** — every
+  record is a real drone. Different data *shape* though (sighting narratives, not
+  incident/causal accounts), so it still needs work to fit HFACS-style labeling.
+- **2a (NASA ASRS) and 2b (NTSB CAROL) are both overwhelmingly manned-aircraft
+  data.** §1's dataset already did the hard work of filtering ASRS down to genuine
+  UAV cases — pulling from raw ASRS or CAROL yourself means wading through mostly
+  airplane/helicopter reports for a thin slice of drone-relevant ones. Given how
+  little of it comes back drone-specific, **not recommended unless you're
+  genuinely stuck for volume later** — the effort-to-yield ratio is poor.
 
 ### 2a. NASA ASRS Database (the same source the paper drew from) ⛔ interactive only
 - **Source**: [asrs.arc.nasa.gov](https://asrs.arc.nasa.gov/)
