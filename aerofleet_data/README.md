@@ -42,10 +42,10 @@ aerofleet_data/
     in_airports_ourairports.csv        <- §0b
   labeled_incidents/
     uav_hfacs_asrs_200/               <- §1 below
+  faa/                                <- §2c (22 quarterly files, 10,552 records)
   raw_incident_sources/
-    asrs_exports/                     <- §2a
-    ntsb_carol_exports/               <- §2b
-    faa_uas_sightings/                <- §2c
+    asrs_exports/                     <- §2a (not pulled — see §2 notes)
+    ntsb_carol_exports/               <- §2b (not pulled — see §2 notes)
   reference_docs/
     hfacs_8_0_guide.pdf               <- §3
     uav_hfacs_llm_paper.pdf           <- §3
@@ -176,23 +176,24 @@ three need hand-labeling before they're usable — and two of the three are most
   and use whatever bulk-export option the current UI offers. Save to
   `aerofleet_data/raw_incident_sources/ntsb_carol_exports/`.
 
-### 2c. FAA UAS Data Delivery System (UDDS) ⛔ wrong dataset family — corrected
-- **Source**: [udds-faa.opendata.arcgis.com](https://udds-faa.opendata.arcgis.com/)
+### 2c. FAA UAS Sightings Report ✅ downloaded (added manually)
+- **Source**: [faa.gov/uas/resources/public_records/uas_sightings_report](https://www.faa.gov/uas/resources/public_records/uas_sightings_report)
+  — published as periodic quarterly file releases, not part of the ArcGIS UDDS
+  catalog (that portal turned out to hold airspace-restriction geometry instead —
+  FacilityMap, NOTAMs, Recognized Identification Areas — real and programmatically
+  queryable, but US regulatory geometry, not incident narratives, so not pulled).
 - **License**: Public (U.S. federal government data).
-- **Correction from the original version of this guide**: checked the portal's own
-  data catalog directly (28 datasets total) — it does **not** contain a "UAS
-  Sightings Report" narrative dataset. What it actually has is US airspace
-  geospatial data: FAA UAS FacilityMap, National Security UAS Flight Restrictions,
-  Active UAS NOTAMs, Recognized Identification Areas — real and programmatically
-  queryable (ArcGIS REST API, CSV/GeoJSON/KML export per dataset), but US-specific
-  regulatory geometry, not incident narratives, and not directly useful for
-  AeroFleet's India/DGCA context.
-- The actual **FAA UAS Sightings Report** (drone sighting narratives, the thing
-  this section originally meant) is published separately as periodic file releases
-  on [faa.gov/uas/resources/public_records/uas_sightings_report](https://www.faa.gov/uas/resources/public_records/uas_sightings_report)
-  — not part of the ArcGIS catalog, no single bulk URL, download the periodic
-  release files manually. Save to
-  `aerofleet_data/raw_incident_sources/faa_uas_sightings/`.
+- **What's actually here**: 22 quarterly files, **FY2021 Q2 through FY26 Q3** (the
+  full available range) in `aerofleet_data/faa/`. **10,552 real sighting records**
+  total. Each row: `Date`, `State`, `City`, `Summary` — a free-text narrative, e.g.
+  *"UAS SIGHTING/... REPORTED A QUADCOPTER UAS WHILE S BOUND AT 1,100 FEET ON 3 MILE
+  FINAL RUNWAY 17L... NO EVASIVE ACTION TAKEN. ORANGE COUNTY SHERIFF NOTIFIED."*
+  Genuinely drone-specific and richer than expected — real proximity/altitude/
+  evasive-action detail in the narrative — but still a different data *shape* than
+  HFACS-style incident forensics: these are observational sighting logs (a drone
+  was seen doing X), not post-hoc causal investigations of *why* an incident
+  happened. Useful as supplementary volume or for an airspace-safety-adjacent task,
+  not a drop-in substitute for §1's causal-factor-labeled dataset.
 
 ### Checked and not usable right now
 **DGCA India incident reports specifically** (as opposed to the regulatory documents
@@ -285,9 +286,8 @@ might work — each was tried and the specific failure is noted.
 
 | # | What | Why it couldn't be automated | Manual URL |
 |---|---|---|---|
-| §2a | NASA ASRS raw exports | Interactive search form only, no bulk URL | [asrs.arc.nasa.gov](https://asrs.arc.nasa.gov/) |
-| §2b | NTSB CAROL bulk accident data | Two guessed direct URLs both failed (404 / wrong content); real link needs the site's own UI | [data.ntsb.gov/carol-main-public](https://data.ntsb.gov/carol-main-public/) |
-| §2c | FAA UAS Sightings Report | Not in the ArcGIS UDDS catalog at all (confirmed by reading the catalog directly); lives as periodic file releases on a separate FAA page | [faa.gov/uas/resources/public_records/uas_sightings_report](https://www.faa.gov/uas/resources/public_records/uas_sightings_report) |
+| §2a | NASA ASRS raw exports | Interactive search form only, no bulk URL; also mostly not drone data (see §2 note) — not recommended unless truly stuck for volume | [asrs.arc.nasa.gov](https://asrs.arc.nasa.gov/) |
+| §2b | NTSB CAROL bulk accident data | Two guessed direct URLs both failed (404 / wrong content); real link needs the site's own UI; also mostly not drone data — not recommended unless truly stuck for volume | [data.ntsb.gov/carol-main-public](https://data.ntsb.gov/carol-main-public/) |
 | §3 | DAF HFACS 8.0 Guide (PDF) | `.mil` sites returned HTTP 403 — Akamai/Edgesuite bot protection, on two different `.mil` mirrors | [safety.af.mil PDF](https://www.safety.af.mil/Portals/71/documents/Human%20Factors/DAF%20HFACS%208%20Guide%201%20April%202023.pdf) |
 | §3 | The precedent paper PDF | MDPI returned HTTP 403 on both the article page and the direct PDF link | [doi.org/10.3390/drones9100704](https://doi.org/10.3390/drones9100704) |
 | §4 | Mistral Small 3.2, Phi-4-reasoning-plus, Gemma 4 12B weights | Not attempted deliberately — 80-150GB combined, and Gemma requires a personal HF account clicking through a license first | commands given in §4 |
@@ -298,8 +298,10 @@ might work — each was tried and the specific failure is noted.
 - [x] ~~Save the DGCA Drone Rules 2021 + CAR S3-X-Part1 PDFs (§0a)~~ — done
 - [x] ~~Pull the OurAirports India CSV (§0b)~~ — done, 651 India airports
 - [x] ~~Clone the labeled HFACS-UAV dataset (§1)~~ — done, 200 verified records
-- [ ] NASA ASRS / NTSB CAROL / FAA sightings (§2) — optional, manual only if 200
-      cases proves too small (see table above)
+- [x] ~~Pull FAA UAS Sightings Report (§2c)~~ — done, 22 quarterly files, 10,552
+      records, FY2021 Q2 through FY26 Q3, added manually
+- [ ] NASA ASRS / NTSB CAROL (§2a/§2b) — not recommended (see table above); only
+      chase these if genuinely stuck for volume
 - [ ] HFACS 8.0 guide + precedent paper PDF (§3) — manual, both bot-blocked (see
       table above)
 - [ ] Download weights for Mistral Small 3.2, Phi-4-reasoning-plus, and Gemma 4
