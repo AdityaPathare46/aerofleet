@@ -137,6 +137,13 @@ data/vector_db/
 # re-running scenario_engine, not source.
 scenario_reports/
 
+# Downloaded fine-tuning data and model weights (GB-scale, third-party
+# licensed) — see aerofleet_data/README.md for what goes here and where to
+# get it. Never committed; that README is the only part meant to be tracked
+# (copy it elsewhere if you want it in git — the folder itself stays local).
+aerofleet_data/*
+!aerofleet_data/README.md
+
 # Mac OS metadata files
 ._*
 
