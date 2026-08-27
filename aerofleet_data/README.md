@@ -1,9 +1,13 @@
-# AeroFleet Fine-Tuning Data — Acquisition Guide
+# AeroFleet Data & Reference Acquisition Guide
 
-What to download, from where, and where it goes in this folder. Written so future
-fine-tuning of the Fleet Incident Forensics Council's models rests on real, sourced,
-correctly-licensed data instead of the synthetic CBF-margin cases the current
-5,000-case benchmark (`scenario_engine/mass_forensics_evaluation.py`) already covers.
+Everything real, drone/DGCA-related, and downloadable that's worth pulling in for
+this project — not just fine-tuning data. Two different purposes, kept separate
+below: **§0** grounds the *app itself* (the regulatory rules and real coordinates
+`aerofleet/city/restricted_sites.py`'s zone model is built on) in official sources;
+**§1 onward** is data for a future, legitimate fine-tuning pass on the Fleet
+Incident Forensics Council's models, instead of the synthetic CBF-margin cases the
+current 5,000-case benchmark (`scenario_engine/mass_forensics_evaluation.py`)
+already covers.
 
 **Read this before downloading anything**: everything in this folder is either large
 (model weights, GB-scale) or carries its own license terms — **do not commit any of
@@ -25,6 +29,11 @@ the one mistake that actually invalidates a result rather than just weakening it
 ```
 aerofleet_data/
   README.md                          <- this file
+  regulatory_docs/
+    dgca_drone_rules_2021.pdf          <- §0a
+    dgca_car_s3_x_part1_2018.pdf       <- §0a
+  geospatial/
+    in_airports_ourairports.csv        <- §0b
   labeled_incidents/
     uav_hfacs_asrs_200/               <- §1 below
   raw_incident_sources/
@@ -42,6 +51,52 @@ aerofleet_data/
 
 Create subfolders as you actually download into them — no need to pre-create empty
 ones you're not using yet.
+
+---
+
+## 0. Grounding the app itself — DGCA regulations & real airspace coordinates
+
+Not fine-tuning data — this is for `aerofleet/city/restricted_sites.py`, the module
+that already models DGCA-style Red/Yellow/Green airspace zones. Its own docstring is
+upfront that it's "rule-grounded rather than shapefile-precise," and that Digital
+Sky's live NPNT platform "isn't publicly queryable by automated means" — confirmed
+true, still, via search: there's no bulk KML/shapefile export of the actual
+Digital Sky airspace map anywhere public. That part doesn't change. What *can*
+genuinely improve is the two things the module's radii and coordinates are built
+from.
+
+### 0a. Official DGCA regulatory documents
+- **Drone Rules, 2021** (the rules the app's whole zone model implements —
+  5 km Red / 8–12 km Yellow lateral band from an airport, etc.):
+  [dgca.gov.in — Drone Rules 2021 (PDF)](https://www.dgca.gov.in/digigov-portal/jsp/dgca/homePage/viewPDF.jsp?page=InventoryList%2Fheaderblock%2Fdrones%2FDrone+Rules+2021.pdf)
+  → save as `aerofleet_data/regulatory_docs/dgca_drone_rules_2021.pdf`
+- **CAR Section 3, Series X, Part I (2018)** — the original drone categorization
+  rules (Nano/Micro/Small/Medium/Large by weight, UIN/UAOP requirements). Useful to
+  sanity-check the app's own fleet defaults (`config/default.yaml`'s
+  `drone_payload_kg: 5.0`, `battery_capacity_wh: 500.0`) against a real DGCA weight
+  category rather than an arbitrary round number:
+  [DGCA S3 bucket — CAR D3X-X1 (PDF)](https://public-prd-dgca.s3.ap-south-1.amazonaws.com/InventoryList/headerblock/drones/D3X-X1.pdf)
+  → save as `aerofleet_data/regulatory_docs/dgca_car_s3_x_part1_2018.pdf`
+- **License**: Indian government public documents — free to read/cite; not
+  redistributable as your own work without attribution to DGCA/Ministry of Civil
+  Aviation.
+
+### 0b. Real airport coordinates (for precise Red/Yellow zone anchor points)
+- **Source**: [OurAirports — India](https://ourairports.com/countries/IN/) /
+  [raw CSV via GitHub](https://github.com/davidmegginson/ourairports-data)
+- **License**: Public domain, no warranty of accuracy stated by the maintainer —
+  cross-check any coordinate you actually use against the DGCA rule text before
+  relying on it.
+- **What**: Real, current lat/lon for every civil airport in India — lets
+  `restricted_sites.py`'s airport entries (Pune, Mumbai, and any city added later)
+  be anchored to a real, sourced ARP coordinate instead of a hand-typed one, while
+  keeping the 5 km/12 km radii exactly as DGCA's rule text specifies (the radii
+  were never the imprecise part — the anchor points were).
+  ```bash
+  curl -L -o aerofleet_data/geospatial/in_airports_ourairports.csv \
+    "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv"
+  ```
+  Then filter to `iso_country == "IN"` before using it.
 
 ---
 
@@ -108,9 +163,10 @@ AeroFleet's taxonomy.
 - Save to `aerofleet_data/raw_incident_sources/faa_uas_sightings/`.
 
 ### Checked and not usable right now
-**DGCA India** (AeroFleet's own regulatory framework, `DGCA_2021`) — no centralized
-public incident database exists today. Worth re-checking periodically; not a source
-you can pull from as of this writing.
+**DGCA India incident reports specifically** (as opposed to the regulatory documents
+in §0a, which are real and downloadable) — no centralized public *incident* database
+exists today. Worth re-checking periodically; not a source you can pull from as of
+this writing.
 
 ---
 
@@ -169,8 +225,12 @@ fine-tuned model to actually reach the running app.
 
 ## Summary checklist
 
-- [ ] Clone the labeled HFACS-UAV dataset (§1) — do this first, it's the one that
-      actually unblocks real fine-tuning
+- [ ] Save the DGCA Drone Rules 2021 + CAR S3-X-Part1 PDFs (§0a) — grounds the app's
+      own zone/fleet-weight rules in the actual regulations
+- [ ] Pull the OurAirports India CSV (§0b) — real ARP coordinates for
+      `restricted_sites.py`'s airport entries
+- [ ] Clone the labeled HFACS-UAV dataset (§1) — do this first for fine-tuning,
+      it's the one that actually unblocks it
 - [ ] (Optional) Pull supplementary raw incident sources (§2) if 200 cases proves
       too small
 - [ ] Save the HFACS 8.0 guide and precedent paper PDF (§3) for the manual
