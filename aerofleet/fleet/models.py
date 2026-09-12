@@ -72,6 +72,14 @@ class Drone:
     battery: Battery = field(default_factory=Battery)
     payload_capacity_kg: float = 5.0
     current_payload_kg: float = 0.0
+    # The airframe's own weight (distinct from payload_capacity_kg above) —
+    # needed for DGCA weight-category classification (Nano <0.25kg, Micro
+    # 0.25-2kg, Small 2-25kg, Medium 25-150kg, Large >150kg, per DGCA CAR
+    # Section 3/X/Part I 2018 — see aerofleet_data/regulatory_docs/). 12.5kg
+    # is a representative "Small" category airframe weight consistent with
+    # this class's existing 5kg payload_capacity_kg / 500Wh battery
+    # defaults, not a specific cited product's spec sheet.
+    weight_kg: float = 12.5
     state: DroneState = DroneState.IDLE
     altitude_band_m: float = 60.0
     home_depot_id: Optional[str] = None

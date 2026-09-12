@@ -73,13 +73,79 @@ class TestDispatchApprovedByCbf:
         assert drone.battery.soc < 1.0  # energy was actually consumed, not just reported
 
 
+class TestCorrectedRoutePopulated:
+    """cbf_certificate.corrected_route (aerofleet/safety/cbf_gate.py's
+    CBFResult.corrected_route) was hardcoded to None everywhere until this
+    phase — a real multi-waypoint route (aerofleet/city/route_weights.py +
+    trajectory_builder.py) should now populate it on every dispatch."""
+
+    def test_approved_dispatch_has_a_real_multi_waypoint_route(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers)
+        resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+
+        route = body["cbf_certificate"]["corrected_route"]
+        assert route is not None, "corrected_route should never be the old hardcoded None anymore"
+        assert len(route) > 1, "a real route has more than one waypoint, not just the destination"
+        for point in route:
+            assert "battery_margin_wh" in point
+            assert "in_red_zone" in point
+            assert "altitude_m" in point
+
+    def test_battery_margin_is_monotonically_decreasing_along_the_route(
+        self, api_client, auth_headers, fresh_fleet_state
+    ):
+        order_id = _create_order(api_client, auth_headers)
+        resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        route = resp.json()["cbf_certificate"]["corrected_route"]
+        margins = [p["battery_margin_wh"] for p in route]
+        assert margins == sorted(margins, reverse=True), (
+            f"real cumulative energy accounting should only ever decrease along the route: {margins}"
+        )
+
+
+class TestComplianceReportPopulated:
+    """aerofleet/agents/compliance_report.py — deterministic, synchronous,
+    never a gate. Should be present on every dispatch response and
+    persisted on the order, with all 5 domains and a sane overall_status."""
+
+    def test_dispatch_response_has_a_full_compliance_report(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers)
+        resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        report = resp.json()["compliance_report"]
+
+        assert set(report["domains"].keys()) == {
+            "regulatory", "airworthiness", "energy", "airspace_safety", "financial",
+        }
+        assert report["overall_status"] in ("COMPLIANT", "AT_RISK", "NON_COMPLIANT")
+        for domain in report["domains"].values():
+            assert domain["status"] in ("COMPLIANT", "AT_RISK", "NON_COMPLIANT")
+
+    def test_clean_dispatch_is_fully_compliant(self, api_client, auth_headers, fresh_fleet_state):
+        # Pinned to the same known-clean point TestDispatchRejectsRealRedZoneDestination
+        # already uses (genuinely far from every real Pune zone) — the
+        # depot's own default destination can legitimately land in a real
+        # yellow band, which isn't a bug, just not what "clean" means here.
+        order_id = _create_order(api_client, auth_headers, payload_kg=1.0)
+        fleet = get_fleet_state("pune")
+        with patch.object(fleet.graph, "node_lat_lon", return_value=(18.40, 73.75)):
+            resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        report = resp.json()["compliance_report"]
+        assert report["overall_status"] == "COMPLIANT", report
+
+
 class TestDispatchRejectedByCbf:
     def test_cbf_rejection_marks_order_failed_and_does_not_assign_a_drone(
         self, api_client, auth_headers, fresh_fleet_state
     ):
         order_id = _create_order(api_client, auth_headers)
 
-        failing_result = MagicMock(passed=False, safety_margin_summary={"battery_reserve_margin": -5.0}, execution_time_ms=0.1)
+        failing_result = MagicMock(
+            passed=False, safety_margin_summary={"battery_reserve_margin": -5.0}, execution_time_ms=0.1,
+            corrected_route=None,
+        )
         with patch("aerofleet.safety.cbf_gate.build_cbf_gate") as mock_build_gate:
             mock_build_gate.return_value.evaluate_trajectory.return_value = failing_result
             resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
@@ -211,7 +277,7 @@ class TestLiveHardwareOnlyCommandedAfterCbfApproval:
         registry = get_drone_link_registry()
         registry._links[target_drone.drone_id] = mock_vehicle
 
-        failing_result = MagicMock(passed=False, safety_margin_summary={}, execution_time_ms=0.1)
+        failing_result = MagicMock(passed=False, safety_margin_summary={}, execution_time_ms=0.1, corrected_route=None)
         try:
             with patch("aerofleet.safety.cbf_gate.build_cbf_gate") as mock_build_gate:
                 mock_build_gate.return_value.evaluate_trajectory.return_value = failing_result
@@ -273,6 +339,7 @@ class TestMissionPlannerWaypointExport:
         failing_result = MagicMock(
             passed=False, safety_margin_summary={"battery_reserve_margin": -5.0}, execution_time_ms=0.1,
             violations=[MagicMock(constraint_name="battery_reserve_margin", violation_magnitude=5.0, required_correction=5.0)],
+            corrected_route=None,
         )
         with patch("aerofleet.safety.cbf_gate.build_cbf_gate") as mock_gate:
             mock_gate.return_value.evaluate_trajectory.return_value = failing_result

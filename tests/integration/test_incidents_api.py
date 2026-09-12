@@ -37,6 +37,7 @@ def _force_cbf_rejection(client, headers, order_id):
     failing_result = MagicMock(
         passed=False, safety_margin_summary={"battery_reserve_margin": -5.0}, execution_time_ms=0.1,
         violations=[MagicMock(constraint_name="battery_reserve_margin", violation_magnitude=5.0, required_correction=5.0)],
+        corrected_route=None,
     )
     with patch("aerofleet.safety.cbf_gate.build_cbf_gate") as mock_gate:
         mock_gate.return_value.evaluate_trajectory.return_value = failing_result

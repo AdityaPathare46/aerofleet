@@ -250,7 +250,7 @@ band that still fits under whichever ceiling applies at that location.
 The two-dimensional zones of step (b) are now `aerofleet/city
 /restricted_sites.py`'s curated set of real, named, publicly-known DGCA
 Red/Yellow sites for Pune and Mumbai (airports, military installations,
-BARC Trombay, etc. — 3 zones for Pune, 7 for Mumbai) rather than one
+BARC Trombay, etc. — 2 zones for Pune, 5 for Mumbai) rather than one
 generic per-city circle, giving step (d)'s "3D volume" a materially more
 realistic ground footprint to extrude through.
 

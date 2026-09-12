@@ -126,6 +126,12 @@ class Order(Base):
     # explanation request explains the real decision, not a re-derived
     # approximation of it (fleet state may have moved on by then).
     dispatch_plan = Column(JSON)
+    # Deterministic, synchronous, computed alongside the CBF verdict above
+    # (aerofleet/agents/compliance_report.py) — never a second gate, purely
+    # a structured report. Same "deterministic, sub-millisecond, always"
+    # philosophy as cbf_certificate; no separate status/timestamp fields
+    # needed since nothing about computing it is async.
+    compliance_report = Column(JSON)
 
     # Async, optional, non-blocking: a natural-language explanation of the
     # decision above, generated after the fact by aerofleet.agents.council

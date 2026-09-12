@@ -176,11 +176,12 @@ async def dispatch_order(
     # waypoint export (on approval, see aerofleet/integrations/
     # mission_planner.py): a mission needs a real launch point, not just a
     # destination. Captured once here rather than separately per branch.
-    origin_lat, origin_lon = None, None
+    origin_lat, origin_lon, origin_node = None, None, None
     try:
         origin_depot = fleet.depots.get(candidate.depot_id)
         if origin_depot is not None:
-            origin_lat, origin_lon = fleet.graph.node_lat_lon(origin_depot.node)
+            origin_node = origin_depot.node
+            origin_lat, origin_lon = fleet.graph.node_lat_lon(origin_node)
     except Exception:
         pass
 
@@ -219,18 +220,62 @@ async def dispatch_order(
         "dest_lon": dest_lon,
     }
 
-    # The ONLY decision path. No LLM call sits anywhere between a dispatch
-    # request and this gate — deterministic, sub-millisecond, always.
+    # A real, zone/energy-aware multi-waypoint route (aerofleet/city/
+    # route_weights.py + trajectory_builder.py) — not just this single
+    # destination point. Falls back to the old single-point stub only if a
+    # real route genuinely can't be computed (origin unknown, or the
+    # weighted search itself fails for some reason) — never silently
+    # substitutes a wrong route, and still fully deterministic/synchronous,
+    # no LLM anywhere in this path.
+    from aerofleet.city.route_weights import optimized_shortest_path
+    from aerofleet.city.trajectory_builder import build_trajectory_points_from_path
     from aerofleet.safety.cbf_gate import build_cbf_gate, build_trajectory_points_from_plan
 
+    trajectory_points = None
+    if origin_node is not None:
+        try:
+            drone = fleet.get_drone(candidate.drone_id)
+            node_path = optimized_shortest_path(
+                fleet.graph.load(), fleet.airspace, origin_node, live_order.destination_node,
+                live_order.payload_kg,
+            )
+            trajectory_points = build_trajectory_points_from_path(
+                node_path, fleet.graph, fleet.airspace, live_order.payload_kg,
+                available_wh=drone.battery.available_wh if drone else candidate.battery_margin_wh,
+                priority=live_order.priority, overrides=dispatch_plan,
+            )
+        except Exception as exc:
+            logger.warning(f"Optimized route computation failed for {order_id}, falling back to single-point check: {exc}")
+
+    if trajectory_points is None:
+        trajectory_points = build_trajectory_points_from_plan(dispatch_plan)
+
+    # The ONLY decision path. No LLM call sits anywhere between a dispatch
+    # request and this gate — deterministic, sub-millisecond, always.
     gate = build_cbf_gate(dispatch_plan, city=order.city)
-    result = gate.evaluate_trajectory(build_trajectory_points_from_plan(dispatch_plan))
+    result = gate.evaluate_trajectory(trajectory_points, corrected_route=trajectory_points)
     cbf_certificate = {
         "passed": result.passed,
         "safety_margins": result.safety_margin_summary,
         "execution_time_ms": result.execution_time_ms,
+        "corrected_route": result.corrected_route,
     }
     verdict = "APPROVED" if result.passed else "REJECTED_BY_CBF_GATE"
+
+    # Deterministic, synchronous compliance report — a structured summary
+    # of real, already-computed facts, never a second gate (see
+    # aerofleet/agents/compliance_report.py's own module docstring for why
+    # this doesn't conflict with the CBF gate being the only decision
+    # path). Every input here is already in memory; this adds no new I/O.
+    from aerofleet.agents.compliance_report import compute_compliance_report
+
+    dispatched_drone = fleet.get_drone(candidate.drone_id)
+    compliance_report = compute_compliance_report(
+        dispatch_plan=dispatch_plan,
+        safety_margin_summary=result.safety_margin_summary,
+        drone_weight_kg=dispatched_drone.weight_kg if dispatched_drone else None,
+        battery_reserve_wh=dispatched_drone.battery.reserve_wh if dispatched_drone else 0.0,
+    )
 
     if verdict == "APPROVED":
         drone = fleet.get_drone(candidate.drone_id)
@@ -325,6 +370,7 @@ async def dispatch_order(
     order.council_verdict = verdict
     order.cbf_certificate = cbf_certificate
     order.dispatch_plan = dispatch_plan
+    order.compliance_report = compliance_report
     db.commit()
 
     logger.info(f"Dispatch decision for {order_id}: {verdict} (drone={candidate.drone_id})")
@@ -335,6 +381,7 @@ async def dispatch_order(
         "verdict": verdict,
         "candidate": candidate.__dict__,
         "cbf_certificate": cbf_certificate,
+        "compliance_report": compliance_report,
         "explanation_status": "NOT_REQUESTED",
     }
 

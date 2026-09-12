@@ -89,20 +89,27 @@ class CityGraph:
         g = self.load()
         return nx.shortest_path(g, orig_node, dest_node, weight="length")
 
+    @staticmethod
+    def edge_attrs(data: Optional[dict]) -> dict:
+        """Extract real edge attributes from whatever `g.get_edge_data(u, v)`
+        (or a networkx weight-callable's own edge-data argument) returns.
+        MultiDiGraph.get_edge_data (real OSM data) returns
+        {parallel_edge_key: {attrs}}; plain Graph.get_edge_data (the
+        offline synthetic-grid fallback) returns {attrs} directly. Handle
+        both rather than assuming the OSM shape unconditionally — the
+        fallback graph used to crash here. Shared by path_length_km below
+        and aerofleet/city/route_weights.py's zone/energy-aware weighting,
+        so there's exactly one place that knows this shape duality."""
+        if not data:
+            return {}
+        first_value = next(iter(data.values()))
+        return first_value if isinstance(first_value, dict) else data
+
     def path_length_km(self, path: List[int]) -> float:
         g = self.load()
         total_m = 0.0
         for u, v in zip(path[:-1], path[1:]):
-            data = g.get_edge_data(u, v)
-            if not data:
-                continue
-            # MultiDiGraph.get_edge_data (real OSM data) returns
-            # {parallel_edge_key: {attrs}}; plain Graph.get_edge_data (the
-            # offline synthetic-grid fallback below) returns {attrs}
-            # directly. Handle both rather than assuming the OSM shape
-            # unconditionally — the fallback graph used to crash here.
-            first_value = next(iter(data.values()))
-            edge = first_value if isinstance(first_value, dict) else data
+            edge = self.edge_attrs(g.get_edge_data(u, v))
             total_m += edge.get("length", 0.0)
         return total_m / 1000.0
 

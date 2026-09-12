@@ -132,7 +132,9 @@ class ControlBarrierFunctionGate:
     #  ROUTE EVALUATION
     # ─────────────────────────────────────────────────────────────────────
 
-    def evaluate_trajectory(self, trajectory_points: List[Dict]) -> CBFResult:
+    def evaluate_trajectory(
+        self, trajectory_points: List[Dict], corrected_route: Optional[List[Dict]] = None
+    ) -> CBFResult:
         """
         Evaluate all constraints across every point of a proposed route.
         passed=True only if ALL constraints are satisfied at ALL points.
@@ -141,6 +143,13 @@ class ControlBarrierFunctionGate:
             trajectory_points: list of state dicts; each may contain keys
                 like separation_m, battery_margin_wh, altitude_m, etc.
                 Missing keys are treated as 'no violation' (safe defaults).
+            corrected_route: an optional real, already-computed route (e.g.
+                aerofleet/city/trajectory_builder.py's output) to attach to
+                the result's corrected_route field. Purely a pass-through —
+                this method never computes or modifies a route itself, it
+                only reports whichever one the caller already built.
+                Defaults to None, matching every existing call site's
+                behavior unchanged.
         """
         start = time.perf_counter()
         violations: List[CBFViolation] = []
@@ -181,7 +190,7 @@ class ControlBarrierFunctionGate:
         return CBFResult(
             passed=passed,
             violations=violations,
-            corrected_route=None,
+            corrected_route=corrected_route,
             safety_margin_summary={k: round(v, 4) for k, v in safety_margins.items()},
             execution_time_ms=round(elapsed_ms, 2),
         )
