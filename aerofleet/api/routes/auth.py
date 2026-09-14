@@ -77,11 +77,24 @@ def get_user_from_token(token: str, db: Session) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
 
 async def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Real auth, no fallback. A missing or invalid token must be rejected,
+    not silently upgraded to a privileged demo account — the previous
+    behavior here (falling back to get_or_create_default_demo_user, an
+    is_admin=True/is_operator=True account, for *any* unauthenticated or
+    unresolvable-token request) meant failed auth granted maximum
+    privileges instead of denying access. get_or_create_default_demo_user
+    is kept below for a real, explicit demo-login flow to call — it must
+    never again be something a client reaches just by omitting a token."""
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     if not token:
-        return get_or_create_default_demo_user(db)
+        raise unauthorized
     user = get_user_from_token(token, db)
     if user is None:
-        return get_or_create_default_demo_user(db)
+        raise unauthorized
     return user
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
