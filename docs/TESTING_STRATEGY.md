@@ -85,11 +85,11 @@ domain factor plus one regulatory call, across 4 different models), so there's n
 make this "1000+ cases" *in an evening* without either faking the labels or a GPU that doesn't
 exist. There is, however, an honest way to make it 1000+ cases over several evenings — see below.
 
-### Scaling this to 5,000 cases — `scenario_engine/mass_forensics_evaluation.py`
+### Scaling this to 1,000 cases — `scenario_engine/mass_forensics_evaluation.py`
 
 For a genuinely large, citable sample (built for a publication-quality accuracy claim, not just a
 sanity check), `scenario_engine/mass_forensics_dataset.py` extends the exact same ground-truth
-derivation (`_labeled()`/`_cert()`, imported, not copied) to 5,000 systematically generated
+derivation (`_labeled()`/`_cert()`, imported, not copied) to 1,000 systematically generated
 incidents — full combinatorial coverage (arity 1 through 4) across the 5 real, CBF-margin-grounded
 factors, each single-factor case sweeping a real magnitude range from borderline to extreme rather
 than repeating one hardcoded value, plus two control categories (no violation at all, and a
@@ -99,17 +99,21 @@ have no forensics-factor mapping in the existing taxonomy and are deliberately l
 payload/noise/altitude rejection is a trivial pre-flight rejection, not incident-forensics
 material worth an LLM investigation.
 
-At 8 calls/incident, 5,000 incidents is ~40,000 real Ollama calls — tens of GPU-hours even on a
-high-end card, genuinely not an evening's work. `scenario_engine/mass_forensics_evaluation.py` is
-built around that reality: batched (default 250/batch) and fully resumable — every individual
-result is flushed to `results.jsonl` immediately, so killing the process at any point loses at
-most one in-flight incident, and re-running picks up exactly where it left off, across as many
-days as it takes. Each batch gets its own self-contained HTML report (no CDN, opens offline); a
-top-level `index.html` shows pooled precision/recall/F1 across every batch completed so far,
-recomputed from raw confusion counts each time — never averaged per-batch F1s, matching how the
-12-case script already scores. `IncidentForensicsWorker` itself is never modified — no concurrency
-added, calls happen exactly the way the 12-case script already calls them, just orchestrated at
-scale.
+1,000 is a deliberate target, not "as many as fits": 5x the 200-case precedent this methodology is
+itself modeled on (the same HFACS-LLM Reasoning dataset in `aerofleet_data/`), comfortably above
+the ~384-per-category sample size a 95%-CI precision/recall estimate needs to be stable. A
+5,000-case target was tried first and dropped for cost, not rigor — at 8 calls/incident, 5,000
+incidents would have been ~40,000 real Ollama calls, tens of GPU-hours even on a high-end card;
+1,000 is ~8,000 calls, roughly 11-22 GPU-hours. `scenario_engine/mass_forensics_evaluation.py` is
+still built to run across multiple sessions if needed: batched (default 250/batch, so 4 batches
+total) and fully resumable — every individual result is flushed to `results.jsonl` immediately, so
+killing the process at any point loses at most one in-flight incident, and re-running picks up
+exactly where it left off. Each batch gets its own self-contained HTML report (no CDN, opens
+offline); a top-level `index.html` shows pooled precision/recall/F1 across every batch completed so
+far, recomputed from raw confusion counts each time — never averaged per-batch F1s, matching how
+the 12-case script already scores. `IncidentForensicsWorker` itself is never modified — no
+concurrency added, calls happen exactly the way the 12-case script already calls them, just
+orchestrated at scale.
 
 ```bash
 # No-GPU pipeline check (this only proves the mechanics work — mock mode's

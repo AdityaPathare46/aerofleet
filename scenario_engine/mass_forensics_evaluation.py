@@ -1,4 +1,4 @@
-"""Mass forensics evaluation — batched, resumable, 5,000-incident scale-up
+"""Mass forensics evaluation — batched, resumable, 1,000-incident scale-up
 of scenario_engine/incident_forensics_evaluation.py's 12-case methodology.
 
 Publication-quality accuracy measurement for the Fleet Incident Forensics
@@ -8,16 +8,21 @@ scored as precision/recall/F1 per factor via the existing `_score_factor`,
 pooled across every completed case — never averaged per-batch, matching
 how the 12-case script already scores.
 
-Genuinely expensive to run for real: each incident costs 8 sequential
+1,000 is a deliberate choice, not just "as many as fits": 5x the 200-case
+precedent this methodology is modeled on (the same HFACS-LLM Reasoning
+dataset in aerofleet_data/), comfortably above the ~384-per-category
+threshold for a stable 95%-CI precision/recall estimate. A 5,000-case
+target was tried first and dropped — each incident costs 8 sequential
 Ollama calls across 4 models (measured directly against
-IncidentForensicsWorker._investigate()), so 5,000 incidents is roughly
-40,000 calls — tens of GPU-hours even on a high-end card. Built to run
-across multiple days: every individual result is flushed to
-`results.jsonl` immediately, so killing this process at any point loses at
-most one in-flight incident, and re-running resumes automatically from
-whatever's already on disk (never rewrites `dataset_manifest.json` once it
-exists, so case_ids stay stable across a multi-day run even if this file's
-generator logic is edited in between runs).
+IncidentForensicsWorker._investigate()), so 5,000 incidents would have
+been ~40,000 calls, tens of GPU-hours even on a high-end card; 1,000 is
+~8,000 calls, roughly 11-22 GPU-hours. Still built to run across multiple
+sessions if needed: every individual result is flushed to `results.jsonl`
+immediately, so killing this process at any point loses at most one
+in-flight incident, and re-running resumes automatically from whatever's
+already on disk (never rewrites `dataset_manifest.json` once it exists, so
+case_ids stay stable even if this file's generator logic is edited
+in between runs).
 
 Run (real, on a machine with Ollama + the model roster pulled):
     python -m scenario_engine.mass_forensics_evaluation
@@ -47,7 +52,7 @@ from scenario_engine.mass_forensics_dataset import GeneratedIncident, load_or_ge
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_STUDY_DIR = REPO_ROOT / "scenario_reports" / "mass_forensics"
 DEFAULT_MOCKCHECK_DIR = REPO_ROOT / "scenario_reports" / "mass_forensics_mockcheck"
-DEFAULT_TARGET = 5000
+DEFAULT_TARGET = 1000
 DEFAULT_BATCH_SIZE = 250
 DEFAULT_SEED = 20260826
 DEFAULT_RETRY_MAX = 3
@@ -354,7 +359,7 @@ def run_study(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--target", type=int, default=None, help="total incidents in the study (default 5000, or 50 under --dry-run)")
+    parser.add_argument("--target", type=int, default=None, help="total incidents in the study (default 1000, or 50 under --dry-run)")
     parser.add_argument("--batch-size", type=int, default=None, help="incidents per batch (default 250, or 10 under --dry-run)")
     parser.add_argument("--seed", type=int, default=None, help="dataset generation seed (default 20260826)")
     parser.add_argument("--study-dir", type=str, default=None, help="study output directory")

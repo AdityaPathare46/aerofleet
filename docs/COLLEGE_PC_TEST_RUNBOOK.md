@@ -16,8 +16,9 @@ different things worth measuring, and they need different tools:
 
 2. **Are the LLM agents themselves reasoning well?** The part that actually needs the GPU and real
    models — `scenario_engine/incident_forensics_evaluation.py` (12 cases, minutes) for a quick
-   check, or `scenario_engine/mass_forensics_evaluation.py` (5,000 cases, batched across multiple
-   days) for a real, citable, publication-quality number.
+   check, or `scenario_engine/mass_forensics_evaluation.py` (1,000 cases, batched, ~11-22 GPU-hours)
+   for a real, citable, publication-quality number — 5x the 200-case precedent this methodology is
+   modeled on, not just "as many as fits."
 
 **Full detail, including exactly why the old `scenario_engine.runner` suite mentioned in earlier
 versions of this doc is no longer the right tool, is in `docs/TESTING_STRATEGY.md` — read that
@@ -38,8 +39,8 @@ pytest tests/property/test_dispatch_invariants.py -q -m property
 # 3. The actual LLM-dependent measurement (12 cases, minutes) — needs Ollama + the 4 roster models
 python -m scenario_engine.incident_forensics_evaluation
 
-# 4. The publication-scale version (5,000 cases, batched — run this, then re-run the SAME
-#    command again on later days to continue where it left off; safe to Ctrl-C any time)
+# 4. The publication-scale version (1,000 cases, batched — run this, then re-run the SAME
+#    command again later to continue where it left off; safe to Ctrl-C any time)
 python -m scenario_engine.mass_forensics_evaluation
 ```
 
@@ -50,10 +51,13 @@ the number worth keeping is from re-running it with that env var unset, against 
 
 Command 4 writes batch reports plus a running `index.html` to `scenario_reports/mass_forensics/` —
 same mock-mode caveat applies, and it's enforced structurally (a study's ledger refuses to mix
-mock and real results). At 8 LLM calls per incident across 4 models, 5,000 incidents is tens of
-GPU-hours — this will **not** finish in one sitting even on the 5090. That's expected: it's built
-to be killed and resumed across as many days as it takes. See `docs/TESTING_STRATEGY.md`'s section
-2 for the full design (category taxonomy, batching, checkpoint format).
+mock and real results). At 8 LLM calls per incident across 4 models, 1,000 incidents is roughly
+11-22 GPU-hours — realistically an overnight-to-a-day run, not a multi-day one (the original
+5,000-case target was dropped specifically because that one really did need multiple days; 1,000
+is 5x the 200-case precedent this methodology is modeled on, which is enough for a statistically
+stable per-category estimate without the extra cost). Still built to resume cleanly if you do need
+to stop partway. See `docs/TESTING_STRATEGY.md`'s section 2 for the full design (category
+taxonomy, batching, checkpoint format).
 
 ## Sequence for tomorrow
 
@@ -67,10 +71,11 @@ to be killed and resumed across as many days as it takes. See `docs/TESTING_STRA
    of the LLM agents' own reasoning. Keep the JSON it writes to `scenario_reports/` — that's your
    actual, non-fabricated evidence for tomorrow.
 6. Kick off `python -m scenario_engine.mass_forensics_evaluation` (no `--dry-run`, `USE_MOCK_AGENTS`
-   unset) and let it run in the background — this is the 5,000-case publication number, and it
-   won't finish tonight. Re-run the exact same command on later days to keep going from where it
-   stopped; `scenario_reports/mass_forensics/index.html` shows real progress at any point, even
-   partway through.
+   unset) and let it run in the background — this is the 1,000-case publication number
+   (~11-22 GPU-hours), realistically an overnight run rather than a multi-day one. Safe to Ctrl-C
+   and re-run the exact same command later to keep going from where it stopped;
+   `scenario_reports/mass_forensics/index.html` shows real progress at any point, even partway
+   through.
 7. Build and install the real desktop app (see **Building a real installer** below) rather than
    running the dev server, then demo the VR Safety View's two modes — Live and Incident Replay
    (dispatch an order into a real DGCA red zone to generate an incident to replay, per

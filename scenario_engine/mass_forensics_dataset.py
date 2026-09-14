@@ -1,13 +1,18 @@
-"""Generates the 5,000-incident manifest for the mass forensics evaluation
+"""Generates the 1,000-incident manifest for the mass forensics evaluation
 study (scenario_engine/mass_forensics_evaluation.py).
 
 Scales scenario_engine/incident_forensics_evaluation.py's existing,
 precedent-matched approach (ground truth derived directly from real CBF
 margins via `_labeled()`/`_cert()`, not hand-guessed) from 12 hand-built
-cases to 5,000 systematically generated ones — reusing those exact
-functions by import, so the CONTRIBUTED/NOT_CONTRIBUTED derivation and the
-routing_navigation/cross_check_anomaly exclusion behave identically at
-scale to how they already behave in the 12-case script.
+cases to 1,000 systematically generated ones — 5x the 200-case precedent
+this methodology is itself modeled on (the same "UAV Accident Forensics
+via HFACS-LLM Reasoning" dataset already downloaded into aerofleet_data/),
+comfortably above the ~384-per-category threshold for a stable 95%-CI
+precision/recall estimate, without the ~55-110 GPU-hour cost the original
+5,000-case target carried. Reuses the existing functions by import, so the
+CONTRIBUTED/NOT_CONTRIBUTED derivation and the routing_navigation/
+cross_check_anomaly exclusion behave identically at scale to how they
+already behave in the 12-case script.
 
 Stays within the 5 factors that already have a real CBF-margin mapping
 (battery_energy, airspace_conflict, weather_environmental,
@@ -92,13 +97,13 @@ _GEOFENCE_ZONE_NAMES = [
 ]
 
 CATEGORY_PLAN: Dict[str, int] = {
-    "single_factor": 2800,
-    "pair_factor": 1000,
-    "triple_factor": 500,
-    "quad_factor": 200,
-    "control": 500,
+    "single_factor": 560,
+    "pair_factor": 200,
+    "triple_factor": 100,
+    "quad_factor": 40,
+    "control": 100,
 }
-assert sum(CATEGORY_PLAN.values()) == 5000
+assert sum(CATEGORY_PLAN.values()) == 1000
 
 
 @dataclass
@@ -225,7 +230,7 @@ def _generate_controls(rng: random.Random, counter: List[int], count_per_subtype
     return cases
 
 
-def _generate_full_5000(seed: int) -> List[GeneratedIncident]:
+def _generate_full_plan(seed: int) -> List[GeneratedIncident]:
     rng = random.Random(seed)
     counter = [0]
     cases: List[GeneratedIncident] = []
@@ -239,17 +244,17 @@ def _generate_full_5000(seed: int) -> List[GeneratedIncident]:
     return cases
 
 
-def generate_dataset(target: int = 5000, seed: int = 20260826) -> List[GeneratedIncident]:
-    """target must be <= 5,000. The full 5,000-case plan is always
+def generate_dataset(target: int = 1000, seed: int = 20260826) -> List[GeneratedIncident]:
+    """target must be <= 1,000. The full 1,000-case plan is always
     generated deterministically first (fixed category proportions, per
     CATEGORY_PLAN); a smaller target takes a deterministic prefix of it
     rather than a separately-designed small taxonomy — used by --dry-run
     to exercise the exact same generation logic and manifest shape as a
     real study, just fewer cases, so the pipeline check is representative
     rather than a different code path."""
-    full = _generate_full_5000(seed)
+    full = _generate_full_plan(seed)
     if target > len(full):
-        raise ValueError(f"target={target} exceeds the fixed 5,000-case plan; adjust CATEGORY_PLAN instead.")
+        raise ValueError(f"target={target} exceeds the fixed 1,000-case plan; adjust CATEGORY_PLAN instead.")
     return full[:target]
 
 
@@ -277,7 +282,7 @@ def load_manifest(path: Path) -> List[GeneratedIncident]:
     return [_from_dict(d) for d in data]
 
 
-def load_or_generate_manifest(path: Path, target: int = 5000, seed: int = 20260826) -> List[GeneratedIncident]:
+def load_or_generate_manifest(path: Path, target: int = 1000, seed: int = 20260826) -> List[GeneratedIncident]:
     if path.exists():
         return load_manifest(path)
     cases = generate_dataset(target=target, seed=seed)
