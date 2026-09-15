@@ -275,6 +275,7 @@ def _batch_slice(manifest: List[GeneratedIncident], batch_number: int, batch_siz
 def run_study(
     study_dir: Path, target: int, batch_size: int, seed: int, mock_mode: bool,
     max_batches: Optional[int], retry_max: int, allow_mixed_mode: bool, report_only: bool,
+    only_batches: Optional[Tuple[int, int]] = None,
 ) -> None:
     manifest = load_or_generate_manifest(study_dir / "dataset_manifest.json", target=target, seed=seed)
     manifest_by_id = {c.case_id: c for c in manifest}
@@ -296,6 +297,8 @@ def run_study(
         worker = IncidentForensicsWorker()
         batches_run_this_invocation = 0
         for batch_number in range(1, n_batches_total + 1):
+            if only_batches is not None and not (only_batches[0] <= batch_number <= only_batches[1]):
+                continue
             batch_cases = _batch_slice(manifest, batch_number, batch_size, target)
             _, counts, completed_ids, excluded_ids = _refresh_state(rows_all, retry_max)
             todo = [c for c in batch_cases if c.case_id not in completed_ids and c.case_id not in excluded_ids]
@@ -368,7 +371,24 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="small no-GPU pipeline check; requires USE_MOCK_AGENTS to be set")
     parser.add_argument("--report-only", action="store_true", help="rebuild reports from existing results.jsonl without any new LLM calls")
     parser.add_argument("--allow-mixed-mode-report", action="store_true", help="allow pooling mock- and real-mode results into one report (not recommended)")
+    parser.add_argument("--only-batches", type=str, default=None,
+                         help="restrict this invocation to 1-indexed batch numbers START-END, inclusive "
+                              "(e.g. '1-14') — for splitting one study across independent machines/sessions "
+                              "that don't share a filesystem. Each machine needs the same --target/--batch-size/"
+                              "--seed (so they generate an identical manifest) and the same model config, and "
+                              "its local results.jsonl only covers its assigned range until the separate "
+                              "results.jsonl files are concatenated back together for a pooled --report-only run.")
     args = parser.parse_args()
+
+    only_batches = None
+    if args.only_batches is not None:
+        try:
+            start_s, end_s = args.only_batches.split("-", 1)
+            only_batches = (int(start_s), int(end_s))
+        except ValueError:
+            raise SystemExit(f"--only-batches must look like 'START-END' (e.g. '1-14'), got {args.only_batches!r}")
+        if only_batches[0] < 1 or only_batches[1] < only_batches[0]:
+            raise SystemExit(f"--only-batches range is invalid: {only_batches[0]}-{only_batches[1]}")
 
     mock_mode = _is_mock_mode()
     if args.dry_run and not mock_mode:
@@ -384,7 +404,7 @@ def main() -> None:
         study_dir=study_dir, target=run_config["target"], batch_size=run_config["batch_size"],
         seed=run_config["seed"], mock_mode=mock_mode, max_batches=args.max_batches,
         retry_max=args.retry_failed_max, allow_mixed_mode=args.allow_mixed_mode_report,
-        report_only=args.report_only,
+        report_only=args.report_only, only_batches=only_batches,
     )
 
 

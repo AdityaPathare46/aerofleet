@@ -61,6 +61,7 @@ coverage.xml
 .ipynb_checkpoints
 *.ipynb
 !research/kaggle_mass_forensics_run.ipynb
+!research/colab_mass_forensics_run.ipynb
 
 # Environment Variables
 .env
