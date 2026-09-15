@@ -18,6 +18,7 @@ silently changes dependency resolution). Add one before results are final.
 | Deterministic dispatch invariants (834 cases) | `pytest tests/property/test_dispatch_invariants.py -q -m property` | Done — 834 passed, 0 failed |
 | Regex-baseline ceiling (1,000 cases, mock) | `USE_MOCK_AGENTS=true python -m scenario_engine.mass_forensics_evaluation --dry-run --target 1000 --batch-size 250 --study-dir scenario_reports/mass_forensics_baseline` | Done — macro-F1 1.0 (see `research/baseline_comparison.md`) |
 | Real LLM forensics number (1,000 cases) | `python -m scenario_engine.mass_forensics_evaluation` | **Pending — college PC, ~11-22 GPU-hours** |
+| Real LLM forensics number, free-GPU variant (1,000 cases, 4 agents on a substitute model) | `research/kaggle_mass_forensics_run.ipynb` on Kaggle | **Pending — your action, chunked across weekly free quota** |
 | Zone-penalty ablation (111 real pairs) | `python -m research.ablation_zone_penalty` | Done — see `research/results/` |
 | Full regression suite | `pytest tests/ -q` | Done — 298 passed, 8 pre-existing baseline failures (unrelated, documented) |
 

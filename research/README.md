@@ -24,9 +24,20 @@ manuscript, it should trace back to a file in here.
 ## 1. Real mass-forensics LLM numbers — *your action*
 
 The 1,000-case study, real Ollama backend. Already reduced from 5,000 (see earlier commits) for a
-realistic timeline. Command: `python -m scenario_engine.mass_forensics_evaluation`. ~11-22 GPU-hours,
-resumable, safe to Ctrl-C. Nothing else in this list can be finished without this number — it's the
-paper's central empirical result.
+realistic timeline. Command: `python -m scenario_engine.mass_forensics_evaluation`. ~11-22 GPU-hours
+on the college PC's RTX 5090, resumable, safe to Ctrl-C. Nothing else in this list can be finished
+without this number — it's the paper's central empirical result.
+
+**No college-PC time available? A free-GPU path exists, with one honest caveat.**
+`research/kaggle_mass_forensics_run.ipynb` runs the same harness on Kaggle's free P100/T4
+(~30 GPU-hours/week, 9h/session), chunked across sessions via the harness's own per-case
+`results.jsonl` checkpoint. The caveat: `llama4:scout` (67GB) doesn't fit a free 16GB GPU, so the
+4 agents it powers (DISPATCHER, AIRSPACE_SAFETY, AI_VALIDATOR, CONTINGENCY) run on
+`mistral-nemo:12b` instead for this run only, via the existing `AGENT_MODEL_<AGENT_ID>` env
+override — no code changes, but a real methodology deviation from the primary run, and the
+notebook records it in a `cloud_run_metadata.json` so it's traceable. Treat this run's numbers as
+a **secondary/robustness result**, not a substitute for the real-roster run — report both if you
+end up with both.
 
 ## 2. Real-world/hardware validation — architecture ready, connection not made yet
 
