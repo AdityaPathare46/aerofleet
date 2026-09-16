@@ -44,20 +44,28 @@ echo "Pulling phi4-mini-reasoning..."
 ollama pull phi4-mini-reasoning
 echo
 
-# 4. Clone (or update) the private repo — only asks for the token on a fresh
-# clone; an already-cloned repo's `git pull` reuses the token already saved
-# in its remote URL from the first run, no need to re-enter it.
+# 4. Clone (or update) the private repo.
+#
+# IMPORTANT: the token is passed as an HTTP header (-c http.extraheader), never
+# embedded in the URL. A URL-embedded token gets echoed back verbatim by git's
+# own error messages (e.g. "repository not found") — a real credential leak
+# that happened during testing. A header is never echoed back either way.
+#
+# Asks once per terminal session (if GH_PAT isn't already set) and reuses it
+# for the rest of this session — close the terminal and it'll ask again next
+# time, which is the deliberate, safer default over saving it to disk.
+if [ -z "$GH_PAT" ]; then
+    read -sp "Paste your GitHub token (read access to AdityaPathare46/aerofleet): " GH_PAT
+    echo
+fi
+
 REPO_DIR="aerofleet"
+AUTH_HEADER="AUTHORIZATION: bearer ${GH_PAT}"
 if [ ! -d "$REPO_DIR" ]; then
-    if [ -z "$GH_PAT" ]; then
-        read -sp "Paste your GitHub token (read access to AdityaPathare46/aerofleet): " GH_PAT
-        echo
-    fi
-    git clone --depth 1 "https://${GH_PAT}@github.com/AdityaPathare46/aerofleet.git" "$REPO_DIR"
-    unset GH_PAT
+    git -c http.extraheader="$AUTH_HEADER" clone --depth 1 "https://github.com/AdityaPathare46/aerofleet.git" "$REPO_DIR"
 else
-    echo "Repo already present — pulling latest (no token needed, already saved from the first run)."
-    (cd "$REPO_DIR" && git pull)
+    echo "Repo already present — pulling latest."
+    (cd "$REPO_DIR" && git -c http.extraheader="$AUTH_HEADER" pull)
 fi
 cd "$REPO_DIR"
 

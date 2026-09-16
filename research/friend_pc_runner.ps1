@@ -50,22 +50,32 @@ Write-Host "Pulling phi4-mini-reasoning..."
 ollama pull phi4-mini-reasoning
 Write-Host ""
 
-# 4. Clone (or update) the private repo — only asks for the token on a fresh
-# clone; an already-cloned repo's `git pull` reuses the token already saved
-# in its remote URL from the first run, no need to re-enter it.
+# 4. Clone (or update) the private repo.
+#
+# IMPORTANT: the token is passed as an HTTP header (-c http.extraheader), never
+# embedded in the URL. A URL-embedded token gets echoed back verbatim by git's
+# own error messages (e.g. "repository not found") — a real credential leak
+# that happened during testing, printed straight to the console. A header is
+# never echoed back either way, verified against a real failing clone.
+#
+# Asks once per terminal session (if GH_PAT isn't already set) and reuses it
+# for the rest of this session — close the terminal/PowerShell window and
+# it'll ask again next time, which is the deliberate, safer default over
+# saving it to disk.
+if (-not $env:GH_PAT) {
+    $secureToken = Read-Host "Paste your GitHub token (read access to AdityaPathare46/aerofleet)" -AsSecureString
+    $env:GH_PAT = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+    )
+}
+$authHeader = "AUTHORIZATION: bearer $($env:GH_PAT)"
+
 if (-not (Test-Path "aerofleet")) {
-    if (-not $env:GH_PAT) {
-        $secureToken = Read-Host "Paste your GitHub token (read access to AdityaPathare46/aerofleet)" -AsSecureString
-        $env:GH_PAT = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-        )
-    }
-    git clone --depth 1 "https://$($env:GH_PAT)@github.com/AdityaPathare46/aerofleet.git" aerofleet
-    Remove-Item Env:GH_PAT -ErrorAction SilentlyContinue
+    git -c "http.extraheader=$authHeader" clone --depth 1 "https://github.com/AdityaPathare46/aerofleet.git" aerofleet
 } else {
-    Write-Host "Repo already present - pulling latest (no token needed, already saved from the first run)."
+    Write-Host "Repo already present - pulling latest."
     Push-Location aerofleet
-    git pull
+    git -c "http.extraheader=$authHeader" pull
     Pop-Location
 }
 Set-Location aerofleet
