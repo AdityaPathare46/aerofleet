@@ -1,19 +1,31 @@
-# AeroFleet — friend's-PC batch runner (Windows)
+# AeroFleet — friend's-PC batch runner (Windows), ZIP-based, no token/git.
+#
+# Setup:
+#   1. On github.com (logged in as a collaborator on the repo), click the
+#      green "Code" button -> "Download ZIP".
+#   2. Extract it. You should see requirements.txt, scenario_engine\, etc.
+#      directly inside the extracted folder.
+#   3. Put this script (friend_pc_runner.ps1) into that same extracted folder.
+#   4. .\friend_pc_runner.ps1
+#      (If it refuses to run: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass, then retry)
+#
 # Runs batches 15-26 of the 1,000-case mass forensics study on this machine.
-#
-# Usage (in PowerShell):
-#   .\friend_pc_runner.ps1
-# (If it refuses to run: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass, then retry)
-#
-# Safe to re-run any time (Ctrl+C, close the window, reboot) — progress is saved
-# per-case to mass_forensics_friend\results.jsonl on this machine's own disk, and
-# re-running this script picks up exactly where it left off. No manual "resume"
-# step needed — that's a Kaggle/Colab-specific problem this doesn't have.
+# Safe to re-run any time (Ctrl+C, close the window, reboot) — progress is
+# saved per-case to mass_forensics_friend\results.jsonl on this machine's own
+# disk, and re-running this script picks up exactly where it left off.
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "=== AeroFleet - friend's-PC batch runner (batches 15-26) ===" -ForegroundColor Cyan
 Write-Host ""
+
+# 0. Sanity check: are we actually inside the extracted repo?
+if (-not (Test-Path "requirements.txt") -or -not (Test-Path "scenario_engine")) {
+    Write-Host "ERROR: requirements.txt or scenario_engine\ not found in this folder." -ForegroundColor Red
+    Write-Host "Move this script INSIDE the extracted repo folder (the one that has"
+    Write-Host "requirements.txt directly in it) and run it from there."
+    exit 1
+}
 
 # 1. Check Ollama is installed
 if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
@@ -50,44 +62,14 @@ Write-Host "Pulling phi4-mini-reasoning..."
 ollama pull phi4-mini-reasoning
 Write-Host ""
 
-# 4. Clone (or update) the private repo.
-#
-# IMPORTANT: the token is passed as an HTTP header (-c http.extraheader), never
-# embedded in the URL. A URL-embedded token gets echoed back verbatim by git's
-# own error messages (e.g. "repository not found") — a real credential leak
-# that happened during testing, printed straight to the console. A header is
-# never echoed back either way, verified against a real failing clone.
-#
-# Asks once per terminal session (if GH_PAT isn't already set) and reuses it
-# for the rest of this session — close the terminal/PowerShell window and
-# it'll ask again next time, which is the deliberate, safer default over
-# saving it to disk.
-if (-not $env:GH_PAT) {
-    $secureToken = Read-Host "Paste your GitHub token (read access to AdityaPathare46/aerofleet)" -AsSecureString
-    $env:GH_PAT = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-    )
-}
-$authHeader = "AUTHORIZATION: bearer $($env:GH_PAT)"
-
-if (-not (Test-Path "aerofleet")) {
-    git -c "http.extraheader=$authHeader" clone --depth 1 "https://github.com/AdityaPathare46/aerofleet.git" aerofleet
-} else {
-    Write-Host "Repo already present - pulling latest."
-    Push-Location aerofleet
-    git -c "http.extraheader=$authHeader" pull
-    Pop-Location
-}
-Set-Location aerofleet
-
-# 5. Python environment
+# 4. Python environment
 if (-not (Test-Path ".venv")) {
     python -m venv .venv
 }
 & .\.venv\Scripts\Activate.ps1
 pip install -q -r requirements.txt
 
-# 6. Confirm Ollama is really reachable before committing to a long run
+# 5. Confirm Ollama is really reachable before committing to a long run
 python -c "
 import requests, sys
 try:
@@ -98,22 +80,27 @@ except Exception as e:
     sys.exit(1)
 "
 
-# 7. Run the harness - this machine's assigned batch range
+# 6. Run the harness - this machine's assigned batch range.
+# Change $onlyBatches below if you've been assigned a different range - just
+# double-check it doesn't overlap whatever the other machines are already
+# covering.
+$onlyBatches = "15-26"
+
 $env:OLLAMA_HOST = "http://localhost:11434"
 Remove-Item Env:USE_MOCK_AGENTS -ErrorAction SilentlyContinue
 
-$studyDir = "..\mass_forensics_friend"
+$studyDir = "mass_forensics_friend"
 New-Item -ItemType Directory -Force -Path $studyDir | Out-Null
 
 Write-Host ""
-Write-Host "Starting the harness - batches 15-26 (cases MFI-00351 - MFI-00650)."
+Write-Host "Starting the harness - batches $onlyBatches."
 Write-Host "This runs for a long time. Leave this PowerShell window open while it runs."
 Write-Host ""
 
 python -m scenario_engine.mass_forensics_evaluation `
     --study-dir $studyDir `
     --target 1000 --batch-size 25 `
-    --only-batches 15-26 `
+    --only-batches $onlyBatches `
     --retry-failed-max 5
 
 Write-Host ""
