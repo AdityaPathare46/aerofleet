@@ -141,8 +141,17 @@ def _refresh_state(rows: List[Dict], retry_max: int) -> Tuple[Dict[str, Dict], D
     latest: Dict[str, Dict] = {}
     counts: Dict[str, int] = {}
     for r in rows:
-        counts[r["case_id"]] = counts.get(r["case_id"], 0) + 1
-        latest[r["case_id"]] = r  # last occurrence wins — rows are append-ordered
+        cid = r["case_id"]
+        counts[cid] = counts.get(cid, 0) + 1
+        # A successful attempt is kept once banked and is never overwritten by a
+        # later failure. Ordinary retries (fail, fail, succeed) still resolve to
+        # the success, same as before — but a case that already succeeded and
+        # then gets a spurious later failure (e.g. re-run against a study_dir
+        # that hadn't yet picked up its earlier result, a transient infra
+        # outage) must not be un-done by that failure. Only overwrite while no
+        # success has been recorded yet.
+        if cid not in latest or latest[cid]["error"] is not None:
+            latest[cid] = r
     completed_ids = {cid for cid, r in latest.items() if r["error"] is None}
     excluded_ids = {cid for cid, r in latest.items() if r["error"] is not None and counts[cid] >= retry_max}
     return latest, counts, completed_ids, excluded_ids
