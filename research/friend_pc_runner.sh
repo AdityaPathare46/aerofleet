@@ -44,21 +44,22 @@ echo "Pulling phi4-mini-reasoning..."
 ollama pull phi4-mini-reasoning
 echo
 
-# 4. Clone (or update) the private repo
-if [ -z "$GH_PAT" ]; then
-    read -sp "Paste your GitHub token (read access to AdityaPathare46/aerofleet): " GH_PAT
-    echo
-fi
-
+# 4. Clone (or update) the private repo — only asks for the token on a fresh
+# clone; an already-cloned repo's `git pull` reuses the token already saved
+# in its remote URL from the first run, no need to re-enter it.
 REPO_DIR="aerofleet"
 if [ ! -d "$REPO_DIR" ]; then
+    if [ -z "$GH_PAT" ]; then
+        read -sp "Paste your GitHub token (read access to AdityaPathare46/aerofleet): " GH_PAT
+        echo
+    fi
     git clone --depth 1 "https://${GH_PAT}@github.com/AdityaPathare46/aerofleet.git" "$REPO_DIR"
+    unset GH_PAT
 else
-    echo "Repo already present — pulling latest."
+    echo "Repo already present — pulling latest (no token needed, already saved from the first run)."
     (cd "$REPO_DIR" && git pull)
 fi
 cd "$REPO_DIR"
-unset GH_PAT
 
 # 5. Python environment
 if [ ! -d ".venv" ]; then

@@ -50,24 +50,25 @@ Write-Host "Pulling phi4-mini-reasoning..."
 ollama pull phi4-mini-reasoning
 Write-Host ""
 
-# 4. Clone (or update) the private repo
-if (-not $env:GH_PAT) {
-    $secureToken = Read-Host "Paste your GitHub token (read access to AdityaPathare46/aerofleet)" -AsSecureString
-    $env:GH_PAT = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-    )
-}
-
+# 4. Clone (or update) the private repo — only asks for the token on a fresh
+# clone; an already-cloned repo's `git pull` reuses the token already saved
+# in its remote URL from the first run, no need to re-enter it.
 if (-not (Test-Path "aerofleet")) {
+    if (-not $env:GH_PAT) {
+        $secureToken = Read-Host "Paste your GitHub token (read access to AdityaPathare46/aerofleet)" -AsSecureString
+        $env:GH_PAT = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+        )
+    }
     git clone --depth 1 "https://$($env:GH_PAT)@github.com/AdityaPathare46/aerofleet.git" aerofleet
+    Remove-Item Env:GH_PAT -ErrorAction SilentlyContinue
 } else {
-    Write-Host "Repo already present - pulling latest."
+    Write-Host "Repo already present - pulling latest (no token needed, already saved from the first run)."
     Push-Location aerofleet
     git pull
     Pop-Location
 }
 Set-Location aerofleet
-Remove-Item Env:GH_PAT -ErrorAction SilentlyContinue
 
 # 5. Python environment
 if (-not (Test-Path ".venv")) {
