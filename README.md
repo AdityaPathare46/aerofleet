@@ -181,19 +181,26 @@ module docstring has the complete rationale and citations.
 
 ## The 11-Agent Fleet Dispatch Council
 
-| # | Agent | Role | Default Model | Origin |
-|---|-------|------|----------------|--------|
-| 1 | **Fleet Dispatcher** | Lead — synthesises the final decision | `llama4:scout` | Meta |
-| 2 | **Route Planner** | Path & ETA over the real city street graph | `mistral-small3.2` | Mistral AI |
-| 3 | **Battery & Power Engineer** | Energy budget, reserve margin | `phi4-reasoning:plus` | Microsoft |
-| 4 | **Airspace Safety Officer** | Separation, geofence, conflict risk | `llama4:scout` | Meta |
-| 5 | **Weather Agent** | Wind, visibility, precipitation limits | `gemma4:12b` | Google |
-| 6 | **Comms / RF Link Agent** | Command & telemetry link budget | `mistral-small3.2` | Mistral AI |
-| 7 | **Cost Economist** | Per-delivery economics | `phi4-reasoning:plus` | Microsoft |
-| 8 | **Ops Scheduler** | Depot & battery-swap-station timing | `gemma4:12b` | Google |
-| 9 | **DGCA Compliance Advisor** | India Drone Rules 2021 / Digital Sky | `mistral-small3.2` | Mistral AI |
-| 10 | **Autonomy Validator** | Cross-checks every other agent's numbers | `llama4:scout` | Meta |
-| 11 | **Payload / Delivery Specialist** | Delivery objectives, release mechanism | `phi4-reasoning:plus` | Microsoft |
+Every agent below shares one model — `phi4-mini-reasoning` (Microsoft, 3.8B, ~3.2GB, reasoning-
+tuned) — chosen specifically to run on ordinary hardware (any 8GB+ RAM laptop, CPU-only, no
+dedicated GPU server needed). A prior version of this roster split 4 different models across
+agents by role; that mixture needed ~80GB combined and, on constrained hardware, caused real
+VRAM-thrashing that dominated latency. See `AI_MODEL_SETUP_GUIDE.md` and
+`aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`.
+
+| # | Agent | Role |
+|---|-------|------|
+| 1 | **Fleet Dispatcher** | Lead — synthesises the final decision |
+| 2 | **Route Planner** | Path & ETA over the real city street graph |
+| 3 | **Battery & Power Engineer** | Energy budget, reserve margin |
+| 4 | **Airspace Safety Officer** | Separation, geofence, conflict risk |
+| 5 | **Weather Agent** | Wind, visibility, precipitation limits |
+| 6 | **Comms / RF Link Agent** | Command & telemetry link budget |
+| 7 | **Cost Economist** | Per-delivery economics |
+| 8 | **Ops Scheduler** | Depot & battery-swap-station timing |
+| 9 | **DGCA Compliance Advisor** | India Drone Rules 2021 / Digital Sky |
+| 10 | **Autonomy Validator** | Cross-checks every other agent's numbers |
+| 11 | **Payload / Delivery Specialist** | Delivery objectives, release mechanism |
 
 **Specialist agents** (trigger-based — only invoked when a condition in that debate actually
 warrants it, not on every dispatch): Conflict Avoidance Planner, Battery Swap Planner, AI
@@ -352,13 +359,9 @@ python3.10 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Point at your Ollama server (remote GPU box over Tailscale, or local)
+# Point at your Ollama server (remote box over Tailscale, or local — CPU is fine)
 export OLLAMA_HOST=http://localhost:11434
-ollama pull llama4:scout
-ollama pull mistral-small3.2
-ollama pull mistral-small3.2
-ollama pull gemma4:12b
-ollama pull phi4-reasoning:plus
+ollama pull phi4-mini-reasoning
 
 # Or skip Ollama entirely for a quick offline demo:
 export USE_MOCK_AGENTS=true

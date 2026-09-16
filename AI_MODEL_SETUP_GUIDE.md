@@ -1,67 +1,64 @@
-# 🚀 AeroFleet — AI GPU Server Setup Guide
+# 🚀 AeroFleet — AI Model Setup Guide
 
-> **What this is**: Your PC will act as a **remote AI GPU server**. You only need to install Ollama and download the AI models. Aditya handles all the code, datasets, and development on his laptop — your PC just runs the AI brains.
+> **What changed**: AeroFleet's LLM roster used to be 4 different models (~80GB combined,
+> requiring a dedicated GPU server). It's now **one lightweight model** — the same reasoning
+> quality per parameter, chosen specifically to run on ordinary hardware: any laptop with 8GB+
+> RAM, Windows or macOS, no discrete GPU required. Setup is now minutes, not hours, and doesn't
+> need a dedicated machine at all.
 >
-> **Last Updated**: March 2026
+> **Last Updated**: September 2026
 
 ---
 
-## 🏗️ How This Setup Works
+## 🏗️ How This Works Now
 
 ```
-  ADITYA'S LAPTOP                         YOUR PC (GPU Server)
-┌───────────────────────┐                ┌───────────────────────┐
-│                       │    "Hey AI,    │                       │
-│  All project code     │    analyze     │  Ollama Server        │
-│  Datasets & PDFs      │ ──this mission──►  4 AI Models (~80GB) │
-│  Dashboard UI         │                │  Running on your GPU  │
-│  Physics engine       │ ◄──response────│                       │
-│  Reports              │    text        │  That's ALL you need! │
-│                       │                │                       │
-└───────────────────────┘                └───────────────────────┘
-         Connected via Tailscale / Local Network
+  YOUR OWN LAPTOP
+┌────────────────────────────────┐
+│  All project code               │
+│  Ollama Server                  │
+│  phi4-mini-reasoning (3.2 GB)   │
+│  Runs on CPU — no GPU required  │
+└────────────────────────────────┘
 ```
 
-**Your PC is just a GPU server** — like a remote brain. You don't need the project code, Python, datasets, or anything else. Just Ollama + models + network.
+**You don't need a separate GPU server anymore.** Install Ollama, pull one small model, and
+everything — code and AI inference — runs on the same machine you're already developing on.
 
-> Once this is set up, connecting to it from the AeroFleet app doesn't require editing any config
-> files anymore — the desktop app's **Settings** panel has a "Tailscale" tab where the Tailscale
-> IP just gets typed in and tested directly, saved without a restart.
+> If you *do* want to contribute spare compute from another machine (e.g. splitting a large
+> batch evaluation across several machines in parallel), the same Tailscale networking steps at
+> the bottom of this guide still work — that's now optional, not required.
 
 ---
 
-## 📋 What You Need To Do (4 Steps)
+## 📋 What You Need To Do (2 Steps)
 
 | Step | What | Time |
 |------|------|------|
 | 1 | Install Ollama | 5 min |
-| 2 | Download 4 AI models | 1-2 hours (~80 GB) |
-| 3 | Install Tailscale (for remote access) | 5 min |
-| 4 | Start Ollama on network mode | 1 min |
+| 2 | Download the model (3.2 GB) | 2-5 min |
 
-That's it. No Python, no code, no project files.
+That's it.
 
 ---
 
 ## 🖥️ Hardware Requirements
 
-| Component | **Minimum** | **Recommended** |
-|-----------|-------------|-----------------|
-| **GPU** | RTX 4070 Ti (16 GB VRAM) | RTX 4090 (24 GB) or 2× RTX 3090 |
-| **RAM** | 64 GB DDR5 | 128 GB DDR5 |
-| **Free Disk** | 100 GB SSD | 150 GB NVMe SSD |
-| **CPU** | Ryzen 7 7700X / i7-13700K | Ryzen 9 7950X / i9-14900K |
-| **Internet** | Stable connection | Wired ethernet preferred |
+| Component | Requirement |
+|-----------|-------------|
+| **RAM** | 8 GB or more |
+| **GPU** | None required — runs fine on CPU. A discrete GPU (even a modest one) speeds it up but isn't needed. |
+| **Free Disk** | ~4 GB |
+| **OS** | Windows, macOS, or Linux |
 
-> **Note**: With 24 GB VRAM, the smaller models (14B) run at 30-50 tokens/sec on GPU. The larger models (70B) use CPU offloading and run at 2-5 tokens/sec — slower but totally functional.
+This is intentionally a low bar — the model was chosen specifically so it runs on an ordinary
+laptop, not just a workstation.
 
 ---
 
 ## Step 1 — Install Ollama
 
-Ollama is the AI model server. It's a single-app install.
-
-### Linux (Recommended for best GPU performance)
+### Linux
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
@@ -78,248 +75,131 @@ brew install ollama
 ### Verify it installed:
 ```bash
 ollama --version
-# Should print something like: ollama version 0.x.x
 ```
 
 ---
 
-## Step 2 — Download All 4 AI Models
-
-Open a terminal and run these commands **one by one**. Each model downloads and stays on your disk permanently.
-
-All four are open-weight and non-Chinese-origin (Meta / Mistral AI / Google / Microsoft).
-
-> Note: an earlier version of this guide listed a 5th model, `mistral-large-3`, for the
-> COMPLIANCE agent. That tag isn't actually locally-pullable — Ollama's `mistral-large-3` is a
-> 675B-parameter *cloud-only* model, not something any local GPU runs (see
-> `aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`, which already assigns COMPLIANCE to
-> `mistral-small3.2` for exactly this reason). Corrected here — only 4 models are actually needed.
-
-### Small/Medium Models (Download First — Fastest)
+## Step 2 — Download the Model
 
 ```bash
-# Model 1: Phi-4-reasoning-plus (14B, Microsoft) — Powers the BATTERY, COST, PAYLOAD agents
-ollama pull phi4-reasoning:plus
-
-# Model 2: Mistral-Small 3.2 (24B, Mistral AI) — Powers the ROUTE, COMMS, COMPLIANCE agents
-ollama pull mistral-small3.2
-
-# Model 3: Gemma 4 (12B, Google) — Powers the WEATHER, OPS agents
-ollama pull gemma4:12b
+ollama pull phi4-mini-reasoning
 ```
 
-### Large Model (Longest Download — Be Patient!)
+Microsoft's Phi-4 line, reasoning-tuned, 3.8B parameters, ~3.2GB at default quantization
+(verified real and pullable against Ollama's own library — not assumed). This single model now
+powers every one of AeroFleet's agents (see `aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`).
 
-```bash
-# Model 4: Llama 4 Scout (109B total / 17B active, MoE, Meta) — Powers the DISPATCHER,
-# AIRSPACE_SAFETY, AI_VALIDATOR agents
-# ~67 GB download — will take 30-90 minutes
-ollama pull llama4:scout
-```
-
-> ⚠️ **Do NOT close the terminal or interrupt these downloads.** If a download fails, just run the same command again — it resumes where it left off.
-
-### Verify All Models Installed
-
+### Verify it installed:
 ```bash
 ollama list
 ```
-
-You should see **all 4 models** listed:
-
+You should see:
 ```
-NAME                     SIZE
-phi4-reasoning:plus      11 GB
-mistral-small3.2         15 GB
-gemma4:12b               7.6 GB
-llama4:scout             67 GB
+NAME                       SIZE
+phi4-mini-reasoning:latest 3.2 GB
 ```
 
-### Quick Test (Optional but Recommended)
-
-Test that a model actually runs on your GPU:
-
+### Quick test:
 ```bash
-ollama run phi4-reasoning:plus "Estimate the energy in Wh to fly a 5kg-payload drone 4km at 3.5 Wh/km base rate."
+ollama run phi4-mini-reasoning "Estimate the energy in Wh to fly a 5kg-payload drone 4km at 3.5 Wh/km base rate."
 ```
+Should respond within a few seconds on CPU alone.
 
-You should get a response within 15-30 seconds. Press `Ctrl+C` to stop.
-
-> 💡 No GPU server available yet, or just want to try the demo? Set `USE_MOCK_AGENTS=true` in
-> `.env` to run the whole pipeline against a deterministic offline backend — no Ollama required.
+> 💡 No time to install Ollama at all? Set `USE_MOCK_AGENTS=true` in `.env` to run the whole
+> pipeline against a deterministic offline backend — no Ollama required, for a quick pipeline
+> sanity check.
 
 ---
 
-## Step 3 — Install Tailscale (Remote Network Access)
+## 🗺️ Which Agent Uses Which Model
 
-Tailscale creates a secure private network between your PC and Aditya's laptop, even if you're in different locations. It's free.
+Every agent — the 11-agent Fleet Dispatch Council, plus the specialist agents (conflict
+avoidance, battery-swap planning, governance/legal, cybersecurity, edge-compute feasibility) —
+now shares the same `phi4-mini-reasoning` model. They keep distinct roles and system prompts
+(that's what makes it a multi-agent architecture); they no longer each pin a different set of
+weights.
+
+**Why one shared model, not a mixture of differently-sized ones:** the previous per-role mixture
+(4 models, up to 80GB combined) needed more VRAM than most machines have, and on constrained
+hardware caused real thrashing — a model getting evicted and reloaded between almost every agent
+call, which dominated latency far more than raw compute did. One small model everywhere removes
+that failure mode entirely, and means every machine (your laptop, a teammate's, a cloud
+notebook) runs the identical real roster — no "smaller substitute used here" methodology caveat
+needed anywhere.
+
+---
+
+## 🌐 Optional: Sharing Compute Across Machines (Tailscale)
+
+Only needed if you want to split a large batch run (e.g. the 1,000-case mass forensics study)
+across multiple machines in parallel — see `research/merge_batched_results.py` and the
+`--only-batches` flag on `scenario_engine/mass_forensics_evaluation.py` for the actual
+batch-splitting mechanism. Networking a second machine in:
 
 ### Install Tailscale
-
 - **Linux**: `curl -fsSL https://tailscale.com/install.sh | sh`
-- **Windows**: Download from **https://tailscale.com/download/windows**
-- **macOS**: Download from **https://tailscale.com/download/mac**
+- **Windows**: **https://tailscale.com/download/windows**
+- **macOS**: **https://tailscale.com/download/mac**
 
-### Set It Up
-
+### Set it up
 ```bash
-# 1. Start Tailscale and log in
-sudo tailscale up
-
-# 2. It will open a browser — sign in with Google/GitHub/Microsoft
-
-# 3. Get your Tailscale IP (looks like 100.x.x.x)
-tailscale ip -4
+sudo tailscale up          # opens a browser to sign in
+tailscale ip -4            # your Tailscale IP, looks like 100.x.x.x
 ```
 
-**Send this IP address to Aditya** — he will use it to connect to your Ollama server.
+### Make Ollama listen on the network, not just localhost
 
-> 💡 **Alternative (Same Room / Same WiFi)**: If you're both on the same WiFi network, you can skip Tailscale. Just find your local IP:
-> - **Linux/macOS**: `hostname -I` or `ifconfig`  
-> - **Windows**: `ipconfig` → look for IPv4 Address (e.g., `192.168.1.105`)
+**Linux**: `OLLAMA_HOST=0.0.0.0 ollama serve` (or set `Environment="OLLAMA_HOST=0.0.0.0"` via
+`sudo systemctl edit ollama.service` for a permanent setting).
 
----
+**Windows**: System Environment Variables → New → `OLLAMA_HOST` = `0.0.0.0` → restart Ollama.
 
-## Step 4 — Start Ollama in Network Mode
+**macOS**: `launchctl setenv OLLAMA_HOST "0.0.0.0"` → restart the Ollama app.
 
-By default, Ollama only accepts connections from `localhost`. You need to make it listen on all network interfaces so Aditya's laptop can reach it.
+Open port **11434** in the firewall (`sudo ufw allow 11434/tcp` on Linux; allow `ollama.exe`
+through Windows Firewall for Private networks).
 
-### Linux
-
+### Verify it's reachable
 ```bash
-# Option A: One-time start
-OLLAMA_HOST=0.0.0.0 ollama serve
-
-# Option B: Set permanently (recommended)
-# Edit the systemd service:
-sudo systemctl edit ollama.service
-
-# Add these lines:
-# [Service]
-# Environment="OLLAMA_HOST=0.0.0.0"
-
-# Then restart:
-sudo systemctl restart ollama
+curl http://<TAILSCALE_IP>:11434/api/tags
 ```
-
-### Windows
-
-1. Open **System Environment Variables** (search for "environment variables" in Start menu)
-2. Under **System Variables**, click **New**
-3. Variable name: `OLLAMA_HOST`
-4. Variable value: `0.0.0.0`
-5. Click OK and **restart Ollama**
-
-### macOS
-
-```bash
-launchctl setenv OLLAMA_HOST "0.0.0.0"
-# Restart the Ollama app
-```
-
-### Firewall Rule
-
-Make sure port **11434** is open:
-
-```bash
-# Linux (UFW)
-sudo ufw allow 11434/tcp
-
-# Windows: Allow through Windows Firewall
-# → "Allow an app through firewall" → Add ollama.exe → Enable for Private networks
-```
-
-### Verify It's Accessible
-
-Ask Aditya to run this from his laptop:
-
-```bash
-curl http://<YOUR_TAILSCALE_IP>:11434/api/tags
-```
-
-If he gets a JSON response listing your models, **you're connected!** 🎉
-
----
-
-## 🗺️ Which AI Model Powers Which Agent
-
-AeroFleet's actual 16-agent roster (`aerofleet/agents/factory.py`'s `DEFAULT_MODEL_MAP`) — only 4
-distinct model tags across all 16 agents, since several agents in the same domain family share a
-model:
-
-| # | Agent | Domain | AI Model on Your PC |
-|---|-------|--------|-------------------|
-| 1 | Fleet Dispatcher | dispatch | `llama4:scout` |
-| 2 | Route Planner | route | `mistral-small3.2` |
-| 3 | Battery & Power Engineer | battery | `phi4-reasoning:plus` |
-| 4 | Airspace Safety Officer | safety | `llama4:scout` |
-| 5 | Weather Agent | weather | `gemma4:12b` |
-| 6 | Comms / RF Link Agent | comms | `mistral-small3.2` |
-| 7 | Cost Economist | cost | `phi4-reasoning:plus` |
-| 8 | Ops Scheduler | operations | `gemma4:12b` |
-| 9 | DGCA Compliance Advisor | compliance | `mistral-small3.2` |
-| 10 | Autonomy Validator | validation | `llama4:scout` |
-| 11 | Payload / Delivery Specialist | payload | `phi4-reasoning:plus` |
-| 12 | Conflict Avoidance Planner | conflict_avoidance | `llama4:scout` |
-| 13 | Battery Swap Planner | battery_swap_planning | `phi4-reasoning:plus` |
-| 14 | AI Governance Validator | governance_legal | `llama4:scout` |
-| 15 | Cyber Security Auditor | cybersecurity | `llama4:scout` |
-| 16 | Edge Compute Feasibility Agent | edge_compute | `phi4-reasoning:plus` |
-
-> Models are loaded **one at a time** — Ollama swaps them automatically. Your GPU runs one model,
-> finishes, then loads the next. (This table previously listed the pre-pivot Space Mission
-> Architect's 12-agent roster and Qwen/DeepSeek/Llama-3.3 model names — stale from before the
-> project's pivot to drone-fleet dispatch and corrected here.)
+A JSON response listing `phi4-mini-reasoning` means it's connected — point `OLLAMA_HOST` in the
+main app's Settings panel (or the `OLLAMA_HOST` env var for a batch script) at that IP.
 
 ---
 
 ## 🔧 Troubleshooting
 
-### "Connection refused" from Aditya's laptop
-- Make sure `ollama serve` is running on your PC
-- Verify `OLLAMA_HOST` is set to `0.0.0.0` (not `localhost`)
-- Check firewall allows port 11434
-- Verify Tailscale is connected on both machines
+### "Connection refused"
+- Confirm `ollama serve` is actually running: `curl http://localhost:11434/api/tags`
+- If connecting across machines: confirm `OLLAMA_HOST=0.0.0.0` is set and Tailscale is connected
+  on both ends
 
-### Models download very slowly
-- Use a wired ethernet connection if possible
-- Don't download multiple models at once — do them one at a time
-- If a download fails halfway, run the same `ollama pull` command again — it resumes
+### Slow responses
+- CPU-only inference is normal and expected to take a few seconds per call, not the tens of
+  minutes the old 4-model roster could hit under VRAM pressure
+- A discrete GPU (even 4-6GB) will noticeably speed this up if available, but isn't required
 
-### Models run very slowly
-- Run `nvidia-smi` to check GPU usage — if 0%, drivers may need updating
-- Close other GPU-heavy apps (games, video editing, etc.)
-- The 70B models are naturally slower (2-5 tokens/sec with CPU offload) — this is normal
-- 14B models should run at 30-50 tokens/sec on a 24GB GPU
-
-### "Out of memory" errors
-- Shouldn't happen since Ollama manages VRAM automatically
-- If it does: restart Ollama with `ollama stop` then `ollama serve`
-- Close any other programs using the GPU
+### "Out of memory"
+- Shouldn't happen at 3.2GB on any 8GB+ RAM machine. If it does: `ollama stop` then
+  `ollama serve` again, and close other memory-heavy applications.
 
 ### Check disk space
 ```bash
-# See how much space models are using:
 du -sh ~/.ollama/models/   # Linux/macOS
 # Windows: check %USERPROFILE%\.ollama\models\
-
-# Remove a model if needed:
-ollama rm <model-name>
+ollama rm <model-name>     # remove a model if needed
 ```
 
 ---
 
-## ✅ Checklist — Send a Screenshot To Aditya When Done
+## ✅ Checklist
 
 - [ ] Ollama installed (`ollama --version` works)
-- [ ] All 4 models downloaded (`ollama list` shows 4 models)
-- [ ] Tailscale installed and connected (or share your local IP)
-- [ ] Ollama running in network mode (`OLLAMA_HOST=0.0.0.0`)
-- [ ] Firewall allows port 11434
-- [ ] Aditya confirmed he can reach your server (`curl` test passed)
+- [ ] Model downloaded (`ollama list` shows `phi4-mini-reasoning`)
+- [ ] Quick test responded (`ollama run phi4-mini-reasoning "..."`)
+- [ ] (Optional, only for multi-machine batch runs) Tailscale connected and `OLLAMA_HOST=0.0.0.0`
+      set
 
-**Once all boxes are checked, Aditya can start running AeroFleet from his laptop using your GPU for AI inference!**
-
----
-
-> **Questions?** Call or message Aditya — he'll help debug any issues.
+**Once the first three are checked, AeroFleet's full pipeline runs end-to-end on your own
+machine — no separate GPU server needed.**

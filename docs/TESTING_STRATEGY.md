@@ -159,8 +159,8 @@ something in this area changes:
 ## What "fine-tuning" actually means here
 
 Worth being precise about, since it's easy to conflate with what's actually happening: nothing in
-this project adjusts model weights. `mistral-small3.2`, `llama4:scout`, and the rest are used
-exactly as Ollama serves them — no LoRA, no weight updates, no training run. What actually exists,
+this project adjusts model weights. `phi4-mini-reasoning` is used exactly as Ollama serves it —
+no LoRA, no weight updates, no training run. What actually exists,
 and is genuinely valuable, is two different things that get called "fine-tuning" loosely:
 
 1. **Regression testing at scale** (section 1 above) — catches the deterministic layer breaking,

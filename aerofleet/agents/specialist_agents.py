@@ -36,7 +36,7 @@ class ConflictAvoidancePlannerAgent(BaseAgent):
 
     name = "Conflict Avoidance Planner"
     domain = "conflict_avoidance"
-    model = "llama4:scout"
+    model = "phi4-mini-reasoning"
 
     CAM_MANDATE = """
     YOU MUST SHOW EXPLICIT CALCULATIONS FOR EVERY AVOIDANCE MANEUVER YOU PROPOSE:
@@ -107,7 +107,7 @@ class BatterySwapPlannerAgent(BaseAgent):
 
     name = "Battery Swap Planner"
     domain = "battery_swap_planning"
-    model = "phi4-reasoning:plus"
+    model = "phi4-mini-reasoning"
 
     SYSTEM_PROMPT = f"""You are the Battery Swap Planner for the AeroFleet dispatch council.
 You handle deliveries that require an intermediate battery-swap or fast-charge stop,
@@ -168,7 +168,7 @@ class AIGovernanceValidatorAgent(BaseAgent):
 
     name = "AI Governance Validator"
     domain = "governance_legal"
-    model = "llama4:scout"
+    model = "phi4-mini-reasoning"
 
     SYSTEM_PROMPT = f"""You are the AI Governance Validator for the AeroFleet dispatch council.
 You produce TWO outputs: (1) regulatory compliance across mandatory fields,
@@ -252,7 +252,7 @@ class CyberSecurityAuditorAgent(BaseAgent):
 
     name = "Cyber Security Auditor"
     domain = "cybersecurity"
-    model = "llama4:scout"
+    model = "phi4-mini-reasoning"
 
     SYSTEM_PROMPT = f"""You are the Cyber Security Auditor for the AeroFleet dispatch council.
 
@@ -303,7 +303,7 @@ class EdgeComputeFeasibilityAgent(BaseAgent):
 
     name = "Edge Compute Feasibility Agent"
     domain = "edge_compute"
-    model = "phi4-reasoning:plus"
+    model = "phi4-mini-reasoning"
 
     SYSTEM_PROMPT = """You are the Edge Compute Feasibility Agent.
 You evaluate whether the drone's onboard compute can run its full autonomy

@@ -43,7 +43,7 @@ PROBE_PROMPT = "Reply with exactly one word: OK"
 
 def _required_models() -> Dict[str, List[str]]:
     """agent_id -> resolved model, inverted to model -> [agent_ids using it]
-    so a model shared by several agents (e.g. llama4:scout) is only
+    so a model shared by several agents (e.g. phi4-mini-reasoning) is only
     checked once."""
     from aerofleet.agents.factory import AgentFactory
 

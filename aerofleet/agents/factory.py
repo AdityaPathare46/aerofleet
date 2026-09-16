@@ -49,33 +49,40 @@ class AgentFactory:
     Dispatch Council of Experts.
     """
 
-    # Default model map — can be overridden per-agent by AGENT_MODEL_<ID> env
-    # vars (see docs/GPU_LIVE_DEMO_RUNBOOK.md for a ready-to-use "safe VRAM"
-    # override set — llama4:scout alone needs ~55GB VRAM at Q4, more than
-    # most single-GPU workstations, "high-end" or not).
+    # Default model map — can be overridden per-agent by AGENT_MODEL_<ID> env vars.
     #
-    # Verified against Ollama's live registry 2026-08-09 (searched, not
-    # assumed): llama4:scout, mistral-small3.2, phi4-reasoning:plus, and
-    # gemma4:12b are all real, locally-runnable tags. mistral-large-3 was
-    # NOT — Ollama's mistral-large-3 is a 675B-parameter *cloud-only* model
-    # (tag mistral-large-3:675b-cloud), not something any local GPU runs;
-    # the previous "verified pullable" comment here was never actually
-    # checked. Swapped COMPLIANCE to mistral-small3.2, already confirmed
-    # real via the same two other agents already using it.
+    # Single shared model across every agent, not a per-role mixture — a deliberate
+    # change from the earlier 4-model roster (llama4:scout/mistral-small3.2/
+    # phi4-reasoning:plus/gemma4:12b, ~80GB combined). That roster needed a
+    # dedicated GPU server and, on constrained hardware (free-tier cloud GPUs,
+    # laptops), caused real VRAM-thrashing (models evicted and reloaded between
+    # almost every agent call) that dominated per-case latency far more than raw
+    # compute did. phi4-mini-reasoning is a genuine, verified Ollama library tag
+    # (not assumed — checked https://ollama.com/library/phi4-mini-reasoning/tags):
+    # 3.8B params, 3.2GB at default quantization, 128K context, reasoning-tuned —
+    # same Microsoft Phi lineage as the model it replaces, small enough to run on
+    # an 8GB-RAM laptop's CPU alone, no GPU required. One model everywhere also
+    # removes the free-tier-GPU model-substitution deviation the earlier roster
+    # needed (llama4:scout didn't fit a 16GB card) — every machine now runs the
+    # identical real roster, no methodology footnote required.
+    #
+    # The 11 agents keep their distinct roles/system-prompts (that's what makes
+    # this a multi-agent architecture) — they just now share one base model
+    # instead of each role pinning a different set of weights.
     DEFAULT_MODEL_MAP: Dict[str, str] = {
-        "DISPATCHER":      "llama4:scout",
-        "ROUTE":           "mistral-small3.2",
-        "BATTERY":         "phi4-reasoning:plus",
-        "AIRSPACE_SAFETY": "llama4:scout",
-        "WEATHER":         "gemma4:12b",
-        "COMMS":           "mistral-small3.2",
-        "COST":            "phi4-reasoning:plus",
-        "OPS":             "gemma4:12b",
-        "COMPLIANCE":      "mistral-small3.2",
-        "AI_VALIDATOR":    "llama4:scout",
-        "PAYLOAD":         "phi4-reasoning:plus",
+        "DISPATCHER":      "phi4-mini-reasoning",
+        "ROUTE":           "phi4-mini-reasoning",
+        "BATTERY":         "phi4-mini-reasoning",
+        "AIRSPACE_SAFETY": "phi4-mini-reasoning",
+        "WEATHER":         "phi4-mini-reasoning",
+        "COMMS":           "phi4-mini-reasoning",
+        "COST":            "phi4-mini-reasoning",
+        "OPS":             "phi4-mini-reasoning",
+        "COMPLIANCE":      "phi4-mini-reasoning",
+        "AI_VALIDATOR":    "phi4-mini-reasoning",
+        "PAYLOAD":         "phi4-mini-reasoning",
         # Specialist agent (trigger-based, defined in specialist_agents.py)
-        "CONTINGENCY":     "llama4:scout",
+        "CONTINGENCY":     "phi4-mini-reasoning",
     }
 
     @classmethod

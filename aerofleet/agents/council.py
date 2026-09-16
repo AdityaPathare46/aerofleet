@@ -590,30 +590,16 @@ INSTRUCTION:
         return "COMPLEX"
 
     def _apply_dynamic_model_routing(self, complexity: str) -> None:
-        """Upgrade/downgrade agent models based on dispatch complexity.
-        COMPLEX dispatches: upgrade reasoning-critical agents to the larger model."""
-        routing = {
-            "SIMPLE": {
-                "ROUTE": "mistral-small3.2",
-                "BATTERY": "phi4-reasoning:plus",
-            },
-            "MEDIUM": {
-                "ROUTE": "mistral-small3.2",
-                "BATTERY": "phi4-reasoning:plus",
-                "AIRSPACE_SAFETY": "llama4:scout",
-            },
-            "COMPLEX": {
-                "ROUTE": "llama4:scout",
-                "BATTERY": "llama4:scout",
-                "AIRSPACE_SAFETY": "llama4:scout",
-                "DISPATCHER": "llama4:scout",
-            },
-        }
-        model_map = routing.get(complexity, routing["MEDIUM"])
-        for agent in self.roster:
-            if agent["id"] in model_map:
-                agent["model"] = model_map[agent["id"]]
-        logger.info(f"Dynamic model routing applied for complexity={complexity}")
+        """Formerly upgraded reasoning-critical agents to a larger model
+        (llama4:scout) for COMPLEX dispatches. The roster now shares one
+        model (phi4-mini-reasoning, see AgentFactory.DEFAULT_MODEL_MAP) across
+        every agent — chosen specifically to run on constrained hardware
+        (laptops, free-tier cloud GPUs) without the VRAM-thrashing multiple
+        differently-sized models caused. There's no larger tier left to route
+        complex dispatches to, so this is now a no-op that keeps the
+        complexity classification (still logged to the transcript below, and
+        still useful signal) without swapping models underneath it."""
+        pass
 
     @staticmethod
     def _infer_dispatch_phase(dispatch_plan: Dict[str, Any]) -> str:

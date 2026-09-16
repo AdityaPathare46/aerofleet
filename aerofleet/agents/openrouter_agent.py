@@ -7,11 +7,10 @@ replacement selected by aerofleet.agents.llm_backend.build_llm_backend()
 based on RuntimeLLMSettings.mode — the council/factory code never needs
 to know which backend is actually running.
 
-The rest of the system (AgentFactory.DEFAULT_MODEL_MAP,
-CouncilOfExperts._apply_dynamic_model_routing) always deals in Ollama-style
-tags (e.g. "llama4:scout"), since that's the roster's native vocabulary.
-OpenRouter uses its own model-id namespace (e.g.
-"meta-llama/llama-4-scout"), so this class owns the one place that
+The rest of the system (AgentFactory.DEFAULT_MODEL_MAP) always deals in
+Ollama-style tags (e.g. "phi4-mini-reasoning"), since that's the roster's
+native vocabulary. OpenRouter uses its own model-id namespace (e.g.
+"microsoft/phi-4-reasoning"), so this class owns the one place that
 translation needs to happen — the rest of the pipeline stays backend-
 agnostic.
 """
@@ -31,19 +30,16 @@ OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 
 # Ollama tag -> OpenRouter model id. Confirmed real/callable on OpenRouter
-# (Aug 2026). NOTE: OpenRouter doesn't have Mistral Large 3 or Gemma 4
-# listed yet (Ollama's registry is ahead of OpenRouter's catalogue here) —
-# those two fall back to the previous generation (Large 2 / Gemma 3) rather
-# than silently sending a tag OpenRouter would 400 on. Documented, not
-# hidden: API-mode COMPLIANCE/WEATHER/OPS responses come from a slightly
-# older model generation than LOCAL/TAILSCALE mode until OpenRouter
-# catches up.
+# (checked https://openrouter.ai/microsoft directly, not assumed).
+# NOTE: OpenRouter has no "phi-4-mini-reasoning" listing — the mini/reasoning
+# combination is Ollama-catalogue-only right now — so it falls back to the
+# full-size microsoft/phi-4-reasoning. That's a reasonable substitution here
+# specifically because API mode runs on OpenRouter's own infrastructure, not
+# local hardware — the whole reason the local roster uses the "mini" variant
+# (VRAM/laptop-friendliness) doesn't apply over an API call, and the
+# reasoning-tuning (the property that does matter) is preserved.
 DEFAULT_TAG_TO_OPENROUTER_ID: Dict[str, str] = {
-    "llama4:scout": "meta-llama/llama-4-scout",
-    "mistral-small3.2": "mistralai/mistral-small-3.2-24b-instruct",
-    "mistral-large-3": "mistralai/mistral-large",       # falls back to Large 2 — see note above
-    "gemma4:12b": "google/gemma-3-12b-it",               # falls back to Gemma 3 — see note above
-    "phi4-reasoning:plus": "microsoft/phi-4-reasoning-plus",
+    "phi4-mini-reasoning": "microsoft/phi-4-reasoning",  # falls back to full-size — see note above
 }
 
 
@@ -52,7 +48,7 @@ class OpenRouterAgent:
         self,
         api_key: Optional[str],
         model_map: Optional[Dict[str, str]] = None,
-        default_model: str = "meta-llama/llama-4-scout",
+        default_model: str = "microsoft/phi-4-reasoning",
         timeout: float = 60.0,
     ):
         if not api_key:

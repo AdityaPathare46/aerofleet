@@ -24,20 +24,24 @@ manuscript, it should trace back to a file in here.
 ## 1. Real mass-forensics LLM numbers — *your action*
 
 The 1,000-case study, real Ollama backend. Already reduced from 5,000 (see earlier commits) for a
-realistic timeline. Command: `python -m scenario_engine.mass_forensics_evaluation`. ~11-22 GPU-hours
-on the college PC's RTX 5090, resumable, safe to Ctrl-C. Nothing else in this list can be finished
-without this number — it's the paper's central empirical result.
+realistic timeline. Command: `python -m scenario_engine.mass_forensics_evaluation`.
 
-**No college-PC time available? A free-GPU path exists, with one honest caveat.**
-`research/kaggle_mass_forensics_run.ipynb` runs the same harness on Kaggle's free P100/T4
-(~30 GPU-hours/week, 9h/session), chunked across sessions via the harness's own per-case
-`results.jsonl` checkpoint. The caveat: `llama4:scout` (67GB) doesn't fit a free 16GB GPU, so the
-4 agents it powers (DISPATCHER, AIRSPACE_SAFETY, AI_VALIDATOR, CONTINGENCY) run on
-`mistral-nemo:12b` instead for this run only, via the existing `AGENT_MODEL_<AGENT_ID>` env
-override — no code changes, but a real methodology deviation from the primary run, and the
-notebook records it in a `cloud_run_metadata.json` so it's traceable. Treat this run's numbers as
-a **secondary/robustness result**, not a substitute for the real-roster run — report both if you
-end up with both.
+**Model roster simplified since the original ~11-22 GPU-hour / RTX-5090 estimate.** The earlier
+4-model, ~80GB roster (`llama4:scout`, `mistral-small3.2`, `phi4-reasoning:plus`, `gemma4:12b`)
+needed a dedicated GPU server, and on constrained hardware (free-tier cloud GPUs, laptops) caused
+real VRAM-thrashing — a model evicted and reloaded between almost every agent call — that
+dominated per-case latency far more than raw compute did. Every agent now shares one model,
+`phi4-mini-reasoning` (3.8B, ~3.2GB, verified real/pullable), chosen specifically to run on
+ordinary hardware — any 8GB+ RAM laptop, CPU-only, no GPU required. This also removes the
+methodology deviation the earlier cloud-GPU path needed (`llama4:scout` didn't fit a 16GB card,
+so 4 agents ran a substitute model there): every machine now runs the identical real roster, so
+there's no secondary/robustness-vs-primary split to report — one number, from wherever it runs.
+
+Given the roster's new footprint, this may not need a cloud GPU at all anymore — running the full
+study directly on a laptop CPU is now a real option, not just Kaggle/Colab
+(`research/kaggle_mass_forensics_run.ipynb` / `research/colab_mass_forensics_run.ipynb`, both
+updated for the single-model roster, still useful if you want to parallelize across multiple
+machines via `--only-batches`).
 
 ## 2. Real-world/hardware validation — architecture ready, connection not made yet
 

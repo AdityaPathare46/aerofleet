@@ -27,14 +27,6 @@ Work through the checkboxes top to bottom. Every step says exactly what "it work
   ollama serve   # if not already running as a service
   ollama list    # should return without erroring (possibly empty list)
   ```
-- [ ] **Check free VRAM before pulling anything**
-  ```bash
-  nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv
-  ```
-  `llama4:scout` needs ~55GB free at Q4 — if the card has less, see
-  `docs/GPU_LIVE_DEMO_RUNBOOK.md` Section 4 for the `AGENT_MODEL_<ID>` override pattern
-  (swap to a smaller quant or reuse `mistral-small3.2`) **before** you need it, not mid-test.
-
 - [ ] **Clone/copy the project onto the machine, then set up the environment**
   ```bash
   cd AeroFleet   # or wherever you placed it
@@ -47,12 +39,10 @@ Work through the checkboxes top to bottom. Every step says exactly what "it work
   ```bash
   python tools/preflight_llm_check.py --host http://localhost:11434
   ```
-  Pull whatever it reports missing:
+  Pull whatever it reports missing (now just one model, no VRAM check needed — it's ~3.2GB and
+  runs fine on CPU alone):
   ```bash
-  ollama pull llama4:scout
-  ollama pull mistral-small3.2
-  ollama pull phi4-reasoning:plus
-  ollama pull gemma4:12b
+  ollama pull phi4-mini-reasoning
   ```
   **Pass signal:** the script prints `Ready for a live demo.` Re-run until it does — don't proceed
   before this.
@@ -127,8 +117,8 @@ Work through the checkboxes top to bottom. Every step says exactly what "it work
   **Pass signal, in order:**
   1. `council_explanation_status` moves `PENDING` → `READY` — expect **tens of seconds to a few
      minutes**, not instant. Slow here is expected and is itself evidence it's real.
-  2. Each transcript entry's `model` field names a real tag (`llama4:scout`,
-     `mistral-small3.2`, …) — never `mock-deterministic`.
+  2. Each transcript entry's `model` field names the real tag (`phi4-mini-reasoning`) — never
+     `mock-deterministic`.
   3. The reasoning text is genuinely different each time you try this (re-dispatch a new order
      and request again) — a fixed template would read identically every time.
   4. Check the API server's own logs during this step for real outbound HTTP calls to
@@ -233,7 +223,7 @@ The real cadence is every 6 hours — for a demo, fire it manually (requires Ope
 | Preflight reports a model missing after you pulled it | tag mismatch | `ollama list` — Ollama tags are exact-string matches against `DEFAULT_MODEL_MAP` |
 | Explanation/incident status stuck on `PENDING` forever | worker didn't start, or `USE_MOCK_AGENTS` leaking from a stale shell/`.env` | check startup log for `Council initialized`; `env \| grep -i mock` |
 | A single agent call hangs past ~5 min | real 300s-per-call timeout (`config.llm.ollama_timeout`) firing repeatedly across retries | check that specific model actually loads standalone: `ollama run <model> "hello"` |
-| Out of memory loading `llama4:scout` | doesn't fit in VRAM | `docs/GPU_LIVE_DEMO_RUNBOOK.md` Section 4 — override via `AGENT_MODEL_<ID>` |
+| Out of memory | shouldn't happen at ~3.2GB on any 8GB+ RAM machine | `ollama stop` then `ollama serve` again; check nothing else is consuming unusual memory |
 | Dispatch to Pune Airport coords doesn't reject | wrong city selected, or airport coords typo | re-check `18.5822, 73.9197` exactly; confirm `"city": "pune"` in the order body |
 | Incident never appears after a rejection | `incident_forensics_worker` didn't start | check startup log for `Incident forensics worker started`; confirm you're hitting the same API process that logged it |
 
