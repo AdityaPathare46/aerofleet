@@ -147,6 +147,10 @@ def _esc_corroboration(result: Dict[str, Any], expected_channels: List[int]) -> 
     spun = [i + 1 for i, r in enumerate(rpm) if r and r > ESC_SPIN_RPM_THRESHOLD]
     if not spun:
         status, note = "no_rpm", "ESC telemetry reported no rotation."
+    elif len(spun) > 1 or len(expected_channels) > 1:
+        # One motor test must turn exactly one ESC. Two means a duplicated
+        # SERVOn_FUNCTION or crossed ESC signal wiring, even if it matches the (wrong) mapping.
+        status, note = "mismatch", f"ESCs {spun} spun for a single motor — expected exactly one."
     elif expected_channels and set(spun) == set(expected_channels):
         status, note = "corroborated", "ESC telemetry shows the expected ESC spinning."
     else:

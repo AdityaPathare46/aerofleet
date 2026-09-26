@@ -117,6 +117,7 @@ class TestEndToEndInspection:
             assert spin.status_code == 200, spin.text
             corro = spin.json()["result"]["esc_corroboration"]
             assert corro["spun_esc"] == [1, 3] and corro["expected_esc"] == [1, 3]
+            assert corro["status"] == "mismatch"  # one motor test must turn exactly one ESC
 
         assert detail["status"] == "READY", detail.get("error")
         assert detail["source"] == SOURCE_MP_FORWARD
