@@ -200,7 +200,7 @@ it was inferred.
 | Check | Requirement | Source |
 |---|---|---|
 | `wir.gps_type` | GPS_TYPE (GPS1_TYPE) ≠ 0 | ArduPilot GPS |
-| `wir.gps_fix` | 3D fix, HDOP ≤ GPS_HDOP_GOOD/100; WARN with fewer than 6 satellites. **Bench mode turns no-fix and high HDOP into WARN.** | ArduPilot pre-arm checks |
+| `wir.gps_fix` | 3D fix, HDOP ≤ GPS_HDOP_GOOD/100; WARN with fewer than 6 satellites (AeroFleet heuristic). **Bench mode turns no-fix and high HDOP into WARN.** | ArduPilot pre-arm checks |
 | `wir.compass_external` *(optional)* | primary compass external | ArduPilot compass setup |
 | `wir.rc_receiver` | RC_CHANNELS ≥ 4 channels, receiver healthy | ArduPilot radio failsafe |
 | `wir.telemetry_radio` *(optional)* | RADIO_STATUS seen → PASS with RSSI/noise; not seen → MANUAL (normal over USB) | MAVLink RADIO_STATUS |

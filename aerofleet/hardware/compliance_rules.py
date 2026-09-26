@@ -908,7 +908,7 @@ def _wir_gps_type(f: Facts) -> Outcome:
 @rule("wir.gps_fix", "wiring", "GPS fix quality",
       "3D fix (or better) and HDOP ≤ GPS_HDOP_GOOD/100 (default 1.4); ≥ 6 satellites.",
       "Move outdoors with a clear view of the sky, wait for lock; check the GPS cable and antenna.",
-      SRC_PREARM, "PreArm \"GPS x: Bad fix\" / \"High GPS HDOP\" (GPS_HDOP_GOOD)")
+      SRC_PREARM, "PreArm \"GPS x: Bad fix\" / \"High GPS HDOP\" (GPS_HDOP_GOOD); the 6-satellite WARN is an AeroFleet heuristic")
 def _wir_gps_fix(f: Facts) -> Outcome:
     g = f.tel("GPS_RAW_INT")
     fix, sats = int(g["fix_type"]), int(g["satellites_visible"])
