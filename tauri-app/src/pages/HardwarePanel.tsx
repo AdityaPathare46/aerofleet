@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+import FcCompliancePanel from '../components/fc/FcCompliancePanel'
 
 // ── Types (mirrors aerofleet/api/schemas.py + hardware.py responses) ────────
 
@@ -61,6 +62,7 @@ export default function HardwarePanel() {
   const [error, setError] = useState<string | null>(null)
   const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected')
   const [stopArmed, setStopArmed] = useState(false)
+  const [tab, setTab] = useState<'vehicles' | 'compliance'>('vehicles')
   const wsRef = useRef<WebSocket | null>(null)
   const stopArmedTimer = useRef<number | null>(null)
 
@@ -246,6 +248,22 @@ export default function HardwarePanel() {
         </div>
       </div>
 
+      <div className="tabs" style={{ padding: '0 24px' }}>
+        <button id="tab-hw-vehicles" className={`tab ${tab === 'vehicles' ? 'active' : ''}`} onClick={() => setTab('vehicles')}>
+          Vehicles
+        </button>
+        <button id="tab-hw-compliance" className={`tab ${tab === 'compliance' ? 'active' : ''}`} onClick={() => setTab('compliance')}>
+          Drone compliance
+        </button>
+      </div>
+
+      {tab === 'compliance' && (
+        <div style={{ padding: '24px' }}>
+          <FcCompliancePanel />
+        </div>
+      )}
+
+      {tab === 'vehicles' && (
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {error && (
           <div className="card" style={{ borderColor: 'var(--status-red)' }}>
@@ -348,6 +366,7 @@ export default function HardwarePanel() {
           <div className="card"><span style={{ color: 'var(--text-muted)' }}>No drones registered for this city.</span></div>
         )}
       </div>
+      )}
     </div>
   )
 }
