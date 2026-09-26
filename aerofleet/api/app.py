@@ -25,6 +25,7 @@ from aerofleet.api.routes import (
     agents,
     auth,
     cities,
+    fc_compliance,
     fleet,
     geofence,
     hardware,
@@ -37,6 +38,10 @@ from aerofleet.api.routes import (
     settings,
 )
 from aerofleet.data.database import get_db_session, init_db
+from aerofleet.hardware.fc_inspection_worker import (
+    start_background_fc_inspection_worker,
+    stop_background_fc_inspection_worker,
+)
 from aerofleet.utils.config import get_config
 from aerofleet.utils.logging import get_logger
 
@@ -91,6 +96,8 @@ async def startup_event():
     logger.info("Policy review worker started (slow-cadence, human-approval-gated)")
     start_background_incident_forensics_worker()
     logger.info("Incident forensics worker started (auto-triggered, async, never on the decision path)")
+    start_background_fc_inspection_worker()
+    logger.info("Flight-controller compliance inspection worker started")
 
 
 @app.on_event("shutdown")
@@ -102,6 +109,7 @@ async def shutdown_event():
     stop_background_explanation_worker()
     stop_background_incident_forensics_worker()
     stop_background_policy_review_worker()
+    stop_background_fc_inspection_worker()
 
 
 @app.get("/")
@@ -136,6 +144,8 @@ app.include_router(safety.router, prefix="/api/v1/safety", tags=["safety"])
 app.include_router(pomdp.router, prefix="/api/v1/pomdp", tags=["formal-specification"])
 # Real drone hardware — MAVLink connection lifecycle, manual overrides, kill switch
 app.include_router(hardware.router, prefix="/api/v1/hardware", tags=["hardware"])
+# Flight-controller compliance check — auto-detect (Mission Planner forward / USB), inspect, report, motor test
+app.include_router(fc_compliance.router, prefix="/api/v1/hardware/fc", tags=["hardware", "compliance"])
 # LLM connection settings — local/Tailscale/OpenRouter mode switch
 app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
 # Fleet-level CBF threshold policy proposals — council-drafted, operator-approved
