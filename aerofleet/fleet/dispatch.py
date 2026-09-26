@@ -13,6 +13,8 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
+import networkx as nx
+
 from aerofleet.city.airspace import AirspaceModel
 from aerofleet.city.graph import CityGraph
 from aerofleet.fleet.models import DeliveryOrder, Depot, Drone
@@ -69,8 +71,15 @@ class DispatchEngine:
             depot = depots.get(drone.home_depot_id) if drone.home_depot_id else None
             origin_node = depot.node if depot else drone.node
 
-            outbound_km = self.graph.route_distance_km(drone.node, order.destination_node)
-            return_km = self.graph.route_distance_km(order.destination_node, origin_node)
+            # A real OSM street graph is directed (one-way streets) and not fully
+            # connected, so a destination can be unreachable from — or unable to
+            # return to — a given drone's depot. That drone is infeasible for
+            # this order, not a server error.
+            try:
+                outbound_km = self.graph.route_distance_km(drone.node, order.destination_node)
+                return_km = self.graph.route_distance_km(order.destination_node, origin_node)
+            except (nx.NetworkXNoPath, nx.NodeNotFound):
+                continue
             total_km = outbound_km + return_km
 
             energy_needed = self.estimate_energy_wh(total_km, order.payload_kg)

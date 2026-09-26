@@ -85,6 +85,11 @@ async def get_incident_vr_scene(
     certificate = ctx.get("cbf_certificate", {}) or {}
     violations = (incident.trigger_detail or {}).get("violations", [])
 
+    from aerofleet.agents.incident_taxonomy import check_claims_against_geometry
+
+    violated = [v.get("constraint_name") for v in violations if isinstance(v, dict) and v.get("constraint_name")]
+    claim_check = check_claims_against_geometry(violated, incident.contributing_factors)
+
     return {
         "incident_id": incident.incident_id,
         "city": incident.city,
@@ -102,6 +107,8 @@ async def get_incident_vr_scene(
         "root_cause_summary": incident.root_cause_summary,
         "systemic_factor_note": incident.systemic_factor_note,
         "recommended_action": incident.recommended_action,
+        "contributing_factors": incident.contributing_factors or [],
+        "claim_check": claim_check,
     }
 
 

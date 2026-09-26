@@ -232,6 +232,7 @@ async def dispatch_order(
     from aerofleet.safety.cbf_gate import build_cbf_gate, build_trajectory_points_from_plan
 
     trajectory_points = None
+    node_path = None
     if origin_node is not None:
         try:
             drone = fleet.get_drone(candidate.drone_id)
@@ -284,6 +285,19 @@ async def dispatch_order(
         from aerofleet.fleet.models import DroneState
 
         drone.state = DroneState.EN_ROUTE
+        if drone.link_mode != "LIVE":
+            from aerofleet.fleet import flight_progress
+
+            if node_path:
+                path_latlon = [fleet.graph.node_lat_lon(n) for n in node_path]
+            elif origin_lat is not None and dest_lat is not None:
+                path_latlon = [(origin_lat, origin_lon), (dest_lat, dest_lon)]
+            else:
+                path_latlon = []
+            if path_latlon:
+                flight_progress.register(
+                    order.city or "pune", drone.drone_id, order_id, path_latlon, dispatch_plan["altitude_m"],
+                )
         drone.battery.consume(candidate.energy_wh_required)
         drone.total_distance_km += candidate.outbound_km + candidate.return_km
 

@@ -91,6 +91,86 @@ DOMAIN_FACTORS: List[DomainFactor] = [
 # and COMPLIANCE respectively, not a per-domain list — they synthesize
 # across the tier-2 findings rather than assessing one narrow domain.
 SYSTEMIC_AGENT_ID = "DISPATCHER"
+
+
+# Which tier-2 factor a violated CBF constraint is direct geometric evidence
+# for. Same mapping the 1,000-case benchmark's ground truth is built from
+# (scenario_engine/mass_forensics_dataset.py's SINGLE_FACTOR_SUBCATEGORIES),
+# plus altitude_ceiling -> airspace_conflict, which the airspace factor's
+# own description above covers but the benchmark never exercised.
+# payload_weight_limit, noise_limit and collision_probability map to no
+# tier-2 factor; routing_navigation and cross_check_anomaly have no CBF
+# margin at all, so no constraint can confirm or refute them.
+CONSTRAINT_TO_FACTOR: Dict[str, str] = {
+    "battery_reserve_margin": "battery_energy",
+    "min_separation": "airspace_conflict",
+    "geofence_exclusion": "airspace_conflict",
+    "altitude_ceiling": "airspace_conflict",
+    "wind_limit": "weather_environmental",
+    "weather_visibility": "weather_environmental",
+    "comms_link_margin": "communications_link",
+    "depot_capacity": "ops_scheduling_capacity",
+}
+
+
+def check_claims_against_geometry(
+    violated_constraints: List[str], contributing_factors: Optional[List[Dict[str, Any]]],
+) -> Dict[str, Any]:
+    """Deterministically compare the council's per-factor verdicts with what
+    the rejection's own violated CBF constraints show. Never LLM-derived.
+
+    A factor the geometry doesn't implicate isn't proven NOT to have
+    contributed (a battery can be degrading without its margin going
+    negative yet), so a CONTRIBUTED claim with no violated constraint behind
+    it is "NO_GEOMETRIC_EVIDENCE" — worth an operator's look, not "wrong".
+    The reverse is firmer: a violated constraint the council didn't mark
+    CONTRIBUTED is "MISSED" — the gate's own numbers show it."""
+    implicated = {CONSTRAINT_TO_FACTOR[c] for c in violated_constraints if c in CONSTRAINT_TO_FACTOR}
+    checkable = set(CONSTRAINT_TO_FACTOR.values())
+    claims = {
+        f.get("factor"): f.get("contributed")
+        for f in (contributing_factors or []) if isinstance(f, dict) and f.get("factor")
+    }
+    confidences = {
+        f.get("factor"): f.get("confidence")
+        for f in (contributing_factors or []) if isinstance(f, dict) and f.get("factor")
+    }
+
+    rows = []
+    for factor in (df.factor_name for df in DOMAIN_FACTORS):
+        claim = claims.get(factor)
+        in_geometry = factor in implicated
+        if factor not in checkable:
+            status = "NOT_CHECKABLE"
+        elif claim is None:
+            status = "NO_CLAIM" if not in_geometry else "MISSED"
+        elif in_geometry:
+            status = "CONFIRMED" if claim == ContributionVerdict.CONTRIBUTED.value else "MISSED"
+        elif claim == ContributionVerdict.CONTRIBUTED.value:
+            status = "NO_GEOMETRIC_EVIDENCE"
+        elif claim == ContributionVerdict.UNCERTAIN.value:
+            status = "UNCERTAIN"
+        else:
+            status = "AGREES_NOT_INVOLVED"
+        rows.append({
+            "factor": factor,
+            "council_claim": claim,
+            "council_confidence": confidences.get(factor),
+            "implicated_by_geometry": in_geometry,
+            "evidence_constraints": sorted(c for c in violated_constraints if CONSTRAINT_TO_FACTOR.get(c) == factor),
+            "status": status,
+        })
+
+    counts: Dict[str, int] = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    disagreements = counts.get("MISSED", 0) + counts.get("NO_GEOMETRIC_EVIDENCE", 0)
+    return {
+        "rows": rows,
+        "counts": counts,
+        "agrees_with_geometry": disagreements == 0 and bool(claims),
+        "has_council_claims": bool(claims),
+    }
 REGULATORY_AGENT_ID = "COMPLIANCE"
 
 

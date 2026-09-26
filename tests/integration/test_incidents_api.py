@@ -187,4 +187,12 @@ class TestVRScene:
 
         assert len(scene["violations"]) == 1
         assert scene["violations"][0]["constraint_name"] == "battery_reserve_margin"
+
+        # The deterministic claims-vs-geometry check is always present;
+        # battery is the factor this geometry implicates.
+        check = scene["claim_check"]
+        battery_row = next(r for r in check["rows"] if r["factor"] == "battery_energy")
+        assert battery_row["implicated_by_geometry"] is True
+        assert battery_row["evidence_constraints"] == ["battery_reserve_margin"]
+        assert {r["factor"] for r in check["rows"]} >= {"battery_energy", "airspace_conflict", "routing_navigation"}
         assert scene["violations"][0]["violation_magnitude"] == pytest.approx(5.0)

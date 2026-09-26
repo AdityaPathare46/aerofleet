@@ -42,6 +42,25 @@ def make_depots():
 
 
 class TestGenerateCandidates:
+    def test_unreachable_destination_skips_the_drone_instead_of_raising(self):
+        """A real OSM graph is directed and not fully connected — a destination
+        one drone can't reach (or return from) must drop that drone, not 500."""
+        import networkx as nx
+
+        graph = MagicMock()
+
+        def distance(orig, dest):
+            if orig == 7:
+                raise nx.NetworkXNoPath("one-way street")
+            return 2.0
+
+        graph.route_distance_km.side_effect = distance
+        engine = DispatchEngine(graph=graph, airspace=MagicMock())
+        stranded = make_drone("STRANDED")
+        stranded.node = 7
+        candidates = engine.generate_candidates(make_order(), [stranded, make_drone("OK")], make_depots())
+        assert [c.drone_id for c in candidates] == ["OK"]
+
     def test_available_feasible_drone_produces_a_candidate(self):
         engine = DispatchEngine(graph=make_graph(2.0), airspace=MagicMock())
         candidates = engine.generate_candidates(make_order(), [make_drone()], make_depots())

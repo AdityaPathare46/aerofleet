@@ -1,516 +1,257 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, Grid, Line } from '@react-three/drei'
-import { createXRStore, XR } from '@react-three/xr'
-import * as THREE from 'three'
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { createXRStore, useXR, XR } from '@react-three/xr'
 import { useAppStore } from '../store/appStore'
+import SignInCard from '../components/SignInCard'
+import { Diorama, toLocal } from '../components/vr/geo'
+import { AltitudeRuler, Ceilings, Depots, ScaleAndNorth, Streets, Table, Zones } from '../components/vr/Airspace'
+import { Swarm } from '../components/vr/Swarm'
+import { ClaimPanel, FleetPanel, ViewControls } from '../components/vr/Panels'
+import { ReplayGeometry, replayFrame } from '../components/vr/Replay'
+import { LiveBoard, ReplayBoard } from '../components/vr/HtmlBoards'
+import { UIMode } from '../components/vr/uiMode'
+import { C } from '../components/vr/theme'
+import type {
+  CityDto, DepotDto, IncidentSummaryDto, LiveMarginsDto, RoadsDto, VRSceneDto, ZoneDto,
+} from '../components/vr/types'
 
-// ── Types (mirrors GET /api/v1/safety/live-margins) ─────────────────────
+/*
+ * VR Safety View — a world-in-miniature supervision table for the drone fleet.
+ *
+ * Why VR at all (docs/VR_RESEARCH_REFERENCES.md):
+ *  1. Swarm separation is a 3D judgment. Two drones over the same street at different altitude
+ *     bands are one dot on a 2D map; stereo depth + head parallax separates them.
+ *  2. Incident Replay: the AI council's incident explanations need checking — on the 1,000-case
+ *     benchmark its factor attribution scored macro-F1 0.47 — and the check is spatial: does the
+ *     narrative match the rejection geometry? Every claim is tested against the CBF numbers here.
+ *  3. A table-top miniature (Stoakley et al., CHI '95) gives the whole ops area at a glance and
+ *     lets an operator walk around it — on a Quest 3 in mixed reality it sits on a real desk.
+ */
 
-interface SafetyMargins {
-  min_separation: number
-  geofence_exclusion: number
-  battery_reserve_margin: number
-  altitude_ceiling: number
-  wind_limit: number
-  payload_weight_limit: number
-  noise_limit: number
-  collision_probability: number
-  comms_link_margin: number
-  depot_capacity: number
-  weather_visibility: number
-}
+const xrStore = createXRStore()
 
-interface LiveDrone {
-  lat: number
-  lon: number
-  link_mode: 'SIMULATED' | 'LIVE'
-  safety_margins: SafetyMargins
-  passed: boolean
-}
-
-interface LiveMarginsDto {
-  city: string
-  drone_count: number
-  drones: Record<string, LiveDrone>
-  fleet_worst_case: SafetyMargins
-}
-
-interface ZoneDto {
-  zone_id: string
-  zone_type: 'GREEN' | 'YELLOW' | 'RED'
-  center_lat: number
-  center_lon: number
-  radius_m: number
-}
-
-interface AltitudeBandDto { name: string; floor_m: number; ceiling_m: number }
-interface CityDto { slug: string; center: [number, number] }
-
-// ── Types (mirrors GET /api/v1/incidents/ and /vr-scene) ────────────────
-
-interface IncidentSummaryDto {
-  incident_id: string
-  city: string
-  order_id: string
-  trigger_type: string
-  status: string
-  created_at: string
-}
-
-interface VRSceneViolation {
-  constraint_name: string
-  violation_magnitude: number
-  required_correction: number
-}
-
-interface VRSceneDto {
-  incident_id: string
-  city: string
-  drone_id: string | null
-  trigger_type: string
-  status: string
-  position: { lat: number | null; lon: number | null }
-  origin: { lat: number | null; lon: number | null }
-  altitude_m: number | null
-  max_altitude_m: number | null
-  in_red_zone: boolean
-  in_yellow_zone: boolean
-  safety_margins: Record<string, number>
-  violations: VRSceneViolation[]
-  root_cause_summary: string | null
-  systemic_factor_note: string | null
-  recommended_action: string | null
-}
-
-const ZONE_COLORS: Record<string, string> = { RED: '#DC2626', YELLOW: '#EAB308', GREEN: '#16A34A' }
-const MIN_SEPARATION_M = 15.0
-const ALTITUDE_CEILING_M = 100.0
+const TABLE_HALF = 0.7
+const XR_TABLE_Z = -0.8
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('aerofleet_token') || ''
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-/** Flat-earth local East/North projection relative to a city center —
- * matches the degree-per-meter approximation already used in
- * TrajectoryViewer.tsx's circlePolygon/squarePolygon helpers. Good enough
- * at city scale; genuine WebXR units are metres, so this keeps a drone's
- * on-screen separation spatially meaningful. */
-function toLocalMeters(lat: number, lon: number, centerLat: number, centerLon: number): [number, number] {
-  const latRad = (centerLat * Math.PI) / 180
-  const north = (lat - centerLat) * 111320
-  const east = (lon - centerLon) * 111320 * Math.cos(latRad)
-  return [east, north]
+class AuthError extends Error {}
+
+async function getJson<T>(url: string, auth = false): Promise<T> {
+  const r = await fetch(url, { headers: auth ? authHeaders() : {} })
+  if (r.status === 401) throw new AuthError('Not signed in')
+  if (!r.ok) throw new Error(`HTTP ${r.status} from ${url.replace(/^https?:\/\/[^/]+/, '')}`)
+  return r.json()
 }
 
-function marginColor(margin: number, warnAt = 5, dangerAt = 0): string {
-  if (margin <= dangerAt) return '#DC2626'
-  if (margin <= warnAt) return '#EAB308'
-  return '#16A34A'
-}
+// ── 3D scene ─────────────────────────────────────────────────────────
 
-// ── 3D content ────────────────────────────────────────────────────────
-
-function GeofenceZone({ zone, center }: { zone: ZoneDto; center: [number, number] }) {
-  const [x, z] = toLocalMeters(zone.center_lat, zone.center_lon, center[0], center[1])
-  const color = ZONE_COLORS[zone.zone_type] || '#7c8288'
+function Room() {
+  // Only in immersive VR: a floor for grounding. In MR the real room is the backdrop.
   return (
-    <mesh position={[x, ALTITUDE_CEILING_M / 2, z]}>
-      <cylinderGeometry args={[zone.radius_m, zone.radius_m, ALTITUDE_CEILING_M, 32, 1, true]} />
-      <meshBasicMaterial color={color} transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
-    </mesh>
-  )
-}
-
-function AltitudeCeiling({ span }: { span: number }) {
-  return (
-    <mesh position={[0, ALTITUDE_CEILING_M, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[span, span]} />
-      <meshBasicMaterial color="#244975" transparent opacity={0.05} side={THREE.DoubleSide} depthWrite={false} />
-    </mesh>
-  )
-}
-
-function SeparationSphere({ radius, color }: { radius: number; color: string }) {
-  return (
-    <mesh>
-      <sphereGeometry args={[radius, 24, 24]} />
-      <meshBasicMaterial color={color} transparent opacity={0.18} depthWrite={false} />
-    </mesh>
-  )
-}
-
-function BatteryGauge({ marginWh, maxWh = 500 }: { marginWh: number; maxWh?: number }) {
-  const frac = Math.max(0, Math.min(1, marginWh / maxWh))
-  const height = 20
-  const color = marginColor(marginWh, 50, 0)
-  return (
-    <group position={[0, 12, 0]}>
-      <mesh position={[0, height / 2, 0]}>
-        <boxGeometry args={[1.5, height, 1.5]} />
-        <meshBasicMaterial color="#2a2c2e" transparent opacity={0.4} />
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <circleGeometry args={[6, 64]} />
+        <meshStandardMaterial color={C.floor} roughness={1} />
       </mesh>
-      <mesh position={[0, (height * frac) / 2, 0]}>
-        <boxGeometry args={[1.8, Math.max(0.3, height * frac), 1.8]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
+      <gridHelper args={[12, 24, '#15263D', '#0E1B2E']} position={[0, 0.001, 0]} />
     </group>
   )
 }
 
-function DroneMarker({
-  droneId, position, drone,
-}: {
-  droneId: string
-  position: [number, number, number]
-  drone: LiveDrone
-}) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 1.5) * 0.6
-    }
-  })
-
-  const m = drone.safety_margins
-  const sepColor = marginColor(m.min_separation, 10, 0)
-  const bodyColor = drone.passed ? '#16A34A' : '#DC2626'
-
-  return (
-    <group position={position}>
-      <mesh ref={meshRef}>
-        <boxGeometry args={[1.2, 0.4, 1.2]} />
-        <meshStandardMaterial color={bodyColor} />
-      </mesh>
-      <SeparationSphere radius={MIN_SEPARATION_M} color={sepColor} />
-      <BatteryGauge marginWh={m.battery_reserve_margin} />
-
-      <Html position={[0, 28, 0]} center distanceFactor={80} occlude={false}>
-        <div style={{
-          background: 'rgba(14,15,16,0.9)', border: '1px solid var(--border)',
-          borderRadius: '4px', padding: '8px 10px', fontFamily: 'var(--font-mono)',
-          fontSize: '11px', color: '#e8e6e1', whiteSpace: 'nowrap', pointerEvents: 'none',
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: '4px' }}>{droneId}</div>
-          <div>sep {m.min_separation.toFixed(0)}m &middot; alt {m.altitude_ceiling.toFixed(0)}m &middot; batt {m.battery_reserve_margin.toFixed(0)}Wh</div>
-          <div style={{ color: 'var(--text-muted)' }}>
-            wind {m.wind_limit.toFixed(1)} &middot; noise {m.noise_limit.toFixed(0)} &middot; link {m.comms_link_margin.toFixed(1)}dB &middot; vis {m.weather_visibility.toFixed(0)}m
-          </div>
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-const CONSTRAINT_LABELS: Record<string, string> = {
-  min_separation: 'Separation from nearest drone',
-  geofence_exclusion: 'DGCA Red Zone geofence',
-  battery_reserve_margin: 'Battery reserve for return-to-home',
-  altitude_ceiling: 'Assigned altitude ceiling',
-  wind_limit: 'Wind speed envelope',
-  payload_weight_limit: 'Payload capacity',
-  noise_limit: 'Ground noise limit',
-  collision_probability: 'Predicted conflict probability',
-  comms_link_margin: 'Command/telemetry link margin',
-  depot_capacity: 'Destination depot pad availability',
-  weather_visibility: 'BVLOS visibility minimum',
-}
-
-/** Renders the FROZEN geometry of a single rejected dispatch — the exact
- * origin/destination coordinates and violated-constraint set the Incident
- * Forensics Council's LLM investigation itself reasoned over (frozen_context
- * in aerofleet/data/models/models.py), reconstructed spatially. This is the
- * feature the VR mode toggle exists for: an operator can stand inside the
- * actual rejection geometry and check it, in 3D, against the council's
- * narrative — rather than trusting the text report on faith. See
- * docs/PATENT_NOVELTY.md Claim 4. */
-function IncidentGeometry({ scene, center }: { scene: VRSceneDto; center: [number, number] }) {
-  const hasOrigin = scene.origin.lat != null && scene.origin.lon != null
-  const hasDest = scene.position.lat != null && scene.position.lon != null
-  if (!hasDest) return null
-
-  const [dx, dz] = toLocalMeters(scene.position.lat as number, scene.position.lon as number, center[0], center[1])
-  const altitude = scene.altitude_m ?? 40
-  const maxAltitude = scene.max_altitude_m ?? ALTITUDE_CEILING_M
-  const altViolation = scene.violations.find((v) => v.constraint_name === 'altitude_ceiling')
-  const geofenceViolation = scene.violations.find((v) => v.constraint_name === 'geofence_exclusion')
-  const separationViolation = scene.violations.find((v) => v.constraint_name === 'min_separation')
-
-  const originPoint = hasOrigin
-    ? toLocalMeters(scene.origin.lat as number, scene.origin.lon as number, center[0], center[1])
-    : null
-
-  return (
-    <>
-      {originPoint && (
-        <>
-          <Line
-            points={[[originPoint[0], 2, originPoint[1]], [dx, altitude, dz]]}
-            color="#7c8288"
-            dashed
-            dashScale={4}
-            lineWidth={1.5}
-          />
-          <mesh position={[originPoint[0], 3, originPoint[1]]}>
-            <cylinderGeometry args={[4, 4, 1.5, 16]} />
-            <meshBasicMaterial color="#16A34A" />
-          </mesh>
-          <Html position={[originPoint[0], 14, originPoint[1]]} center distanceFactor={80} occlude={false}>
-            <div style={{
-              background: 'rgba(14,15,16,0.9)', border: '1px solid var(--border)', borderRadius: '4px',
-              padding: '4px 8px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-muted)',
-              whiteSpace: 'nowrap', pointerEvents: 'none',
-            }}>
-              origin depot
-            </div>
-          </Html>
-        </>
-      )}
-
-      {/* Vertical rod from ground to the attempted cruise altitude at the
-          rejection point — this is the actual number the altitude_ceiling
-          constraint checked, not a re-derived approximation. */}
-      <Line
-        points={[[dx, 0, dz], [dx, altitude, dz]]}
-        color={altViolation ? '#DC2626' : '#7c8288'}
-        lineWidth={altViolation ? 3 : 1.5}
-      />
-      <mesh position={[dx, altitude, dz]}>
-        <sphereGeometry args={[3, 16, 16]} />
-        <meshBasicMaterial color={geofenceViolation ? '#DC2626' : '#EAB308'} />
-      </mesh>
-
-      {altViolation && (
-        <mesh position={[dx, maxAltitude, dz]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[40, 44, 32]} />
-          <meshBasicMaterial color="#DC2626" transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} />
-        </mesh>
-      )}
-
-      {separationViolation && <SeparationSphere radius={MIN_SEPARATION_M} color="#DC2626" />}
-
-      <Html position={[dx, altitude + 20, dz]} center distanceFactor={80} occlude={false}>
-        <div style={{
-          background: 'rgba(14,15,16,0.94)', border: '1px solid var(--status-red)', borderRadius: '4px',
-          padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#e8e6e1',
-          whiteSpace: 'nowrap', pointerEvents: 'none',
-        }}>
-          <div style={{ fontWeight: 700, color: 'var(--status-red)', marginBottom: '4px' }}>
-            REJECTED{scene.drone_id ? ` · ${scene.drone_id}` : ''}
-          </div>
-          <div>attempted alt {altitude.toFixed(0)}m{maxAltitude ? ` / ceiling ${maxAltitude.toFixed(0)}m` : ''}</div>
-        </div>
-      </Html>
-    </>
-  )
-}
-
-/** Drones can be several km from the city center (Phase P allows up to a
- * ~20km bounds radius), so the camera starts wide enough to cover a
- * realistic flight envelope by default — the user pans/zooms/orbits from
- * there via OrbitControls, same "explore it yourself" pattern as the
- * existing 2D Airspace Map, rather than the view trying to auto-chase
- * whatever's currently flying.
- *
- * In Incident Replay, a single rejection's geometry sits wherever that
- * order's real destination was — often nowhere near the city-wide default
- * framing above, and easily just off in the dark with nothing to orbit
- * toward. `focus` re-centers the camera on the incident's own midpoint
- * whenever the selected incident changes, with a tighter offset than the
- * live wide-area default. */
-function CameraFraming({ focus }: { focus: [number, number, number] }) {
-  const controlsRef = useRef<any>(null)
-  const { camera } = useThree()
-  const isReplay = focus[0] !== 0 || focus[1] !== 0 || focus[2] !== 0
-
-  useEffect(() => {
-    const offset: [number, number, number] = isReplay ? [350, 260, 350] : [900, 700, 900]
-    camera.position.set(focus[0] + offset[0], focus[1] + offset[1], focus[2] + offset[2])
-    camera.lookAt(focus[0], focus[1], focus[2])
-    if (controlsRef.current) {
-      controlsRef.current.target.set(focus[0], focus[1], focus[2])
-      controlsRef.current.update()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus[0], focus[1], focus[2]])
-
-  return <OrbitControls ref={controlsRef} target={focus} />
-}
-
-function Scene({
-  drones, zones, center, replayScene,
-}: {
-  drones: Record<string, LiveDrone>
+interface SceneProps {
+  mode: 'live' | 'replay'
+  live: LiveMarginsDto | null
+  scene: VRSceneDto | null
   zones: ZoneDto[]
-  center: [number, number]
-  replayScene?: VRSceneDto | null
-}) {
-  const dronePositions = useMemo<[number, number, number][]>(
-    () =>
-      Object.values(drones).map((d) => {
-        const [x, z] = toLocalMeters(d.lat, d.lon, center[0], center[1])
-        const y = d.safety_margins.altitude_ceiling > 0 ? ALTITUDE_CEILING_M - d.safety_margins.altitude_ceiling : 40
-        return [x, y, z]
-      }),
-    [drones, center]
-  )
+  depots: DepotDto[]
+  roads: RoadsDto | null
+  cityCenter: [number, number]
+  cityName: string
+  diorama: Diorama
+  selected: string | null
+  setSelected: (id: string | null) => void
+  controls: ViewControls
+  rotationDeg: number
+  tableHeight: number
+  ageS: number | null
+}
 
-  const focusPoint = useMemo<[number, number, number]>(() => {
-    if (!replayScene || replayScene.position.lat == null || replayScene.position.lon == null) return [0, 0, 0]
-    const [dx, dz] = toLocalMeters(replayScene.position.lat, replayScene.position.lon, center[0], center[1])
-    if (replayScene.origin.lat != null && replayScene.origin.lon != null) {
-      const [ox, oz] = toLocalMeters(replayScene.origin.lat, replayScene.origin.lon, center[0], center[1])
-      return [(dx + ox) / 2, 25, (dz + oz) / 2]
-    }
-    return [dx, 25, dz]
-  }, [replayScene, center])
+function SceneContent(p: SceneProps) {
+  const xrMode = useXR((s) => s.mode)
+  const inXR = xrMode != null
+  const isAR = xrMode === 'immersive-ar'
+  const legal = p.live?.constants.legal_ceiling_m ?? 120
+  const ops = p.live?.constants.operational_ceiling_m ?? 100
+  const controls = { ...p.controls, inXR }
 
   return (
-    <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[100, 200, 100]} intensity={0.8} />
+    <UIMode.Provider value={{ inXR }}>
+      {!isAR && <color attach="background" args={[C.void]} />}
+      <ambientLight intensity={0.55} />
+      <hemisphereLight args={['#9CC3FF', '#0A1220', 0.5]} />
+      <directionalLight position={[1.5, 3, 2]} intensity={1.1} />
 
-      <Grid args={[8000, 8000]} cellColor="#2a2c2e" sectionColor="#3a3c3e" fadeDistance={6000} infiniteGrid position={[0, -1, 0]} />
-      <AltitudeCeiling span={8000} />
+      {inXR && !isAR && <Room />}
 
-      {zones.map((z) => <GeofenceZone key={z.zone_id} zone={z} center={center} />)}
+      <group position={inXR ? [0, p.tableHeight, XR_TABLE_Z] : [0, 0, 0]}>
+        <group rotation={[0, (p.rotationDeg * Math.PI) / 180, 0]}>
+          <Table d={p.diorama} showPlinth={inXR && !isAR} />
+          {p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
+          <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />
+          <Ceilings d={p.diorama} opsCeilingM={ops} legalCeilingM={legal} />
+          <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />
+          <AltitudeRuler d={p.diorama} />
+          <ScaleAndNorth d={p.diorama} />
+          {p.mode === 'live' && p.live && (
+            <Swarm drones={p.live.drones} pairs={p.live.pairs} constants={p.live.constants} d={p.diorama}
+              cityCenter={p.cityCenter} selected={p.selected} detailAll={p.controls.detailAll}
+              onSelect={(id) => p.setSelected(p.selected === id ? null : id)} />
+          )}
+          {p.mode === 'replay' && p.scene && <ReplayGeometry scene={p.scene} d={p.diorama} cityCenter={p.cityCenter} />}
+        </group>
 
-      {replayScene ? (
-        <IncidentGeometry scene={replayScene} center={center} />
-      ) : (
-        Object.entries(drones).map(([id, d], i) => (
-          <DroneMarker key={id} droneId={id} position={dronePositions[i]} drone={d} />
-        ))
+        {/* In a headset the boards are in-world (HTML can't render there); on desktop they're
+            HTML overlays rendered by the page instead. */}
+        {inXR && (
+          <group position={[0, p.mode === 'live' ? 0.5 : 0.52, -TABLE_HALF - 0.18]} rotation={[-0.12, 0, 0]} scale={1.35}>
+            {p.mode === 'live'
+              ? <FleetPanel data={p.live} cityName={p.cityName} ageS={p.ageS} vExag={p.diorama.vExag} controls={controls} />
+              : p.scene && <ClaimPanel scene={p.scene} controls={controls} />}
+          </group>
+        )}
+      </group>
+
+      {!inXR && (
+        <OrbitControls makeDefault target={[0, 0.16, -0.22]} minDistance={0.45} maxDistance={3.2}
+          maxPolarAngle={Math.PI * 0.47} enableDamping dampingFactor={0.08} zoomSpeed={1.4} />
       )}
-
-      <CameraFraming focus={focusPoint} />
-    </>
+    </UIMode.Provider>
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────
-
-const xrStore = createXRStore()
-
-/** Floating HTML overlay (outside the Canvas — plain DOM, not drei's <Html>)
- * carrying the Incident Forensics Council's own text findings alongside the
- * 3D replay, so an operator can read the AI's claimed root cause right next
- * to the frozen geometry it's claiming happened, rather than having to
- * cross-reference a separate page from memory. */
-function IncidentBriefingPanel({ scene }: { scene: VRSceneDto }) {
-  return (
-    <div style={{
-      position: 'absolute', top: '16px', right: '16px', width: '320px', maxHeight: 'calc(100% - 32px)',
-      overflowY: 'auto', background: 'rgba(14,15,16,0.94)', border: '1px solid var(--border)',
-      borderRadius: '6px', padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '11px',
-      color: '#e8e6e1', zIndex: 5,
-    }}>
-      <div style={{ fontWeight: 700, marginBottom: '2px' }}>{scene.incident_id}</div>
-      <div style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>
-        {scene.trigger_type} &middot; investigation {scene.status}
-      </div>
-
-      <div style={{ fontWeight: 700, color: 'var(--status-red)', marginBottom: '4px' }}>Violated constraints</div>
-      {scene.violations.length === 0 && <div style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>none recorded</div>}
-      {scene.violations.map((v) => (
-        <div key={v.constraint_name} style={{ marginBottom: '8px' }}>
-          <div>{CONSTRAINT_LABELS[v.constraint_name] || v.constraint_name}</div>
-          <div style={{ color: 'var(--text-muted)' }}>
-            margin breach {v.violation_magnitude.toFixed(2)} &middot; est. correction {v.required_correction.toFixed(1)}
-          </div>
-        </div>
-      ))}
-
-      {scene.root_cause_summary && (
-        <>
-          <div style={{ fontWeight: 700, marginTop: '10px', marginBottom: '4px' }}>Council's root cause</div>
-          <div style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>{scene.root_cause_summary}</div>
-        </>
-      )}
-
-      {scene.recommended_action && (
-        <>
-          <div style={{ fontWeight: 700, marginBottom: '4px' }}>Recommended action</div>
-          <div style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>{scene.recommended_action}</div>
-        </>
-      )}
-
-      <div style={{ borderTop: '1px solid var(--border)', marginTop: '10px', paddingTop: '10px', color: 'var(--text-muted)' }}>
-        Walk the geometry above and confirm it actually matches this claim before trusting it —
-        that check is the reason this view exists.
-      </div>
-    </div>
-  )
-}
+// ── page ─────────────────────────────────────────────────────────────
 
 export default function VRSafetyView() {
   const { apiUrl } = useAppStore()
   const [city, setCity] = useState('pune')
   const [cities, setCities] = useState<CityDto[]>([])
-  const [margins, setMargins] = useState<LiveMarginsDto | null>(null)
   const [zones, setZones] = useState<ZoneDto[]>([])
+  const [depots, setDepots] = useState<DepotDto[]>([])
+  const [roads, setRoads] = useState<RoadsDto | null>(null)
+  const [live, setLive] = useState<LiveMarginsDto | null>(null)
+  const [lastFetch, setLastFetch] = useState<number | null>(null)
+  const [now, setNow] = useState(Date.now())
   const [error, setError] = useState<string | null>(null)
+  const [needsAuth, setNeedsAuth] = useState(false)
+  const [authNonce, setAuthNonce] = useState(0)
 
   const [mode, setMode] = useState<'live' | 'replay'>('live')
   const [incidents, setIncidents] = useState<IncidentSummaryDto[]>([])
-  const [selectedIncidentId, setSelectedIncidentId] = useState<string>('')
-  const [vrScene, setVrScene] = useState<VRSceneDto | null>(null)
+  const [selectedIncidentId, setSelectedIncidentId] = useState('')
+  const [scene, setScene] = useState<VRSceneDto | null>(null)
+
+  const [rangeKm, setRangeKm] = useState(4)
+  const [detailAll, setDetailAll] = useState(false)
+  const [rotationDeg, setRotationDeg] = useState(0)
+  const [tableHeight, setTableHeight] = useState(0.82)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [focus, setFocus] = useState<[number, number]>([0, 0])
+  const [xrSupport, setXrSupport] = useState<{ vr: boolean; ar: boolean }>({ vr: false, ar: false })
+
+  const onAuthError = useCallback((e: unknown) => {
+    if (e instanceof AuthError) { setNeedsAuth(true); return true }
+    return false
+  }, [])
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/v1/cities/`).then((r) => r.json()).then(setCities).catch(() => {})
-  }, [apiUrl])
+    const xr = (navigator as Navigator & { xr?: { isSessionSupported: (m: string) => Promise<boolean> } }).xr
+    if (!xr) return
+    Promise.all([xr.isSessionSupported('immersive-vr'), xr.isSessionSupported('immersive-ar')])
+      .then(([vr, ar]) => setXrSupport({ vr, ar })).catch(() => {})
+  }, [])
+
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t) }, [])
+
+  useEffect(() => { getJson<CityDto[]>(`${apiUrl}/api/v1/cities/`).then(setCities).catch(() => {}) }, [apiUrl])
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/v1/geofence/zones?city=${city}`).then((r) => r.json()).then(setZones).catch(() => {})
+    setRoads(null)
+    getJson<ZoneDto[]>(`${apiUrl}/api/v1/geofence/zones?city=${city}`).then(setZones).catch(() => setZones([]))
+    getJson<DepotDto[]>(`${apiUrl}/api/v1/fleet/depots?city=${city}`).then(setDepots).catch(() => setDepots([]))
+    getJson<RoadsDto>(`${apiUrl}/api/v1/cities/${city}/roads`).then(setRoads).catch(() => {})
   }, [apiUrl, city])
 
   useEffect(() => {
     if (mode !== 'live') return
     let cancelled = false
-    const poll = () => {
-      fetch(`${apiUrl}/api/v1/safety/live-margins?city=${city}`, { headers: authHeaders() })
-        .then((r) => r.json())
-        .then((d) => { if (!cancelled) { setMargins(d); setError(null) } })
-        .catch((e) => { if (!cancelled) setError(String(e)) })
-    }
+    const poll = () => getJson<LiveMarginsDto>(`${apiUrl}/api/v1/safety/live-margins?city=${city}`, true)
+      .then((d) => { if (!cancelled) { setLive(d); setLastFetch(Date.now()); setError(null); setNeedsAuth(false) } })
+      .catch((e) => { if (!cancelled && !onAuthError(e)) setError(String((e as Error).message || e)) })
     poll()
     const id = setInterval(poll, 1500)
     return () => { cancelled = true; clearInterval(id) }
-  }, [apiUrl, city, mode])
+  }, [apiUrl, city, mode, authNonce, onAuthError])
 
   useEffect(() => {
     if (mode !== 'replay') return
-    fetch(`${apiUrl}/api/v1/incidents/?city=${city}&trigger_type=CBF_REJECTION`, { headers: authHeaders() })
-      .then((r) => {
-        if (!r.ok) throw new Error(r.status === 401 ? 'Not signed in — incident history requires auth' : `HTTP ${r.status}`)
-        return r.json()
-      })
-      .then((list: IncidentSummaryDto[]) => {
+    getJson<IncidentSummaryDto[]>(`${apiUrl}/api/v1/incidents/?city=${city}&trigger_type=CBF_REJECTION`, true)
+      .then((list) => {
         setIncidents(list)
         setError(null)
+        setNeedsAuth(false)
         setSelectedIncidentId((prev) => (list.some((i) => i.incident_id === prev) ? prev : (list[0]?.incident_id || '')))
       })
-      .catch((e) => { setIncidents([]); setError(String(e.message || e)) })
-  }, [apiUrl, city, mode])
+      .catch((e) => { setIncidents([]); if (!onAuthError(e)) setError(String((e as Error).message || e)) })
+  }, [apiUrl, city, mode, authNonce, onAuthError])
 
   useEffect(() => {
-    if (mode !== 'replay' || !selectedIncidentId) { setVrScene(null); return }
-    fetch(`${apiUrl}/api/v1/incidents/${selectedIncidentId}/vr-scene`, { headers: authHeaders() })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        return r.json()
-      })
-      .then((d) => { setVrScene(d); setError(null) })
-      .catch((e) => { setVrScene(null); setError(String(e.message || e)) })
-  }, [apiUrl, selectedIncidentId, mode])
+    if (mode !== 'replay' || !selectedIncidentId) { setScene(null); return }
+    getJson<VRSceneDto>(`${apiUrl}/api/v1/incidents/${selectedIncidentId}/vr-scene`, true)
+      .then((d) => { setScene(d); setError(null) })
+      .catch((e) => { setScene(null); if (!onAuthError(e)) setError(String((e as Error).message || e)) })
+  }, [apiUrl, selectedIncidentId, mode, authNonce, onAuthError])
 
-  const center = useMemo<[number, number]>(() => {
-    const cfg = cities.find((c) => c.slug === city)
-    return cfg ? cfg.center : [18.5204, 73.8567]
-  }, [cities, city])
+  const cityCfg = cities.find((c) => c.slug === city)
+  const cityCenter = useMemo<[number, number]>(() => cityCfg?.center ?? [18.5204, 73.8567], [cityCfg])
+  const cityName = cityCfg?.name?.split(',')[0] ?? city
 
-  const droneCount = margins?.drone_count ?? 0
+  // Zooming in to 1-2 km re-centres on the selected drone (a snapshot, so the table
+  // doesn't swim every poll); the 4 km view always shows the whole operating area.
+  const selectDrone = useCallback((id: string | null) => {
+    setSelected(id)
+    const drone = id && live?.drones[id]
+    if (drone && rangeKm < 4) setFocus(toLocal(drone.lat, drone.lon, cityCenter))
+  }, [live, rangeKm, cityCenter])
+
+  const changeRange = useCallback((km: number) => {
+    setRangeKm(km)
+    const drone = selected && live?.drones[selected]
+    setFocus(km < 4 && drone ? toLocal(drone.lat, drone.lon, cityCenter) : [0, 0])
+  }, [selected, live, cityCenter])
+
+  const diorama = useMemo(() => {
+    const legal = live?.constants.legal_ceiling_m ?? 120
+    if (mode === 'replay' && scene) {
+      const f = replayFrame(scene, cityCenter)
+      if (f) return new Diorama(f.east, f.north, f.extentM, TABLE_HALF, 0.32, legal)
+    }
+    return new Diorama(focus[0], focus[1], rangeKm * 1000, TABLE_HALF, 0.32, legal)
+  }, [mode, scene, cityCenter, focus, rangeKm, live?.constants.legal_ceiling_m])
+
+  const controls: ViewControls = {
+    rangeKm, setRangeKm: changeRange, detailAll, setDetailAll,
+    rotate: (deg) => setRotationDeg((r) => r + deg), inXR: false,
+    nudgeHeight: (dy) => setTableHeight((h) => Math.min(1.3, Math.max(0.5, h + dy))),
+  }
+
+  const ageS = lastFetch ? (now - lastFetch) / 1000 : null
+  const droneCount = live?.drone_count ?? 0
+  const noXR = !xrSupport.vr && !xrSupport.ar
 
   return (
     <div style={{ overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -518,92 +259,106 @@ export default function VRSafetyView() {
         <div>
           <div className="page-title">VR Safety View</div>
           <div className="page-subtitle">
-            {mode === 'live' ? (
-              <>Live CBF constraint margins rendered in stereoscopic 3D — real depth cues for judging near-boundary separation that a flat screen collapses &middot; {droneCount} active flight{droneCount === 1 ? '' : 's'}</>
-            ) : (
-              <>Incident Replay — walk the frozen rejection geometry to verify the Forensics Council's narrative against the real numbers</>
-            )}
+            {mode === 'live'
+              ? <>Walk-around tabletop of the live airspace — {droneCount} airborne · separation, altitude and battery for every drone, in stereo depth</>
+              : <>Incident Replay — every AI council claim checked against the real rejection geometry</>}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button className={`btn ${mode === 'live' ? 'btn--primary' : ''}`} onClick={() => setMode('live')}>Live</button>
-            <button className={`btn ${mode === 'replay' ? 'btn--primary' : ''}`} onClick={() => setMode('replay')}>Incident Replay</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className={`btn ${mode === 'live' ? 'btn--primary' : ''}`} onClick={() => setMode('live')}>Live swarm</button>
+            <button className={`btn ${mode === 'replay' ? 'btn--primary' : ''}`} onClick={() => setMode('replay')}>Incident replay</button>
           </div>
           {mode === 'replay' && (
-            <select
-              className="form-select"
-              value={selectedIncidentId}
-              onChange={(e) => setSelectedIncidentId(e.target.value)}
-            >
+            <select className="form-select" style={{ width: 'auto', maxWidth: 300 }} value={selectedIncidentId} onChange={(e) => setSelectedIncidentId(e.target.value)}>
               {incidents.length === 0 && <option value="">No CBF-rejection incidents yet</option>}
               {incidents.map((i) => (
-                <option key={i.incident_id} value={i.incident_id}>
-                  {i.incident_id} &middot; {new Date(i.created_at).toLocaleString()}
-                </option>
+                <option key={i.incident_id} value={i.incident_id}>{i.incident_id} · {new Date(i.created_at).toLocaleString()}</option>
               ))}
             </select>
           )}
-          <select className="form-select" value={city} onChange={(e) => setCity(e.target.value)}>
-            {cities.length === 0 && <option value="pune">Pune</option>}
-            {cities.map((c) => <option key={c.slug} value={c.slug}>{c.slug}</option>)}
+          <select className="form-select" style={{ width: 'auto' }} value={city} onChange={(e) => { setCity(e.target.value); setSelected(null); setFocus([0, 0]) }}>
+            {cities.length === 0 && <option value="pune">pune</option>}
+            {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name?.split(',')[0] ?? c.slug}</option>)}
           </select>
-          <button
-            id="btn-enter-vr"
-            className="btn btn--primary"
-            onClick={() => xrStore.enterVR().catch((e) => setError(`WebXR unavailable: ${e}`))}
-          >
+          <button className="btn btn--primary" id="btn-enter-vr"
+            title={xrSupport.vr ? 'Enter immersive VR' : 'No headset detected — open this page in the Quest 3 browser (see docs/VR_QUEST3_GUIDE.md)'}
+            onClick={() => xrStore.enterVR().catch((e) => setError(`WebXR VR unavailable: ${e}`))}>
             Enter VR
+          </button>
+          <button className="btn" id="btn-enter-mr"
+            title={xrSupport.ar ? 'Mixed reality: the table appears in your real room (Quest 3 passthrough)' : 'Mixed reality needs a passthrough headset such as Quest 3'}
+            onClick={() => xrStore.enterAR().catch((e) => setError(`WebXR mixed reality unavailable: ${e}`))}>
+            Enter MR
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="card" style={{ margin: '0 24px 12px', borderColor: 'var(--status-red)' }}>
-          <span style={{ color: 'var(--status-red)' }}>&#9888; {error}</span>
-        </div>
-      )}
+      {needsAuth ? (
+        <SignInCard apiUrl={apiUrl} reason="The live swarm feed and incident history need an authenticated session."
+          onSignedIn={() => { setNeedsAuth(false); setAuthNonce((n) => n + 1) }} />
+      ) : (
+        <>
+          {error && (
+            <div className="card" style={{ margin: '0 24px 12px', borderColor: 'var(--status-red)' }}>
+              <span style={{ color: 'var(--status-red)' }}>&#9888; {error}</span>
+            </div>
+          )}
+          {mode === 'live' && live && droneCount === 0 && (
+            <div className="card" style={{ margin: '0 24px 12px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                No drones airborne in {cityName} — dispatch orders from the Dispatch Console (or run
+                <code style={{ margin: '0 4px' }}>python tools/seed_demo_swarm.py</code>) to populate the swarm.
+              </span>
+            </div>
+          )}
+          {mode === 'replay' && incidents.length === 0 && (
+            <div className="card" style={{ margin: '0 24px 12px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                No CBF-rejection incidents recorded for {cityName} yet — a dispatch into a red zone or above the ceiling creates one.
+              </span>
+            </div>
+          )}
+          {mode === 'replay' && scene && scene.position.lat == null && (
+            <div className="card" style={{ margin: '0 24px 12px', borderColor: 'var(--status-amber)' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                This incident predates coordinate capture and has no geometry to replay — pick a more recent one.
+              </span>
+            </div>
+          )}
 
-      {mode === 'live' && droneCount === 0 && (
-        <div className="card" style={{ margin: '0 24px 12px' }}>
-          <span style={{ color: 'var(--text-muted)' }}>
-            No active flights right now — dispatch an order from the Dispatch Console to see live safety margins here.
-            Geofence zones still render below.
-          </span>
-        </div>
+          <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+            <Canvas
+              camera={{ position: [0, 1.12, 1.55], fov: 42, near: 0.01, far: 60 }}
+              gl={{ antialias: true, alpha: true }}
+              dpr={[1, 2]}
+              style={{ background: C.void }}
+            >
+              <XR store={xrStore}>
+                <Suspense fallback={null}>
+                  <SceneContent
+                    mode={mode} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
+                    cityCenter={cityCenter} cityName={cityName} diorama={diorama} selected={selected}
+                    setSelected={selectDrone} controls={controls} rotationDeg={rotationDeg}
+                    tableHeight={tableHeight} ageS={ageS}
+                  />
+                </Suspense>
+              </XR>
+            </Canvas>
+            {mode === 'live' && (
+              <LiveBoard data={live} cityName={cityName} ageS={ageS} vExag={diorama.vExag} controls={controls} />
+            )}
+            {mode === 'replay' && scene && scene.position.lat != null && <ReplayBoard scene={scene} />}
+            <div style={{
+              position: 'absolute', right: 16, bottom: 14, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: '#93A8C4', pointerEvents: 'none', lineHeight: 1.6,
+            }}>
+              drag to orbit · scroll to zoom · click a drone for its full data block
+              {noXR && <><br />no WebXR headset detected — on a Quest 3, open this page in the Quest Browser (docs/VR_QUEST3_GUIDE.md)</>}
+            </div>
+          </div>
+        </>
       )}
-
-      {mode === 'replay' && incidents.length === 0 && (
-        <div className="card" style={{ margin: '0 24px 12px' }}>
-          <span style={{ color: 'var(--text-muted)' }}>
-            No CBF-rejection incidents recorded yet for {city} — dispatch an order into a red zone or over the
-            altitude ceiling from the Dispatch Console to generate one.
-          </span>
-        </div>
-      )}
-
-      {mode === 'replay' && vrScene && vrScene.position.lat == null && (
-        <div className="card" style={{ margin: '0 24px 12px', borderColor: 'var(--status-amber)' }}>
-          <span style={{ color: 'var(--text-muted)' }}>
-            This incident predates coordinate capture in frozen_context and has no geometry to replay —
-            pick a more recent one, or dispatch a new rejected order.
-          </span>
-        </div>
-      )}
-
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-        <Canvas camera={{ position: [900, 700, 900], fov: 55, near: 0.1, far: 40000 }} style={{ background: '#0e0f10' }}>
-          <XR store={xrStore}>
-            <Scene
-              drones={mode === 'live' ? (margins?.drones || {}) : {}}
-              zones={zones}
-              center={center}
-              replayScene={mode === 'replay' ? vrScene : null}
-            />
-          </XR>
-        </Canvas>
-        {mode === 'replay' && vrScene && vrScene.position.lat != null && <IncidentBriefingPanel scene={vrScene} />}
-      </div>
     </div>
   )
 }

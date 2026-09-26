@@ -231,11 +231,14 @@ def fresh_fleet_state():
     drone/order mutations from one test never leak into another. Needed
     because aerofleet.fleet.state._fleet_states is a module-level singleton
     dict, not something the app resets per-request."""
+    from aerofleet.fleet import flight_progress
     from aerofleet.fleet import state as fleet_state_module
 
     fleet_state_module._fleet_states.clear()
+    flight_progress.clear()
     yield
     fleet_state_module._fleet_states.clear()
+    flight_progress.clear()
 
 
 @pytest.fixture
