@@ -76,6 +76,18 @@ export interface CityDto {
   airport_name?: string
 }
 
+// Mirrors GET /api/v1/cities/{slug}/buildings — each entry [height_dm, source_index, e1, n1, ...]
+export interface BuildingsDto {
+  center: [number, number]
+  available: boolean
+  count: number
+  sources: string[]
+  height_sources: Record<string, number>
+  assumed_height_m: number
+  attribution: string
+  buildings: number[][]
+}
+
 export interface RoadsDto {
   center: [number, number]
   synthetic: boolean

@@ -6,6 +6,8 @@ import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
 import { Diorama, toLocal } from '../components/vr/geo'
 import { AltitudeRuler, Ceilings, Depots, ScaleAndNorth, Streets, Table, Zones } from '../components/vr/Airspace'
+import { Buildings } from '../components/vr/Buildings'
+import { HeadsetLauncher } from '../components/vr/HeadsetLauncher'
 import { Swarm } from '../components/vr/Swarm'
 import { ClaimPanel, FleetPanel, ViewControls } from '../components/vr/Panels'
 import { ReplayGeometry, replayFrame } from '../components/vr/Replay'
@@ -13,7 +15,7 @@ import { LiveBoard, ReplayBoard } from '../components/vr/HtmlBoards'
 import { UIMode } from '../components/vr/uiMode'
 import { C } from '../components/vr/theme'
 import type {
-  CityDto, DepotDto, IncidentSummaryDto, LiveMarginsDto, RoadsDto, VRSceneDto, ZoneDto,
+  BuildingsDto, CityDto, DepotDto, IncidentSummaryDto, LiveMarginsDto, RoadsDto, VRSceneDto, ZoneDto,
 } from '../components/vr/types'
 
 /*
@@ -70,6 +72,8 @@ interface SceneProps {
   zones: ZoneDto[]
   depots: DepotDto[]
   roads: RoadsDto | null
+  buildings: BuildingsDto | null
+  onBuildingStats: (drawn: number, measured: number) => void
   cityCenter: [number, number]
   cityName: string
   diorama: Diorama
@@ -102,6 +106,9 @@ function SceneContent(p: SceneProps) {
         <group rotation={[0, (p.rotationDeg * Math.PI) / 180, 0]}>
           <Table d={p.diorama} showPlinth={inXR && !isAR} />
           {p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
+          {p.buildings && p.controls.showBuildings && (
+            <Buildings data={p.buildings} d={p.diorama} cityCenter={p.cityCenter} onStats={p.onBuildingStats} />
+          )}
           <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />
           <Ceilings d={p.diorama} opsCeilingM={ops} legalCeilingM={legal} />
           <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />
@@ -143,6 +150,10 @@ export default function VRSafetyView() {
   const [zones, setZones] = useState<ZoneDto[]>([])
   const [depots, setDepots] = useState<DepotDto[]>([])
   const [roads, setRoads] = useState<RoadsDto | null>(null)
+  const [buildings, setBuildings] = useState<BuildingsDto | null>(null)
+  const [showBuildings, setShowBuildings] = useState(true)
+  const [buildingStats, setBuildingStats] = useState<{ drawn: number; measured: number } | null>(null)
+  const onBuildingStats = useCallback((drawn: number, measured: number) => setBuildingStats({ drawn, measured }), [])
   const [live, setLive] = useState<LiveMarginsDto | null>(null)
   const [lastFetch, setLastFetch] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
@@ -184,6 +195,9 @@ export default function VRSafetyView() {
     getJson<ZoneDto[]>(`${apiUrl}/api/v1/geofence/zones?city=${city}`).then(setZones).catch(() => setZones([]))
     getJson<DepotDto[]>(`${apiUrl}/api/v1/fleet/depots?city=${city}`).then(setDepots).catch(() => setDepots([]))
     getJson<RoadsDto>(`${apiUrl}/api/v1/cities/${city}/roads`).then(setRoads).catch(() => {})
+    setBuildings(null)
+    setBuildingStats(null)
+    getJson<BuildingsDto>(`${apiUrl}/api/v1/cities/${city}/buildings`).then((b) => setBuildings(b.available ? b : null)).catch(() => {})
   }, [apiUrl, city])
 
   useEffect(() => {
@@ -247,6 +261,11 @@ export default function VRSafetyView() {
     rangeKm, setRangeKm: changeRange, detailAll, setDetailAll,
     rotate: (deg) => setRotationDeg((r) => r + deg), inXR: false,
     nudgeHeight: (dy) => setTableHeight((h) => Math.min(1.3, Math.max(0.5, h + dy))),
+    showBuildings, setShowBuildings,
+    buildingNote: showBuildings && buildings && buildingStats
+      ? ` · ${buildingStats.drawn.toLocaleString()} OSM buildings: ${buildingStats.measured.toLocaleString()} with a tagged height (light), `
+        + `the rest drawn at an assumed ${buildings.assumed_height_m} m (dark)`
+      : '',
   }
 
   const ageS = lastFetch ? (now - lastFetch) / 1000 : null
@@ -254,7 +273,7 @@ export default function VRSafetyView() {
   const noXR = !xrSupport.vr && !xrSupport.ar
 
   return (
-    <div style={{ overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="page-header">
         <div>
           <div className="page-title">VR Safety View</div>
@@ -281,6 +300,7 @@ export default function VRSafetyView() {
             {cities.length === 0 && <option value="pune">pune</option>}
             {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name?.split(',')[0] ?? c.slug}</option>)}
           </select>
+          <HeadsetLauncher apiUrl={apiUrl} city={city} mode={mode} incidentId={selectedIncidentId} />
           <button className="btn btn--primary" id="btn-enter-vr"
             title={xrSupport.vr ? 'Enter immersive VR' : 'No headset detected — open this page in the Quest 3 browser (see docs/VR_QUEST3_GUIDE.md)'}
             onClick={() => xrStore.enterVR().catch((e) => setError(`WebXR VR unavailable: ${e}`))}>
@@ -338,6 +358,7 @@ export default function VRSafetyView() {
                 <Suspense fallback={null}>
                   <SceneContent
                     mode={mode} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
+                    buildings={buildings} onBuildingStats={onBuildingStats}
                     cityCenter={cityCenter} cityName={cityName} diorama={diorama} selected={selected}
                     setSelected={selectDrone} controls={controls} rotationDeg={rotationDeg}
                     tableHeight={tableHeight} ageS={ageS}

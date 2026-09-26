@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
 
+from aerofleet.city.buildings import ASSUMED_HEIGHT_M, LEVEL_HEIGHT_M, load_buildings
 from aerofleet.city.registry import CITY_REGISTRY
 
 router = APIRouter()
@@ -91,3 +92,34 @@ async def city_roads(slug: str) -> Dict[str, Any]:
     if slug not in CITY_REGISTRY:
         raise HTTPException(status_code=404, detail=f"Unknown city '{slug}'")
     return _road_network(slug)
+
+
+@lru_cache(maxsize=8)
+def _buildings(slug: str) -> Dict[str, Any]:
+    cfg = CITY_REGISTRY[slug]
+    data = load_buildings(slug, cfg.center)
+    return {
+        "city": slug,
+        "center": list(cfg.center),
+        "units": "metres east/north of center; height in decimetres",
+        "available": data.get("available", False),
+        "count": len(data["buildings"]),
+        "sources": data["sources"],
+        "height_sources": data["height_sources"],
+        "level_height_m": LEVEL_HEIGHT_M,
+        "assumed_height_m": ASSUMED_HEIGHT_M,
+        "attribution": data.get("attribution", ""),
+        "buildings": data["buildings"],
+    }
+
+
+@router.get("/{slug}/buildings")
+def city_buildings(slug: str) -> Dict[str, Any]:
+    """OpenStreetMap building footprints with heights, as compact local-metre
+    rings: each entry is [height_dm, source_index, e1, n1, e2, n2, ...] with
+    `sources` naming where each height came from (OSM height tag, storeys x
+    level_height_m, or the assumed default). First call per city fetches and
+    caches from OSM (sync def: FastAPI runs it off the event loop)."""
+    if slug not in CITY_REGISTRY:
+        raise HTTPException(status_code=404, detail=f"Unknown city '{slug}'")
+    return _buildings(slug)

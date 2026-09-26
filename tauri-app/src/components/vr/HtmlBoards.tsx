@@ -91,7 +91,7 @@ export function LiveBoard({ data, cityName, ageS, vExag, controls }: {
               </span>
             ))}
           </div>
-          <div style={{ fontSize: 10.5, color: C.textFaint, lineHeight: 1.5 }}>{legendNote(minSep, vExag)}</div>
+          <div style={{ fontSize: 10.5, color: C.textFaint, lineHeight: 1.5 }}>{legendNote(minSep, vExag) + controls.buildingNote}</div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
             <span style={{ ...eyebrow, marginRight: 2 }}>RANGE</span>
@@ -103,6 +103,8 @@ export function LiveBoard({ data, cityName, ageS, vExag, controls }: {
               title="Show every drone's full data block, not just ones needing attention">
               {controls.detailAll ? 'Details: all' : 'Details: auto'}
             </Btn>
+            <Btn active={controls.showBuildings} onClick={() => controls.setShowBuildings(!controls.showBuildings)}
+              title="OpenStreetMap buildings, extruded on the same vertical scale as the drones">3D city</Btn>
             <Btn onClick={() => controls.rotate(45)} title="Rotate table">⟲</Btn>
             <Btn onClick={() => controls.rotate(-45)} title="Rotate table">⟳</Btn>
           </div>

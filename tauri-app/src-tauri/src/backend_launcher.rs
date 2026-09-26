@@ -114,7 +114,7 @@ fn common_clone_locations() -> Vec<PathBuf> {
     candidates
 }
 
-fn find_project_root() -> Option<PathBuf> {
+pub(crate) fn find_project_root() -> Option<PathBuf> {
     if let Ok(env_override) = std::env::var("AEROFLEET_PROJECT_ROOT") {
         let root = PathBuf::from(env_override);
         if looks_like_project_root(&root) {

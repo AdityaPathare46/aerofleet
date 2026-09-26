@@ -3,6 +3,7 @@
 
 mod backend_launcher;
 mod ollama_installer;
+mod vr_headset;
 
 use std::process::Child;
 use std::sync::Mutex;
@@ -36,12 +37,17 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(BackendChild(Mutex::new(None)))
+        .manage(vr_headset::VrViewerChild(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             ollama_installer::check_ollama_status,
             ollama_installer::install_ollama,
             ollama_installer::pull_model,
             ollama_installer::get_linux_install_command,
             set_project_root_and_launch,
+            vr_headset::vr_headset_status,
+            vr_headset::set_vr_viewer_path,
+            vr_headset::launch_vr_viewer,
+            vr_headset::stop_vr_viewer,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -76,6 +82,11 @@ fn main() {
             // backend_already_running) tolerates a stray leftover process
             // by just not spawning a second one on top of it.
             if let tauri::RunEvent::ExitRequested { .. } = event {
+                if let Some(state) = app_handle.try_state::<vr_headset::VrViewerChild>() {
+                    if let Some(mut child) = state.0.lock().unwrap().take() {
+                        let _ = child.kill();
+                    }
+                }
                 if let Some(state) = app_handle.try_state::<BackendChild>() {
                     if let Some(mut child) = state.0.lock().unwrap().take() {
                         let _ = child.kill();

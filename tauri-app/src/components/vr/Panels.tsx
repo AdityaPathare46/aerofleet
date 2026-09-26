@@ -88,6 +88,10 @@ export interface ViewControls {
   rotate: (deg: number) => void
   inXR: boolean
   nudgeHeight: (dy: number) => void
+  showBuildings: boolean
+  setShowBuildings: (v: boolean) => void
+  /** One sentence on how many buildings are shown and how many heights are measured. */
+  buildingNote: string
 }
 
 export const RANGE_OPTIONS_KM = [1, 2, 4]
@@ -152,7 +156,7 @@ export function FleetPanel({ data, cityName, ageS, vExag, controls }: {
           <T x={0.018} y={0} text={l.t} size={0.0098} color={C.textDim} />
         </group>
       ))}
-      <T x={left} y={top - 0.408} size={0.0092} color={C.textFaint} maxWidth={W - 0.06} text={legendNote(minSep, vExag)} />
+      <T x={left} y={top - 0.408} size={0.0092} color={C.textFaint} maxWidth={W - 0.06} text={legendNote(minSep, vExag) + controls.buildingNote} />
 
       <T x={left} y={top - 0.47} text="RANGE" size={0.0095} color={C.textFaint} font={FONT.monoBold} />
       {RANGE_OPTIONS_KM.map((km, i) => (
@@ -162,6 +166,8 @@ export function FleetPanel({ data, cityName, ageS, vExag, controls }: {
       <Button3D x={left + 0.3} y={top - 0.458} w={0.12} label={controls.detailAll ? 'Details: all' : 'Details: auto'}
         active={controls.detailAll} onClick={() => controls.setDetailAll(!controls.detailAll)} />
       <Button3D x={left + 0.43} y={top - 0.458} w={0.08} label="⟲ 45°" onClick={() => controls.rotate(45)} />
+      <Button3D x={left + 0.3} y={top - 0.505} w={0.12} label="3D city" active={controls.showBuildings}
+        onClick={() => controls.setShowBuildings(!controls.showBuildings)} />
       <Button3D x={left + 0.52} y={top - 0.458} w={0.08} label="⟳ 45°" onClick={() => controls.rotate(-45)} />
       <Button3D x={left + 0.63} y={top - 0.458} w={0.1} label="Table ▲" onClick={() => controls.nudgeHeight(0.05)} />
       <Button3D x={left + 0.74} y={top - 0.458} w={0.1} label="Table ▼" onClick={() => controls.nudgeHeight(-0.05)} />
