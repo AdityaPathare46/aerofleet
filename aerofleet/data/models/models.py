@@ -339,3 +339,54 @@ class RouteCalculation(Base):
     calculation_status = Column(String(50))   # SUCCESS, FAILED, APPROXIMATE
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class FCInspection(Base):
+    """One flight-controller compliance inspection — the operator's audit
+    trail for "was this aircraft checked, what did it show, and who
+    confirmed the things a sensor can't". Same storage idiom as
+    Order.compliance_report / IncidentReport: the structured results live in
+    JSON columns, written by a background worker
+    (aerofleet/hardware/fc_inspection_worker.py) and read back by
+    aerofleet/api/routes/fc_compliance.py.
+
+    `snapshot` is the immutable record of what was read over MAVLink
+    (FCSnapshot.to_dict()); `report` is always recomputed from snapshot +
+    `context` + `checklist` + `motor_tests` by compliance_rules.build_report(),
+    never edited directly, so an attestation can't silently rewrite a
+    measurement."""
+
+    __tablename__ = "fc_inspections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    inspection_id = Column(String(50), unique=True, index=True, nullable=False)
+
+    status = Column(String(20), default="PENDING", index=True)  # PENDING, RUNNING, READY, FAILED
+    progress = Column(Integer, default=0)
+    stage = Column(String(200), nullable=True)
+    error = Column(Text, nullable=True)
+
+    # How the flight controller was reached.
+    requested_connection = Column(String(255), nullable=True)  # None => auto-detect
+    connection = Column(String(255), nullable=True)
+    source = Column(String(40), nullable=True)  # mission_planner_forward | usb | manual
+    discovery = Column(JSON, nullable=True)
+
+    drone_id = Column(String(50), index=True, nullable=True)
+    city = Column(String(50), nullable=True)
+    context = Column(JSON, nullable=True)  # compliance_rules.InspectionContext.to_dict()
+    requested_by = Column(String(50), nullable=True)
+
+    snapshot = Column(JSON, nullable=True)
+    report = Column(JSON, nullable=True)
+    verdict = Column(String(20), nullable=True)
+
+    # {check_id: {"result": "confirmed"|"failed"|"unchecked", "note", "by", "at"}}
+    checklist = Column(JSON, nullable=True)
+    # {"layout": "quad_x", "results": {"A": {..., "confirmation": {...}}}, "log": [...]}
+    motor_tests = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

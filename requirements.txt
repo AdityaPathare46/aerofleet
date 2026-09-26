@@ -57,3 +57,5 @@ ollama>=0.3.0
 
 # Real drone hardware (MAVLink)
 pymavlink>=2.4.49
+# USB flight-controller discovery (aerofleet/hardware/fc_discovery.py)
+pyserial>=3.5
