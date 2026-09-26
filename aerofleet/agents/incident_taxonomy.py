@@ -183,10 +183,16 @@ investigation, not a new recommendation.
 You are assessing ONE factor: {description}
 
 Respond with your normal Thought/Action/Observation/Verdict format, but end
-with a fenced JSON block exactly in this shape:
+with one fenced JSON block, valid JSON, in exactly this shape (example values):
 ```json
-{{"factor": "{factor_name}", "contributed": "CONTRIBUTED" | "NOT_CONTRIBUTED" | "UNCERTAIN", "confidence": 0.0-1.0, "evidence": "cite the actual numbers from the incident context above"}}
+{{"factor": "{factor_name}", "contributed": "NOT_CONTRIBUTED", "confidence": 0.8, "evidence": "cite the actual numbers from the incident context above"}}
 ```
+Rules for that block: "factor" is exactly "{factor_name}" (do not rename it);
+"contributed" is exactly one of CONTRIBUTED, NOT_CONTRIBUTED, UNCERTAIN;
+"confidence" is a number from 0 to 1.
+Only claim CONTRIBUTED if a number that belongs to YOUR factor shows it. A
+violated constraint that belongs to a different factor (e.g. a negative
+battery reserve when you assess communications) is not evidence for yours.
 Base "evidence" only on the numbers actually given to you in the incident
 context — never invent a figure. If the incident context doesn't contain
 enough information to assess your factor, use "UNCERTAIN" with a low

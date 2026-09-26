@@ -11,6 +11,7 @@ from aerofleet.agents.incident_forensics_worker import (
     IncidentForensicsWorker,
     IncidentJob,
     _extract_json_block,
+    _normalise_domain_verdict,
     new_incident_id,
 )
 from aerofleet.data.database import get_db_session
@@ -45,6 +46,43 @@ class TestExtractJsonBlock:
 
     def test_malformed_json_returns_none_not_an_exception(self):
         assert _extract_json_block("```json\n{not valid}\n```") is None
+
+    # Failure modes found in the 1,000-case study (research/results/f1_diagnostics.md),
+    # where they were the majority of the council's "misses".
+
+    def test_brace_inside_an_evidence_string_does_not_truncate_the_block(self):
+        text = '```json\n{"factor": "comms", "contributed": "CONTRIBUTED", "evidence": "margins {comms_link_margin: -3.1}"}\n```'
+        assert _extract_json_block(text)["evidence"] == "margins {comms_link_margin: -3.1}"
+
+    def test_nested_object_is_parsed_whole(self):
+        text = '```json\n{"factor": "battery_energy", "contributed": "CONTRIBUTED", "numbers": {"reserve": -42.1}}\n```'
+        assert _extract_json_block(text)["numbers"] == {"reserve": -42.1}
+
+    def test_fence_without_json_tag_and_bare_objects_are_accepted(self):
+        assert _extract_json_block('```\n{"contributed": "UNCERTAIN"}\n```') == {"contributed": "UNCERTAIN"}
+        assert _extract_json_block('Verdict: {"contributed": "NOT_CONTRIBUTED"} done.') == {"contributed": "NOT_CONTRIBUTED"}
+
+    def test_an_echoed_invalid_schema_line_is_skipped_for_the_real_answer(self):
+        text = ('Shape: {"contributed": "CONTRIBUTED" | "NOT_CONTRIBUTED", "confidence": 0.0-1.0}\n'
+                '```json\n{"factor": "battery_energy", "contributed": "CONTRIBUTED", "confidence": 0.9}\n```')
+        assert _extract_json_block(text)["confidence"] == 0.9
+
+
+class TestNormaliseDomainVerdict:
+    def test_a_relabelled_factor_is_pinned_to_the_factor_that_was_asked(self):
+        out = _normalise_domain_verdict({"factor": "safety_margin_negative", "contributed": "CONTRIBUTED", "confidence": 0.9},
+                                        "battery_energy")
+        assert out["factor"] == "battery_energy"
+        assert out["reported_factor"] == "safety_margin_negative"
+        assert out["contributed"] == "CONTRIBUTED"
+
+    def test_verdict_spelling_is_normalised_and_junk_becomes_uncertain(self):
+        assert _normalise_domain_verdict({"contributed": "not contributed"}, "f")["contributed"] == "NOT_CONTRIBUTED"
+        assert _normalise_domain_verdict({"contributed": "maybe"}, "f")["contributed"] == "UNCERTAIN"
+
+    def test_confidence_is_clamped_and_non_numbers_become_zero(self):
+        assert _normalise_domain_verdict({"confidence": 1.7}, "f")["confidence"] == 1.0
+        assert _normalise_domain_verdict({"confidence": "high"}, "f")["confidence"] == 0.0
 
 
 class TestInvestigate:

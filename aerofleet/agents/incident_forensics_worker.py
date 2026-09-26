@@ -56,19 +56,73 @@ class IncidentJob:
     order_id: Optional[str] = None
 
 
+_FENCE_RE = re.compile(r"```[A-Za-z]*\s*(.*?)```", re.DOTALL)
+_VERDICTS = ("CONTRIBUTED", "NOT_CONTRIBUTED", "UNCERTAIN")
+
+
+def _json_objects(text: str) -> List[str]:
+    """Every top-level {...} span in `text`, found by brace balancing that ignores
+    braces inside JSON strings — so nested objects and a "}" inside an evidence
+    string no longer truncate the block (the old non-greedy regex did both)."""
+    spans, depth, start, in_str, esc = [], 0, 0, False, False
+    for i, ch in enumerate(text):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"' and depth > 0:
+            in_str = True
+        elif ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}" and depth > 0:
+            depth -= 1
+            if depth == 0:
+                spans.append(text[start:i + 1])
+    return spans
+
+
 def _extract_json_block(text: str) -> Optional[Dict[str, Any]]:
-    """Pull the last ```json ... ``` fenced block out of an LLM response.
+    """The agent's final JSON object: the last one that parses, preferring fenced
+    blocks (```json, ``` or any language tag) over bare objects in the prose.
+    Taking the last *parseable* object matters because models often echo the
+    prompt's schema line before giving their real answer.
     Never raises — a malformed/missing block is treated as "this agent's
     assessment couldn't be parsed," not a fatal error for the whole
     investigation (see _process()'s per-agent try/except)."""
-    matches = re.findall(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if not matches:
-        return None
+    fenced = [obj for block in _FENCE_RE.findall(text or "") for obj in _json_objects(block)]
+    for candidate in reversed(fenced + _json_objects(text or "")):
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    logger.warning("Could not parse an incident-forensics JSON block from the agent response")
+    return None
+
+
+def _normalise_domain_verdict(parsed: Dict[str, Any], factor_name: str) -> Dict[str, Any]:
+    """Pin a domain agent's verdict to the factor it was asked about.
+
+    The worker keys verdicts by factor, and agents sometimes relabel their own
+    factor ("safety_margin_negative", "routing_safety", ...). Trusting that label
+    silently dropped the verdict and scored the real factor as UNCERTAIN; the
+    agent's own label is kept as `reported_factor` for the transcript."""
+    verdict = str(parsed.get("contributed", "")).strip().upper().replace(" ", "_").replace("-", "_")
     try:
-        return json.loads(matches[-1])
-    except json.JSONDecodeError as exc:
-        logger.warning(f"Could not parse incident-forensics JSON block: {exc}")
-        return None
+        confidence = min(max(float(parsed.get("confidence", 0.0)), 0.0), 1.0)
+    except (TypeError, ValueError):
+        confidence = 0.0
+    out = dict(parsed)
+    out.update(factor=factor_name, contributed=verdict if verdict in _VERDICTS else "UNCERTAIN", confidence=confidence)
+    if parsed.get("factor") not in (None, factor_name):
+        out["reported_factor"] = parsed.get("factor")
+    return out
 
 
 class IncidentForensicsWorker:
@@ -146,7 +200,7 @@ class IncidentForensicsWorker:
                 "model": agent["model"], "text": raw,
             })
             parsed = _extract_json_block(raw)
-            factors.append(parsed if parsed else {
+            factors.append(_normalise_domain_verdict(parsed, domain_factor.factor_name) if parsed else {
                 "factor": domain_factor.factor_name, "contributed": "UNCERTAIN",
                 "confidence": 0.0, "evidence": "Could not parse this agent's response.",
             })

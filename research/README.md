@@ -8,7 +8,7 @@ manuscript, it should trace back to a file in here.
 
 | # | Gap | Status |
 |---|---|---|
-| 1 | Real mass-forensics LLM numbers | **On you** — running on the college PC |
+| 1 | Real mass-forensics LLM numbers | **Done** — 985/1,000 real cases, macro-F1 0.468, diagnosed in `real_llm_results.md` |
 | 2 | Real-world/hardware validation | Architecture confirmed SITL-ready; SITL not yet connected |
 | 3 | Statistical rigor (ablation study) | **Done** — real result in `results/` |
 | 4 | Formal CBF safety treatment | **Done** — honest math in `cbf_formal_safety.md` |
@@ -21,7 +21,13 @@ manuscript, it should trace back to a file in here.
 
 ---
 
-## 1. Real mass-forensics LLM numbers — *your action*
+## 1. Real mass-forensics LLM numbers — done
+
+**Result and how to report it: [`real_llm_results.md`](real_llm_results.md)** (macro-F1 0.468 on 985
+real cases; 82% of misses were unparseable agent output, 61% of false alarms were
+cross-attribution; worker fixed since, re-run pending). Diagnostics are reproducible with
+`python -m research.f1_diagnostics`. The notes below describe how the run was set up.
+
 
 The 1,000-case study, real Ollama backend. Already reduced from 5,000 (see earlier commits) for a
 realistic timeline. Command: `python -m scenario_engine.mass_forensics_evaluation`.
