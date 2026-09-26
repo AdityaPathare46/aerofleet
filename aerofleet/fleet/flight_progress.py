@@ -9,11 +9,21 @@ the depot pad.
 
 This dead-reckons each approved flight along its real planned route
 (the same optimized node path dispatch_order already computes and hands
-to the CBF gate) at a constant cruise speed. It is deliberately simple:
-no acceleration, no wind drift, no auto-completion on arrival — a drone
-that reaches its destination holds there (``arrived=True``) until the
-existing order lifecycle moves it on. LIVE drones never use this; they
-report their real position over MAVLink.
+to the CBF gate) with a three-phase vertical profile, the way a delivery
+multirotor actually flies it:
+
+  CLIMB    vertical at the origin depot, 0 -> cruise altitude at CLIMB_RATE_MPS
+  CRUISE   along the route at the cruise altitude, CRUISE_SPEED_MPS
+  DESCENT  vertical at the destination, cruise altitude -> 0 at DESCENT_RATE_MPS
+  LANDED   on the ground at the destination (``arrived=True``) until the
+           existing order lifecycle moves the drone on
+
+Because the whole flight is a known function of time, ``trajectory()``
+returns it as time-stamped 4D points (past and future) — what the VR
+views draw and what conflict_forecast.py projects forward. It is
+deliberately simple: constant rates, no acceleration, no wind drift.
+LIVE drones never use this; they report their real position over MAVLink
+and have no forecast.
 """
 from __future__ import annotations
 
@@ -24,6 +34,12 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 CRUISE_SPEED_MPS = 12.0
+# Conservative delivery-multirotor vertical rates (consumer quadcopters are
+# limited to ~5-6 m/s up and ~3-4 m/s down; loaded delivery drones fly slower).
+CLIMB_RATE_MPS = 3.0
+DESCENT_RATE_MPS = 2.0
+
+CLIMB, CRUISE, DESCENT, LANDED = "CLIMB", "CRUISE", "DESCENT", "LANDED"
 _EARTH_RADIUS_M = 6_371_000.0
 
 LatLon = Tuple[float, float]
@@ -57,11 +73,14 @@ class FlightState:
     lat: float
     lon: float
     heading_deg: float
-    progress: float          # 0..1 along the planned route
+    progress: float          # 0..1 along the planned route (horizontal)
     flown_m: float
     remaining_m: float
-    arrived: bool
+    arrived: bool            # landed at the destination
     remaining_path: List[LatLon]
+    altitude_m: float = 0.0  # above ground, from the vertical profile
+    phase: str = CRUISE
+    eta_s: float = 0.0       # seconds until touchdown
 
 
 @dataclass
@@ -72,6 +91,8 @@ class PlannedFlight:
     altitude_m: float
     started_at: float
     speed_mps: float = CRUISE_SPEED_MPS
+    climb_mps: float = CLIMB_RATE_MPS
+    descent_mps: float = DESCENT_RATE_MPS
     _cum_m: List[float] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:
@@ -90,35 +111,89 @@ class PlannedFlight:
     def destination(self) -> LatLon:
         return self.path[-1]
 
-    def state_at(self, now: float) -> FlightState:
-        flown = max(0.0, (now - self.started_at) * self.speed_mps)
-        total = self.total_m
-        if total <= 0.0 or len(self.path) == 1:
-            lat, lon = self.path[-1]
-            return FlightState(lat, lon, 0.0, 1.0, 0.0, 0.0, True, [self.path[-1]])
-        if flown >= total:
-            heading = bearing_deg(self.path[-2], self.path[-1])
-            lat, lon = self.path[-1]
-            return FlightState(lat, lon, heading, 1.0, total, 0.0, True, [self.path[-1]])
+    @property
+    def climb_s(self) -> float:
+        return self.altitude_m / self.climb_mps if self.climb_mps > 0 else 0.0
 
-        # Segment containing the current distance.
+    @property
+    def cruise_s(self) -> float:
+        return self.total_m / self.speed_mps
+
+    @property
+    def descent_s(self) -> float:
+        return self.altitude_m / self.descent_mps if self.descent_mps > 0 else 0.0
+
+    @property
+    def duration_s(self) -> float:
+        return self.climb_s + self.cruise_s + self.descent_s
+
+    def _point_at_distance(self, flown: float) -> Tuple[LatLon, int]:
+        """Position `flown` metres along the route, and the index of the segment it's on."""
+        if len(self.path) == 1 or self.total_m <= 0.0:
+            return self.path[-1], max(len(self.path) - 2, 0)
+        flown = min(max(flown, 0.0), self.total_m)
         i = 0
-        while i + 1 < len(self._cum_m) and self._cum_m[i + 1] < flown:
+        while i + 2 < len(self._cum_m) and self._cum_m[i + 1] < flown:
             i += 1
         a, b = self.path[i], self.path[i + 1]
         seg = self._cum_m[i + 1] - self._cum_m[i]
         t = 0.0 if seg <= 0 else (flown - self._cum_m[i]) / seg
-        lat = a[0] + (b[0] - a[0]) * t
-        lon = a[1] + (b[1] - a[1]) * t
-        return FlightState(
-            lat=lat, lon=lon,
-            heading_deg=bearing_deg(a, b),
-            progress=flown / total,
-            flown_m=flown,
-            remaining_m=total - flown,
-            arrived=False,
-            remaining_path=[(lat, lon)] + self.path[i + 1:],
-        )
+        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t), i
+
+    def _heading(self, i: int) -> float:
+        return bearing_deg(self.path[i], self.path[i + 1]) if len(self.path) > 1 else 0.0
+
+    def state_at(self, now: float) -> FlightState:
+        elapsed = max(0.0, now - self.started_at)
+        total = self.total_m
+        eta = max(0.0, self.duration_s - elapsed)
+
+        if elapsed < self.climb_s:
+            lat, lon = self.path[0]
+            return FlightState(lat, lon, self._heading(0), 0.0, 0.0, total, False, list(self.path),
+                               altitude_m=elapsed * self.climb_mps, phase=CLIMB, eta_s=eta)
+
+        cruise_elapsed = elapsed - self.climb_s
+        if cruise_elapsed < self.cruise_s:
+            flown = cruise_elapsed * self.speed_mps
+            (lat, lon), i = self._point_at_distance(flown)
+            return FlightState(
+                lat=lat, lon=lon, heading_deg=self._heading(i), progress=flown / total,
+                flown_m=flown, remaining_m=total - flown, arrived=False,
+                remaining_path=[(lat, lon)] + self.path[i + 1:],
+                altitude_m=self.altitude_m, phase=CRUISE, eta_s=eta,
+            )
+
+        lat, lon = self.path[-1]
+        heading = self._heading(len(self.path) - 2) if len(self.path) > 1 else 0.0
+        descent_elapsed = cruise_elapsed - self.cruise_s
+        if descent_elapsed < self.descent_s:
+            return FlightState(lat, lon, heading, 1.0, total, 0.0, False, [self.path[-1]],
+                               altitude_m=self.altitude_m - descent_elapsed * self.descent_mps, phase=DESCENT, eta_s=eta)
+        return FlightState(lat, lon, heading, 1.0, total, 0.0, True, [self.path[-1]],
+                           altitude_m=0.0, phase=LANDED, eta_s=0.0)
+
+    def trajectory(self, now: float, max_points: int = 48) -> List[Tuple[float, float, float, float]]:
+        """The whole flight as (lat, lon, altitude_m, t_rel_s) points, where t_rel_s is
+        seconds relative to `now` (negative = already flown). Always includes the
+        take-off point, top of climb, the route (thinned to fit), top of descent,
+        touchdown, and the drone's current position at t_rel_s = 0 while airborne."""
+        t0 = self.started_at - now
+        alt = self.altitude_m
+        pts: List[Tuple[float, float, float, float]] = [(*self.path[0], 0.0, t0), (*self.path[0], alt, t0 + self.climb_s)]
+        route_idx = list(range(len(self.path)))
+        if len(route_idx) > max_points - 5:
+            step = (len(route_idx) - 1) / (max_points - 6)
+            route_idx = sorted({round(k * step) for k in range(max_points - 5)} | {len(self.path) - 1})
+        for k in route_idx[1:]:
+            pts.append((*self.path[k], alt, t0 + self.climb_s + self._cum_m[k] / self.speed_mps))
+        pts.append((*self.path[-1], 0.0, t0 + self.duration_s))
+
+        if t0 < 0 < t0 + self.duration_s:
+            s = self.state_at(now)
+            pts.append((s.lat, s.lon, s.altitude_m, 0.0))
+            pts.sort(key=lambda p: p[3])
+        return [(round(a, 6), round(b, 6), round(h, 1), round(t, 1)) for a, b, h, t in pts]
 
 
 _LOCK = threading.Lock()

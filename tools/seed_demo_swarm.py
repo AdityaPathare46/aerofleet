@@ -43,6 +43,10 @@ def main() -> int:
     ap.add_argument("--city", default="pune")
     ap.add_argument("--orders", type=int, default=14, help="flights to dispatch")
     ap.add_argument("--rejections", type=int, default=2, help="deliberate red-zone dispatches (create incidents)")
+    ap.add_argument("--converging", type=int, default=0,
+                    help="pairs of deliveries from one depot to the same address ~1 km away, launched --stagger "
+                         "seconds apart: the second arrives over the first while it is still descending — the "
+                         "conflict the VR view's trajectory forecast is there to catch before it happens")
     ap.add_argument("--stagger", type=float, default=2.5, help="seconds between launches from the same depot")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
@@ -87,6 +91,19 @@ def main() -> int:
         approved += verdict == "APPROVED"
         rejected += verdict != "APPROVED"
         print(f"  flight {i + 1:>2}/{args.orders}  {depot['depot_id']:<10} -> {verdict}  {result.get('assigned_drone_id') or ''}")
+
+    for i in range(args.converging):
+        depot = depots[i % len(depots)]
+        drop = offset(depot["lat"], depot["lon"], rng.uniform(0, 360), 1000)
+        verdicts = []
+        for _ in range(2):
+            wait = args.stagger - (time.time() - last_launch.get(depot["depot_id"], 0.0))
+            if wait > 0:
+                time.sleep(wait)
+            r = dispatch(depot, *drop, "STANDARD")
+            verdicts.append(r.get("verdict") or r.get("detail"))
+            last_launch[depot["depot_id"]] = time.time()
+        print(f"  converging pair {i + 1}: two deliveries {depot['depot_id']} -> same address  {' / '.join(map(str, verdicts))}")
 
     for i in range(min(args.rejections, len(red_zones) * 3)):
         zone = red_zones[i % len(red_zones)]

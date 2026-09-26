@@ -22,6 +22,10 @@ export interface LiveDrone {
   remaining_m: number | null
   arrived: boolean
   route: [number, number][]
+  phase: 'CLIMB' | 'CRUISE' | 'DESCENT' | 'LANDED' | null
+  eta_s: number | null
+  /** Whole flight as [lat, lon, altitude_m, t_rel_s]; negative t = already flown. */
+  trajectory: [number, number, number, number][]
   position_source: 'TELEMETRY' | 'ROUTE_DEAD_RECKONING' | 'DEPOT_NODE'
 }
 
@@ -34,12 +38,29 @@ export interface DronePair {
   separation_margin_m: number
 }
 
+// A pair whose planned trajectories come within the watch band later in the forecast horizon.
+export interface PredictedConflict {
+  a: string
+  b: string
+  t_s: number
+  horizontal_m: number
+  vertical_m: number
+  separation_margin_m: number
+  severity: 'CONFLICT' | 'WATCH'
+  a_at: [number, number, number]  // lat, lon, altitude_m
+  b_at: [number, number, number]
+}
+
 export interface LiveConstants {
   min_separation_m: number
   operational_ceiling_m: number
   legal_ceiling_m: number
   pair_awareness_radius_m: number
   cruise_speed_mps: number
+  climb_rate_mps?: number
+  descent_rate_mps?: number
+  forecast_horizon_s?: number
+  separation_watch_band_m?: number
 }
 
 export interface LiveMarginsDto {
@@ -48,6 +69,8 @@ export interface LiveMarginsDto {
   drone_count: number
   drones: Record<string, LiveDrone>
   pairs: DronePair[]
+  predicted_conflicts?: PredictedConflict[]
+  forecast_drone_ids?: string[]
   fleet_worst_case: Record<string, number>
   constants: LiveConstants
   constraint_sources: { live: string[]; default: string[] }
@@ -136,4 +159,6 @@ export interface VRSceneDto {
     agrees_with_geometry: boolean
     has_council_claims: boolean
   }
+  /** Route the CBF gate checked, per waypoint: [lat, lon, altitude_m, in_red_zone 0/1, battery_margin_wh]. */
+  planned_route?: [number, number, number, number, number][]
 }

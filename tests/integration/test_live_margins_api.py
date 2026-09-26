@@ -72,9 +72,12 @@ def test_pairs_carry_horizontal_and_vertical_separation(api_client, auth_headers
     fleet = get_fleet_state("pune")
     a, b, far = fleet.list_drones()[:3]
     lat0, lon0 = fleet.graph.node_lat_lon(fleet.depots[next(iter(fleet.depots))].node)
-    # a and b ~10 m apart horizontally, stacked 20 m apart vertically.
-    _fly(fleet, a, "OA", [(lat0, lon0), (lat0 + 0.05, lon0)], 50.0)
-    _fly(fleet, b, "OB", [(lat0 + 0.00009, lon0), (lat0 + 0.05, lon0)], 70.0)
+    # a and b ~10 m apart horizontally, stacked 20 m apart vertically — each just past the top
+    # of its climb (a drone still on the pad isn't in the airspace and isn't paired).
+    def just_cruising(alt):
+        return alt / flight_progress.CLIMB_RATE_MPS + 0.5
+    _fly(fleet, a, "OA", [(lat0, lon0), (lat0 + 0.05, lon0)], 50.0, started_ago_s=just_cruising(50.0))
+    _fly(fleet, b, "OB", [(lat0 + 0.00009, lon0), (lat0 + 0.05, lon0)], 70.0, started_ago_s=just_cruising(70.0))
     _fly(fleet, far, "OC", [(lat0 + 0.2, lon0 + 0.2), (lat0 + 0.3, lon0 + 0.2)], 50.0)
 
     body = api_client.get(URL, headers=auth_headers).json()
@@ -86,3 +89,24 @@ def test_pairs_carry_horizontal_and_vertical_separation(api_client, auth_headers
     assert not any(far.drone_id in (p["a"], p["b"]) for p in body["pairs"])  # beyond awareness radius
     assert body["drones"][a.drone_id]["nearest_drone_id"] == b.drone_id
     assert body["drones"][a.drone_id]["passed"] is False  # CBF min_separation is horizontal
+
+
+def test_trajectory_and_forecast_are_served(api_client, auth_headers, fresh_fleet_state):
+    fleet = get_fleet_state("pune")
+    a, b = fleet.list_drones()[:2]
+    lat0, lon0 = fleet.graph.node_lat_lon(fleet.depots[next(iter(fleet.depots))].node)
+    # Head-on along the same street, 1.2 km apart, same altitude: they meet in ~50 s of cruise.
+    _fly(fleet, a, "OA", [(lat0, lon0), (lat0 + 0.02, lon0)], 60.0, started_ago_s=25.0)
+    _fly(fleet, b, "OB", [(lat0 + 0.0108 * 2, lon0), (lat0 - 0.01, lon0)], 60.0, started_ago_s=25.0)
+
+    body = api_client.get(URL, headers=auth_headers).json()
+    traj = body["drones"][a.drone_id]["trajectory"]
+    assert traj[0][2] == 0.0 and traj[0][3] < 0          # take-off, already in the past
+    assert any(p[3] == 0.0 for p in traj)                 # current position at t = 0
+    assert traj[-1][2] == 0.0 and traj[-1][3] > 0         # touchdown ahead
+    assert body["drones"][a.drone_id]["phase"] == "CRUISE"
+
+    conflict = next(c for c in body["predicted_conflicts"] if {c["a"], c["b"]} == {a.drone_id, b.drone_id})
+    assert conflict["severity"] == "CONFLICT" and 0 < conflict["t_s"] <= 120
+    assert conflict["horizontal_m"] < body["constants"]["min_separation_m"]
+    assert set(body["forecast_drone_ids"]) >= {a.drone_id, b.drone_id}

@@ -1,5 +1,5 @@
 import { fmtDistance } from './geo'
-import { droneStatus } from './Swarm'
+import { clock, droneStatus } from './Swarm'
 import { C, CLAIM_STATUS, CONSTRAINT_LABELS, CONSTRAINT_UNITS, FACTOR_LABELS, WARN_BANDS } from './theme'
 import type { LiveMarginsDto, VRSceneDto } from './types'
 
@@ -14,13 +14,18 @@ export function fleetKpis(data: LiveMarginsDto | null): Kpi[] {
   const loss = data?.pairs.filter((p) => p.separation_margin_m < 0).length ?? 0
   const watch = drones.filter((d) => droneStatus(d) !== 'ok').length
   const closest = data?.pairs[0]
+  const predicted = (data?.predicted_conflicts ?? []).filter((c) => c.severity === 'CONFLICT')
+  const horizonMin = Math.round((data?.constants.forecast_horizon_s ?? 120) / 60)
   return [
     { key: 'AIRBORNE', value: String(drones.length), color: C.text },
-    { key: 'LOSS OF SEP.', value: String(loss), color: loss ? C.bad : C.ok, sub: `pairs < ${minSep} m` },
+    {
+      key: 'LOSS OF SEP.', value: String(loss), color: loss ? C.bad : C.ok,
+      sub: closest ? `now · closest ${fmtDistance(closest.horizontal_m)}` : `pairs < ${minSep} m now`,
+    },
     { key: 'WATCH / VIOL.', value: String(watch), color: watch ? C.warn : C.ok, sub: 'drones' },
     {
-      key: 'CLOSEST PAIR', value: closest ? fmtDistance(closest.horizontal_m) : '—',
-      color: closest && closest.separation_margin_m < 0 ? C.bad : C.text, sub: 'horizontal',
+      key: 'PREDICTED', value: String(predicted.length), color: predicted.length ? C.bad : C.ok,
+      sub: predicted.length ? `conflicts · first in ${clock(Math.min(...predicted.map((c) => c.t_s)))}` : `conflicts in next ${horizonMin} min`,
     },
   ]
 }
@@ -44,7 +49,7 @@ export function constraintRows(data: LiveMarginsDto | null): ConstraintRow[] {
 
 export function legendNote(minSep: number, vExag: number): string {
   return `Drop-line to the ground = altitude · beam = pair within ${WARN_BANDS.min_separation + minSep} m · `
-    + `dashed = remaining route · ASSUMED = no live per-drone sensor yet, dispatch-time default used · `
+    + `bright line = trajectory ahead (ticks every 30 s), faint = already flown · ring = predicted conflict · ASSUMED = no live per-drone sensor yet, dispatch-time default used · `
     + `symbols not to scale, vertical ×${vExag.toFixed(0)}`
 }
 

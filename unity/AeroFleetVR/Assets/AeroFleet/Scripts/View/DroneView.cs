@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AeroFleet.VR.Data;
 using AeroFleet.VR.Geo;
 using AeroFleet.VR.Interaction;
+using TMPro;
 using UnityEngine;
 
 namespace AeroFleet.VR.View
@@ -10,7 +11,8 @@ namespace AeroFleet.VR.View
     /// <summary>
     /// One airborne drone on the table: quad glyph pointing along its heading, a drop-line to the
     /// ground (the altitude you read against the ruler), a ground ring (where it is over the map),
-    /// its remaining route, and a data tag. Position eases toward each new poll so the swarm moves
+    /// its 4D trajectory — climb, cruise, descent; the flown part faint, the part ahead bright, with
+    /// +30 s time ticks and the touchdown point — and a data tag. Position eases toward each new poll so the swarm moves
     /// smoothly between 1.5 s updates instead of jumping.
     /// </summary>
     public class DroneView : MonoBehaviour
@@ -18,12 +20,18 @@ namespace AeroFleet.VR.View
         public const float G = 0.02f; // symbol span in metres — a symbol, not to scale (the legend says so)
 
         public string Id { get; private set; }
+        /// <summary>Height of this drone's tag card in metres (0 when collapsed to a title).</summary>
+        public float TagHeight => tag != null ? tag.CardSize.y : 0f;
+        float tagLift;
         public Action<string> OnSelect;
 
         Transform glyph, rotors, stem, shadow;
         Renderer nose, light;
-        LineRenderer statusRing, routeLine;
+        LineRenderer statusRing, pastLine, futureLine;
         Transform destMarker;
+        TextMeshPro destLabel;
+        readonly List<(Transform mark, TextMeshPro label)> ticks = new List<(Transform, TextMeshPro)>();
+        const int TickEveryS = 30, MaxTicks = 4;
         DataTag tag;
         BoxCollider tagHit;
         Vector3 target;
@@ -73,9 +81,21 @@ namespace AeroFleet.VR.View
             shadow.SetParent(transform, false);
             Draw.Line(shadow, Draw.Circle(0.0045f, 20), 0.0016f, Palette.Ok, loop: true, name: "Ring");
 
-            routeLine = Draw.Line(transform.parent, new Vector3[0], 0.0012f, Palette.Accent, name: "Route " + Id);
-            destMarker = Draw.Prim(PrimitiveType.Cube, transform.parent, Vector3.zero, Vector3.one * 0.0075f, Draw.Solid(Palette.Accent), "Destination " + Id).transform;
-            destMarker.localRotation = Quaternion.Euler(45, 0, 45);
+            pastLine = Draw.Line(transform.parent, new Vector3[0], 0.0008f, Palette.Accent, name: "Flown " + Id);
+            futureLine = Draw.Line(transform.parent, new Vector3[0], 0.0012f, Palette.Accent, name: "Ahead " + Id);
+            destMarker = new GameObject("Touchdown " + Id).transform;
+            destMarker.SetParent(transform.parent, false);
+            Draw.Prim(PrimitiveType.Cube, destMarker, Vector3.zero, Vector3.one * 0.0075f, Draw.Solid(Palette.Accent), "Diamond")
+                .transform.localRotation = Quaternion.Euler(45, 0, 45);
+            destLabel = Draw.Text(destMarker, "", 0.0068f, Palette.Accent, TextAlignmentOptions.Center, new Vector3(0, 0.0165f, 0));
+            destLabel.gameObject.AddComponent<Billboard>();
+            for (int i = 0; i < MaxTicks; i++)
+            {
+                var mark = Draw.Prim(PrimitiveType.Sphere, transform.parent, Vector3.zero, Vector3.one * 0.0042f, Draw.Solid(Palette.Accent), "Tick " + Id).transform;
+                var label = Draw.Text(mark, $"+{(i + 1) * TickEveryS} s", 0.0058f / 0.0042f, Palette.Accent, TextAlignmentOptions.Left, new Vector3(1.6f, 0.9f, 0));
+                label.gameObject.AddComponent<Billboard>();
+                ticks.Add((mark, label));
+            }
 
             tag = DataTag.Create(transform, new Vector3(0, G * 1.1f, 0), 0.0082f);
             tagHit = tag.gameObject.AddComponent<BoxCollider>();
@@ -84,8 +104,10 @@ namespace AeroFleet.VR.View
 
         void OnDestroy()
         {
-            if (routeLine != null) Destroy(routeLine.gameObject);
+            if (pastLine != null) Destroy(pastLine.gameObject);
+            if (futureLine != null) Destroy(futureLine.gameObject);
             if (destMarker != null) Destroy(destMarker.gameObject);
+            foreach (var t in ticks) if (t.mark != null) Destroy(t.mark.gameObject);
         }
 
         public void Apply(LiveDrone d, Diorama dio, Vector2d cityCenter, LiveConstants k, bool selected, bool expanded)
@@ -106,22 +128,42 @@ namespace AeroFleet.VR.View
             var ring = shadow.GetComponentInChildren<LineRenderer>();
             ring.startColor = ring.endColor = color;
 
-            // route
+            // trajectory: flown part faint, the part ahead bright, time ticks and touchdown when emphasised
             emphasised = selected || expanded;
-            var pts = new List<Vector3>();
-            if (d.Route != null && d.Route.Count >= 2)
-                foreach (var p in d.Route)
+            var past = new List<Vector3>();
+            var ahead = new List<Vector3>();
+            var traj = d.Trajectory;
+            if (traj != null && traj.Count >= 2)
+            {
+                foreach (var p in traj)
                 {
-                    Vector2 r = GeoMath.ToLocal(p[0], p[1], cityCenter.x, cityCenter.y);
-                    pts.Add(dio.Point(r.x, r.y, (float)d.AltitudeM));
+                    Vector3 v = TablePoint(dio, cityCenter, p);
+                    if (p[3] <= 0) past.Add(v);
+                    if (p[3] >= 0) ahead.Add(v);
                 }
-            routeLine.positionCount = pts.Count;
-            routeLine.SetPositions(pts.ToArray());
-            routeLine.widthMultiplier = emphasised ? 0.0016f : 0.0008f;
-            Color rc = Palette.WithAlpha(Palette.Accent, emphasised ? 0.85f : 0.28f);
-            routeLine.startColor = routeLine.endColor = rc;
-            destMarker.gameObject.SetActive(emphasised && pts.Count >= 2);
-            if (pts.Count >= 2) destMarker.localPosition = new Vector3(pts[pts.Count - 1].x, 0.005f, pts[pts.Count - 1].z);
+            }
+            else if (d.Route != null && d.Route.Count >= 2) // no plan (e.g. LIVE telemetry): remaining route only
+            {
+                foreach (var p in d.Route) ahead.Add(TablePoint(dio, cityCenter, new[] { p[0], p[1], d.AltitudeM, 0 }));
+            }
+            SetLine(pastLine, past, 0.0008f, Palette.WithAlpha(Palette.Accent, emphasised ? 0.35f : 0.12f));
+            SetLine(futureLine, ahead, emphasised ? 0.0016f : 0.0009f, Palette.WithAlpha(Palette.Accent, emphasised ? 0.9f : 0.32f));
+
+            bool hasTouchdown = traj != null && traj.Count >= 2 && traj[traj.Count - 1][3] > 0;
+            destMarker.gameObject.SetActive(emphasised && (hasTouchdown || ahead.Count >= 2));
+            if (ahead.Count >= 2)
+            {
+                Vector3 end = ahead[ahead.Count - 1];
+                destMarker.localPosition = new Vector3(end.x, Mathf.Max(end.y, 0.004f), end.z);
+                destLabel.text = hasTouchdown ? $"lands in {Clock(traj[traj.Count - 1][3])}" : "destination";
+            }
+            for (int i = 0; i < ticks.Count; i++)
+            {
+                double t = (i + 1) * TickEveryS;
+                bool show = emphasised && traj != null && traj.Count >= 2 && t < traj[traj.Count - 1][3];
+                ticks[i].mark.gameObject.SetActive(show);
+                if (show) ticks[i].mark.localPosition = TablePoint(dio, cityCenter, AtTime(traj, t));
+            }
 
             // tag
             string title = expanded ? $"{Vocab.ShortId(Id)}  {d.State?.Replace('_', ' ')}" : Vocab.ShortId(Id);
@@ -153,14 +195,66 @@ namespace AeroFleet.VR.View
             else
                 rows.Add(TagRow.Text("SEP", "no other drone airborne", Palette.TextDim));
             if (d.Progress != null)
-                rows.Add(TagRow.Bar("LEG", d.Arrived ? "arrived · holding" : $"{d.Progress * 100:0} %  ·  {GeoMath.FormatDistance(d.RemainingM ?? 0)} left",
-                    (float)d.Progress.Value, -1, Palette.Accent));
+            {
+                string leg = d.Phase switch
+                {
+                    "CLIMB" => $"climbing to {CruiseAltitude(d):0} m over the depot",
+                    "DESCENT" => $"descending · lands in {Clock(d.EtaS ?? 0)}",
+                    "LANDED" => "landed at destination",
+                    _ => $"{d.Progress * 100:0} %  ·  {GeoMath.FormatDistance(d.RemainingM ?? 0)} left · lands in {Clock(d.EtaS ?? 0)}",
+                };
+                rows.Add(TagRow.Bar("LEG", leg, (float)d.Progress.Value, -1, Palette.Accent));
+            }
             rows.Add(TagRow.Text("SRC", Vocab.SourceLabel(d.PositionSource), Palette.TextDim));
             return rows;
         }
 
+        static Vector3 TablePoint(Diorama dio, Vector2d city, double[] p)
+        {
+            Vector2 en = GeoMath.ToLocal(p[0], p[1], city.x, city.y);
+            return dio.Point(en.x, en.y, (float)p[2]);
+        }
+
+        /// <summary>Trajectory position at t seconds from now (linear between samples).</summary>
+        static double[] AtTime(List<double[]> traj, double t)
+        {
+            for (int i = 0; i + 1 < traj.Count; i++)
+            {
+                double[] a = traj[i], b = traj[i + 1];
+                if (t < a[3] || t > b[3]) continue;
+                double u = b[3] > a[3] ? (t - a[3]) / (b[3] - a[3]) : 0;
+                return new[] { a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u, t };
+            }
+            return traj[traj.Count - 1];
+        }
+
+        static double CruiseAltitude(LiveDrone d)
+        {
+            double max = d.AltitudeM;
+            if (d.Trajectory != null) foreach (var p in d.Trajectory) max = System.Math.Max(max, p[2]);
+            return max;
+        }
+
+        public static string Clock(double seconds)
+        {
+            int s = Mathf.Max(0, Mathf.RoundToInt((float)seconds));
+            return s >= 60 ? $"{s / 60}:{s % 60:00}" : $"{s} s";
+        }
+
+        static void SetLine(LineRenderer lr, List<Vector3> pts, float width, Color c)
+        {
+            lr.positionCount = pts.Count;
+            lr.SetPositions(pts.ToArray());
+            lr.widthMultiplier = width;
+            lr.startColor = lr.endColor = c;
+        }
+
+        /// <summary>Raise the tag so it doesn't sit on a nearby drone's tag (set by SwarmView).</summary>
+        public void SetTagLift(float lift) => tagLift = lift;
+
         void Update()
         {
+            tag.transform.localPosition = Vector3.Lerp(tag.transform.localPosition, new Vector3(0, G * 1.1f + tagLift, 0), 1 - Mathf.Exp(-Time.deltaTime * 6f));
             float dt = Time.deltaTime;
             transform.localPosition = Vector3.Lerp(transform.localPosition, target, 1 - Mathf.Exp(-dt * 2.5f));
             rotors.GetChild(0).Rotate(0, -38 * Mathf.Rad2Deg * dt, 0);

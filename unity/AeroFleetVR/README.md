@@ -35,10 +35,10 @@ Assets/AeroFleet/
   Scripts/Geo/Diorama.cs           real metres → table metres (east=+x, north=+z, vertical ×VExag)
   Scripts/View/TableView.cs        surface, streets, zone prisms, ceilings, altitude ruler, scale, depots
   Scripts/View/BuildingsView.cs    OSM footprints extruded; tagged heights light, assumed heights dark
-  Scripts/View/SwarmView.cs        drones + separation beams / awareness links
-  Scripts/View/DroneView.cs        glyph, drop-line, ground ring, route, data tag
+  Scripts/View/SwarmView.cs        drones, separation beams / awareness links, predicted conflicts, tag stacking
+  Scripts/View/DroneView.cs        glyph, drop-line, ground ring, 4D trajectory (+30 s ticks, touchdown), data tag
   Scripts/View/DataTag.cs          labelled rows with bars and limit ticks (no unlabelled bars)
-  Scripts/View/ReplayView.cs       frozen rejection geometry
+  Scripts/View/ReplayView.cs       frozen rejection: the exact route the gate checked, failing waypoints in red
   Scripts/View/FleetBoard.cs       KPIs, worst-case margin per CBF constraint (LIVE/ASSUMED), controls
   Scripts/View/ContextBoard.cs     replay: claim check · live: how to read the table + selected drone
   Scripts/Interaction/             Clickable (XRI ray or mouse), desktop orbit/picking

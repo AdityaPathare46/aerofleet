@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { Diorama, fmtDistance, toLocal } from './geo'
 import { Label, Tag, TagRow } from './Tag'
 import { C, FONT, WARN_BANDS } from './theme'
-import type { DronePair, LiveConstants, LiveDrone } from './types'
+import type { DronePair, LiveConstants, LiveDrone, PredictedConflict } from './types'
 
 type PosMap = React.MutableRefObject<Record<string, THREE.Vector3>>
 export type DroneStatus = 'ok' | 'watch' | 'violation'
@@ -22,6 +22,28 @@ export function droneStatus(drone: LiveDrone): DroneStatus {
 }
 
 export const STATUS_COLOR: Record<DroneStatus, string> = { ok: C.ok, watch: C.warn, violation: C.bad }
+
+const TICK_EVERY_S = 30
+const MAX_TICKS = 4
+
+export function clock(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds))
+  return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s} s`
+}
+
+type Traj = [number, number, number, number][]
+
+/** Trajectory position at t seconds from now (linear between samples). */
+function atTime(traj: Traj, t: number): [number, number, number] {
+  for (let i = 0; i + 1 < traj.length; i++) {
+    const a = traj[i], b = traj[i + 1]
+    if (t < a[3] || t > b[3]) continue
+    const u = b[3] > a[3] ? (t - a[3]) / (b[3] - a[3]) : 0
+    return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]
+  }
+  const last = traj[traj.length - 1]
+  return [last[0], last[1], last[2]]
+}
 
 function shortId(id: string): string {
   return id.length > 10 ? id.slice(-8) : id
@@ -116,14 +138,27 @@ function Drone({
     if (shadow.current) shadow.current.position.y = -h + 0.0012
   })
 
-  const route = useMemo(() => {
-    if (drone.route.length < 2) return null
-    return drone.route.map(([lat, lon]) => {
-      const [re, rn] = toLocal(lat, lon, cityCenter)
-      return d.point(re, rn, drone.altitude_m)
-    })
-  }, [drone.route, drone.altitude_m, d, cityCenter])
-  const dest = route ? route[route.length - 1] : null
+  // 4D trajectory: flown part faint, the part ahead bright, +30 s ticks and touchdown.
+  const path = useMemo(() => {
+    const pt = (lat: number, lon: number, alt: number) => {
+      const [pe, pn] = toLocal(lat, lon, cityCenter)
+      return d.point(pe, pn, alt)
+    }
+    const traj = drone.trajectory ?? []
+    if (traj.length >= 2) {
+      const last = traj[traj.length - 1]
+      return {
+        past: traj.filter((p) => p[3] <= 0).map((p) => pt(p[0], p[1], p[2])),
+        ahead: traj.filter((p) => p[3] >= 0).map((p) => pt(p[0], p[1], p[2])),
+        ticks: Array.from({ length: MAX_TICKS }, (_, i) => (i + 1) * TICK_EVERY_S)
+          .filter((t) => t < last[3]).map((t) => ({ t, pos: pt(...atTime(traj, t)) })),
+        touchdown: last[3] > 0 ? { pos: pt(last[0], last[1], 0), eta: last[3] } : null,
+      }
+    }
+    // no plan (e.g. LIVE telemetry): remaining route at the current altitude only
+    const ahead = drone.route.length >= 2 ? drone.route.map(([lat, lon]) => pt(lat, lon, drone.altitude_m)) : []
+    return { past: [], ahead, ticks: [], touchdown: ahead.length ? { pos: ahead[ahead.length - 1], eta: null } : null }
+  }, [drone.trajectory, drone.route, drone.altitude_m, d, cityCenter])
 
   const rows = useMemo<TagRow[]>(() => {
     const legal = constants.legal_ceiling_m
@@ -150,10 +185,12 @@ function Drone({
         : { label: 'SEP', value: 'no other drone airborne', color: C.textDim },
     ]
     if (drone.progress != null) {
-      r.push({
-        label: 'LEG', value: drone.arrived ? 'arrived · holding' : `${Math.round(drone.progress * 100)} % · ${fmtDistance(drone.remaining_m ?? 0)} left`,
-        bar: { frac: drone.progress, color: C.accent },
-      })
+      const eta = clock(drone.eta_s ?? 0)
+      const value = drone.phase === 'CLIMB' ? `climbing to ${Math.round(Math.max(...(drone.trajectory ?? []).map((p) => p[2]), drone.altitude_m))} m`
+        : drone.phase === 'DESCENT' ? `descending · lands in ${eta}`
+          : drone.phase === 'LANDED' ? 'landed at destination'
+            : `${Math.round(drone.progress * 100)} % · ${fmtDistance(drone.remaining_m ?? 0)} left · lands in ${eta}`
+      r.push({ label: 'LEG', value, bar: { frac: drone.progress, color: C.accent } })
     }
     r.push({
       label: 'SRC',
@@ -196,22 +233,35 @@ function Drone({
           onClick={() => onSelect(id)}
         />
       </group>
-      {route && (selected || expanded) && (
+      {path.past.length >= 2 && (
+        <Line points={path.past} color={C.accent} lineWidth={0.8} transparent opacity={selected || expanded ? 0.3 : 0.12} />
+      )}
+      {path.ahead.length >= 2 && (selected || expanded) && (
         <>
-          <Line points={route} color={C.accent} lineWidth={1.4} dashed dashSize={0.008} gapSize={0.005} transparent opacity={0.8} />
-          {dest && (
-            <group position={[dest[0], 0.004, dest[2]]}>
+          <Line points={path.ahead} color={C.accent} lineWidth={1.6} transparent opacity={0.9} />
+          {path.ticks.map(({ t, pos }) => (
+            <group key={t} position={pos}>
+              <mesh>
+                <sphereGeometry args={[0.0021, 10, 10]} />
+                <meshBasicMaterial color={C.accent} />
+              </mesh>
+              <Label position={[0.009, 0.005, 0]} anchorX="left" text={`+${t} s`} color={C.accent} size={0.0058} font={FONT.mono} />
+            </group>
+          ))}
+          {path.touchdown && (
+            <group position={[path.touchdown.pos[0], 0.004, path.touchdown.pos[2]]}>
               <mesh>
                 <octahedronGeometry args={[0.0055]} />
                 <meshBasicMaterial color={C.accent} />
               </mesh>
-              {selected && <Label position={[0, 0.014, 0]} text={`${shortId(id)} destination`} color={C.accent} size={0.0068} />}
+              <Label position={[0, 0.014, 0]} color={C.accent} size={0.0068}
+                text={path.touchdown.eta != null ? `${shortId(id)} lands in ${clock(path.touchdown.eta)}` : `${shortId(id)} destination`} />
             </group>
           )}
         </>
       )}
-      {route && !(selected || expanded) && (
-        <Line points={route} color={C.accent} lineWidth={0.8} transparent opacity={0.28} />
+      {path.ahead.length >= 2 && !(selected || expanded) && (
+        <Line points={path.ahead} color={C.accent} lineWidth={0.8} transparent opacity={0.28} />
       )}
     </>
   )
@@ -280,13 +330,41 @@ function AwarenessLinks({ pairs, pos }: { pairs: DronePair[]; pos: PosMap }) {
   )
 }
 
+// ── Predicted conflicts (look-ahead over planned trajectories) ─────────
+
+function PredictedConflictMarker({ c, d, cityCenter }: { c: PredictedConflict; d: Diorama; cityCenter: [number, number] }) {
+  const conflict = c.severity === 'CONFLICT'
+  const color = conflict ? C.bad : C.warn
+  const at = (p: [number, number, number]) => {
+    const [e, n] = toLocal(p[0], p[1], cityCenter)
+    return d.point(e, n, p[2])
+  }
+  const pa = at(c.a_at), pb = at(c.b_at)
+  const mid: [number, number, number] = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2 - 0.014, (pa[2] + pb[2]) / 2]
+  return (
+    <group>
+      {[pa, pb].map((p, i) => (
+        <mesh key={i} position={p} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.0075, 0.0095, 28]} />
+          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+      <Line points={[pa, pb]} color={color} lineWidth={1.4} />
+      {/* below the rings: the space above is where the drones' tags are */}
+      <Label position={mid} color={color} size={0.0066} font={FONT.mono}
+        text={`${conflict ? 'PREDICTED CONFLICT' : 'near miss'} in ${clock(c.t_s)} · ${Math.round(c.horizontal_m)} m ↔ ↕${Math.round(c.vertical_m)} m`} />
+    </group>
+  )
+}
+
 // ── Swarm root ─────────────────────────────────────────────────────────
 
 export function Swarm({
-  drones, pairs, constants, d, cityCenter, selected, onSelect, detailAll,
+  drones, pairs, predicted = [], constants, d, cityCenter, selected, onSelect, detailAll,
 }: {
   drones: Record<string, LiveDrone>
   pairs: DronePair[]
+  predicted?: PredictedConflict[]
   constants: LiveConstants
   d: Diorama
   cityCenter: [number, number]
@@ -298,6 +376,8 @@ export function Swarm({
   const watchBand = WARN_BANDS.min_separation
   const close = pairs.filter((p) => p.separation_margin_m < watchBand)
   const loose = pairs.filter((p) => p.separation_margin_m >= watchBand)
+  const inConflict = new Set(predicted.filter((c) => c.severity === 'CONFLICT').flatMap((c) => [c.a, c.b]))
+  const onTable = (p: [number, number, number]) => { const [e, n] = toLocal(p[0], p[1], cityCenter); return d.contains(e, n) }
 
   return (
     <>
@@ -306,12 +386,15 @@ export function Swarm({
         if (!d.contains(e, n, d.extentM * 0.02)) return null
         return (
           <Drone key={id} id={id} drone={drone} d={d} cityCenter={cityCenter} pos={pos}
-            selected={selected === id} expanded={detailAll || selected === id || droneStatus(drone) !== 'ok'}
+            selected={selected === id} expanded={detailAll || selected === id || droneStatus(drone) !== 'ok' || inConflict.has(id)}
             constants={constants} onSelect={onSelect} />
         )
       })}
       <AwarenessLinks pairs={loose} pos={pos} />
       {close.map((p) => <PairBeam key={`${p.a}|${p.b}`} pair={p} pos={pos} minSep={constants.min_separation_m} />)}
+      {predicted.filter((c) => drones[c.a] && drones[c.b] && onTable(c.a_at) && onTable(c.b_at)).map((c) => (
+        <PredictedConflictMarker key={`${c.a}|${c.b}`} c={c} d={d} cityCenter={cityCenter} />
+      ))}
     </>
   )
 }

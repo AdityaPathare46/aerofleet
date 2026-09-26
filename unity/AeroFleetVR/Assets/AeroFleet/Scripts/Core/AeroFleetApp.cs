@@ -283,7 +283,7 @@ namespace AeroFleet.VR
             yield return api.Get<VrSceneDto>($"/api/v1/incidents/{id}/vr-scene", true, x => s = x, (_, e) => SetStatus($"Incident: {e}", true));
             if (Mode != ViewMode.Replay || s == null) yield break;
             Scene = s;
-            SetStatus($"{CityName} · replay · incident {IncidentIndex + 1} of {Incidents.Count} · {Scene.Violations.Count} violated constraint(s)");
+            SetStatus($"{CityName} · replay · incident {IncidentIndex + 1} of {Incidents.Count} · {ReplayView.GroupViolations(Scene.Violations).Count} violated constraint(s)");
             RebuildDiorama();
             replay.Show(Scene, Diorama, center);
         }

@@ -127,10 +127,17 @@ namespace AeroFleet.VR.View
             DronePair closest = data != null && data.Pairs.Count > 0 ? data.Pairs[0] : null;
 
             SetKpi(0, "AIRBORNE", airborne.ToString(), Palette.Text, "drones in the air");
-            SetKpi(1, "LOSS OF SEP.", loss.ToString(), loss > 0 ? Palette.Bad : Palette.Ok, $"pairs < {minSep:0} m");
+            SetKpi(1, "LOSS OF SEP.", loss.ToString(), loss > 0 ? Palette.Bad : Palette.Ok,
+                closest != null ? $"now · closest {GeoMath.FormatDistance(closest.HorizontalM)}" : $"pairs < {minSep:0} m now");
             SetKpi(2, "WATCH / VIOL.", watch.ToString(), watch > 0 ? Palette.Warn : Palette.Ok, "drones near a limit");
-            SetKpi(3, "CLOSEST PAIR", closest != null ? GeoMath.FormatDistance(closest.HorizontalM) : "—",
-                closest != null && closest.SeparationMarginM < 0 ? Palette.Bad : Palette.Text, "horizontal");
+            int predicted = 0;
+            PredictedConflict soonest = null;
+            if (data != null)
+                foreach (var c in data.PredictedConflicts)
+                    if (c.Severity == "CONFLICT") { predicted++; if (soonest == null || c.TS < soonest.TS) soonest = c; }
+            double horizon = data?.Constants.ForecastHorizonS ?? 120;
+            SetKpi(3, "PREDICTED", predicted.ToString(), predicted > 0 ? Palette.Bad : Palette.Ok,
+                soonest != null ? $"conflicts · first in {DroneView.Clock(soonest.TS)}" : $"conflicts in next {horizon / 60:0} min");
 
             var liveSet = new HashSet<string>(data?.ConstraintSources.Live ?? new List<string>());
             for (int i = 0; i < rows.Count; i++)
@@ -149,7 +156,7 @@ namespace AeroFleet.VR.View
                 SetRow(i, text, c, has ? (isLive ? "LIVE" : "ASSUMED") : "", isLive ? Palette.Ok : Palette.TextDim);
             }
             legend.text = $"Drop-line to the ground = altitude · beam = pair within {Vocab.WarnBands["min_separation"] + minSep:0} m · " +
-                          "faint line = remaining route · ASSUMED = no live per-drone sensor yet, the dispatch-time default is used · " +
+                          "bright line = trajectory ahead (ticks every 30 s), faint = already flown · ASSUMED = no live per-drone sensor yet, the dispatch-time default is used · " +
                           $"symbols not to scale, vertical ×{(dio != null ? dio.VExag : 0):0}" + BuildingNote(app);
         }
 
@@ -160,7 +167,7 @@ namespace AeroFleet.VR.View
             title.text = n > 0 ? $"REPLAY · INCIDENT {app.IncidentIndex + 1} OF {n}" : "REPLAY · NO REJECTIONS YET";
             tableHeader.text = "CONSTRAINTS AT THE MOMENT OF REJECTION";
             var violated = new Dictionary<string, double>();
-            if (s != null) foreach (var v in s.Violations) violated[v.ConstraintName] = v.ViolationMagnitude;
+            if (s != null) foreach (var (name, worst, _) in ReplayView.GroupViolations(s.Violations)) violated[name] = worst;
 
             SetKpi(0, "VIOLATED", s != null ? violated.Count.ToString() : "—", violated.Count > 0 ? Palette.Bad : Palette.Text, "CBF constraints");
             SetKpi(1, "ALTITUDE", s?.AltitudeM != null ? $"{s.AltitudeM:0} m" : "—", violated.ContainsKey("altitude_ceiling") ? Palette.Bad : Palette.Text,

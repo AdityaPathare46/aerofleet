@@ -156,6 +156,7 @@ namespace AeroFleet.VR.View
             Item(Palette.Warn, "Separation beam", "Drawn between two drones inside the watch band, labelled horizontal ↔ and vertical ↕ distance.");
             Item(Palette.Bad, "Red column = DGCA no-fly zone", "Flight prohibited at every altitude. Yellow column = airport permission zone, ceiling 60 m.");
             Item(Palette.Accent, "Ceilings", "Blue plane = AeroFleet ops ceiling (100 m); red plane = DGCA legal limit (120 m AGL).");
+            Item(Palette.Bad, "Predicted conflict", "Where two planned trajectories will pass closer than 15 m within the next 2 min: rings mark both drones' future positions.");
 
             y += 0.01f;
             Heading("SELECTED DRONE", y);
@@ -177,7 +178,9 @@ namespace AeroFleet.VR.View
                 d.NearestDroneId != null
                     ? $"Nearest {Vocab.ShortId(d.NearestDroneId)}: {GeoMath.FormatDistance(d.NearestHorizontalM)} horizontal, {d.NearestVerticalM:0} m vertical"
                     : "No other drone airborne",
-                d.Progress != null ? (d.Arrived ? "Arrived, holding" : $"Leg {d.Progress * 100:0} % complete, {GeoMath.FormatDistance(d.RemainingM ?? 0)} to go") : "No active leg",
+                d.Progress == null ? "No planned trajectory (live telemetry only)"
+                    : d.Phase == "LANDED" ? "Landed at the destination"
+                    : $"{d.Phase?.ToLowerInvariant()} · {d.Progress * 100:0} % of the route, {GeoMath.FormatDistance(d.RemainingM ?? 0)} to go · lands in {DroneView.Clock(d.EtaS ?? 0)}",
                 $"Position source: {Vocab.SourceLabel(d.PositionSource)}  ·  C2 link: {d.LinkMode}",
             };
             foreach (var line in lines) { T(line, M, y, 0.0155f, Palette.TextDim); y += 0.028f; }

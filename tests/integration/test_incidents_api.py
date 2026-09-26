@@ -196,3 +196,10 @@ class TestVRScene:
         assert battery_row["evidence_constraints"] == ["battery_reserve_margin"]
         assert {r["factor"] for r in check["rows"]} >= {"battery_energy", "airspace_conflict", "routing_navigation"}
         assert scene["violations"][0]["violation_magnitude"] == pytest.approx(5.0)
+
+        # The route the gate actually checked, per waypoint, from the origin depot to the destination.
+        route = scene["planned_route"]
+        assert len(route) >= 2
+        assert route[0][:2] == pytest.approx([depot_lat, depot_lon], abs=1e-5)
+        assert route[-1][:2] == pytest.approx([scene["position"]["lat"], scene["position"]["lon"]], abs=0.01)
+        assert all(len(p) == 5 and p[3] in (0, 1) for p in route)

@@ -77,6 +77,19 @@ the backend in one of two ways:
   - The drop-line to the ground is the altitude, read against the ruler (LOW 0–60, MID 60–80,
     HIGH 80–100 m).
   - Separation beams are labelled with horizontal ↔ and vertical ↕ distance.
+- **Trajectories:** every simulated drone flies a known plan: climb over the depot at 3 m/s,
+  cruise the road route at 12 m/s, descend at 2 m/s, land. A selected drone (or one needing
+  attention) shows its path ahead as a bright line, with ticks at +30/+60/+90/+120 s and "lands
+  in m:ss" at touchdown. The part already flown is faint.
+- **Predicted conflicts:** the backend projects every pair's planned trajectories 2 minutes ahead,
+  using the gate's horizontal separation rule. A red ring pair marks where two drones *will* be
+  closer than 15 m, labelled "PREDICTED CONFLICT in 42 s". The board's PREDICTED tile counts
+  them. Amber means a near miss inside the watch band. Drones on live MAVLink telemetry have no
+  plan and aren't forecast.
+- **Replay:** a rejection from after this change is drawn along the exact route the gate checked,
+  waypoint by waypoint at each waypoint's altitude. It turns red where a waypoint is in a no-fly
+  zone, over the ceiling, or past the battery reserve, and the first failure is labelled. Older
+  incidents show a straight line and say so.
 - **Red column:** DGCA no-fly zone, all altitudes. **Yellow column:** airport permission zone,
   60 m ceiling.
 - **Buildings:** OpenStreetMap footprints. Light buildings have a tagged height. Dark ones are

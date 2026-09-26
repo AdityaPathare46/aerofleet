@@ -77,6 +77,10 @@ namespace AeroFleet.VR.Data
         [JsonProperty("remaining_m")] public double? RemainingM;
         [JsonProperty("arrived")] public bool Arrived;
         [JsonProperty("route")] public List<double[]> Route;
+        [JsonProperty("phase")] public string Phase;          // CLIMB | CRUISE | DESCENT | LANDED (null: no plan)
+        [JsonProperty("eta_s")] public double? EtaS;          // seconds to touchdown
+        /// <summary>Whole flight as [lat, lon, altitude_m, t_rel_s]; negative t = already flown.</summary>
+        [JsonProperty("trajectory")] public List<double[]> Trajectory = new List<double[]>();
         [JsonProperty("position_source")] public string PositionSource;
     }
 
@@ -90,6 +94,20 @@ namespace AeroFleet.VR.Data
         [JsonProperty("separation_margin_m")] public double SeparationMarginM;
     }
 
+    /// <summary>A pair whose planned trajectories come within the watch band later in the forecast horizon.</summary>
+    public class PredictedConflict
+    {
+        [JsonProperty("a")] public string A;
+        [JsonProperty("b")] public string B;
+        [JsonProperty("t_s")] public double TS;
+        [JsonProperty("horizontal_m")] public double HorizontalM;
+        [JsonProperty("vertical_m")] public double VerticalM;
+        [JsonProperty("separation_margin_m")] public double SeparationMarginM;
+        [JsonProperty("severity")] public string Severity;    // CONFLICT | WATCH
+        [JsonProperty("a_at")] public double[] AAt;           // [lat, lon, altitude_m]
+        [JsonProperty("b_at")] public double[] BAt;
+    }
+
     public class LiveConstants
     {
         [JsonProperty("min_separation_m")] public double MinSeparationM = 15;
@@ -97,6 +115,10 @@ namespace AeroFleet.VR.Data
         [JsonProperty("legal_ceiling_m")] public double LegalCeilingM = 120;
         [JsonProperty("pair_awareness_radius_m")] public double PairAwarenessRadiusM = 250;
         [JsonProperty("cruise_speed_mps")] public double CruiseSpeedMps = 12;
+        [JsonProperty("climb_rate_mps")] public double ClimbRateMps = 3;
+        [JsonProperty("descent_rate_mps")] public double DescentRateMps = 2;
+        [JsonProperty("forecast_horizon_s")] public double ForecastHorizonS = 120;
+        [JsonProperty("separation_watch_band_m")] public double SeparationWatchBandM = 35;
     }
 
     public class ConstraintSources
@@ -112,6 +134,8 @@ namespace AeroFleet.VR.Data
         [JsonProperty("drone_count")] public int DroneCount;
         [JsonProperty("drones")] public Dictionary<string, LiveDrone> Drones = new Dictionary<string, LiveDrone>();
         [JsonProperty("pairs")] public List<DronePair> Pairs = new List<DronePair>();
+        [JsonProperty("predicted_conflicts")] public List<PredictedConflict> PredictedConflicts = new List<PredictedConflict>();
+        [JsonProperty("forecast_drone_ids")] public List<string> ForecastDroneIds = new List<string>();
         [JsonProperty("fleet_worst_case")] public Dictionary<string, double> FleetWorstCase = new Dictionary<string, double>();
         [JsonProperty("constants")] public LiveConstants Constants = new LiveConstants();
         [JsonProperty("constraint_sources")] public ConstraintSources ConstraintSources = new ConstraintSources();
@@ -174,6 +198,8 @@ namespace AeroFleet.VR.Data
         [JsonProperty("root_cause_summary")] public string RootCauseSummary;
         [JsonProperty("recommended_action")] public string RecommendedAction;
         [JsonProperty("claim_check")] public ClaimCheck ClaimCheck = new ClaimCheck();
+        /// <summary>Route the CBF gate checked, per waypoint: [lat, lon, altitude_m, in_red_zone 0/1, battery_margin_wh].</summary>
+        [JsonProperty("planned_route")] public List<double[]> PlannedRoute = new List<double[]>();
     }
 
     public class TokenDto

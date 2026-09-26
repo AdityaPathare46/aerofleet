@@ -115,7 +115,7 @@ function SceneContent(p: SceneProps) {
           <AltitudeRuler d={p.diorama} />
           <ScaleAndNorth d={p.diorama} />
           {p.mode === 'live' && p.live && (
-            <Swarm drones={p.live.drones} pairs={p.live.pairs} constants={p.live.constants} d={p.diorama}
+            <Swarm drones={p.live.drones} pairs={p.live.pairs} predicted={p.live.predicted_conflicts ?? []} constants={p.live.constants} d={p.diorama}
               cityCenter={p.cityCenter} selected={p.selected} detailAll={p.controls.detailAll}
               onSelect={(id) => p.setSelected(p.selected === id ? null : id)} />
           )}

@@ -31,6 +31,9 @@ router = APIRouter()
 # swarm view's separation lines — wide enough to show a pair approaching
 # the 15 m CBF minimum well before it's breached.
 PAIR_AWARENESS_RADIUS_M = 250.0
+# Same "watch" band the VR views use for min_separation (tauri-app/src/components/vr/theme.ts
+# WARN_BANDS, Unity Vocab.WarnBands): a forecast pair inside it is shown, below zero it's a conflict.
+SEPARATION_WATCH_BAND_M = 35.0
 MAX_PAIRS = 80
 
 # Which of the 11 CBF constraints live-margins evaluates from real, live
@@ -125,7 +128,7 @@ async def live_margins(
 
     from aerofleet.api.routes.fleet import _drone_lat_lon
     from aerofleet.city.airspace import DGCA_LEGAL_CEILING_M
-    from aerofleet.fleet import flight_progress
+    from aerofleet.fleet import conflict_forecast, flight_progress
     from aerofleet.fleet.models import DroneState
 
     # Only actively-flying drones — min_separation is an airborne-conflict
@@ -138,13 +141,15 @@ async def live_margins(
     min_sep_m = build_cbf_gate({}, city=city).config["min_separation_m"]
 
     positioned = []
+    flights: Dict[str, Any] = {}
     for drone in fleet.list_drones():
         if drone.state not in IN_FLIGHT_STATES:
             continue
         flight = flight_progress.get(city, drone.drone_id) if drone.link_mode != "LIVE" else None
         if flight is not None and flight.order_id == drone.order_id:
             fs = flight.state_at(now)
-            lat, lon, altitude_m = fs.lat, fs.lon, flight.altitude_m
+            lat, lon, altitude_m = fs.lat, fs.lon, fs.altitude_m
+            flights[drone.drone_id] = flight
         else:
             fs = None
             lat, lon = _drone_lat_lon(fleet, drone)
@@ -158,8 +163,10 @@ async def live_margins(
     # drones are horizontally close but stacked in different altitude bands.
     pairs: List[Dict[str, Any]] = []
     nearest: Dict[str, Tuple[Optional[str], float, float]] = {}
-    for i, (a, alat, alon, aalt, _) in enumerate(positioned):
-        for b, blat, blon, balt, _ in positioned[i + 1:]:
+    # A drone on the ground (landed, or not yet lifted off) isn't in the airspace.
+    airborne = [p for p in positioned if p[4] is None or p[4].altitude_m >= conflict_forecast.ON_GROUND_M]
+    for i, (a, alat, alon, aalt, _) in enumerate(airborne):
+        for b, blat, blon, balt, _ in airborne[i + 1:]:
             horiz = flight_progress.haversine_m((alat, alon), (blat, blon))
             vert = abs(aalt - balt)
             for me, other in ((a.drone_id, b.drone_id), (b.drone_id, a.drone_id)):
@@ -224,12 +231,20 @@ async def live_margins(
             "progress": round(fs.progress, 3) if fs else None,
             "remaining_m": round(fs.remaining_m, 1) if fs else None,
             "arrived": fs.arrived if fs else False,
+            "phase": fs.phase if fs else None,
+            "eta_s": round(fs.eta_s, 1) if fs else None,
             "route": route,
+            # Whole flight as [lat, lon, altitude_m, t_rel_s] — negative t is already flown.
+            "trajectory": [list(p) for p in flights[drone.drone_id].trajectory(now)] if fs else [],
             "position_source": "TELEMETRY" if drone.link_mode == "LIVE" else ("ROUTE_DEAD_RECKONING" if fs else "DEPOT_NODE"),
         }
         for name, margin in result.safety_margin_summary.items():
             if name not in worst_case or margin < worst_case[name]:
                 worst_case[name] = margin
+
+    predicted = conflict_forecast.forecast_conflicts(
+        flights, now, min_separation_m=min_sep_m, watch_band_m=SEPARATION_WATCH_BAND_M,
+    )
 
     return {
         "city": city,
@@ -237,6 +252,8 @@ async def live_margins(
         "drone_count": len(per_drone),
         "drones": per_drone,
         "pairs": pairs,
+        "predicted_conflicts": predicted,
+        "forecast_drone_ids": sorted(flights),
         "fleet_worst_case": worst_case,
         "constants": {
             "min_separation_m": min_sep_m,
@@ -244,6 +261,11 @@ async def live_margins(
             "legal_ceiling_m": DGCA_LEGAL_CEILING_M,
             "pair_awareness_radius_m": PAIR_AWARENESS_RADIUS_M,
             "cruise_speed_mps": flight_progress.CRUISE_SPEED_MPS,
+            "climb_rate_mps": flight_progress.CLIMB_RATE_MPS,
+            "descent_rate_mps": flight_progress.DESCENT_RATE_MPS,
+            "forecast_horizon_s": conflict_forecast.HORIZON_S,
+            "forecast_step_s": conflict_forecast.STEP_S,
+            "separation_watch_band_m": SEPARATION_WATCH_BAND_M,
         },
         "constraint_sources": {"live": LIVE_CONSTRAINTS, "default": DEFAULT_CONSTRAINTS},
     }

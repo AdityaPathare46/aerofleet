@@ -248,6 +248,16 @@ async def dispatch_order(
         except Exception as exc:
             logger.warning(f"Optimized route computation failed for {order_id}, falling back to single-point check: {exc}")
 
+    # The exact route the gate is about to check, one entry per waypoint, kept so an incident
+    # replay can show *where along the route* a constraint failed instead of a straight line:
+    # [lat, lon, altitude_m, in_red_zone (0/1), battery_margin_wh].
+    planned_route = None
+    if trajectory_points is not None and node_path:
+        planned_route = [
+            [round(lat, 6), round(lon, 6), pt["altitude_m"], int(bool(pt["in_red_zone"])), pt["battery_margin_wh"]]
+            for (lat, lon), pt in zip((fleet.graph.node_lat_lon(n) for n in node_path), trajectory_points)
+        ]
+
     if trajectory_points is None:
         trajectory_points = build_trajectory_points_from_plan(dispatch_plan)
 
@@ -378,6 +388,7 @@ async def dispatch_order(
                 "candidate": candidate.__dict__,
                 "origin_lat": dispatch_plan["origin_lat"],
                 "origin_lon": dispatch_plan["origin_lon"],
+                "planned_route": planned_route,
             },
         ))
 

@@ -109,6 +109,9 @@ async def get_incident_vr_scene(
         "recommended_action": incident.recommended_action,
         "contributing_factors": incident.contributing_factors or [],
         "claim_check": claim_check,
+        # The route the CBF gate actually checked, per waypoint: [lat, lon, altitude_m,
+        # in_red_zone (0/1), battery_margin_wh]. Empty for incidents recorded before it was kept.
+        "planned_route": ctx.get("planned_route") or [],
     }
 
 
