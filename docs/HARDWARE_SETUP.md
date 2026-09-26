@@ -4,6 +4,11 @@ AeroFleet can command real ArduPilot/PX4 flight controllers over MAVLink
 (`aerofleet/hardware/`), not just simulated drones. This document is the
 safety context and the exact steps to connect one.
 
+Before connecting a drone for flight, run the pre-flight **flight-controller
+compliance check** (Hardware → Drone compliance). It works alongside Mission
+Planner via its MAVLink Mirror, or directly over USB — see
+[FC_COMPLIANCE.md](FC_COMPLIANCE.md).
+
 ## Read this first
 
 **This software makes AeroFleet capable of commanding real aircraft. It
