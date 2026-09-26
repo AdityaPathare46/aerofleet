@@ -31,6 +31,7 @@ rsync -a --exclude '._*' --exclude .DS_Store /Volumes/UnityWork/UnityProjects/Ae
 Assets/AeroFleet/
   Scripts/Core/AeroFleetApp.cs     entry point: config → sign-in → city data → live poll / replay
   Scripts/Core/LaunchConfig.cs     config file < CLI args < AEROFLEET_TOKEN env var
+  Scripts/Core/Pairing.cs          desktop beacon listener (UDP 47800), pairing handshake, scenario DTOs
   Scripts/Data/                    ApiClient (UnityWebRequest + bearer) and DTOs mirroring the API
   Scripts/Geo/Diorama.cs           real metres → table metres (east=+x, north=+z, vertical ×VExag)
   Scripts/View/TableView.cs        surface, streets, zone prisms, ceilings, altitude ruler, scale, depots
@@ -41,6 +42,7 @@ Assets/AeroFleet/
   Scripts/View/ReplayView.cs       frozen rejection: the exact route the gate checked, failing waypoints in red
   Scripts/View/FleetBoard.cs       KPIs, worst-case margin per CBF constraint (LIVE/ASSUMED), controls
   Scripts/View/ContextBoard.cs     replay: claim check · live: how to read the table + selected drone
+  Scripts/View/ConnectBoard.cs     connect to a desktop: found computers, confirm code, errors
   Scripts/Interaction/             Clickable (XRI ray or mouse), desktop orbit/picking
   Editor/AeroFleetSetup.cs         AeroFleet ▸ Setup / Dev / Build menus
 ```
@@ -54,6 +56,19 @@ In the Unity project: **AeroFleet ▸ Setup ▸ Run All**. It creates the theme 
 (`Resources/`), builds `Scenes/AeroFleetVR.unity` (XRI *XR Origin (XR Rig)*, interaction manager,
 ground collider, app), makes it the only build scene, assigns the OpenXR loader for Standalone with
 the Oculus Touch / Quest Touch Plus / Touch Pro profiles, and allows plain-HTTP to the backend.
+
+## How it starts
+
+| started by | behaviour |
+|---|---|
+| the desktop app (Quest Link) | already paired: follows the desktop's view from the first frame |
+| a config file (`aerofleet_config.json`; dev/tests) | standalone exactly as before; offers *Connect* if a desktop starts sharing |
+| nothing (fresh Quest) | connect screen: finds the desktop on the Wi-Fi, asks to pair, shows the code |
+
+While paired it polls the desktop's scenario (1 s) through the desktop's VR gateway, applies
+changes (city, live/replay, incident, selected drone, range, tags, buildings), and heartbeats what it
+shows (3 s). If the desktop ends the session or goes silent for 8 s it returns to the connect screen.
+Protocol and security: `aerofleet/api/routes/vr.py`, `aerofleet/vr/`, `docs/VR_QUEST3_GUIDE.md`.
 
 ## Run
 
@@ -82,9 +97,12 @@ and the operator token in the `AEROFLEET_TOKEN` environment variable (never on t
 process arguments are visible to every other process on the PC). `--aerofleet-mode replay
 --aerofleet-incident <id>` opens a specific rejection.
 
-**Quest standalone:** **AeroFleet ▸ Build ▸ Quest APK**; put an `aerofleet_config.json` with the
-backend's LAN address in the app's persistent data folder, or `adb reverse tcp:8000 tcp:8000` and
-keep `http://localhost:8000`.
+**Quest standalone:** **AeroFleet ▸ Build ▸ Quest APK**, install, open it on the same Wi-Fi as the
+desktop and pair (see the guide). Setup step 4 forces the INTERNET permission the beacon listener needs.
+
+Note: this project has an active Unity 6 build profile (*Meta Quest*). With a profile active,
+the PlayerSettings API writes into the profile only, so `AeroFleetSetup` also writes the settings the
+Windows build needs (plain HTTP to the local gateway, product name) into the global ProjectSettings.
 
 ## Honesty notes
 

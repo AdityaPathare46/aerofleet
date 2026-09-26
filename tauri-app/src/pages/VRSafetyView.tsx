@@ -7,7 +7,7 @@ import SignInCard from '../components/SignInCard'
 import { Diorama, toLocal } from '../components/vr/geo'
 import { AltitudeRuler, Ceilings, Depots, ScaleAndNorth, Streets, Table, Zones } from '../components/vr/Airspace'
 import { Buildings } from '../components/vr/Buildings'
-import { HeadsetLauncher } from '../components/vr/HeadsetLauncher'
+import { VrConnect, type VrScenario } from '../components/vr/VrConnect'
 import { Swarm } from '../components/vr/Swarm'
 import { ClaimPanel, FleetPanel, ViewControls } from '../components/vr/Panels'
 import { ReplayGeometry, replayFrame } from '../components/vr/Replay'
@@ -268,6 +268,11 @@ export default function VRSafetyView() {
       : '',
   }
 
+  const vrScenario = useMemo<VrScenario>(() => ({
+    city, mode, incident_id: mode === 'replay' ? selectedIncidentId || null : null, selected_drone: selected,
+    range_km: rangeKm, detail_all: detailAll, show_buildings: showBuildings,
+  }), [city, mode, selectedIncidentId, selected, rangeKm, detailAll, showBuildings])
+
   const ageS = lastFetch ? (now - lastFetch) / 1000 : null
   const droneCount = live?.drone_count ?? 0
   const noXR = !xrSupport.vr && !xrSupport.ar
@@ -300,7 +305,7 @@ export default function VRSafetyView() {
             {cities.length === 0 && <option value="pune">pune</option>}
             {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name?.split(',')[0] ?? c.slug}</option>)}
           </select>
-          <HeadsetLauncher apiUrl={apiUrl} city={city} mode={mode} incidentId={selectedIncidentId} />
+          <VrConnect apiUrl={apiUrl} scenario={vrScenario} signedIn={!needsAuth && (lastFetch != null || scene != null || incidents.length > 0)} />
           <button className="btn btn--primary" id="btn-enter-vr"
             title={xrSupport.vr ? 'Enter immersive VR' : 'No headset detected — open this page in the Quest 3 browser (see docs/VR_QUEST3_GUIDE.md)'}
             onClick={() => xrStore.enterVR().catch((e) => setError(`WebXR VR unavailable: ${e}`))}>

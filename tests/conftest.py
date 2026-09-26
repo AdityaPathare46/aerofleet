@@ -12,6 +12,8 @@ from typing import Dict, Any
 os.environ["ENVIRONMENT"] = "test"
 os.environ["LOG_LEVEL"] = "ERROR"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+# VR pairing sessions work in-process in tests, but must not open LAN sockets (gateway/beacon).
+os.environ["AEROFLEET_VR_NETWORK"] = "off"
 
 
 @pytest.fixture(scope="session")

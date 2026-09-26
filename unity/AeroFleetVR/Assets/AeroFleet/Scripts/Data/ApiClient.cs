@@ -24,7 +24,10 @@ namespace AeroFleet.VR.Data
         {
             using (var req = UnityWebRequest.Get(BaseUrl + path))
             {
-                if (auth && HasToken) req.SetRequestHeader("Authorization", "Bearer " + Token);
+                // Always send the token when we have one: through the VR gateway even the "public" reads
+                // (cities, roads, buildings) need the headset's session token. `auth` only documents that
+                // the endpoint requires it.
+                if (HasToken) req.SetRequestHeader("Authorization", "Bearer " + Token);
                 req.timeout = 15;
                 yield return req.SendWebRequest();
                 if (req.result != UnityWebRequest.Result.Success)

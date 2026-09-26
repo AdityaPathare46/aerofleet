@@ -1,16 +1,49 @@
 # Using the VR Safety View on a Meta Quest 3
 
-There are three ways to put the AeroFleet tabletop in a headset. All three show the same data from
-the same backend: the live swarm or an incident replay, real Pune/Mumbai streets and OSM
-buildings, DGCA zones, and ceilings.
+The AeroFleet desktop app (Windows or Mac) and the **AeroFleet VR** app pair with each other: the
+headset shows exactly what you're looking at on the desktop — city, live swarm or incident,
+selected drone, range — and follows as you change it. Without a desktop, the VR app still runs on
+its own as before.
 
-| path | runs on | best for |
+| path | runs on | how it connects |
 |---|---|---|
-| **A. PC-VR with the native viewer** (recommended) | Windows PC + Quest 3 over Quest Link / Air Link | the desktop app: one click from the VR view |
-| B. Quest Browser (WebXR) | the Quest itself, page served from your PC | no install on the PC, quick demos |
-| C. Standalone Quest app (APK) | the Quest itself | a headset without a PC nearby |
+| **A. Quest 3 app over Wi-Fi** (recommended) | Windows or Mac + a standalone Quest 3 | pairs with the desktop over the local network |
+| **B. PC-VR over Quest Link** | Windows PC + Quest 3 on Link / Air Link | the desktop launches the viewer on the PC |
+| C. Quest Browser (WebXR) | the Quest itself | the in-app web view, no install |
 
-## A. PC-VR — "Launch in headset" from the desktop app
+## A. Quest 3 over Wi-Fi — pair with the desktop
+
+1. Install **AeroFleet VR** on the Quest (**AeroFleet ▸ Build ▸ Quest APK**, then
+   `adb install -r AeroFleetVR.apk`). Put the Quest on the same Wi-Fi as the computer.
+2. In the desktop app open **VR Safety View**. The first time, a **View this in VR** window opens
+   (later: the **Connect headset** button in the header). Click **Connect a headset**.
+3. Open **AeroFleet VR** on the Quest. It finds the computer by itself and asks to connect; a
+   4-digit code appears in the headset.
+4. The same code appears on the desktop — click **Allow** if they match (**Deny** otherwise).
+5. The headset now shows your current view and follows every change on the desktop. The desktop's
+   header shows *Quest 3 connected*, and the window shows what the headset is displaying.
+6. **Disconnect headset** or **End VR session** in the same window stops it; the headset goes back
+   to its connect screen.
+
+If the headset was already running on its own when you click *Connect a headset*, it shows
+"<computer> is sharing a view — Connect / Not now" instead.
+
+**What is exposed on the network, and when.** The AeroFleet backend itself only ever listens on
+this computer (127.0.0.1). While a VR session is open — and only then — it also opens a small
+**VR gateway on port 8765** and announces itself on **UDP port 47800**. The gateway accepts:
+the pairing handshake (which does nothing until you click Allow), and, with the paired headset's
+session token, read-only requests for exactly what the VR view draws. It refuses every other
+endpoint and never accepts desktop login tokens. Ending the session (or leaving the desktop app
+for 90 s) closes both. The first time, the OS firewall may ask whether to allow incoming
+connections for Python — allow it on private networks.
+
+**Troubleshooting**
+- *Headset says "Looking for AeroFleet on this Wi-Fi…" forever:* both devices on the same network?
+  Guest/enterprise Wi-Fi often blocks device-to-device traffic (client isolation) — use a home
+  network or a phone hotspot. Check the firewall prompt above.
+- *"Your AeroFleet sign-in has expired":* sign in again on the desktop, then Connect a headset.
+
+## B. PC-VR over Quest Link (Windows)
 
 1. **On the PC:** install the *Meta Quest Link* app. Open it, then go to Settings ▸ General ▸
    OpenXR Runtime and set Meta Quest Link as active.
@@ -20,28 +53,20 @@ buildings, DGCA zones, and ceilings.
    `Builds/Windows/AeroFleetVR.exe`) and either
    - place the `AeroFleetVR` build folder next to `AeroFleet.exe`,
    - set `AEROFLEET_VR_VIEWER` to the exe path, or
-   - use **Locate viewer…** in the Headset panel once. The path is remembered.
-4. **In AeroFleet:** open *VR Safety View* and sign in. Choose the city and either *Live swarm* or
-   an incident, then click **Headset ▾**. The panel checks four things:
-   - Windows
-   - the OpenXR runtime
-   - Link or SteamVR is running
-   - the viewer was found
-
-   When all four are green, click **Launch … in headset**.
-5. The viewer opens in the headset. It uses the same API URL, city, mode and incident you had
-   selected, and the session is passed securely through an environment variable. The table is in
-   front of you, with the fleet board on the left and the claim-check / legend board on the right.
+   - put it in the checkout at `unity/AeroFleetVR/Builds/Windows/`.
+4. **In AeroFleet:** open *VR Safety View* ▸ **Connect headset**. Under *This PC over Quest Link*
+   the window says whether the OpenXR runtime, Link/SteamVR and the viewer are ready; click
+   **Launch on this PC**.
+5. The viewer opens in the headset already paired (no code needed — you're at this PC) and
+   follows the desktop exactly like the Wi-Fi path. The table is in front of you, with the fleet
+   board on the left and the claim-check / legend board on the right.
    - Point a controller at a drone or a button and pull the trigger.
    - **RECENTER** re-centres the table on where you are standing.
    - **TABLE ▲/▼** changes its height.
    - **CITY ►** switches between Pune and Mumbai.
    - **3D CITY** toggles buildings.
 
-If the viewer can't reach the backend, its board says so. It needs the backend reachable from the
-PC (the default `http://127.0.0.1:8000` works when both run on the same machine).
-
-## B. Quest Browser (WebXR)
+## C. Quest Browser (WebXR)
 
 The in-app view is a WebXR page, and the Quest Browser supports it natively.
 
@@ -62,14 +87,13 @@ The in-app view is a WebXR page, and the Quest Browser supports it natively.
 Using `localhost` through `adb reverse` matters: WebXR needs a secure context, and localhost counts
 as one, whereas a LAN IP over plain http does not.
 
-## C. Standalone APK
+## Running the VR app without a desktop (development, tests)
 
-**AeroFleet ▸ Build ▸ Quest APK**, then install with `adb install -r AeroFleetVR.apk`. Point it at
-the backend in one of two ways:
-
-- `adb reverse tcp:8000 tcp:8000`, which keeps the default `http://localhost:8000`, or
-- put an `aerofleet_config.json` in the app's persistent data folder with the PC's LAN address
-  (`apiUrl`).
+With an `aerofleet_config.json` in the app's persistent data folder (in the Unity editor:
+**AeroFleet ▸ Dev ▸ Write Local Test Config**), the VR app starts on its own against that backend,
+exactly as before pairing existed, and only offers *Connect* if a desktop starts sharing. On a
+headset it can reach the backend through `adb reverse tcp:8000 tcp:8000` with the default
+`http://localhost:8000`.
 
 ## What you are looking at
 

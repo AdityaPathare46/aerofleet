@@ -64,3 +64,9 @@ def test_tolerates_missing_or_malformed_factors():
     assert _status(r, "weather_environmental") == "MISSED"
     r = check_claims_against_geometry(["wind_limit"], ["garbage", {"no_factor": 1}])
     assert r["has_council_claims"] is False
+
+
+def test_a_constraint_violated_at_many_waypoints_is_one_piece_of_evidence():
+    out = check_claims_against_geometry(["geofence_exclusion"] * 9 + ["min_separation"], None)
+    row = next(r for r in out["rows"] if r["factor"] == "airspace_conflict")
+    assert row["evidence_constraints"] == ["geofence_exclusion", "min_separation"]

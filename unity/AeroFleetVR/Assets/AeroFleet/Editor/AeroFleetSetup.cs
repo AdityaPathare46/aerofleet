@@ -39,6 +39,7 @@ namespace AeroFleet.VR.EditorTools
             CreateTheme();
             BuildScene();
             ConfigurePcVr();
+            ConfigureQuestNetworking();
             Debug.Log("[AeroFleet] Setup complete. Press Play to run the viewer against the local backend.");
         }
 
@@ -159,9 +160,46 @@ namespace AeroFleet.VR.EditorTools
             PlayerSettings.productName = "AeroFleet VR";
             PlayerSettings.companyName = "AeroFleet";
             PlayerSettings.runInBackground = true;
-            AssetDatabase.SaveAssets();
+            SavePlayerSettings();
             Debug.Log($"[AeroFleet] Standalone OpenXR loader {(assigned ? "assigned" : "already assigned")}; " +
                       $"profiles enabled: {string.Join(", ", enabled.Select(f => f.GetType().Name))}");
+        }
+
+        // ── 4. Quest standalone networking ────────────────────────────────
+
+        [MenuItem("AeroFleet/Setup/4. Configure Quest Networking", priority = 14)]
+        public static void ConfigureQuestNetworking()
+        {
+            // The standalone headset pairs with the desktop over Wi-Fi: HTTP to the desktop's VR
+            // gateway and a UDP listener for its beacon (Core/Pairing.cs). Unity only adds the
+            // INTERNET permission automatically when it sees UnityWebRequest in use at build time;
+            // force it so the beacon listener works even before the first request.
+            PlayerSettings.Android.forceInternetPermission = true;
+            PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            SavePlayerSettings();
+            Debug.Log("[AeroFleet] Quest networking: INTERNET permission forced, plain HTTP to the desktop gateway allowed.");
+        }
+
+        /// <summary>
+        /// Persist PlayerSettings. With a Unity 6 build profile active (this project's "Meta Quest"),
+        /// the PlayerSettings API writes into that profile only — the global settings, which a Windows
+        /// build made with BuildPipeline uses, stay untouched. So the settings the viewer needs on every
+        /// platform are also written to the global ProjectSettings asset directly.
+        /// </summary>
+        static void SavePlayerSettings()
+        {
+            var settings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (settings.Length > 0)
+            {
+                var so = new SerializedObject(settings[0]);
+                so.FindProperty("insecureHttpOption").intValue = (int)InsecureHttpOption.AlwaysAllowed;
+                so.FindProperty("runInBackground").boolValue = true;
+                so.FindProperty("productName").stringValue = "AeroFleet VR";
+                so.FindProperty("companyName").stringValue = "AeroFleet";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(settings[0]);
+            }
+            AssetDatabase.SaveAssets();
         }
 
         // ── dev helper ─────────────────────────────────────────────────────

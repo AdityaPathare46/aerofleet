@@ -15,10 +15,18 @@ namespace AeroFleet.VR
     /// (/safety/live-margins every 1.5 s) or replays a frozen CBF rejection with its claim check.
     /// Works in a headset (Quest 3 over Link, or standalone) and, without one, as a desktop window
     /// with mouse orbit and picking — the same scene either way.
+    ///
+    /// Three ways to start:
+    ///   launched by the desktop (Quest Link) — follows the desktop's view right away;
+    ///   a config file (development/tests) — runs standalone exactly as before;
+    ///   a fresh headset — listens for an AeroFleet desktop on the Wi-Fi and pairs with it.
+    /// While paired it follows the scenario the desktop pushes (city, live/replay, incident,
+    /// selected drone, range) and reports what it shows. See Pairing.cs, aerofleet/vr/.
     /// </summary>
     public class AeroFleetApp : MonoBehaviour
     {
         const float PollSeconds = 1.5f;
+        const float LinkLostAfterS = 8f;
         const float TableHalf = 0.7f, ColumnHeight = 0.32f;
         static readonly Vector3 TableHome = new Vector3(0f, 0.82f, 0.85f);
 
@@ -32,7 +40,10 @@ namespace AeroFleet.VR
         public int IncidentIndex { get; private set; }
         public VrSceneDto Scene { get; private set; }
         public Diorama Diorama { get; private set; }
-        public string StatusLine { get; private set; } = "connecting…";
+        public string StatusLine => (Following ? $"following {FollowingHost} · " : "") + statusText;
+        string statusText = "connecting…";
+        public bool Following { get; private set; }
+        public string FollowingHost { get; private set; }
         public bool StatusIsError { get; private set; }
         public bool InHeadset { get; private set; }
         public bool ShowBuildings { get; private set; } = true;
@@ -54,6 +65,16 @@ namespace AeroFleet.VR
         float lastLiveAt = -1f, nextBoardRefresh;
         string builtDioramaKey;
         Coroutine poller;
+
+        enum Stage { Starting, Home, Standalone, Following }
+        Stage stage = Stage.Starting;
+        BeaconListener beacons;
+        ConnectBoard connectBoard;
+        string boardState;          // null | home | prompt | code | error
+        string homeMessage, autoPairedSession, dismissedSession, followingSession;
+        bool pairing, stopPolling;
+        int scenarioVersion = -1;
+        float nextBeaconCheck;
 
         Transform workspace, tableRoot, tableSpin;
         TableView table;
@@ -81,6 +102,34 @@ namespace AeroFleet.VR
             if (!InHeadset) EnableDesktopMode();
             PlaceBoards();
 
+            beacons = new BeaconListener();
+            beacons.Start();
+
+            if (cfg.source == "launched by AeroFleet" && api.HasToken)
+            {
+                yield return Follow(cfg.apiUrl, cfg.token, "this PC");
+                if (Following) yield break;
+            }
+            if (cfg.source == "config file" || api.HasToken)
+            {
+                yield return RunStandaloneCo();
+                yield break;
+            }
+            stage = Stage.Home;
+            SetStatus("waiting for the AeroFleet desktop app…");
+        }
+
+        public void RunStandalone()
+        {
+            boardState = null;
+            connectBoard.Hide();
+            StartCoroutine(RunStandaloneCo());
+        }
+
+        IEnumerator RunStandaloneCo()
+        {
+            stage = Stage.Standalone;
+            api = new ApiClient(cfg.apiUrl, cfg.token);
             if (!api.HasToken && !string.IsNullOrEmpty(cfg.username))
             {
                 SetStatus("signing in…");
@@ -98,21 +147,211 @@ namespace AeroFleet.VR
 
         void Update()
         {
+            if (Time.unscaledTime >= nextBeaconCheck && beacons != null && !pairing)
+            {
+                nextBeaconCheck = Time.unscaledTime + 0.5f;
+                UpdateConnectBoard();
+            }
             if (Time.unscaledTime < nextBoardRefresh) return;
             nextBoardRefresh = Time.unscaledTime + 0.25f;
             if (Mode == ViewMode.Live && lastLiveAt > 0 && !StatusIsError)
             {
                 float age = Time.unscaledTime - lastLiveAt;
-                StatusLine = $"{CityName} · live · {Live?.DroneCount ?? 0} airborne · updated {age:0.0} s ago" +
+                statusText = $"{CityName} · live · {Live?.DroneCount ?? 0} airborne · updated {age:0.0} s ago" +
                              (age > 6 ? "  —  backend not responding" : "");
             }
             fleetBoard?.Refresh(this);
             contextBoard?.Refresh(this);
         }
 
+        void OnDestroy() => beacons?.Dispose();
+
+        string DeviceName
+        {
+            get
+            {
+                string n = SystemInfo.deviceModel != null && SystemInfo.deviceModel.Contains("Quest") ? SystemInfo.deviceModel : SystemInfo.deviceName;
+                if (!InHeadset) n += " (no headset)";
+                return n.Length > 40 ? n.Substring(0, 40) : n;
+            }
+        }
+
+        // ── pairing with the desktop ───────────────────────────────────────
+
+        void UpdateConnectBoard()
+        {
+            if (boardState == "code" || boardState == "error") return;
+            var desktops = beacons.Current();
+            if (stage == Stage.Home)
+            {
+                boardState = "home";
+                connectBoard.ShowHome(desktops, homeMessage, cfg.source == "config file", beacons.Error);
+                // A fresh headset that hears exactly one desktop asks it straight away — the operator
+                // still has to allow it there.
+                if (desktops.Count == 1 && desktops[0].Session != autoPairedSession)
+                {
+                    autoPairedSession = desktops[0].Session;
+                    PairWith(desktops[0]);
+                }
+            }
+            else if (stage == Stage.Standalone)
+            {
+                var offer = desktops.Find(d => d.Session != dismissedSession);
+                if (offer != null) { boardState = "prompt"; connectBoard.ShowPrompt(offer); }
+                else if (boardState == "prompt") { boardState = null; connectBoard.Hide(); }
+            }
+        }
+
+        public void PairWith(DesktopBeacon desk)
+        {
+            if (pairing) return;
+            pairing = true;
+            string url = desk.GatewayUrl;
+            StartCoroutine(PairingClient.Pair(url, DeviceName,
+                code => { boardState = "code"; connectBoard.ShowCode(desk.Host, code); },
+                token => { pairing = false; followingSession = desk.Session; StartCoroutine(Follow(url, token, desk.Host)); },
+                err =>
+                {
+                    pairing = false;
+                    // The desktop closed its session between announcing it and our request: nothing to
+                    // report, keep looking.
+                    if (err.StartsWith("409")) { boardState = null; return; }
+                    boardState = "error";
+                    connectBoard.ShowError(err, RetryConnect);
+                }));
+        }
+
+        public void DismissPrompt(string session)
+        {
+            dismissedSession = session;
+            boardState = null;
+            connectBoard.Hide();
+        }
+
+        void RetryConnect()
+        {
+            boardState = null;
+            autoPairedSession = null;
+            connectBoard.Hide();
+        }
+
+        IEnumerator Follow(string url, string token, string host)
+        {
+            var link = new ApiClient(url, token);
+            ScenarioEnvelope env = null;
+            string err = null;
+            yield return link.Get<ScenarioEnvelope>("/api/v1/vr/device/scenario", true, e => env = e, (_, e) => err = e);
+            if (env == null)
+            {
+                boardState = "error";
+                connectBoard.ShowError($"Paired, but the desktop didn't answer: {err}", RetryConnect);
+                yield break;
+            }
+
+            api = link;
+            cfg.apiUrl = url;
+            Following = true;
+            FollowingHost = host;
+            stage = Stage.Following;
+            stopPolling = false;
+            boardState = null;
+            connectBoard.Hide();
+            Debug.Log($"[AeroFleet] Paired with {host} — following its view");
+
+            if (city == null || city.Slug != env.Scenario.City)
+            {
+                cfg.city = env.Scenario.City;
+                yield return SwitchCityQuiet();
+                if (city == null) yield break;
+            }
+            yield return ApplyScenario(env);
+            StartCoroutine(FollowLoop());
+        }
+
+        IEnumerator FollowLoop()
+        {
+            float nextBeat = 0f, lastHeard = Time.realtimeSinceStartup;
+            while (Following)
+            {
+                ScenarioEnvelope env = null;
+                long code = 0;
+                yield return api.Get<ScenarioEnvelope>("/api/v1/vr/device/scenario", true, e => env = e, (c, _) => code = c);
+                if (code == 401) { EndFollowing("The desktop ended the VR session."); yield break; }
+                if (env != null) lastHeard = Time.realtimeSinceStartup;
+                // Ending the session also stops the desktop's gateway, so usually there's no 401 to read —
+                // just silence. Treat a few seconds of it as the session being over.
+                else if (Time.realtimeSinceStartup - lastHeard > LinkLostAfterS)
+                {
+                    EndFollowing($"Lost the connection to {FollowingHost} — the VR session ended or the Wi-Fi dropped.");
+                    yield break;
+                }
+                if (env != null && env.Version != scenarioVersion) yield return ApplyScenario(env);
+                if (Time.realtimeSinceStartup >= nextBeat)
+                {
+                    nextBeat = Time.realtimeSinceStartup + 3f;
+                    string status = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                    {
+                        mode = Mode == ViewMode.Replay ? "replay" : "live", city = CitySlug,
+                        incident_id = Scene?.IncidentId, selected = Selected, in_headset = InHeadset,
+                    });
+                    yield return PairingClient.Send("POST", api.BaseUrl + "/api/v1/vr/device/heartbeat", status, api.Token, null, null);
+                }
+                yield return new WaitForSeconds(1f);
+            }
+        }
+
+        void EndFollowing(string message)
+        {
+            Following = false;
+            stopPolling = true;
+            stage = Stage.Home;
+            homeMessage = message;
+            // Its beacon may still be cached for a few seconds — don't pair straight back into the
+            // session that just ended.
+            autoPairedSession = dismissedSession = followingSession;
+            boardState = null;
+            SetStatus(message, true);
+        }
+
+        /// <summary>Make the table show what the desktop shows. Only runs when the desktop's scenario changes,
+        /// so the operator can still look around locally in between.</summary>
+        IEnumerator ApplyScenario(ScenarioEnvelope env)
+        {
+            scenarioVersion = env.Version;
+            var s = env.Scenario;
+            if (city == null || s.City != city.Slug)
+            {
+                cfg.city = s.City;
+                yield return SwitchCityQuiet();
+                if (city == null || city.Slug != s.City)
+                {
+                    SetStatus($"Couldn't load {s.City} from the desktop — {statusText}", true);
+                    yield break;
+                }
+            }
+            DetailAll = s.DetailAll;
+            if (ShowBuildings != s.ShowBuildings)
+            {
+                ShowBuildings = s.ShowBuildings;
+                if (Diorama != null) buildingsView.Build(Diorama, center, ShowBuildings ? Buildings : null);
+            }
+            if (s.Mode == "replay")
+            {
+                int i = Incidents.FindIndex(x => x.IncidentId == s.IncidentId);
+                if (Mode != ViewMode.Replay || i < 0) yield return EnterReplay(s.IncidentId);
+                else if (i != IncidentIndex || Scene == null) { IncidentIndex = i; yield return LoadScene(); }
+            }
+            else
+            {
+                if (Mode != ViewMode.Live || poller == null) { Scene = null; EnterLive(); }
+                Selected = s.SelectedDrone;
+            }
+            SetRange(s.RangeKm);
+        }
+
         void SetStatus(string text, bool error = false)
         {
-            StatusLine = text;
+            statusText = text;
             StatusIsError = error;
             if (error) Debug.LogWarning("[AeroFleet] " + text);
         }
@@ -147,6 +386,7 @@ namespace AeroFleet.VR
 
             fleetBoard = FleetBoard.Create(workspace, this);
             contextBoard = ContextBoard.Create(workspace);
+            connectBoard = ConnectBoard.Create(workspace, this);
         }
 
         void PlaceBoards()
@@ -157,6 +397,7 @@ namespace AeroFleet.VR
                 var eye = new Vector3(0, 1.55f, 0);
                 fleetBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(-1.08f, 1.32f, 0.72f)), workspace.TransformPoint(eye));
                 contextBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(1.08f, 1.32f, 0.72f)), workspace.TransformPoint(eye));
+                connectBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0f, 1.42f, 0.62f)), workspace.TransformPoint(eye));
             }
             else
             {
@@ -164,6 +405,7 @@ namespace AeroFleet.VR
                 var eye = new Vector3(0, 1.4f, -1.2f);
                 fleetBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(-0.46f, 1.66f, 1.8f)), workspace.TransformPoint(eye));
                 contextBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0.46f, 1.66f, 1.8f)), workspace.TransformPoint(eye));
+                connectBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0f, 1.5f, 0.35f)), workspace.TransformPoint(eye));
             }
         }
 
@@ -226,7 +468,7 @@ namespace AeroFleet.VR
 
         IEnumerator PollLive()
         {
-            while (Mode == ViewMode.Live)
+            while (Mode == ViewMode.Live && !stopPolling)
             {
                 long code = 0;
                 string err = null;
@@ -366,9 +608,17 @@ namespace AeroFleet.VR
 
         IEnumerator SwitchCity()
         {
-            switching = true;
             var mode = Mode;
             Mode = ViewMode.Live; // stops the poller loop on its next tick
+            yield return SwitchCityQuiet();
+            if (city == null) yield break;
+            if (mode == ViewMode.Replay) yield return EnterReplay(null); else EnterLive();
+        }
+
+        /// <summary>Load cfg.city's map, zones, depots and buildings, clearing the old city's state.</summary>
+        IEnumerator SwitchCityQuiet()
+        {
+            switching = true;
             Live = null; Scene = null; Selected = null; focus = Vector2.zero;
             Incidents = new List<IncidentSummaryDto>();
             swarm.Clear();
@@ -376,8 +626,6 @@ namespace AeroFleet.VR
             builtDioramaKey = null;
             yield return LoadCity();
             switching = false;
-            if (city == null) yield break;
-            if (mode == ViewMode.Replay) yield return EnterReplay(null); else EnterLive();
         }
 
         public void RotateTable() => tableSpin.localRotation *= Quaternion.Euler(0, 90, 0);

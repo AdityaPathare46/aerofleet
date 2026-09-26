@@ -35,6 +35,7 @@ from aerofleet.api.routes import (
     routes,
     safety,
     settings,
+    vr,
 )
 from aerofleet.data.database import get_db_session, init_db
 from aerofleet.utils.config import get_config
@@ -142,6 +143,7 @@ app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"]
 app.include_router(policy.router, prefix="/api/v1/policy", tags=["policy"])
 # Fleet incident forensics — auto-triggered multi-agent root-cause investigation
 app.include_router(incidents.router, prefix="/api/v1/incidents", tags=["incidents"])
+app.include_router(vr.router, prefix="/api/v1/vr", tags=["vr"])
 
 
 if __name__ == "__main__":

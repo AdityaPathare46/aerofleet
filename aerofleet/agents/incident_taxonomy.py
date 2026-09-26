@@ -125,6 +125,8 @@ def check_claims_against_geometry(
     it is "NO_GEOMETRIC_EVIDENCE" — worth an operator's look, not "wrong".
     The reverse is firmer: a violated constraint the council didn't mark
     CONTRIBUTED is "MISSED" — the gate's own numbers show it."""
+    # The gate reports one violation per failing waypoint; evidence is per constraint, not per waypoint.
+    violated_constraints = list(dict.fromkeys(violated_constraints))
     implicated = {CONSTRAINT_TO_FACTOR[c] for c in violated_constraints if c in CONSTRAINT_TO_FACTOR}
     checkable = set(CONSTRAINT_TO_FACTOR.values())
     claims = {
