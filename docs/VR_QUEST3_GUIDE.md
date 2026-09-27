@@ -11,6 +11,45 @@ its own as before.
 | **B. PC-VR over Quest Link** | Windows PC + Quest 3 on Link / Air Link | the desktop launches the viewer on the PC |
 | C. Quest Browser (WebXR) | the Quest itself | the in-app web view, no install |
 
+## Install the AeroFleet VR app on a Quest 3 (sideload)
+
+The APK is built by Unity (**AeroFleet ▸ Build ▸ Quest APK**) at
+`Builds/Quest/AeroFleetVR.apk` inside the Unity project (package `com.aerofleet.vr`, v1.0.0).
+
+1. **Developer mode (once).** In the Meta Horizon phone app: Menu ▸ Devices ▸ your Quest ▸
+   Headset settings ▸ Developer Mode ▸ on. Meta asks you to create or join a (free) developer
+   organisation at developers.meta.com first. Reboot the headset.
+2. **Connect by USB-C** to the computer. In the headset, accept **Allow USB debugging**
+   (tick *Always allow from this computer*).
+3. **adb.** Use Unity's bundled copy, or install Android platform-tools
+   (`brew install android-platform-tools` on a Mac). Check the headset is listed:
+
+   ```bash
+   adb devices
+   ```
+
+4. **Install** (use `-r` to upgrade an earlier install in place):
+
+   ```bash
+   adb install -r Builds/Quest/AeroFleetVR.apk
+   ```
+
+   (SideQuest's desktop app works too: drag the APK onto it.)
+5. **Launch:** in the headset open the App Library, set the filter to **Unknown Sources**, and
+   open **AeroFleet VR**.
+
+**First test.** Start AeroFleet on the computer (the desktop app, or the backend with
+`uvicorn aerofleet.api.app:app --host 127.0.0.1 --port 8000`), open **VR Safety View ▸ Connect a
+headset**, then open AeroFleet VR in the headset and follow section A below. If the headset shows
+"Looking for AeroFleet on this Wi-Fi…" for more than a few seconds, keep the USB cable in and run
+the command below. The computer then appears in the headset as "*name* (USB)".
+
+```bash
+adb reverse tcp:8765 tcp:8765
+```
+
+In the headset: point a controller at a button or a drone and pull the **trigger**.
+
 ## A. Quest 3 over Wi-Fi — pair with the desktop
 
 1. Install **AeroFleet VR** on the Quest (**AeroFleet ▸ Build ▸ Quest APK**, then

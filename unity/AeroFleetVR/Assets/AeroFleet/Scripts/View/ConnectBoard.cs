@@ -61,9 +61,24 @@ namespace AeroFleet.VR.View
             return b;
         }
 
+        static Material logoMaterial;
+
         void Title(string sub)
         {
-            var t = T("AEROFLEET VR", M, 0.05f, 0.03f, Palette.Accent, s: FontStyles.Bold);
+            // The AeroFleet mark (Resources/aerofleet_mark.png — same logo as the desktop app and the app icon).
+            if (logoMaterial == null)
+            {
+                var tex = Resources.Load<Texture2D>("aerofleet_mark");
+                if (tex != null) logoMaterial = new Material(Draw.Theme.unlit) { mainTexture = tex, color = Color.white };
+            }
+            float x = M;
+            if (logoMaterial != null)
+            {
+                var logo = Draw.Prim(PrimitiveType.Quad, content, panel.At(M + 0.035f, 0.05f, Panel.Front * 2),
+                                     new Vector3(0.07f, 0.07f, 1), logoMaterial, "Logo");
+                x = M + 0.085f;
+            }
+            var t = T("AEROFLEET VR", x, 0.05f, 0.03f, Palette.Accent, s: FontStyles.Bold);
             t.characterSpacing = 6;
             T(sub, M, 0.1f, 0.019f, Palette.TextDim, wrap: Width - 2 * M);
         }

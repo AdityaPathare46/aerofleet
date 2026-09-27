@@ -104,6 +104,7 @@ namespace AeroFleet.VR
 
             beacons = new BeaconListener();
             beacons.Start();
+            StartCoroutine(ProbeUsbGateway());
 
             if (cfg.source == "launched by AeroFleet" && api.HasToken)
             {
@@ -199,6 +200,31 @@ namespace AeroFleet.VR
                 var offer = desktops.Find(d => d.Session != dismissedSession);
                 if (offer != null) { boardState = "prompt"; connectBoard.ShowPrompt(offer); }
                 else if (boardState == "prompt") { boardState = null; connectBoard.Hide(); }
+            }
+        }
+
+        /// <summary>
+        /// Second way to find the desktop: over the USB cable. With `adb reverse tcp:8765 tcp:8765`
+        /// the headset's own 127.0.0.1:8765 is the laptop's VR gateway, which works even where Wi-Fi
+        /// blocks broadcasts between devices (guest/enterprise networks, some Android builds).
+        /// </summary>
+        IEnumerator ProbeUsbGateway()
+        {
+            while (true)
+            {
+                if (stage == Stage.Home || stage == Stage.Standalone)
+                {
+                    GatewayHello hello = null;
+                    yield return PairingClient.Send("GET", "http://127.0.0.1:8765/api/v1/vr/hello", null, null,
+                        t => { try { hello = Newtonsoft.Json.JsonConvert.DeserializeObject<GatewayHello>(t); } catch { } }, null);
+                    if (hello != null && hello.SessionOpen && !string.IsNullOrEmpty(hello.Session))
+                        beacons.Inject(new DesktopBeacon
+                        {
+                            Version = 1, Host = hello.Host + " (USB)", GatewayPort = hello.GatewayPort > 0 ? hello.GatewayPort : 8765,
+                            Addrs = new List<string> { "127.0.0.1" }, Session = hello.Session, SourceIp = "127.0.0.1", ViaUsb = true,
+                        });
+                }
+                yield return new WaitForSeconds(3f);
             }
         }
 

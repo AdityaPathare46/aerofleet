@@ -152,7 +152,11 @@ async def disconnect_device(user: User = Depends(get_current_active_user)) -> Di
 
 @router.get("/hello")
 async def hello() -> Dict[str, Any]:
-    return {"aerofleet_vr": 1, "host": socket.gethostname(), "session_open": _registry._session is not None}
+    # The session id is what the beacon broadcasts anyway; a headset on a USB cable (adb reverse)
+    # finds the desktop through this instead of the beacon.
+    s = _registry._session
+    return {"aerofleet_vr": 1, "host": socket.gethostname(), "session_open": s is not None,
+            "session": s.session_id if s else None, "gateway_port": GATEWAY_PORT}
 
 
 class PairRequestBody(BaseModel):

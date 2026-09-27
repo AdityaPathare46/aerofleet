@@ -21,6 +21,7 @@ namespace AeroFleet.VR
         [JsonProperty("addrs")] public List<string> Addrs = new List<string>();
         [JsonProperty("session")] public string Session;
         [JsonIgnore] public string SourceIp;
+        [JsonIgnore] public bool ViaUsb;
         [JsonIgnore] public float LastSeen;
 
         /// <summary>Prefer the address the datagram actually came from — it's the one that routes back.</summary>
@@ -108,6 +109,9 @@ namespace AeroFleet.VR
             }
         }
 
+        /// <summary>Add a desktop found another way (the USB/adb-reverse probe) as if it had been heard.</summary>
+        public void Inject(DesktopBeacon b) => inbox.Enqueue(b);
+
         /// <summary>Desktops heard in the last few seconds, keyed by host. Call from the main thread.</summary>
         public List<DesktopBeacon> Current(float maxAgeS = 4f)
         {
@@ -118,10 +122,15 @@ namespace AeroFleet.VR
                     b.SourceIp = prev.SourceIp; // keep the LAN route once we have it
                 known[b.Host] = b;
             }
-            var list = new List<DesktopBeacon>();
+            // One entry per desktop session: the same session heard over Wi-Fi and over USB is one
+            // desktop — prefer the Wi-Fi route (no cable needed once paired).
+            var bySession = new Dictionary<string, DesktopBeacon>();
             foreach (var b in known.Values)
-                if (Time.realtimeSinceStartup - b.LastSeen <= maxAgeS) list.Add(b);
-            return list;
+            {
+                if (Time.realtimeSinceStartup - b.LastSeen > maxAgeS) continue;
+                if (!bySession.TryGetValue(b.Session, out var have) || (have.ViaUsb && !b.ViaUsb)) bySession[b.Session] = b;
+            }
+            return new List<DesktopBeacon>(bySession.Values);
         }
 
         public void Dispose()
@@ -129,6 +138,14 @@ namespace AeroFleet.VR
             running = false;
             try { udp?.Close(); } catch { }
         }
+    }
+
+    public class GatewayHello
+    {
+        [JsonProperty("host")] public string Host;
+        [JsonProperty("session_open")] public bool SessionOpen;
+        [JsonProperty("session")] public string Session;
+        [JsonProperty("gateway_port")] public int GatewayPort;
     }
 
     /// <summary>The headset side of the pairing handshake (aerofleet/api/routes/vr.py).</summary>

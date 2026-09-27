@@ -40,6 +40,7 @@ namespace AeroFleet.VR.EditorTools
             BuildScene();
             ConfigurePcVr();
             ConfigureQuestNetworking();
+            ApplyAppIcon();
             Debug.Log("[AeroFleet] Setup complete. Press Play to run the viewer against the local backend.");
         }
 
@@ -167,7 +168,7 @@ namespace AeroFleet.VR.EditorTools
 
         // ── 4. Quest standalone networking ────────────────────────────────
 
-        [MenuItem("AeroFleet/Setup/4. Configure Quest Networking", priority = 14)]
+        [MenuItem("AeroFleet/Setup/4. Configure Quest (identity & networking)", priority = 14)]
         public static void ConfigureQuestNetworking()
         {
             // The standalone headset pairs with the desktop over Wi-Fi: HTTP to the desktop's VR
@@ -176,8 +177,35 @@ namespace AeroFleet.VR.EditorTools
             // force it so the beacon listener works even before the first request.
             PlayerSettings.Android.forceInternetPermission = true;
             PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            // A real identity instead of the URP template's default package name.
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, "com.aerofleet.vr");
+            PlayerSettings.bundleVersion = "1.0.0";
+            PlayerSettings.Android.bundleVersionCode = 1;
             SavePlayerSettings();
-            Debug.Log("[AeroFleet] Quest networking: INTERNET permission forced, plain HTTP to the desktop gateway allowed.");
+            Debug.Log("[AeroFleet] Quest: com.aerofleet.vr 1.0.0, INTERNET permission forced, plain HTTP to the desktop gateway allowed.");
+        }
+
+        // ── 5. app icon ────────────────────────────────────────────────────
+
+        const string IconPath = Root + "/Branding/aerofleet_vr_icon.png";
+
+        [MenuItem("AeroFleet/Setup/5. Apply App Icon", priority = 15)]
+        public static void ApplyAppIcon()
+        {
+            // The AeroFleet mark (same as the desktop app) on the VR view's night-ops background.
+            // Source: unity/AeroFleetVR/branding/ in the repo.
+            var importer = (TextureImporter)AssetImporter.GetAtPath(IconPath);
+            if (importer == null) throw new Exception("Missing " + IconPath);
+            importer.textureType = TextureImporterType.Default;
+            importer.mipmapEnabled = false;
+            importer.alphaIsTransparency = false;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(IconPath);
+            // Default icon for every platform; Android (Quest) and Windows builds derive their sizes from it.
+            PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+            SavePlayerSettings();
+            Debug.Log("[AeroFleet] App icon set: " + IconPath);
         }
 
         /// <summary>

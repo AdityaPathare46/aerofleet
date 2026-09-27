@@ -50,6 +50,14 @@ Assets/AeroFleet/
 Same data contract, palette, thresholds and wording as the in-app web view
 (`tauri-app/src/components/vr/`), so the headset and the desktop never describe a number differently.
 
+## Branding
+
+`branding/aerofleet_vr_icon_1024.png` is the app icon: the desktop app's winged-A mark in the VR
+view's accent colour on its night-ops background. `branding/aerofleet_mark.png` is the bare mark,
+which the connect screen shows. Both are generated from `tauri-app/src-tauri/icons/icon.png`, so
+the two apps share one logo. Setup step 5 installs the icon; step 4 sets the package identity
+(`com.aerofleet.vr`, 1.0.0).
+
 ## Set up (once)
 
 In the Unity project: **AeroFleet ▸ Setup ▸ Run All**. It creates the theme and materials
@@ -97,8 +105,10 @@ and the operator token in the `AEROFLEET_TOKEN` environment variable (never on t
 process arguments are visible to every other process on the PC). `--aerofleet-mode replay
 --aerofleet-incident <id>` opens a specific rejection.
 
-**Quest standalone:** **AeroFleet ▸ Build ▸ Quest APK**, install, open it on the same Wi-Fi as the
-desktop and pair (see the guide). Setup step 4 forces the INTERNET permission the beacon listener needs.
+**Quest standalone:** **AeroFleet ▸ Build ▸ Quest APK** → `Builds/Quest/AeroFleetVR.apk`; sideload
+with `adb install -r` (step-by-step in `docs/VR_QUEST3_GUIDE.md`), open it on the same Wi-Fi as the
+desktop and pair. No Wi-Fi discovery (guest/enterprise networks)? With the USB cable in, run
+`adb reverse tcp:8765 tcp:8765`; the headset also probes 127.0.0.1:8765 and finds the desktop that way. Setup step 4 forces the INTERNET permission the beacon listener needs.
 
 Note: this project has an active Unity 6 build profile (*Meta Quest*). With a profile active,
 the PlayerSettings API writes into the profile only, so `AeroFleetSetup` also writes the settings the
