@@ -40,6 +40,8 @@ class MockLLMBackend:
         context_prompt: Union[str, Dict],
         model: Optional[str] = None,
         system_prompt_override: Optional[str] = None,
+        json_schema: Optional[Dict[str, Any]] = None,   # accepted for interface parity; not used here
+        temperature: Optional[float] = None,
     ) -> str:
         if isinstance(context_prompt, dict):
             context_prompt = json.dumps(context_prompt, indent=2)

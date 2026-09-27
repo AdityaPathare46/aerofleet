@@ -47,8 +47,10 @@ class TestExtractJsonBlock:
     def test_malformed_json_returns_none_not_an_exception(self):
         assert _extract_json_block("```json\n{not valid}\n```") is None
 
-    # Failure modes found in the 1,000-case study (research/results/f1_diagnostics.md),
-    # where they were the majority of the council's "misses".
+    # Robustness of the v2 extractor. The last two cases below (no ```json tag / bare object, and
+    # an echoed invalid schema line) are what the original extractor actually failed on — see
+    # _extract_json_block_v1 and tests/unit/test_forensics_strategy.py; nested objects and braces
+    # inside strings are covered for completeness (the original handled those).
 
     def test_brace_inside_an_evidence_string_does_not_truncate_the_block(self):
         text = '```json\n{"factor": "comms", "contributed": "CONTRIBUTED", "evidence": "margins {comms_link_margin: -3.1}"}\n```'

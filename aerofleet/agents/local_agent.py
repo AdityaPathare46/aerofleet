@@ -96,6 +96,7 @@ class LocalMissionAgent:
         user_prompt: str,
         model: Optional[str] = None,
         temperature: float = 0.3,
+        json_schema: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Core chat method wrapping Ollama with error handling and logging.
@@ -120,6 +121,7 @@ class LocalMissionAgent:
                 extra={"prompt_length": len(user_prompt)}
             )
             
+            extra = {"format": json_schema} if json_schema else {}  # Ollama constrained decoding
             response = self._client.chat(
                 model=resolved_model,
                 messages=[
@@ -129,7 +131,8 @@ class LocalMissionAgent:
                 options={
                     "temperature": temperature,
                     "num_predict": 4096,
-                }
+                },
+                **extra,
             )
             
             # Handle both object-style and dict-style SDK responses
@@ -233,6 +236,8 @@ Output Format:
         context_prompt: Union[str, Dict],
         model: Optional[str] = None,
         system_prompt_override: Optional[str] = None,
+        json_schema: Optional[Dict[str, Any]] = None,
+        temperature: Optional[float] = None,
     ) -> str:
         """
         Core reasoning engine using Dr. Astra persona.
@@ -278,6 +283,8 @@ Output Format:
                 system_prompt=system_persona,
                 user_prompt=context_prompt,
                 model=model,
+                json_schema=json_schema,
+                **({"temperature": temperature} if temperature is not None else {}),
             )
             
             logger.info(

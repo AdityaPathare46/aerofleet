@@ -31,6 +31,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from aerofleet.agents import forensics_strategy
+from aerofleet.agents.forensics_strategy import ForensicsStrategy
 from aerofleet.agents.incident_taxonomy import (
     DOMAIN_ASSESSMENT_TASK_TEMPLATE,
     DOMAIN_FACTORS,
@@ -62,8 +64,9 @@ _VERDICTS = ("CONTRIBUTED", "NOT_CONTRIBUTED", "UNCERTAIN")
 
 def _json_objects(text: str) -> List[str]:
     """Every top-level {...} span in `text`, found by brace balancing that ignores
-    braces inside JSON strings — so nested objects and a "}" inside an evidence
-    string no longer truncate the block (the old non-greedy regex did both)."""
+    braces inside JSON strings, so a bare object in the prose or one inside a fence
+    of any language tag can be found. (The original regex only matched ```json
+    fences and only tried the last one — see _extract_json_block_v1.)"""
     spans, depth, start, in_str, esc = [], 0, 0, False, False
     for i, ch in enumerate(text):
         if in_str:
@@ -125,8 +128,21 @@ def _normalise_domain_verdict(parsed: Dict[str, Any], factor_name: str) -> Dict[
     return out
 
 
+def _extract_json_block_v1(text: str) -> Optional[Dict[str, Any]]:
+    """The original extractor (non-greedy regex over ```json fences), kept only so the v1 baseline
+    can be reproduced exactly — see forensics_strategy.py."""
+    matches = re.findall(r"```json\s*(\{.*?\})\s*```", text or "", re.DOTALL)
+    if not matches:
+        return None
+    try:
+        return json.loads(matches[-1])
+    except json.JSONDecodeError:
+        return None
+
+
 class IncidentForensicsWorker:
-    def __init__(self) -> None:
+    def __init__(self, strategy: "Optional[ForensicsStrategy]" = None) -> None:
+        self.strategy = strategy or forensics_strategy.from_env()
         self._queue: "asyncio.Queue[IncidentJob]" = asyncio.Queue()
         self._running = False
 
@@ -186,21 +202,40 @@ class IncidentForensicsWorker:
         transcript: List[Dict[str, Any]] = []
         factors: List[Dict[str, Any]] = []
 
+        st = self.strategy
+        domain_context = context_prompt
+        if st.evidence_ownership:
+            domain_context += "\n" + forensics_strategy.evidence_ownership_block(job.frozen_context)
+
         for domain_factor in DOMAIN_FACTORS:
             agent = roster.get(domain_factor.agent_id)
             if agent is None:
                 continue
-            task = DOMAIN_ASSESSMENT_TASK_TEMPLATE.format(
-                description=domain_factor.description, factor_name=domain_factor.factor_name
-            )
-            system_prompt = f"{agent['system_prompt']}\n\n{task}"
-            raw = backend.reason(context_prompt, model=agent["model"], system_prompt_override=system_prompt)
+            fmt = dict(description=domain_factor.description, factor_name=domain_factor.factor_name)
+            if st.prompt_version == "v1":
+                task = forensics_strategy.DOMAIN_ASSESSMENT_TASK_TEMPLATE_V1.format(**fmt)
+            else:
+                task = DOMAIN_ASSESSMENT_TASK_TEMPLATE.format(**fmt)
+                if st.structured_output:
+                    task += forensics_strategy.STRUCTURED_TASK_SUFFIX.format(**fmt)
+            system_prompt = f"{agent['system_prompt']}\n\n{task}" + forensics_strategy.few_shot_block(st.few_shot, domain_factor.factor_name)
+            call: Dict[str, Any] = {}
+            if st.structured_output:
+                call["json_schema"] = forensics_strategy.domain_json_schema(domain_factor.factor_name)
+            if st.temperature is not None:
+                call["temperature"] = st.temperature
+            raw = backend.reason(domain_context, model=agent["model"], system_prompt_override=system_prompt, **call)
             transcript.append({
                 "phase": 2, "agent_id": domain_factor.agent_id, "name": agent["name"],
                 "model": agent["model"], "text": raw,
             })
-            parsed = _extract_json_block(raw)
-            factors.append(_normalise_domain_verdict(parsed, domain_factor.factor_name) if parsed else {
+            if st.prompt_version == "v1":
+                parsed = _extract_json_block_v1(raw)
+                verdict = parsed  # v1 trusted the agent's own factor label (see research/real_llm_results.md)
+            else:
+                parsed = _extract_json_block(raw)
+                verdict = _normalise_domain_verdict(parsed, domain_factor.factor_name) if parsed else None
+            factors.append(verdict or {
                 "factor": domain_factor.factor_name, "contributed": "UNCERTAIN",
                 "confidence": 0.0, "evidence": "Could not parse this agent's response.",
             })
