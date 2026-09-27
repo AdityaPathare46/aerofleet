@@ -130,10 +130,39 @@ class TestComplianceReportPopulated:
         # yellow band, which isn't a bug, just not what "clean" means here.
         order_id = _create_order(api_client, auth_headers, payload_kg=1.0)
         fleet = get_fleet_state("pune")
+        _register_every_drone(fleet)
         with patch.object(fleet.graph, "node_lat_lon", return_value=(18.40, 73.75)):
             resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
         report = resp.json()["compliance_report"]
         assert report["overall_status"] == "COMPLIANT", report
+
+    def test_a_drone_with_no_uin_on_file_is_flagged(self, api_client, auth_headers, fresh_fleet_state):
+        order_id = _create_order(api_client, auth_headers, payload_kg=1.0)
+        fleet = get_fleet_state("pune")
+        _clear_registrations()
+        with patch.object(fleet.graph, "node_lat_lon", return_value=(18.40, 73.75)):
+            resp = api_client.post(f"/api/v1/orders/{order_id}/dispatch", headers=auth_headers)
+        regulatory = resp.json()["compliance_report"]["domains"]["regulatory"]
+        assert regulatory["status"] == "AT_RISK"
+        assert any("UIN" in issue for issue in regulatory["issues"])
+
+
+def _register_every_drone(fleet):
+    from aerofleet.data.database import get_db_session
+    from aerofleet.fleet import registration
+
+    with get_db_session() as db:
+        for i, drone in enumerate(fleet.list_drones()):
+            registration.record(db, drone.drone_id, f"UA-TEST-{i:05d}", by="test")
+
+
+def _clear_registrations():
+    from aerofleet.data.database import get_db_session
+    from aerofleet.data.models.models import DroneRegistration
+
+    with get_db_session() as db:
+        db.query(DroneRegistration).delete()
+        db.commit()
 
 
 class TestDispatchRejectedByCbf:

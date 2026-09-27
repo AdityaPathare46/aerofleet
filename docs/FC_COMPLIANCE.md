@@ -222,16 +222,30 @@ it was inferred.
 ### DGCA regulatory
 | Check | Requirement |
 |---|---|
-| `dgca.uin` | A Digital Sky UIN is recorded for the aircraft. FAIL if none. |
+| `dgca.uin` | The aircraft's Digital Sky UIN is in the registration registry and verified. PASS = verified; WARN = recorded but not verified, or typed in for this inspection only; FAIL = none on file, or the typed-in UIN disagrees with the registry. |
 | MANUAL: `dgca.remote_pilot` | Remote Pilot Certificate. |
 | MANUAL: `dgca.npnt` | NPNT / Digital Sky permission. |
 | MANUAL: `dgca.airspace` | Green, yellow or red zone on the Digital Sky map. |
 | MANUAL: `dgca.insurance` | Third-party insurance. |
 | MANUAL: `dgca.type_certificate` | DGCA type certificate for the model. |
 
-**UIN:** AeroFleet's fleet registry has no UIN field today. The UIN
-entered when starting the inspection is stored with the inspection
-record. A PASS means "recorded", not "valid on Digital Sky".
+**UIN:** each drone's UIN lives in the drone registration registry
+(`drone_registrations` table, `aerofleet/fleet/registration.py`, API
+`/api/v1/fleet/registrations/{drone_id}`, the *Registration* card on this tab).
+Statuses say exactly what is known:
+
+| status | meaning |
+|---|---|
+| NONE | no UIN on file |
+| RECORDED | an operator entered a UIN (format-checked only) |
+| VERIFIED | an operator attests they checked it on Digital Sky; who, when and how are stored |
+
+AeroFleet cannot look a UIN up on Digital Sky itself (DGCA offers no public
+verification API), so VERIFIED is an operator's recorded attestation, never an
+automatic check. Changing a UIN resets VERIFIED to RECORDED. Writes need an
+operator account. The same registry feeds dispatch: a drone with no UIN on file
+now shows as AT_RISK in the dispatch compliance report's regulatory domain
+(previously every drone was silently assumed registered).
 
 **NPNT is MANUAL on purpose.** ArduPilot exposes no NPNT or permission
 artefact state over MAVLink, so AeroFleet cannot sense it and does not

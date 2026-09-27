@@ -81,7 +81,9 @@ def healthy_dict():
     }
 
 
-CTX = InspectionContext(uin="UA-0001-TEST", weight_kg=12.5, weight_source="test", drone_id="D1")
+# A properly registered aircraft: UIN in the registry and verified on Digital Sky by an operator.
+CTX = InspectionContext(registry_uin="UA-0001-TEST", uin_status="VERIFIED", uin_verified_by="op",
+                        uin_verified_at="2026-09-01T10:00:00", weight_kg=12.5, weight_source="test", drone_id="D1")
 
 
 def report_for(d, ctx=CTX, **kw):
@@ -268,6 +270,18 @@ class TestFaults:
         rep = report_for(healthy_dict(), InspectionContext(uin="U", weight_kg=24.0))
         c = check(rep, "air.dgca_category")
         assert c["status"] == WARN and c["evidence"]["category"] == "Small"
+
+    def test_uin_status_says_exactly_what_is_known(self):
+        base = dict(weight_kg=12.5, drone_id="D1")
+        verified = report_for(healthy_dict(), InspectionContext(registry_uin="UA-1", uin_status="VERIFIED",
+                                                                uin_verified_by="op", uin_verified_at="2026-09-01", **base))
+        assert status(verified, "dgca.uin") == PASS
+        recorded = report_for(healthy_dict(), InspectionContext(registry_uin="UA-1", uin_status="RECORDED", **base))
+        assert status(recorded, "dgca.uin") == WARN
+        entered_only = report_for(healthy_dict(), InspectionContext(uin="UA-1", **base))
+        assert status(entered_only, "dgca.uin") == WARN
+        mismatch = report_for(healthy_dict(), InspectionContext(uin="UA-2", registry_uin="UA-1", uin_status="VERIFIED", **base))
+        assert status(mismatch, "dgca.uin") == FAIL
 
     def test_missing_uin_fails(self):
         rep = report_for(healthy_dict(), InspectionContext(weight_kg=12.5))

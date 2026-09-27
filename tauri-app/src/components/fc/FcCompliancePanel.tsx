@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../../store/appStore'
+import RegistrationCard from './RegistrationCard'
 import MotorDiagram, { MotorLayout, MotorLegend } from './MotorDiagram'
 
 // ── Types (mirror aerofleet/api/routes/fc_compliance.py responses) ─────────
@@ -434,16 +435,18 @@ export default function FcCompliancePanel() {
       </div>
 
       {/* ── Run check ──────────────────────────────────────────────── */}
+      <RegistrationCard apiUrl={apiUrl} droneId={droneId} />
+
       <div className="card">
         <div className="card__header"><span className="card__title">Run compliance check</span></div>
         <div className="grid-3" style={{ gap: '12px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Drone ID (fleet registry, optional)</label>
+            <label className="form-label">Drone ID (uses its registration and weight)</label>
             <input className="form-input" value={droneId} onChange={e => setDroneId(e.target.value)} placeholder="e.g. PUN-D01-1" />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Digital Sky UIN</label>
-            <input className="form-input" value={uin} onChange={e => setUin(e.target.value)} placeholder="UIN from Digital Sky" />
+            <label className="form-label">UIN for this inspection only (optional)</label>
+            <input className="form-input" value={uin} onChange={e => setUin(e.target.value)} placeholder="blank = use the registry" />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Airframe weight kg (blank = registry)</label>

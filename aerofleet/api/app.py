@@ -33,6 +33,7 @@ from aerofleet.api.routes import (
     orders,
     policy,
     pomdp,
+    registrations,
     routes,
     safety,
     settings,
@@ -135,6 +136,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(orders.router, prefix="/api/v1/orders", tags=["orders"])
 app.include_router(routes.router, prefix="/api/v1/routes", tags=["routing"])
+app.include_router(registrations.router, prefix="/api/v1/fleet/registrations", tags=["fleet", "compliance"])
 app.include_router(fleet.router, prefix="/api/v1/fleet", tags=["fleet"])
 app.include_router(cities.router, prefix="/api/v1/cities", tags=["cities"])
 app.include_router(geofence.router, prefix="/api/v1/geofence", tags=["geofence"])

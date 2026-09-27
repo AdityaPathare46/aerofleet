@@ -38,6 +38,18 @@ def init_db():
             poolclass=StaticPool,
             echo=config.database.echo,
         )
+    elif config.database.database_url.startswith("sqlite"):
+        # File SQLite: pooled connections move between threads (FastAPI's threadpool, the FC
+        # inspection worker, the incident/policy workers), so the per-thread check must be off,
+        # and a writer on one thread must make readers wait rather than fail — SQLite serialises
+        # writes itself; `timeout` is how long a connection waits for the lock.
+        _engine = create_engine(
+            config.database.database_url,
+            connect_args={"check_same_thread": False, "timeout": 30},
+            pool_size=config.database.pool_size,
+            max_overflow=config.database.max_overflow,
+            echo=config.database.echo,
+        )
     else:
         _engine = create_engine(
             config.database.database_url,

@@ -11,7 +11,45 @@ from typing import Dict, Any
 # Set test environment
 os.environ["ENVIRONMENT"] = "test"
 os.environ["LOG_LEVEL"] = "ERROR"
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+# Throwaway SQLite *files*, not ":memory:": in-memory SQLite must share one connection across
+# every thread, and the background workers (FC inspections, incident forensics) write from their
+# own threads while requests read — which intermittently failed with "another row available".
+# A file DB gives each thread its own connection, like production.
+# In tests every init_db() call starts a brand-new file — the same "each app start is an empty
+# database" isolation each fresh in-memory engine used to give.
+import itertools as _itertools
+import tempfile as _tempfile
+
+_TEST_DB_DIR = _tempfile.mkdtemp(prefix="aerofleet-tests-")
+_test_db_counter = _itertools.count()
+
+
+def _fresh_test_db_url() -> str:
+    return "sqlite:///" + os.path.join(_TEST_DB_DIR, f"test-{next(_test_db_counter)}.db")
+
+
+os.environ["DATABASE_URL"] = _fresh_test_db_url()
+
+import aerofleet.data.database as _database_module  # noqa: E402
+
+_original_init_db = _database_module.init_db
+
+
+def _init_fresh_test_db():
+    import aerofleet.utils.config as _config_module
+
+    os.environ["DATABASE_URL"] = _fresh_test_db_url()
+    _config_module._config = None
+    if _database_module._engine is not None:
+        _database_module._engine.dispose()
+    _original_init_db()
+
+
+# Patched before anything imports init_db by name (aerofleet/api/app.py does, at import time).
+_database_module.init_db = _init_fresh_test_db
+# A fixed, test-only signing key: the backend otherwise generates and persists a per-install key
+# in the user's config directory, which tests must not touch.
+os.environ["AEROFLEET_SECRET_KEY"] = "test-only-signing-key-0123456789abcdef0123456789abcdef"
 # VR pairing sessions work in-process in tests, but must not open LAN sockets (gateway/beacon).
 os.environ["AEROFLEET_VR_NETWORK"] = "off"
 

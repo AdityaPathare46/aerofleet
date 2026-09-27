@@ -70,7 +70,8 @@ def _regulatory_domain(dispatch_plan: Dict[str, Any]) -> Dict[str, Any]:
     zone_color = "RED" if dispatch_plan.get("in_red_zone") else ("YELLOW" if dispatch_plan.get("in_yellow_zone") else "GREEN")
     result = AgentTools.dgca_compliance_check(
         zone_color=zone_color,
-        uin_registered=bool(dispatch_plan.get("uin_registered", True)),
+        # Unknown means not registered: a missing UIN must show up, not be assumed away.
+        uin_registered=bool(dispatch_plan.get("uin_registered", False)),
         atc_permission=bool(dispatch_plan.get("atc_permission", False)),
         altitude_m=float(dispatch_plan.get("altitude_m", 60.0)),
     )

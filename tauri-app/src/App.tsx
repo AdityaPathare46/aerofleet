@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useAppStore } from './store/appStore'
+import { installAuthRetry, startSilentRenewal } from './lib/session'
 import logo from './assets/logo.png'
 import { tauriInvoke, tauriListen } from './lib/tauriBridge'
 
@@ -95,6 +96,9 @@ export default function App() {
   // when every actual API call was succeeding. Pings the root endpoint on
   // mount and every 10s afterward so the badge reflects the real backend
   // state, including recovering if the API restarts mid-session.
+  // Renew the sign-in in the background so an operator isn't logged out mid-session.
+  useEffect(() => { installAuthRetry(apiUrl); return startSilentRenewal(apiUrl) }, [apiUrl])
+
   useEffect(() => {
     let cancelled = false
     const check = () => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { storeTokens } from '../lib/session'
 
 /** Minimal sign-in / create-account card. Stores the JWT under the same
  * `aerofleet_token` key every page already reads, so signing in here unlocks
@@ -32,8 +33,7 @@ export default function SignInCard({ apiUrl, onSignedIn, reason }: {
         body: new URLSearchParams({ username, password }),
       })
       if (!r.ok) throw new Error(r.status === 401 ? 'Incorrect username or password' : `Sign-in failed (HTTP ${r.status})`)
-      const { access_token } = await r.json()
-      localStorage.setItem('aerofleet_token', access_token)
+      storeTokens(await r.json())
       onSignedIn()
     } catch (err) {
       setError(String((err as Error).message || err))

@@ -23,6 +23,7 @@ def _plan(**overrides):
         "altitude_m": 60.0,
         "in_red_zone": False,
         "in_yellow_zone": False,
+        "uin_registered": True,   # a registered drone; dispatch reads this from the registration registry
     }
     base.update(overrides)
     return base
@@ -36,6 +37,13 @@ class TestRegulatoryDomain:
     def test_clean_plan_is_compliant(self):
         report = compute_compliance_report(_plan(), safety_margin_summary={})
         assert report["domains"]["regulatory"]["status"] == DomainStatus.COMPLIANT.value
+
+    def test_a_plan_that_does_not_say_is_treated_as_unregistered(self):
+        plan = _plan()
+        del plan["uin_registered"]
+        report = compute_compliance_report(plan, safety_margin_summary={})
+        assert report["domains"]["regulatory"]["status"] == DomainStatus.AT_RISK.value
+        assert any("UIN" in issue for issue in report["domains"]["regulatory"]["issues"])
 
     def test_red_zone_is_non_compliant(self):
         report = compute_compliance_report(_plan(in_red_zone=True), safety_margin_summary={})

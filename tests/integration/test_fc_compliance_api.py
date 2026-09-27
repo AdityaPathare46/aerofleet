@@ -164,9 +164,14 @@ class TestHealthyAircraftFullWorkflow:
     confirmations -> manual checklist -> verdict PASS."""
 
     def test_full_workflow(self, api_client, auth_headers, operator_headers, udp_port_env):
+        # A fully compliant aircraft is one whose UIN is in the registry and verified on Digital Sky.
+        reg = "/api/v1/fleet/registrations/BENCH-HEALTHY"
+        assert api_client.put(reg, headers=operator_headers, json={"uin": "UA-TEST-0001"}).status_code == 200
+        assert api_client.post(f"{reg}/verify", headers=operator_headers,
+                               json={"note": "checked on Digital Sky (test)"}).status_code == 200
         with running_mock("healthy") as port:
             udp_port_env(port)
-            iid = _start(api_client, operator_headers)
+            iid = _start(api_client, operator_headers, drone_id="BENCH-HEALTHY", uin=None)
             detail = _wait(api_client, operator_headers, iid)
             assert detail["status"] == "READY"
             assert _fail_ids(detail) == set()

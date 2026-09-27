@@ -185,6 +185,9 @@ async def dispatch_order(
     except Exception:
         pass
 
+    from aerofleet.fleet import registration
+
+    uin_status = registration.status_of(registration.get(db, candidate.drone_id))
     dispatch_plan = {
         "order_id": order_id,
         "drone_id": candidate.drone_id,
@@ -218,6 +221,10 @@ async def dispatch_order(
         # were silently dropped.
         "dest_lat": dest_lat,
         "dest_lon": dest_lon,
+        # From the drone registration registry (aerofleet/fleet/registration.py) — previously never
+        # set, so the regulatory check silently assumed every drone was registered.
+        "uin_registered": uin_status in (registration.RECORDED, registration.VERIFIED),
+        "uin_status": uin_status,
     }
 
     # A real, zone/energy-aware multi-waypoint route (aerofleet/city/

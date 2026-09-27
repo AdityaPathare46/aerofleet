@@ -193,6 +193,7 @@ async def start_inspection(
     body: InspectionRequest,
     current_user: User = Depends(get_current_active_user),
     _owner: None = Depends(require_hardware_owner),
+    db: Session = Depends(get_db),
 ):
     if not body.auto and not body.connection:
         raise HTTPException(status_code=422, detail="Give a connection string or set auto=true")
@@ -206,7 +207,19 @@ async def start_inspection(
             raise HTTPException(status_code=404, detail=f"Drone '{body.drone_id}' not found in {body.city}'s fleet")
         weight_kg, weight_source = drone.weight_kg, f"AeroFleet fleet registry ({body.city})"
 
+    registry_uin = uin_status = verified_by = verified_at = None
+    if body.drone_id:
+        from aerofleet.fleet import registration
+
+        reg_row = registration.get(db, body.drone_id)
+        uin_status = registration.status_of(reg_row)
+        if reg_row is not None:
+            registry_uin, verified_by = reg_row.uin, reg_row.verified_by
+            verified_at = reg_row.verified_at.isoformat() if reg_row.verified_at else None
+
     context = {
+        "registry_uin": registry_uin, "uin_status": uin_status,
+        "uin_verified_by": verified_by, "uin_verified_at": verified_at,
         "bench_mode": body.bench_mode, "drone_id": body.drone_id, "uin": (body.uin or "").strip() or None,
         "weight_kg": weight_kg, "weight_source": weight_source, "payload_kg": body.payload_kg,
     }

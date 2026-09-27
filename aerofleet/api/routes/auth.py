@@ -1,15 +1,18 @@
 """Authentication and user management API endpoints."""
 
 import os
+import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import bcrypt
 from jose import JWTError, jwt
 
 from aerofleet.api.rate_limit import limiter
+from aerofleet.api.secret_key import resolve_secret_key
 from aerofleet.api.schemas import UserCreate, UserResponse, Token
 from aerofleet.data.models.models import User
 from aerofleet.data.database import get_db_session
@@ -20,10 +23,14 @@ logger = get_logger(__name__)
 router = APIRouter()
 config = get_config()
 
-# Security configuration
-SECRET_KEY = getattr(config.api, "secret_key", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7")
+# Security configuration — see aerofleet/api/secret_key.py: env var, then a non-placeholder config
+# value, then a random per-install key. Never a constant from the repository.
+SECRET_KEY = resolve_secret_key(getattr(config, "secret_key", None))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Short-lived access tokens, renewed silently with a longer-lived refresh token (POST /auth/refresh),
+# so an operator isn't logged out mid-session and a leaked access token expires quickly.
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("AEROFLEET_ACCESS_TOKEN_MINUTES", "60"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("AEROFLEET_REFRESH_TOKEN_DAYS", "14"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
@@ -59,9 +66,25 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def create_refresh_token(username: str) -> str:
+    """Long-lived token whose only use is POST /auth/refresh — rejected everywhere else."""
+    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    return jwt.encode({"sub": username, "exp": expire, "type": "refresh", "jti": secrets.token_hex(8)},
+                      SECRET_KEY, algorithm=ALGORITHM)
+
+
+def issue_tokens(username: str) -> dict:
+    return {
+        "access_token": create_access_token({"sub": username}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)),
+        "token_type": "bearer",
+        "refresh_token": create_refresh_token(username),
+        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
 
 def get_user_from_token(token: str, db: Session) -> Optional[User]:
     """Decode a JWT and look up its user, returning None rather than raising
@@ -70,7 +93,8 @@ def get_user_from_token(token: str, db: Session) -> Optional[User]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username is None:
+        # A refresh token is not a login: it only buys a new access token at /auth/refresh.
+        if username is None or payload.get("type") == "refresh":
             return None
     except JWTError:
         return None
@@ -173,11 +197,31 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return issue_tokens(user.username)
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh", response_model=Token)
+@limiter.limit("30/minute")
+async def refresh_access_token(request: Request, body: RefreshRequest, db: Session = Depends(get_db)):
+    """Silent renewal: a valid refresh token buys a fresh access token and a new refresh token
+    (rotation). The desktop app calls this before the access token expires, so an operator stays
+    signed in for as long as the app is in use, up to REFRESH_TOKEN_EXPIRE_DAYS idle."""
+    unauthorized = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalid or expired",
+                                 headers={"WWW-Authenticate": "Bearer"})
+    try:
+        payload = jwt.decode(body.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise unauthorized
+    if payload.get("type") != "refresh" or not payload.get("sub"):
+        raise unauthorized
+    user = db.query(User).filter(User.username == payload["sub"]).first()
+    if user is None or not user.is_active:
+        raise unauthorized
+    return issue_tokens(user.username)
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):

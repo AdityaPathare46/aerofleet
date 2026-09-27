@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 class Token(BaseModel):
     access_token: str
     token_type: str
+    refresh_token: Optional[str] = None
+    expires_in: Optional[int] = None   # access-token lifetime, seconds
 
 
 class TokenData(BaseModel):

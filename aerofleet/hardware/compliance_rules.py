@@ -143,7 +143,11 @@ class InspectionContext:
     """What AeroFleet knows about the aircraft beyond the flight controller."""
     bench_mode: bool = False          # indoor bench check: no GPS fix expected
     drone_id: Optional[str] = None
-    uin: Optional[str] = None
+    uin: Optional[str] = None                 # typed in for this inspection
+    registry_uin: Optional[str] = None        # from the drone registration registry (fleet/registration.py)
+    uin_status: Optional[str] = None          # NONE | RECORDED | VERIFIED (registry)
+    uin_verified_by: Optional[str] = None
+    uin_verified_at: Optional[str] = None
     weight_kg: Optional[float] = None
     weight_source: Optional[str] = None
     payload_kg: float = 0.0
@@ -151,6 +155,8 @@ class InspectionContext:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "bench_mode": self.bench_mode, "drone_id": self.drone_id, "uin": self.uin,
+            "registry_uin": self.registry_uin, "uin_status": self.uin_status,
+            "uin_verified_by": self.uin_verified_by, "uin_verified_at": self.uin_verified_at,
             "weight_kg": self.weight_kg, "weight_source": self.weight_source, "payload_kg": self.payload_kg,
         }
 
@@ -159,6 +165,8 @@ class InspectionContext:
         d = d or {}
         return cls(
             bench_mode=bool(d.get("bench_mode", False)), drone_id=d.get("drone_id"), uin=d.get("uin"),
+            registry_uin=d.get("registry_uin"), uin_status=d.get("uin_status"),
+            uin_verified_by=d.get("uin_verified_by"), uin_verified_at=d.get("uin_verified_at"),
             weight_kg=d.get("weight_kg"), weight_source=d.get("weight_source"),
             payload_kg=float(d.get("payload_kg") or 0.0),
         )
@@ -1130,15 +1138,30 @@ def _fs_rtl(f: Facts) -> Outcome:
 #  DGCA regulatory
 # ═════════════════════════════════════════════════════════════════════════
 
-@rule("dgca.uin", "dgca", "UIN recorded",
-      "The drone's Digital Sky Unique Identification Number (UIN) is recorded in AeroFleet for this aircraft.",
-      "Register the drone on Digital Sky and enter its UIN when starting the inspection.",
+@rule("dgca.uin", "dgca", "UIN registered and verified",
+      "The drone's Digital Sky Unique Identification Number (UIN) is in AeroFleet's registration registry, "
+      "and an operator has verified it on Digital Sky.",
+      "Register the drone on Digital Sky, record its UIN under Hardware ▸ Drone compliance ▸ Registration, "
+      "then mark it verified once checked on Digital Sky.",
       SRC_DIGITAL_SKY, "Drone Rules 2021 — registration and UIN before operation (" + SRC_DRONE_RULES + ")")
 def _dgca_uin(f: Facts) -> Outcome:
-    uin = (f.ctx.uin or "").strip()
-    if not uin:
-        return _o(FAIL, "No UIN recorded for this aircraft in AeroFleet.", drone_id=f.ctx.drone_id)
-    return _o(PASS, "Recorded only — validity on Digital Sky is not verifiable over MAVLink.", uin=uin, drone_id=f.ctx.drone_id)
+    # AeroFleet can't query Digital Sky (no public verification API), so the best possible result
+    # is an operator's recorded attestation — and the evidence says so.
+    entered = (f.ctx.uin or "").strip().upper() or None
+    registry = (f.ctx.registry_uin or "").strip().upper() or None
+    ids = {"drone_id": f.ctx.drone_id}
+    if entered and registry and entered != registry:
+        return _o(FAIL, f"The UIN entered for this inspection ({entered}) doesn't match the registry ({registry}).",
+                  entered_uin=entered, registry_uin=registry, **ids)
+    if registry and f.ctx.uin_status == "VERIFIED":
+        return _o(PASS, f"Verified on Digital Sky by {f.ctx.uin_verified_by} on {(f.ctx.uin_verified_at or '')[:10]} "
+                        "(operator attestation — AeroFleet cannot query Digital Sky).", uin=registry, **ids)
+    if registry:
+        return _o(WARN, "Recorded in the registry but not yet verified on Digital Sky.", uin=registry, registry_status=f.ctx.uin_status, **ids)
+    if entered:
+        return _o(WARN, "Entered for this inspection only — not in the registration registry, and not verified.",
+                  uin=entered, **ids)
+    return _o(FAIL, "No UIN on file for this aircraft.", **ids)
 
 
 manual("dgca.remote_pilot", "dgca", "Remote pilot certificate",

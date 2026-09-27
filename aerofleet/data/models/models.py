@@ -390,3 +390,28 @@ class FCInspection(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DroneRegistration(Base):
+    """A drone's DGCA Digital Sky registration (UIN), kept per drone_id.
+
+    A separate table keyed by drone_id (not a column on `drones`) because the live fleet is an
+    in-memory registry (aerofleet/fleet/state.py) — this survives restarts either way, and a new
+    table is created by init_db() without migrating existing databases.
+
+    AeroFleet cannot look a UIN up on Digital Sky (there is no public verification API), so the
+    status says exactly what is known: RECORDED (an operator entered it) or VERIFIED (an operator
+    attests they checked it on Digital Sky — who, when and a note are kept).
+    """
+
+    __tablename__ = "drone_registrations"
+
+    drone_id = Column(String(50), primary_key=True)
+    uin = Column(String(40), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="RECORDED")  # RECORDED | VERIFIED
+    recorded_by = Column(String(50), nullable=True)
+    recorded_at = Column(DateTime, default=datetime.utcnow)
+    verified_by = Column(String(50), nullable=True)
+    verified_at = Column(DateTime, nullable=True)
+    verification_note = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
