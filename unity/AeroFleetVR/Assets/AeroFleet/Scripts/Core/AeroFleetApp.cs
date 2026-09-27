@@ -46,11 +46,37 @@ namespace AeroFleet.VR
         public string FollowingHost { get; private set; }
         public bool StatusIsError { get; private set; }
         public bool InHeadset { get; private set; }
+        public VrPointer Pointer { get; private set; }
         public bool ShowBuildings { get; private set; } = true;
         public BuildingsDto Buildings { get; private set; }
         public int BuildingsDrawn => buildingsView != null ? buildingsView.Drawn : 0;
         public int BuildingsDrawnMeasured => buildingsView != null ? buildingsView.DrawnMeasured : 0;
         public string CitySlug => city?.Slug ?? cfg?.city;
+
+        // ── inspection, planning, building, preview ────────────────────────
+        public enum Tool { None, Plan, Build }
+        public Tool ActiveTool { get; private set; }
+        /// <summary>Bumped on every tool/plan/build change so the right board knows to redraw.</summary>
+        public int UiVersion { get; private set; }
+        public bool FollowSelected { get; private set; }
+        public FcInspectionDto SelectedInspection { get; private set; }
+        public bool SelectedInspectionLoaded { get; private set; }
+        /// <summary>Paired: the desktop operator allowed it. Standalone: this viewer signed in itself.</summary>
+        public bool AllowDispatch { get; private set; }
+        public bool Previewing => preview != null && preview.Playing;
+        public DroneBuild Build { get; } = new DroneBuild();
+        public DepotDto PlanOrigin { get; private set; }
+        public double? PlanLat { get; private set; }
+        public double? PlanLon { get; private set; }
+        public static readonly double[] PlanPayloads = { 0.5, 1, 2, 3 };
+        public static readonly string[] PlanPriorities = { "STANDARD", "EXPRESS", "MEDICAL" };
+        public int PlanPayloadIndex { get; private set; } = 1;
+        public int PlanPriorityIndex { get; private set; }
+        public string PlanStatus { get; private set; }
+        public bool PlanStatusBad { get; private set; }
+        public bool PlanBusy { get; private set; }
+        public DispatchResultDto PlanResult { get; private set; }
+        string inspectedFor;
         public string CityName => city?.Name?.Split(',')[0] ?? cfg?.city;
 
         LaunchConfig cfg;
@@ -81,6 +107,9 @@ namespace AeroFleet.VR
         BuildingsView buildingsView;
         SwarmView swarm;
         ReplayView replay;
+        ForecastPreview preview;
+        PlanView planView;
+        InspectionBench bench;
         FleetBoard fleetBoard;
         ContextBoard contextBoard;
 
@@ -100,6 +129,7 @@ namespace AeroFleet.VR
             while (!XRSettings.isDeviceActive && Time.realtimeSinceStartup < until) yield return null;
             InHeadset = XRSettings.isDeviceActive;
             if (!InHeadset) EnableDesktopMode();
+            else Pointer = gameObject.AddComponent<VrPointer>();
             PlaceBoards();
 
             beacons = new BeaconListener();
@@ -141,6 +171,7 @@ namespace AeroFleet.VR
 
             yield return LoadCity();
             if (city == null) yield break;
+            AllowDispatch = api.HasToken;
 
             if (Mode == ViewMode.Replay) yield return EnterReplay(cfg.incidentId);
             else EnterLive();
@@ -161,6 +192,9 @@ namespace AeroFleet.VR
                 statusText = $"{CityName} · live · {Live?.DroneCount ?? 0} airborne · updated {age:0.0} s ago" +
                              (age > 6 ? "  —  backend not responding" : "");
             }
+            if (Selected != inspectedFor) StartCoroutine(LoadInspection(Selected));
+            if (Selected == null) FollowSelected = false;
+            UpdateBench();
             fleetBoard?.Refresh(this);
             contextBoard?.Refresh(this);
         }
@@ -276,6 +310,7 @@ namespace AeroFleet.VR
 
             api = link;
             cfg.apiUrl = url;
+            AllowDispatch = env.AllowDispatch;
             Following = true;
             FollowingHost = host;
             stage = Stage.Following;
@@ -303,7 +338,7 @@ namespace AeroFleet.VR
                 long code = 0;
                 yield return api.Get<ScenarioEnvelope>("/api/v1/vr/device/scenario", true, e => env = e, (c, _) => code = c);
                 if (code == 401) { EndFollowing("The desktop ended the VR session."); yield break; }
-                if (env != null) lastHeard = Time.realtimeSinceStartup;
+                if (env != null) { lastHeard = Time.realtimeSinceStartup; AllowDispatch = env.AllowDispatch; }
                 // Ending the session also stops the desktop's gateway, so usually there's no 401 to read —
                 // just silence. Treat a few seconds of it as the session being over.
                 else if (Time.realtimeSinceStartup - lastHeard > LinkLostAfterS)
@@ -329,6 +364,7 @@ namespace AeroFleet.VR
         void EndFollowing(string message)
         {
             Following = false;
+            AllowDispatch = false;
             stopPolling = true;
             stage = Stage.Home;
             homeMessage = message;
@@ -409,6 +445,17 @@ namespace AeroFleet.VR
             swarm.OnSelect = Select;
             replay = new GameObject("Replay").AddComponent<ReplayView>();
             replay.transform.SetParent(tableSpin, false);
+            preview = new GameObject("Preview").AddComponent<ForecastPreview>();
+            preview.transform.SetParent(tableSpin, false);
+            preview.gameObject.SetActive(false);
+            planView = new GameObject("Plan").AddComponent<PlanView>();
+            planView.transform.SetParent(tableSpin, false);
+            planView.gameObject.SetActive(false);
+            table.OnDepotClick = OnDepotClick;
+            table.OnSurfaceClick = OnSurfaceClick;
+            bench = new GameObject("InspectionBench").AddComponent<InspectionBench>();
+            bench.transform.SetParent(workspace, false);
+            bench.gameObject.SetActive(false);
 
             fleetBoard = FleetBoard.Create(workspace, this);
             contextBoard = ContextBoard.Create(workspace);
@@ -424,6 +471,8 @@ namespace AeroFleet.VR
                 fleetBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(-1.08f, 1.32f, 0.72f)), workspace.TransformPoint(eye));
                 contextBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(1.08f, 1.32f, 0.72f)), workspace.TransformPoint(eye));
                 connectBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0f, 1.42f, 0.62f)), workspace.TransformPoint(eye));
+                // the stand: right of the table, an arm's length away, below the right board
+                bench.transform.localPosition = new Vector3(0.9f, 1.0f, 0.25f);
             }
             else
             {
@@ -432,6 +481,7 @@ namespace AeroFleet.VR
                 fleetBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(-0.46f, 1.66f, 1.8f)), workspace.TransformPoint(eye));
                 contextBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0.46f, 1.66f, 1.8f)), workspace.TransformPoint(eye));
                 connectBoard.GetComponent<Panel>().Face(workspace.TransformPoint(new Vector3(0f, 1.5f, 0.35f)), workspace.TransformPoint(eye));
+                bench.transform.localPosition = new Vector3(1.12f, 1.0f, 0.75f);
             }
         }
 
@@ -515,7 +565,13 @@ namespace AeroFleet.VR
             lastLiveAt = Time.unscaledTime;
             StatusIsError = false;
             if (Selected != null && !data.Drones.ContainsKey(Selected)) Selected = null;
-            RebuildDiorama(); // no-op unless the ceiling constant changed
+            if (FollowSelected && Selected != null && RangeKm < 4)
+            {
+                var d = data.Drones[Selected];
+                Vector2 at = GeoMath.ToLocal(d.Lat, d.Lon, center.x, center.y);
+                if ((at - focus).magnitude > 150f) focus = at; // re-centre in steps, not every poll (the table rebuilds)
+            }
+            RebuildDiorama(); // no-op unless the ceiling constant or the focus changed
             swarm.Apply(data, Diorama, center, Selected, DetailAll);
         }
 
@@ -568,10 +624,12 @@ namespace AeroFleet.VR
             string key = $"{Mode}|{e:0}|{n:0}|{extent:0}|{legal:0}";
             if (key == builtDioramaKey) return;
             builtDioramaKey = key;
+            preview?.Stop(); // its geometry is in the old table's coordinates
             Diorama = new Diorama(e, n, extent, TableHalf, ColumnHeight, legal);
             table.Build(Diorama, center, roads, zones, depots, Live?.Constants ?? new LiveConstants(), showPlinth: true);
             buildingsView.Build(Diorama, center, ShowBuildings ? Buildings : null);
             if (Mode == ViewMode.Live && Live != null) swarm.Apply(Live, Diorama, center, Selected, DetailAll);
+            RefreshPlanView();
         }
 
         // ── controls (board buttons) ───────────────────────────────────────
@@ -579,6 +637,8 @@ namespace AeroFleet.VR
         public void SetMode(ViewMode m)
         {
             if (city == null || m == Mode) return;
+            preview.Stop();
+            if (m == ViewMode.Replay && ActiveTool == Tool.Plan) SetTool(Tool.None);
             if (m == ViewMode.Live) { Scene = null; EnterLive(); }
             else StartCoroutine(EnterReplay(Scene?.IncidentId));
         }
@@ -646,12 +706,173 @@ namespace AeroFleet.VR
         {
             switching = true;
             Live = null; Scene = null; Selected = null; focus = Vector2.zero;
+            preview.Stop();
+            ClearPlan();
             Incidents = new List<IncidentSummaryDto>();
             swarm.Clear();
             replay.Hide();
             builtDioramaKey = null;
             yield return LoadCity();
             switching = false;
+        }
+
+        // ── drone inspection ───────────────────────────────────────────────
+
+        /// <summary>The selected drone's latest flight-controller compliance inspection, if it has one.</summary>
+        IEnumerator LoadInspection(string id)
+        {
+            inspectedFor = id;
+            SelectedInspection = null;
+            SelectedInspectionLoaded = false;
+            if (id == null) yield break;
+            List<FcInspectionDto> list = null;
+            yield return api.Get<List<FcInspectionDto>>($"/api/v1/hardware/fc/inspections?drone_id={UnityEngine.Networking.UnityWebRequest.EscapeURL(id)}&limit=5",
+                true, l => list = l, (_, e) => Debug.LogWarning("[AeroFleet] Inspection lookup: " + e));
+            if (inspectedFor != id) yield break;
+            var done = list?.Find(i => i.Status == "READY");
+            FcInspectionDto detail = null;
+            if (done != null)
+                yield return api.Get<FcInspectionDto>($"/api/v1/hardware/fc/inspections/{done.InspectionId}", true, x => detail = x);
+            if (inspectedFor != id) yield break;
+            SelectedInspection = detail;
+            SelectedInspectionLoaded = true;
+        }
+
+        void UpdateBench()
+        {
+            if (ActiveTool == Tool.Build) bench.ShowBuild(Build);
+            else if (Mode == ViewMode.Live && Selected != null && Live != null && Live.Drones.TryGetValue(Selected, out var d))
+                bench.Show(Selected, d, SelectedInspection, SelectedInspectionLoaded);
+            else bench.Hide();
+        }
+
+        public void ToggleFollow()
+        {
+            if (Selected == null) return;
+            FollowSelected = !FollowSelected;
+            if (FollowSelected) SetRange(RangeKm < 4 ? RangeKm : 1);
+        }
+
+        // ── tools ──────────────────────────────────────────────────────────
+
+        public void SetTool(Tool t)
+        {
+            ActiveTool = ActiveTool == t ? Tool.None : t;
+            if (ActiveTool == Tool.Plan)
+            {
+                if (Mode != ViewMode.Live) SetMode(ViewMode.Live);
+                PlanResult = null;
+                PlanNote(PlanOrigin == null ? "Point at a depot pylon and pull the trigger to start from it." : null);
+            }
+            if (ActiveTool != Tool.Plan) ClearPlan();
+            UiVersion++;
+        }
+
+        public void TogglePreview()
+        {
+            if (preview.Playing) preview.Stop();
+            else if (Mode == ViewMode.Live && Live != null) preview.Play(Live, Diorama, center);
+            UiVersion++;
+        }
+
+        public void StepBuild(string part, int delta)
+        {
+            Build.Step(part, delta);
+            UiVersion++;
+        }
+
+        // ── planning a delivery in VR ──────────────────────────────────────
+
+        void OnDepotClick(DepotDto depot)
+        {
+            if (Mode != ViewMode.Live) return;
+            if (ActiveTool != Tool.Plan) SetTool(Tool.Plan); // pressing a depot starts a plan from it
+            PlanOrigin = depot;
+            PlanResult = null;
+            PlanNote(PlanLat == null ? $"From {depot.Name}. Now point at the map where the parcel should go and pull the trigger." : null);
+            RefreshPlanView();
+        }
+
+        void OnSurfaceClick(Vector3 local)
+        {
+            if (ActiveTool != Tool.Plan || Diorama == null || PlanBusy) return;
+            if (PlanOrigin == null) { PlanNote("Pick the origin depot first — point at a depot pylon.", true); return; }
+            Vector2 en = Diorama.Unproject(local);
+            var (lat, lon) = GeoMath.ToLatLon(en.x, en.y, center.x, center.y);
+            PlanLat = lat; PlanLon = lon;
+            PlanResult = null;
+            PlanNote(null);
+            RefreshPlanView();
+        }
+
+        public void CyclePlanPayload() { PlanPayloadIndex = (PlanPayloadIndex + 1) % PlanPayloads.Length; UiVersion++; }
+        public void CyclePlanPriority() { PlanPriorityIndex = (PlanPriorityIndex + 1) % PlanPriorities.Length; UiVersion++; }
+
+        public void ClearPlan()
+        {
+            PlanOrigin = null; PlanLat = PlanLon = null; PlanResult = null; PlanStatus = null; PlanBusy = false;
+            planView?.Hide();
+            UiVersion++;
+        }
+
+        void PlanNote(string text, bool bad = false)
+        {
+            PlanStatus = text; PlanStatusBad = bad;
+            UiVersion++;
+        }
+
+        void RefreshPlanView()
+        {
+            if (planView == null) return;
+            if (ActiveTool == Tool.Plan && Mode == ViewMode.Live && (PlanOrigin != null || PlanLat != null))
+                planView.Show(Diorama, center, PlanOrigin, PlanLat, PlanLon, Palette.Accent);
+            else planView.Hide();
+        }
+
+        public bool CanDispatch => AllowDispatch && PlanOrigin != null && PlanLat != null && !PlanBusy;
+
+        public void DispatchPlan()
+        {
+            if (!AllowDispatch)
+            {
+                PlanNote(Following ? "The desktop hasn't allowed this headset to dispatch — tick “Allow the headset to dispatch” in AeroFleet's VR panel."
+                                   : "Sign in to dispatch.", true);
+                return;
+            }
+            if (CanDispatch) StartCoroutine(DispatchCo());
+        }
+
+        IEnumerator DispatchCo()
+        {
+            PlanBusy = true;
+            PlanResult = null;
+            PlanNote("Creating the order…");
+            var body = new Dictionary<string, object>
+            {
+                { "city", city.Slug }, { "origin_depot_id", PlanOrigin.DepotId },
+                { "destination_lat", PlanLat.Value }, { "destination_lon", PlanLon.Value },
+                { "payload_kg", PlanPayloads[PlanPayloadIndex] }, { "priority", PlanPriorities[PlanPriorityIndex] },
+            };
+            OrderDto order = null;
+            string err = null;
+            yield return api.Post<OrderDto>("/api/v1/orders/", body, o => order = o, (c, e) => err = c == 403 ? e : $"{c}: {e}");
+            if (order == null) { PlanBusy = false; PlanNote("Order refused — " + err, true); yield break; }
+
+            PlanNote($"Order {order.OrderId} created — asking the safety gate…");
+            DispatchResultDto result = null;
+            yield return api.Post<DispatchResultDto>($"/api/v1/orders/{order.OrderId}/dispatch", null, r => result = r,
+                (c, e) => err = c == 409 ? e : $"{c}: {e}");
+            PlanBusy = false;
+            if (result == null) { PlanNote($"Not dispatched — {err}", true); yield break; }
+            PlanResult = result;
+            if (result.Verdict == "APPROVED")
+            {
+                PlanNote($"APPROVED · {result.AssignedDroneId} is on its way — its trajectory appears on the table with the next update.");
+                yield return new WaitForSeconds(PollSeconds * 1.5f);
+                if (Live != null && result.AssignedDroneId != null && Live.Drones.ContainsKey(result.AssignedDroneId) && Selected != result.AssignedDroneId)
+                    Select(result.AssignedDroneId);
+            }
+            else PlanNote($"{result.Verdict.Replace('_', ' ')} — see the margins below.", true);
         }
 
         public void RotateTable() => tableSpin.localRotation *= Quaternion.Euler(0, 90, 0);

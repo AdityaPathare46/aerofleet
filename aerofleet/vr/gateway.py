@@ -8,7 +8,11 @@ of requests to the main API and refuses everything else:
   * unauthenticated: the pairing handshake (hello, request, poll) — that is
     all a device that hasn't been approved on the desktop can do;
   * with the paired headset's session token: GET-only reads of exactly what
-    the VR view renders, plus the headset's own scenario/heartbeat calls.
+    the VR view renders, plus the headset's own scenario/heartbeat calls;
+  * only if the operator ticked "Allow the headset to dispatch" on the
+    desktop: creating a delivery order and asking for its dispatch — the
+    two POSTs route planning in VR needs. The CBF gate still decides, and
+    the orders API never commands LIVE hardware for a VR-originated request.
 
 Why not accept normal JWTs here: login tokens are long-lived and their
 signing key may be a shared default on some installs, so a LAN-facing
@@ -56,16 +60,26 @@ _READ = [re.compile(p) for p in (
     r"^/api/v1/safety/live-margins$",
     r"^/api/v1/incidents/?$",
     r"^/api/v1/incidents/INC-[A-Z0-9]+/vr-scene$",
+    # drone inspection in the headset: the drone's flight-controller compliance record (read-only)
+    r"^/api/v1/hardware/fc/inspections$",
+    r"^/api/v1/hardware/fc/inspections/FCI-[A-Z0-9]+$",
 )]
+_DISPATCH = [
+    ("POST", re.compile(r"^/api/v1/orders/?$")),
+    ("POST", re.compile(r"^/api/v1/orders/ORD-[0-9A-F]{8}/dispatch$")),
+]
+MAX_BODY_BYTES = 4096
 _HOP_HEADERS = {"connection", "keep-alive", "transfer-encoding", "te", "upgrade", "content-encoding", "content-length", "host"}
 
 
 def classify(method: str, path: str) -> Optional[str]:
-    """'public', 'device', 'read', or None (refused)."""
+    """'public', 'device', 'read', 'dispatch', or None (refused)."""
     if any(method == m and p.match(path) for m, p in _PUBLIC):
         return "public"
     if any(method == m and p.match(path) for m, p in _DEVICE):
         return "device"
+    if any(method == m and p.match(path) for m, p in _DISPATCH):
+        return "dispatch"
     if method == "GET" and any(p.match(path) for p in _READ):
         return "read"
     return None
@@ -102,11 +116,18 @@ def build_gateway_app(registry: VrSessionRegistry, upstream: httpx.AsyncBaseTran
                 return JSONResponse({"detail": "Not paired — pair this headset from the AeroFleet desktop app"},
                                     status_code=401)
             headers[VR_TOKEN_HEADER] = token
-            if kind == "read":
+            if kind == "dispatch" and not session.allow_dispatch:
+                return JSONResponse({"detail": "The desktop hasn't allowed this headset to dispatch — tick "
+                                               "'Allow the headset to dispatch' in AeroFleet's VR panel"},
+                                    status_code=403)
+            if kind in ("read", "dispatch"):
                 headers["Authorization"] = f"Bearer {owner_jwt(session.owner)}"
 
+        body = await request.body()
+        if len(body) > MAX_BODY_BYTES:
+            return JSONResponse({"detail": "Request too large"}, status_code=413)
         upstream_resp = await client.request(method, path, params=request.query_params, headers=headers,
-                                             content=await request.body())
+                                             content=body)
         out_headers = {k: v for k, v in upstream_resp.headers.items() if k.lower() not in _HOP_HEADERS}
         return Response(upstream_resp.content, status_code=upstream_resp.status_code, headers=out_headers)
 

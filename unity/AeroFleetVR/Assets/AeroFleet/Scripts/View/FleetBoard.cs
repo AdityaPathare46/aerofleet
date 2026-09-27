@@ -14,7 +14,7 @@ namespace AeroFleet.VR.View
     /// </summary>
     public class FleetBoard : MonoBehaviour
     {
-        public const float Width = 0.86f, Height = 1.0f;
+        public const float Width = 0.86f, Height = 1.08f;
 
         Panel panel;
         TextMeshPro title, subtitle;
@@ -23,7 +23,7 @@ namespace AeroFleet.VR.View
         readonly List<(TextMeshPro label, TextMeshPro value, Transform chip, TextMeshPro chipText)> rows =
             new List<(TextMeshPro, TextMeshPro, Transform, TextMeshPro)>();
         TextMeshPro legend;
-        Button3D live, replay, allTags, prev, next, cityButton, buildingsButton;
+        Button3D live, replay, allTags, prev, next, cityButton, buildingsButton, plan, build, previewButton;
         readonly Dictionary<int, Button3D> ranges = new Dictionary<int, Button3D>();
 
         public static FleetBoard Create(Transform parent, AeroFleetApp app)
@@ -87,6 +87,10 @@ namespace AeroFleet.VR.View
             p.Button("TABLE ▲", X(3), r2, bw, bh, () => app.NudgeTable(0.05f));
             p.Button("TABLE ▼", X(4), r2, bw, bh, () => app.NudgeTable(-0.05f));
             p.Button("RECENTER", X(5), r2, bw, bh, app.Recenter);
+            float r3 = r2 + bh + 0.012f, w3 = 2 * bw + 0.01f;
+            plan = p.Button("PLAN ROUTE", X(0), r3, w3, bh, () => app.SetTool(AeroFleetApp.Tool.Plan));
+            build = p.Button("BUILD DRONE", X(2), r3, w3, bh, () => app.SetTool(AeroFleetApp.Tool.Build));
+            previewButton = p.Button("► 2-MIN PREVIEW", X(4), r3, w3, bh, app.TogglePreview);
         }
 
         public void Refresh(AeroFleetApp app)
@@ -98,6 +102,12 @@ namespace AeroFleet.VR.View
             allTags.SetOn(app.DetailAll);
             allTags.SetEnabled(isLive);
             prev.SetEnabled(!isLive && app.Incidents.Count > 1);
+            plan.SetOn(app.ActiveTool == AeroFleetApp.Tool.Plan);
+            plan.SetEnabled(isLive);
+            build.SetOn(app.ActiveTool == AeroFleetApp.Tool.Build);
+            previewButton.SetOn(app.Previewing);
+            previewButton.SetEnabled(isLive && app.Live != null);
+            previewButton.SetLabel(app.Previewing ? "STOP PREVIEW" : "► 2-MIN PREVIEW");
             next.SetEnabled(!isLive && app.Incidents.Count > 1);
 
             cityButton.SetLabel($"{app.CityName?.ToUpperInvariant()} ►");

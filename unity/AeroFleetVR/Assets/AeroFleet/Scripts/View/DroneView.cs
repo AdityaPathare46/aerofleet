@@ -216,7 +216,7 @@ namespace AeroFleet.VR.View
         }
 
         /// <summary>Trajectory position at t seconds from now (linear between samples).</summary>
-        static double[] AtTime(List<double[]> traj, double t)
+        public static double[] AtTime(List<double[]> traj, double t)
         {
             for (int i = 0; i + 1 < traj.Count; i++)
             {

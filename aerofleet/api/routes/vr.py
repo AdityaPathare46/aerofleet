@@ -113,6 +113,20 @@ async def push_scenario(scenario: Scenario, user: User = Depends(get_current_act
         _raise(e)
 
 
+class Permissions(BaseModel):
+    allow_dispatch: bool
+
+
+@router.put("/session/permissions")
+async def set_permissions(body: Permissions, user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """Let the paired headset plan and dispatch deliveries. Off by default and per session; every
+    dispatch still goes through the CBF gate, and VR-originated dispatches never command LIVE hardware."""
+    try:
+        return {"allow_dispatch": _registry.set_allow_dispatch(user.username, body.allow_dispatch)}
+    except SessionError as e:
+        _raise(e)
+
+
 @router.post("/session/requests/{request_id}/{decision}")
 async def decide_request(request_id: str, decision: str, user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
     if decision not in ("approve", "deny"):
@@ -190,7 +204,8 @@ def _device_session(token: Optional[str]) -> VrSession:
 @router.get("/device/scenario")
 async def device_scenario(x_aerofleet_vr_token: Optional[str] = Header(None, alias=VR_TOKEN_HEADER)) -> Dict[str, Any]:
     s = _device_session(x_aerofleet_vr_token)
-    return {"scenario_version": s.scenario_version, "scenario": s.scenario, "owner": s.owner}
+    return {"scenario_version": s.scenario_version, "scenario": s.scenario, "owner": s.owner,
+            "allow_dispatch": s.allow_dispatch}
 
 
 @router.post("/device/heartbeat")

@@ -74,11 +74,14 @@ class VrSession:
     scenario_version: int = 0
     requests: Dict[str, PairRequest] = field(default_factory=dict)
     device: Optional[Device] = None
+    # Off until the operator ticks "Allow the headset to dispatch" on the desktop; reset by a new session.
+    allow_dispatch: bool = False
 
     def public(self) -> Dict[str, Any]:
         return {
             "session_id": self.session_id,
             "scenario_version": self.scenario_version,
+            "allow_dispatch": self.allow_dispatch,
             "device": self.device.public() if self.device else None,
             "pending_requests": [r.public() for r in self.requests.values() if r.status == PENDING],
         }
@@ -145,6 +148,14 @@ class VrSessionRegistry:
                 s.scenario = dict(scenario)
                 s.scenario_version += 1
             return s.scenario_version
+
+    def set_allow_dispatch(self, owner: str, allow: bool) -> bool:
+        """Whether the paired headset may create and dispatch delivery orders (as the session owner).
+        The CBF gate still decides every dispatch; this only lets the request be made from VR."""
+        s = self._require(owner)
+        with self._lock:
+            s.allow_dispatch = bool(allow)
+            return s.allow_dispatch
 
     def decide(self, owner: str, request_id: str, approve: bool) -> PairRequest:
         s = self._require(owner)

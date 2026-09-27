@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from aerofleet.api.routes.auth import get_current_active_user
@@ -122,6 +122,7 @@ async def update_order(
 @router.post("/{order_id}/dispatch")
 async def dispatch_order(
     order_id: str,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -154,7 +155,14 @@ async def dispatch_order(
     if live_order is None:
         raise HTTPException(status_code=404, detail="Order not registered with fleet state")
 
-    candidate = fleet.dispatch_engine.best_candidate(live_order, fleet.list_drones(), fleet.depots)
+    drones = fleet.list_drones()
+    # Asked from a VR headset (through aerofleet/vr/gateway.py, which tags the request): plan with
+    # simulated drones only — a headset never arms real hardware.
+    from aerofleet.vr.gateway import VR_TOKEN_HEADER
+
+    if request.headers.get(VR_TOKEN_HEADER):
+        drones = [d for d in drones if d.link_mode != "LIVE"]
+    candidate = fleet.dispatch_engine.best_candidate(live_order, drones, fleet.depots)
     if candidate is None:
         order.status = "FAILED"
         db.commit()

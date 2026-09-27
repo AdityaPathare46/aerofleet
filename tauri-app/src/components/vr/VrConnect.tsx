@@ -28,6 +28,7 @@ interface DeviceInfo {
 }
 interface SessionView {
   session_id: string; scenario_version: number; device: DeviceInfo | null; pending_requests: PendingRequest[]
+  allow_dispatch: boolean
   host: string; addresses: string[]; gateway_port: number; network: 'on' | 'off'; gateway_running: boolean
 }
 interface HeadsetStatus {
@@ -110,6 +111,9 @@ export function VrConnect({ apiUrl, scenario, signedIn }: { apiUrl: string; scen
   const startSession = () => act(async () => { lastPushed.current = ''; setSession(await call<SessionView>('POST', '/session')) })
   const endSession = () => act(async () => { await call('DELETE', '/session'); setSession(null) })
   const decide = (id: string, d: 'approve' | 'deny') => act(async () => { await call('POST', `/session/requests/${id}/${d}`); setSession(await call('GET', '/session')) })
+  const setAllowDispatch = (allow: boolean) => act(async () => {
+    await call('PUT', '/session/permissions', { allow_dispatch: allow }); setSession(await call('GET', '/session'))
+  })
   const disconnect = () => act(async () => { await call('POST', '/session/device/disconnect'); setSession(await call('GET', '/session')) })
   const launchPcvr = () => act(async () => {
     const s = session ?? await call<SessionView>('POST', '/session')
@@ -196,6 +200,17 @@ export function VrConnect({ apiUrl, scenario, signedIn }: { apiUrl: string; scen
                         {device.status.in_headset === false && ' (running without a headset)'}
                       </div>
                     )}
+                    <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', cursor: 'pointer' }}>
+                      <input type="checkbox" id="vr-allow-dispatch" checked={session?.allow_dispatch ?? false} disabled={busy}
+                        onChange={(e) => setAllowDispatch(e.target.checked)} style={{ marginTop: 2 }} />
+                      <span>
+                        <b>Allow the headset to dispatch</b>
+                        <span style={{ display: 'block', color: 'var(--text-secondary)' }}>
+                          Lets whoever wears it plan a route in VR and send a simulated drone, as you. Every dispatch still
+                          goes through the safety gate; a headset never commands live hardware. Off again for the next session.
+                        </span>
+                      </span>
+                    </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button className="btn" disabled={busy} onClick={disconnect}>Disconnect headset</button>
                     </div>

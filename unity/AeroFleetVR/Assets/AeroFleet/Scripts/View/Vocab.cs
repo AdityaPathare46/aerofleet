@@ -88,6 +88,15 @@ namespace AeroFleet.VR.View
         public static Color MarginColor(double margin, double warnBand) =>
             margin < 0 ? Palette.Bad : margin < warnBand ? Palette.Warn : Palette.Ok;
 
+        /// <summary>A margin as the boards print it: geofence as clear/INSIDE, unitless ones with 3 decimals.</summary>
+        public static string FormatMargin(string key, double v)
+        {
+            if (key == "geofence_exclusion") return v < 0 ? "INSIDE" : "clear";
+            string unit = ConstraintUnit(key);
+            string num = unit == "" ? v.ToString("0.###") : System.Math.Abs(v) >= 100 ? v.ToString("0") : v.ToString("0.#");
+            return unit == "" ? num : num + " " + unit;
+        }
+
         public static string ShortId(string id) => id != null && id.Length > 10 ? id.Substring(id.Length - 8) : id;
 
         public static string SourceLabel(string positionSource) =>

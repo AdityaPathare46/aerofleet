@@ -63,7 +63,8 @@ def test_paired_headset_can_read_what_the_vr_view_renders(api_client, auth_heade
 
 def test_gateway_refuses_everything_outside_the_allowlist(api_client, auth_headers, gateway):
     vr = _pair(api_client, auth_headers, gateway)
-    assert gateway.post("/api/v1/orders/", headers=vr, json={}).status_code == 404        # no writes
+    assert gateway.delete("/api/v1/orders/ORD-12345678", headers=vr).status_code == 405  # not even routed
+    assert gateway.post("/api/v1/orders/ORD-12345678/request-explanation", headers=vr).status_code == 404
     assert gateway.get("/api/v1/admin/users", headers=vr).status_code == 404              # not in the allowlist
     assert gateway.get("/api/v1/hardware/status", headers=vr).status_code == 404
 
@@ -92,3 +93,55 @@ def test_local_device_token_for_quest_link(api_client, auth_headers, gateway):
 def test_session_endpoints_need_a_login(api_client):
     assert api_client.post("/api/v1/vr/session").status_code == 401
     assert api_client.get("/api/v1/vr/session").status_code == 401
+
+
+def _order_body(api_client):
+    depot = api_client.get("/api/v1/fleet/depots?city=pune").json()[0]
+    return {"city": "pune", "origin_depot_id": depot["depot_id"], "destination_lat": depot["lat"] + 0.004,
+            "destination_lon": depot["lon"] + 0.004, "payload_kg": 1.0, "priority": "STANDARD"}
+
+
+def test_headset_cannot_dispatch_until_the_desktop_allows_it(api_client, auth_headers, gateway):
+    vr = _pair(api_client, auth_headers, gateway)
+    assert gateway.get("/api/v1/vr/device/scenario", headers=vr).json()["allow_dispatch"] is False
+    r = gateway.post("/api/v1/orders/", headers=vr, json=_order_body(api_client))
+    assert r.status_code == 403 and "Allow the headset to dispatch" in r.json()["detail"]
+
+    assert api_client.put("/api/v1/vr/session/permissions", headers=auth_headers,
+                          json={"allow_dispatch": True}).json() == {"allow_dispatch": True}
+    assert gateway.get("/api/v1/vr/device/scenario", headers=vr).json()["allow_dispatch"] is True
+    order = gateway.post("/api/v1/orders/", headers=vr, json=_order_body(api_client))
+    assert order.status_code == 201, order.text
+    d = gateway.post(f"/api/v1/orders/{order.json()['order_id']}/dispatch", headers=vr)
+    assert d.status_code in (200, 409), d.text   # the CBF gate / fleet decides, not the gateway
+    if d.status_code == 200:
+        assert d.json()["verdict"] in ("APPROVED", "REJECTED") or d.json()["verdict"].startswith("FAILED")
+
+    # revoking works immediately
+    api_client.put("/api/v1/vr/session/permissions", headers=auth_headers, json={"allow_dispatch": False})
+    assert gateway.post("/api/v1/orders/", headers=vr, json=_order_body(api_client)).status_code == 403
+
+
+def test_a_new_session_starts_without_dispatch_permission(api_client, auth_headers, gateway):
+    _pair(api_client, auth_headers, gateway)
+    api_client.put("/api/v1/vr/session/permissions", headers=auth_headers, json={"allow_dispatch": True})
+    api_client.delete("/api/v1/vr/session", headers=auth_headers)
+    assert api_client.post("/api/v1/vr/session", headers=auth_headers).json()["allow_dispatch"] is False
+
+
+def test_vr_dispatch_never_picks_a_live_hardware_drone(api_client, auth_headers, gateway):
+    from aerofleet.fleet.state import get_fleet_state
+
+    vr = _pair(api_client, auth_headers, gateway)
+    api_client.put("/api/v1/vr/session/permissions", headers=auth_headers, json={"allow_dispatch": True})
+    fleet = get_fleet_state("pune")
+    saved = {d.drone_id: d.link_mode for d in fleet.list_drones()}
+    try:
+        for d in fleet.list_drones():
+            d.link_mode = "LIVE"
+        order = gateway.post("/api/v1/orders/", headers=vr, json=_order_body(api_client)).json()
+        r = gateway.post(f"/api/v1/orders/{order['order_id']}/dispatch", headers=vr)
+        assert r.status_code == 409 and "No feasible drone" in r.json()["detail"]
+    finally:
+        for d in fleet.list_drones():
+            d.link_mode = saved.get(d.drone_id, "SIMULATED")

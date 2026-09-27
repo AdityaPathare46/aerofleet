@@ -15,6 +15,11 @@ namespace AeroFleet.VR.Geo
             return new Vector2((float)east, (float)north);
         }
 
+        /// <summary>Inverse of <see cref="ToLocal"/>: (lat, lon) of a point east/north metres from the reference.</summary>
+        public static (double lat, double lon) ToLatLon(float east, float north, double centerLat, double centerLon) =>
+            (centerLat + north / MetresPerDegLat,
+             centerLon + east / (MetresPerDegLat * System.Math.Cos(centerLat * System.Math.PI / 180.0)));
+
         public static string FormatDistance(double m) =>
             m >= 1000 ? $"{m / 1000:0.0} km" : $"{Mathf.RoundToInt((float)m)} m";
 
@@ -55,6 +60,9 @@ namespace AeroFleet.VR.Geo
 
         public Vector3 Point(float east, float north, float altitudeM = 0f) =>
             new Vector3(X(east), Y(altitudeM), Z(north));
+
+        /// <summary>Table-local point back to real east/north metres.</summary>
+        public Vector2 Unproject(Vector3 local) => new Vector2(local.x / Scale + FocusEast, local.z / Scale + FocusNorth);
 
         public bool Contains(float east, float north, float pad = 0f)
         {

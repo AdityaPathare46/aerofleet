@@ -42,6 +42,36 @@ namespace AeroFleet.VR.Data
             }
         }
 
+        /// <param name="fail">(HTTP status or -1, the API's "detail" message when it gave one).</param>
+        public IEnumerator Post<T>(string path, object body, Action<T> ok, Action<long, string> fail = null)
+        {
+            using (var req = new UnityWebRequest(BaseUrl + path, "POST"))
+            {
+                req.downloadHandler = new DownloadHandlerBuffer();
+                if (body != null)
+                {
+                    req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
+                    req.SetRequestHeader("Content-Type", "application/json");
+                }
+                if (HasToken) req.SetRequestHeader("Authorization", "Bearer " + Token);
+                req.timeout = 20;
+                yield return req.SendWebRequest();
+                if (req.result != UnityWebRequest.Result.Success)
+                {
+                    string detail = req.error;
+                    try { detail = JsonConvert.DeserializeObject<DetailDto>(req.downloadHandler.text)?.Detail ?? detail; } catch { }
+                    fail?.Invoke(req.responseCode, detail);
+                    yield break;
+                }
+                T parsed;
+                try { parsed = JsonConvert.DeserializeObject<T>(req.downloadHandler.text); }
+                catch (Exception e) { fail?.Invoke(-1, $"{path}: bad JSON ({e.Message})"); yield break; }
+                ok(parsed);
+            }
+        }
+
+        class DetailDto { [JsonProperty("detail")] public string Detail; }
+
         public IEnumerator Login(string username, string password, Action ok, Action<string> fail)
         {
             var form = new WWWForm();

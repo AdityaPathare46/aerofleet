@@ -16,7 +16,8 @@ namespace AeroFleet.VR.Interaction
 
             Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
             Clickable hit = null;
-            if (Physics.Raycast(ray, out var info, 20f)) hit = info.collider.GetComponentInParent<Clickable>();
+            bool any = Physics.Raycast(ray, out var info, 20f);
+            if (any) hit = info.collider.GetComponentInParent<Clickable>();
 
             if (hit != hovered)
             {
@@ -24,7 +25,7 @@ namespace AeroFleet.VR.Interaction
                 hovered = hit;
                 hovered?.OnHover?.Invoke(true);
             }
-            if (hovered != null && mouse.leftButton.wasPressedThisFrame) hovered.OnClick?.Invoke();
+            if (hovered != null && mouse.leftButton.wasPressedThisFrame) VrPointer.Press(hovered, info.point);
         }
     }
 }

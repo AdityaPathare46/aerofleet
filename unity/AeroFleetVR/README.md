@@ -32,18 +32,21 @@ Assets/AeroFleet/
   Scripts/Core/AeroFleetApp.cs     entry point: config → sign-in → city data → live poll / replay
   Scripts/Core/LaunchConfig.cs     config file < CLI args < AEROFLEET_TOKEN env var
   Scripts/Core/Pairing.cs          desktop beacon listener (UDP 47800), pairing handshake, scenario DTOs
-  Scripts/Data/                    ApiClient (UnityWebRequest + bearer) and DTOs mirroring the API
+  Scripts/Data/                    ApiClient (UnityWebRequest + bearer), DTOs mirroring the API, DroneBuild sizing model
   Scripts/Geo/Diorama.cs           real metres → table metres (east=+x, north=+z, vertical ×VExag)
-  Scripts/View/TableView.cs        surface, streets, zone prisms, ceilings, altitude ruler, scale, depots
+  Scripts/View/TableView.cs        surface (pressable, for route planning), streets, zone prisms, ceilings, ruler, depot pylons
   Scripts/View/BuildingsView.cs    OSM footprints extruded; tagged heights light, assumed heights dark
   Scripts/View/SwarmView.cs        drones, separation beams / awareness links, predicted conflicts, tag stacking
   Scripts/View/DroneView.cs        glyph, drop-line, ground ring, 4D trajectory (+30 s ticks, touchdown), data tag
   Scripts/View/DataTag.cs          labelled rows with bars and limit ticks (no unlabelled bars)
   Scripts/View/ReplayView.cs       frozen rejection: the exact route the gate checked, failing waypoints in red
   Scripts/View/FleetBoard.cs       KPIs, worst-case margin per CBF constraint (LIVE/ASSUMED), controls
-  Scripts/View/ContextBoard.cs     replay: claim check · live: how to read the table + selected drone
+  Scripts/View/ContextBoard.cs     replay: claim check · live: legend, drone inspection, PLAN A DELIVERY, BUILD A DRONE
+  Scripts/View/InspectionBench.cs  selected drone (or your build) on a stand, parts coloured from live data + FC inspection
+  Scripts/View/ForecastPreview.cs  2-minute preview at ×10: ghosts along planned trajectories, conflicts light up
+  Scripts/View/PlanView.cs         the delivery being planned: origin ring, destination pin, request line
   Scripts/View/ConnectBoard.cs     connect to a desktop: found computers, confirm code, errors
-  Scripts/Interaction/             Clickable (XRI ray or mouse), desktop orbit/picking
+  Scripts/Interaction/             Clickable; VrPointer (controller aim + trigger / pinch, haptics), desktop orbit/picking
   Editor/AeroFleetSetup.cs         AeroFleet ▸ Setup / Dev / Build menus
 ```
 

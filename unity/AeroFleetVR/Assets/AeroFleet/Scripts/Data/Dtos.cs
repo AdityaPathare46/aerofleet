@@ -202,6 +202,61 @@ namespace AeroFleet.VR.Data
         [JsonProperty("planned_route")] public List<double[]> PlannedRoute = new List<double[]>();
     }
 
+    /// <summary>A flight-controller compliance inspection (GET /api/v1/hardware/fc/inspections[/{id}]).</summary>
+    public class FcInspectionDto
+    {
+        [JsonProperty("inspection_id")] public string InspectionId;
+        [JsonProperty("status")] public string Status;           // PENDING | RUNNING | READY | FAILED
+        [JsonProperty("verdict")] public string Verdict;         // PASS | FAIL | INCOMPLETE
+        [JsonProperty("drone_id")] public string DroneId;
+        [JsonProperty("firmware")] public string Firmware;
+        [JsonProperty("source")] public string Source;
+        [JsonProperty("completed_at")] public string CompletedAt;
+        [JsonProperty("counts")] public Dictionary<string, int> Counts = new Dictionary<string, int>();
+        [JsonProperty("report")] public FcReportDto Report;
+    }
+
+    public class FcReportDto
+    {
+        [JsonProperty("verdict")] public string Verdict;
+        [JsonProperty("categories")] public List<FcCategoryDto> Categories = new List<FcCategoryDto>();
+    }
+
+    public class FcCategoryDto
+    {
+        [JsonProperty("key")] public string Key;                 // flight_controller | battery | motors | airframe | wiring | failsafes | dgca
+        [JsonProperty("title")] public string Title;
+        [JsonProperty("counts")] public Dictionary<string, int> Counts = new Dictionary<string, int>();
+    }
+
+    public class OrderDto
+    {
+        [JsonProperty("order_id")] public string OrderId;
+        [JsonProperty("status")] public string Status;
+    }
+
+    /// <summary>POST /api/v1/orders/{id}/dispatch — the CBF gate's decision.</summary>
+    public class DispatchResultDto
+    {
+        [JsonProperty("order_id")] public string OrderId;
+        [JsonProperty("assigned_drone_id")] public string AssignedDroneId;
+        [JsonProperty("verdict")] public string Verdict;              // APPROVED | REJECTED_BY_CBF_GATE | FAILED_*
+        [JsonProperty("cbf_certificate")] public CbfCertificateDto Certificate;
+        [JsonProperty("compliance_report")] public ComplianceSummaryDto Compliance;
+    }
+
+    public class CbfCertificateDto
+    {
+        [JsonProperty("passed")] public bool Passed;
+        [JsonProperty("safety_margins")] public Dictionary<string, double> SafetyMargins = new Dictionary<string, double>();
+        [JsonProperty("execution_time_ms")] public double ExecutionTimeMs;
+    }
+
+    public class ComplianceSummaryDto
+    {
+        [JsonProperty("overall_status")] public string OverallStatus;  // COMPLIANT | AT_RISK | NON_COMPLIANT
+    }
+
     public class TokenDto
     {
         [JsonProperty("access_token")] public string AccessToken;

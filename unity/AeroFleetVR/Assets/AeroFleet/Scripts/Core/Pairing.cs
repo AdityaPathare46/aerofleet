@@ -53,6 +53,8 @@ namespace AeroFleet.VR
         [JsonProperty("scenario_version")] public int Version;
         [JsonProperty("scenario")] public DesktopScenario Scenario;
         [JsonProperty("owner")] public string Owner;
+        /// <summary>The operator ticked "Allow the headset to dispatch" on the desktop.</summary>
+        [JsonProperty("allow_dispatch")] public bool AllowDispatch;
     }
 
     /// <summary>

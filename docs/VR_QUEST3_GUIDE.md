@@ -134,6 +134,38 @@ exactly as before pairing existed, and only offers *Connect* if a desktop starts
 headset it can reach the backend through `adb reverse tcp:8000 tcp:8000` with the default
 `http://localhost:8000`.
 
+## Controls in the headset
+
+Point with either controller and pull the **trigger** (or pinch, with hand tracking). A ray and a
+dot show what you're pointing at, and a short buzz confirms each press. The grip button does
+nothing. The thumbsticks still move and turn you.
+
+- **Board buttons:** everything on the left board works from the headset: LIVE / REPLAY, 1 / 2 / 4 km,
+  ALL TAGS, incidents, 3D CITY, the city, ROTATE, TABLE ▲▼, RECENTER. A change made in the headset
+  stays until the desktop changes its view.
+- **Inspect a drone:** point at it (or its tag), then pull the trigger. The right board lists its state,
+  battery, altitude against its ceiling, leg progress and ETA, its predicted conflicts, and all 11 CBF
+  margins marked LIVE or ASSUMED. A model of it appears on a stand to your right. The battery is coloured
+  from the live feed. The flight controller, motors, GPS/wiring and frame are coloured from its latest
+  flight-controller compliance inspection (Hardware ▸ Drone compliance), or grey with "not inspected"
+  when it has none. **FOLLOW** switches to 1 km and keeps the table centred on it.
+- **Depots:** blue pylons with the depot name stand above the buildings. Pressing one starts a plan
+  from it.
+- **PLAN ROUTE:** press a depot, then press the map where the parcel should go (a pin marks it),
+  choose payload and priority, and press **DISPATCH**. The backend routes it and the CBF gate decides.
+  The board shows APPROVED or the violated margins, and an approved drone's trajectory joins the swarm.
+  When paired, this needs **Allow the headset to dispatch** ticked in the desktop's VR panel. It is off
+  by default, off again for every new session, and can be revoked at any time. A headset only
+  dispatches simulated drones; the orders API never selects a LIVE (MAVLink) drone for a request
+  that came through the VR gateway.
+- **► 2-MIN PREVIEW:** plays the next two minutes at ×10. A ghost of every drone flies its planned
+  trajectory, and each predicted conflict lights up as the clock reaches it. It uses the same
+  trajectories the backend forecasts from, frozen at the moment you pressed it.
+- **BUILD DRONE:** choose a frame, motors, battery and payload with ◄ ►. The stand shows the airframe,
+  and the board gives all-up mass, DGCA weight category, hover power, endurance and thrust/weight. It is a
+  first-order sizing sketch (momentum theory with a stated figure of merit and drive efficiency;
+  parts typical of their class). The board lists every assumption.
+
 ## What you are looking at
 
 - **Drones:** green = within limits, amber = inside a watch band, red = CBF violation.

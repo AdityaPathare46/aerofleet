@@ -30,6 +30,13 @@ namespace AeroFleet.VR.View
             content.SetParent(transform, false);
 
             BuildSurface(d, showPlinth);
+            if (Surface == null)
+            {
+                Surface = gameObject.AddComponent<BoxCollider>();
+                gameObject.AddComponent<Interaction.Clickable>().OnClickAt = p => OnSurfaceClick?.Invoke(transform.InverseTransformPoint(p));
+            }
+            Surface.center = new Vector3(0, -0.003f, 0);
+            Surface.size = new Vector3(d.TableHalf * 2, 0.006f, d.TableHalf * 2);
             if (roads != null) BuildStreets(d, cityCenter, roads);
             if (zones != null)
             {
@@ -252,20 +259,52 @@ namespace AeroFleet.VR.View
             Label(north, new Vector3(0, 0.022f, 0), "N", 0.016f, Palette.Accent, FontStyles.Bold);
         }
 
+        /// <summary>Pressed when the operator points at a depot pylon (route planning uses it).</summary>
+        public System.Action<DepotDto> OnDepotClick;
+        /// <summary>The table itself was pressed: the hit point in table-local metres (x east, z north).</summary>
+        public System.Action<Vector3> OnSurfaceClick;
+        /// <summary>Depot pylons currently on the table, by id — for highlighting the selected origin.</summary>
+        public readonly Dictionary<string, Transform> DepotMarkers = new Dictionary<string, Transform>();
+
+        /// <summary>
+        /// Depots as pylons that stand above the 3D city (the first Quest test found flat pads hidden
+        /// inside the buildings): ground ring, mast, lit marker, name label — and clickable.
+        /// </summary>
         void BuildDepots(Diorama d, Vector2d cityCenter, List<DepotDto> depots)
         {
+            DepotMarkers.Clear();
+            float mast = Mathf.Max(d.Y(45f), 0.07f);   // well above the 9 m assumed-height carpet at any range
             foreach (var p in depots)
             {
                 if (p.Lat == null || p.Lon == null) continue;
                 Vector2 en = GeoMath.ToLocal(p.Lat.Value, p.Lon.Value, cityCenter.x, cityCenter.y);
                 if (!d.Contains(en.x, en.y)) continue;
-                var pad = new GameObject(p.DepotId).transform;
-                pad.SetParent(content, false);
-                pad.localPosition = d.Point(en.x, en.y);
-                Draw.Prim(PrimitiveType.Cylinder, pad, new Vector3(0, 0.002f, 0), new Vector3(0.022f, 0.002f, 0.022f), Draw.Unlit(Palette.Depot), "Pad");
-                Label(pad, new Vector3(0, 0.018f, 0), p.Name.Replace("Micro-Depot", "Depot"), 0.0085f, Palette.Depot);
+                var depot = p;
+                var pylon = new GameObject(p.DepotId).transform;
+                pylon.SetParent(content, false);
+                pylon.localPosition = d.Point(en.x, en.y);
+                Draw.Line(pylon, Draw.Circle(0.014f, 32, 0.0025f), 0.0022f, Palette.Depot, loop: true, name: "GroundRing");
+                Draw.Prim(PrimitiveType.Cylinder, pylon, new Vector3(0, mast / 2, 0), new Vector3(0.0024f, mast / 2, 0.0024f),
+                          Draw.Solid(Palette.Depot), "Mast");
+                var beacon = Draw.Prim(PrimitiveType.Cube, pylon, new Vector3(0, mast, 0), Vector3.one * 0.013f,
+                                       Draw.Solid(Palette.Depot), "Beacon").transform;
+                beacon.localRotation = Quaternion.Euler(45, 0, 45);
+                string name = p.Name.Replace("Micro-Depot", "Depot");
+                Label(pylon, new Vector3(0, mast + 0.024f, 0), name, 0.0105f, Palette.Depot, FontStyles.Bold);
+                Label(pylon, new Vector3(0, mast + 0.0125f, 0), p.DepotId, 0.0075f, Palette.TextDim);
+
+                var hit = new GameObject("Hit");
+                hit.transform.SetParent(pylon, false);
+                var box = hit.AddComponent<BoxCollider>();
+                box.center = new Vector3(0, (mast + 0.03f) / 2, 0);
+                box.size = new Vector3(0.035f, mast + 0.03f, 0.035f);
+                hit.AddComponent<Interaction.Clickable>().OnClick = () => OnDepotClick?.Invoke(depot);
+                DepotMarkers[p.DepotId] = pylon;
             }
         }
+
+        /// <summary>Surface collider so the pointer can drop a destination on the map (route planning).</summary>
+        public BoxCollider Surface { get; private set; }
 
         static void Label(Transform parent, Vector3 pos, string text, float height, Color color,
                           FontStyles style = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.Center)
