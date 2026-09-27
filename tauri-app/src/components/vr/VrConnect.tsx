@@ -200,21 +200,23 @@ export function VrConnect({ apiUrl, scenario, signedIn }: { apiUrl: string; scen
                         {device.status.in_headset === false && ' (running without a headset)'}
                       </div>
                     )}
-                    <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', cursor: 'pointer' }}>
-                      <input type="checkbox" id="vr-allow-dispatch" checked={session?.allow_dispatch ?? false} disabled={busy}
-                        onChange={(e) => setAllowDispatch(e.target.checked)} style={{ marginTop: 2 }} />
-                      <span>
-                        <b>Allow the headset to dispatch</b>
-                        <span style={{ display: 'block', color: 'var(--text-secondary)' }}>
-                          Lets whoever wears it plan a route in VR and send a simulated drone, as you. Every dispatch still
-                          goes through the safety gate; a headset never commands live hardware. Off again for the next session.
-                        </span>
-                      </span>
-                    </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button className="btn" disabled={busy} onClick={disconnect}>Disconnect headset</button>
                     </div>
                   </div>
+                )}
+                {session && (
+                  <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', cursor: 'pointer' }}>
+                    <input type="checkbox" id="vr-allow-dispatch" checked={session?.allow_dispatch ?? false} disabled={busy}
+                      onChange={(e) => setAllowDispatch(e.target.checked)} style={{ marginTop: 2 }} />
+                    <span>
+                      <b>Allow the headset to dispatch</b>
+                      <span style={{ display: 'block', color: 'var(--text-secondary)' }}>
+                        Lets whoever wears it plan a route in VR and send a simulated drone, as you. Every dispatch still
+                        goes through the safety gate; a headset never commands live hardware. Off again for the next session.
+                      </span>
+                    </span>
+                  </label>
                 )}
                 {session && <div><button className="btn" disabled={busy} onClick={endSession}>End VR session</button></div>}
               </section>
