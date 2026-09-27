@@ -41,6 +41,7 @@ namespace AeroFleet.VR.EditorTools
             ConfigurePcVr();
             ConfigureQuestNetworking();
             ApplyAppIcon();
+            OptimiseForQuest();
             Debug.Log("[AeroFleet] Setup complete. Press Play to run the viewer against the local backend.");
         }
 
@@ -202,10 +203,68 @@ namespace AeroFleet.VR.EditorTools
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
             var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(IconPath);
-            // Default icon for every platform; Android (Quest) and Windows builds derive their sizes from it.
+            var adaptiveBg = PrepareIcon(Root + "/Branding/aerofleet_vr_adaptive_background.png");
+            var adaptiveFg = PrepareIcon(Root + "/Branding/aerofleet_vr_adaptive_foreground.png");
+            // Default icon (Windows, and anything without a platform-specific set)...
             PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+            // ...but Android has its own icon kinds that override the default — without these the Quest
+            // build ships Unity's cube (checked in the APK). Adaptive = background + foreground layers.
+            var android = UnityEditor.Build.NamedBuildTarget.Android;
+            // (Unity 6.6 keeps only the adaptive kind; legacy/round are obsolete.)
+            var kind = UnityEditor.Android.AndroidPlatformIconKind.Adaptive;
+            var icons = PlayerSettings.GetPlatformIcons(android, kind);
+            foreach (var i in icons) i.SetTextures(adaptiveBg, adaptiveFg);
+            PlayerSettings.SetPlatformIcons(android, kind, icons);
             SavePlayerSettings();
-            Debug.Log("[AeroFleet] App icon set: " + IconPath);
+            Debug.Log($"[AeroFleet] App icon set (default + Android adaptive, {icons.Length} sizes): " + IconPath);
+        }
+
+        static Texture2D PrepareIcon(string path)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer == null) throw new Exception("Missing " + path);
+            importer.textureType = TextureImporterType.Default;
+            importer.mipmapEnabled = false;
+            importer.alphaIsTransparency = true;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        // ── 6. Quest performance ───────────────────────────────────────────
+
+        [MenuItem("AeroFleet/Setup/6. Optimise for Quest", priority = 16)]
+        public static void OptimiseForQuest()
+        {
+            // SSAO is a full-screen effect per eye; Unity's OpenXR validator warns it costs significant
+            // performance on device. The tabletop reads fine without it.
+            int disabled = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:UniversalRendererData"))
+            {
+                var data = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (data == null) continue;
+                foreach (var feature in data.rendererFeatures)
+                    if (feature != null && feature.GetType().Name == "ScreenSpaceAmbientOcclusion" && feature.isActive)
+                    {
+                        feature.SetActive(false);
+                        EditorUtility.SetDirty(feature);
+                        EditorUtility.SetDirty(data);
+                        disabled++;
+                    }
+            }
+            // "Prioritize Input Polling" (the validator's recommendation for Meta Quest): lower controller
+            // latency. Set by name so this compiles across OpenXR package versions.
+            string latency = "not available in this OpenXR version";
+            var oxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
+            var prop = oxr.GetType().GetProperty("latencyOptimization");
+            if (prop != null && prop.CanWrite)
+            {
+                prop.SetValue(oxr, Enum.Parse(prop.PropertyType, "PrioritizeInputPolling"));
+                EditorUtility.SetDirty(oxr);
+                latency = "Prioritize Input Polling";
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[AeroFleet] Quest optimisation: SSAO disabled on {disabled} renderer(s); latency optimisation: {latency}.");
         }
 
         /// <summary>

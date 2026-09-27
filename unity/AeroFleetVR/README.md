@@ -55,8 +55,9 @@ Same data contract, palette, thresholds and wording as the in-app web view
 `branding/aerofleet_vr_icon_1024.png` is the app icon: the desktop app's winged-A mark in the VR
 view's accent colour on its night-ops background. `branding/aerofleet_mark.png` is the bare mark,
 which the connect screen shows. Both are generated from `tauri-app/src-tauri/icons/icon.png`, so
-the two apps share one logo. Setup step 5 installs the icon; step 4 sets the package identity
-(`com.aerofleet.vr`, 1.0.0).
+the two apps share one logo. Android uses an adaptive icon instead: `aerofleet_vr_adaptive_background.png` + `aerofleet_vr_adaptive_foreground.png` (mark kept inside the launcher's safe zone). Setup step 5 installs both — Android's icon overrides the default one, so without it the APK ships Unity's cube (found by inspecting the built APK). Step 4 sets the package identity
+(`com.aerofleet.vr`, 1.0.0); step 6 turns off SSAO and sets OpenXR latency optimisation to
+*Prioritize Input Polling*, as Unity's OpenXR validator recommends for Quest.
 
 ## Set up (once)
 
