@@ -18,6 +18,8 @@ manuscript, it should trace back to a file in here.
 | 8 | Reproducibility package | Mostly already existed; consolidated in `reproducibility.md` |
 | 9 | The manuscript itself | Not started |
 | 10 | Advisor/faculty review | **On you** — process step, not something I can do |
+| 11 | Improve phi4-mini from its 1,000-case errors | Harness ready (`forensics_v2/`, conditions C0–C4 on unseen + hard cases); run with `college_pc_forensics_v2.ps1` |
+| 12 | Standards alignment and remaining evidence | Plan in [`PAPER_READINESS.md`](PAPER_READINESS.md) |
 
 ---
 

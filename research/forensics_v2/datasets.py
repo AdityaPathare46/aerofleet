@@ -1,7 +1,8 @@
 """Datasets for the forensics-v2 experiments — kept strictly apart so nothing learned from the
 1,000-case study leaks into what it is evaluated on.
 
-  train  the original study's manifest (seed 20260826). Only used to build few-shot examples.
+  train  the original study's plan (seed 20260826), regenerated from its seed — identical to the
+         study's dataset_manifest.json (checked), which isn't in git. Only used for few-shot examples.
   eval   a freshly generated plan with a different seed (20260927): same category mix, new margins,
          stratified sample. Never seen by any prompt.
   hard   the eval sample with *near-miss distractors*: every core CBF key the case doesn't violate
@@ -13,12 +14,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import replace
-from pathlib import Path
 from typing import Dict, List
 
-from scenario_engine.mass_forensics_dataset import GeneratedIncident, generate_dataset, load_manifest
+from scenario_engine.mass_forensics_dataset import GeneratedIncident, generate_dataset
 
-TRAIN_MANIFEST = Path("scenario_reports/mass_forensics_final/dataset_manifest.json")
+TRAIN_SEED = 20260826
 EVAL_SEED = 20260927
 
 # Core CBF keys the generator uses for positives, and the near-miss range for each (own units).
@@ -31,7 +31,7 @@ STRATA = {"single_factor": 0.56, "pair_factor": 0.20, "triple_factor": 0.10, "qu
 
 
 def train_cases() -> List[GeneratedIncident]:
-    return load_manifest(TRAIN_MANIFEST)
+    return generate_dataset(1000, seed=TRAIN_SEED)
 
 
 def eval_cases(n: int = 120, seed: int = EVAL_SEED) -> List[GeneratedIncident]:
