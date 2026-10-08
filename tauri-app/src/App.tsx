@@ -12,6 +12,7 @@ import FleetMapPage from './pages/TrajectoryViewer'
 import ScenarioRunnerPage from './pages/ScenarioRunner'
 import KnowledgeBasePage from './pages/KnowledgeBase'
 import HardwarePanelPage from './pages/HardwarePanel'
+import FleetAssurancePage from './pages/FleetAssurance'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -38,6 +39,7 @@ const Icons = {
 
 const PAGES = [
   { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
+  { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
   { id: 'mission',     label: 'Dispatch Console',   Icon: Icons.Mission },
   { id: 'council',     label: 'Council Room',       Icon: Icons.Council },
   { id: 'incidents',   label: 'Incident Forensics', Icon: Icons.Incident },
@@ -52,6 +54,7 @@ const PAGES = [
 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,
+  assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,
   incidents:  IncidentForensicsPage,
