@@ -113,9 +113,13 @@ def deconflict(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Opti
             options += [(ALTITUDE_CHANGE_COST_S, 0.0, band, m.with_altitude(band)) for band in altitude_bands_m
                         if abs(band - m.plan.max_alt_m) > 1e-6]
         steps = int(max_delay_s // delay_step_s)
-        options += [(d, d, None, replace(m, start_s=m.start_s + d)) for d in (delay_step_s * k for k in range(1, steps + 1))]
+        delays = [delay_step_s * k for k in range(1, steps + 1)]
+        options += [(d, d, None, replace(m, start_s=m.start_s + d)) for d in delays]
+        if v_sep_m is not None:                               # a new height AND a short delay often beats a long delay alone
+            options += [(ALTITUDE_CHANGE_COST_S + d, d, band, replace(m.with_altitude(band), start_s=m.start_s + d))
+                        for band in altitude_bands_m if abs(band - m.plan.max_alt_m) > 1e-6 for d in delays]
         chosen = None
-        for cost, delay, band, cand in sorted(options, key=lambda o: (o[0], o[1])):
+        for cost, delay, band, cand in sorted(options, key=lambda o: (o[0], o[1], o[2] or 0.0)):
             traj = _trajectory(cand, origin)
             # only this candidate against the missions already fixed: an earlier unresolved pair must not block it
             if not any(_pair(traj, other, h_sep_m, v_sep_m) for other in fixed_trajs):

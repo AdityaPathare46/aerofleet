@@ -32,6 +32,13 @@ interface Review {
   }
   drift?: Drift | null
 }
+interface Conflict { a: string; b: string; t_s: number; horizontal_m: number; vertical_m: number; duration_s: number }
+interface Deconflicted {
+  before: Conflict[]; after: Conflict[]; resolved: boolean; unresolved: string[]; note: string
+  changes: { id: string; delay_s: number; new_altitude_m: number | null; old_altitude_m: number | null }[]
+  schedule: { id: string; launch_at_s: number; cruise_altitude_m: number }[]
+  rule: { h_sep_m: number; v_sep_m: number | null }; files: Record<string, string>
+}
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
@@ -79,6 +86,10 @@ export default function FleetAssurancePage() {
   const [flightLog, setFlightLog] = useState<File | null>(null)
   const [flights, setFlights] = useState<FlightRow[]>([])
   const [review, setReview] = useState<Review | null>(null)
+  const missionFiles = useRef<HTMLInputElement>(null)
+  const [missions, setMissions] = useState<File[]>([])
+  const [layered, setLayered] = useState(false)
+  const [plansResult, setPlansResult] = useState<Deconflicted | null>(null)
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
 
   const call = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -130,6 +141,20 @@ export default function FleetAssurancePage() {
     const r = await call<Review>(`/drones/${encodeURIComponent(id)}/flights`, { method: 'POST', body })
     setReview(r); if (r.drift) setDrift(r.drift); setPlan(null); setFlightLog(null); await refresh()
   })
+  const deconflict = () => act(async () => {
+    if (missions.length < 2) throw new Error('Choose at least two mission files.')
+    const body = new FormData()
+    missions.forEach((f) => body.append('plans', f))
+    body.append('options', JSON.stringify({ v_sep_m: layered ? 20 : null }))
+    const r = await fetch(`${apiUrl}/api/v1/assurance/plans/deconflict`, { method: 'POST', headers: token(), body })
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+    setPlansResult(await r.json())
+  })
+  const download = (id: string, text: string) => {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = `${id}.waypoints`; a.click()
+    URL.revokeObjectURL(a.href)
+  }
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
@@ -296,6 +321,46 @@ export default function FleetAssurancePage() {
           </div>
         </div>
       )}
+
+      <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="deconflict-card">
+        <div>
+          <div style={{ fontWeight: 600 }}>Will these missions conflict?</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Choose the mission files planned for the same period. Each file is one drone; the file name is its id.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input ref={missionFiles} id="deconflict-files" type="file" multiple hidden onChange={(e) => { setMissions([...(e.target.files ?? [])]); setPlansResult(null); e.target.value = '' }} />
+          <button className="btn" disabled={busy} onClick={() => missionFiles.current?.click()}>{missions.length ? `${missions.length} mission files chosen` : 'Choose mission files'}</button>
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+            <input type="checkbox" id="deconflict-layered" checked={layered} onChange={(e) => setLayered(e.target.checked)} />
+            Allow drones to pass at different heights (20 m apart)
+          </label>
+          <button className="btn btn--primary" id="btn-deconflict" disabled={busy || missions.length < 2} onClick={deconflict}>Check and fix</button>
+        </div>
+        {plansResult && (
+          <div id="deconflict-result" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 13 }}>
+              <Pill verdict={plansResult.resolved ? 'OK' : 'BLOCK'} label={plansResult.resolved ? 'No conflicts left' : `${plansResult.unresolved.length} mission(s) still conflict`} />
+              <span>{plansResult.before.length} conflict(s) found, {plansResult.after.length} left after {plansResult.changes.length} change(s).</span>
+              {!plansResult.resolved && <span style={{ color: 'var(--status-red)' }}>Could not clear: {plansResult.unresolved.join(', ')}</span>}
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Mission</th><th>Launch at</th><th>Cruise height</th><th>Change</th><th /></tr></thead>
+              <tbody>{plansResult.schedule.map((m) => {
+                const c = plansResult.changes.find((x) => x.id === m.id)
+                return (
+                  <tr key={m.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                    <td style={{ padding: '6px 0', fontWeight: 600 }}>{m.id}</td><td>+{clock(m.launch_at_s)}</td><td>{m.cruise_altitude_m} m</td>
+                    <td style={{ color: c ? '#92400E' : 'var(--text-muted)' }}>{!c ? 'none' : c.new_altitude_m !== null ? `height ${c.old_altitude_m} m → ${c.new_altitude_m} m` : `launch delayed ${c.delay_s} s`}</td>
+                    <td style={{ textAlign: 'right' }}><button className="btn" onClick={() => download(m.id, plansResult.files[m.id])}>Download</button></td>
+                  </tr>)
+              })}</tbody>
+            </table>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Rule: at least {plansResult.rule.h_sep_m} m apart sideways{plansResult.rule.v_sep_m ? ` or ${plansResult.rule.v_sep_m} m apart in height` : ', whatever the height'}. {plansResult.note} Delays are a launch schedule; the mission files are not changed for them.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

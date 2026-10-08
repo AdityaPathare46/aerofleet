@@ -69,3 +69,12 @@ def test_an_impossible_set_is_reported_as_unresolved_not_hidden():
 def test_duplicate_ids_are_refused():
     with pytest.raises(ValueError, match="unique"):
         deconflict([Mission("A", plan(DEPOT, NORTH)), Mission("A", plan(DEPOT, EAST))])
+
+
+def test_height_and_a_short_delay_together_beat_a_long_delay():
+    # bravo shares alpha's pad and route: height alone cannot clear the shared climb, delay alone must wait out the whole flight
+    ms = [Mission("alpha", plan(DEPOT, NORTH)), Mission("bravo", plan(DEPOT, NORTH))]
+    delay_only = deconflict(ms)["changes"][0]
+    both = deconflict(ms, v_sep_m=20.0)["changes"][0]
+    assert both["new_altitude_m"] is not None and 0 < both["delay_s"] < delay_only["delay_s"]
+    assert deconflict(ms, v_sep_m=20.0)["resolved"]
