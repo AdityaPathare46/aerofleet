@@ -84,3 +84,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 2.1–2.2 done (11 unit tests). Next: 2.3 API + report (upload plan + log per drone, store result, show in the Fleet Assurance screen), then 2.1b real `.bin` logs.
 - 2026-10-08: Phase 2.3 API done (3 new integration tests, 9 in the file). Next: 2.3b screen.
 - 2026-10-08: Phase 2.3b done and checked in the browser; fixed a stale-reply race when the fleet changes. Both wedge features now work end to end in the dev app. The Mac app bundle has NOT been rebuilt since phase 1. Next: 2.1b real `.bin` logs (needs sample downloads), then 2.4 or Phase 3.
+- 2026-10-08: Mac app rebuilt and installed to /Applications (includes Fleet Assurance: drift + flight reviews). Not launched or checked inside the bundle; the dev build was checked in the browser.
