@@ -415,3 +415,35 @@ class DroneRegistration(Base):
     verified_at = Column(DateTime, nullable=True)
     verification_note = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class FleetBaseline(Base):
+    """The approved flight-controller configuration for a fleet (AeroFleet 2.0 drift check).
+
+    `approved` holds per-parameter sign-offs {NAME: {"value", "by", "at", "note"}}: a drone whose
+    parameter equals an approved value is not blocked for it. See aerofleet/assurance/drift.py.
+    """
+
+    __tablename__ = "fleet_baselines"
+
+    fleet = Column(String(50), primary_key=True)
+    params = Column(JSON, nullable=False)
+    approved = Column(JSON, nullable=False, default=dict)
+    source = Column(String(200), nullable=True)      # the file name it was set from
+    set_by = Column(String(100), nullable=False)
+    set_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class ParamSnapshot(Base):
+    """One uploaded parameter file for one drone — immutable; the newest is the drone's current state."""
+
+    __tablename__ = "param_snapshots"
+
+    id = Column(Integer, primary_key=True)
+    drone_id = Column(String(50), nullable=False, index=True)
+    fleet = Column(String(50), nullable=False, index=True)
+    params = Column(JSON, nullable=False)
+    file_format = Column(String(30), nullable=True)
+    filename = Column(String(200), nullable=True)
+    uploaded_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

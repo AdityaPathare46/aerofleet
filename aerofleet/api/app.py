@@ -25,6 +25,7 @@ from aerofleet.api.routes import (
     agents,
     auth,
     cities,
+    assurance,
     fc_compliance,
     fleet,
     geofence,
@@ -149,6 +150,7 @@ app.include_router(pomdp.router, prefix="/api/v1/pomdp", tags=["formal-specifica
 app.include_router(hardware.router, prefix="/api/v1/hardware", tags=["hardware"])
 # Flight-controller compliance check — auto-detect (Mission Planner forward / USB), inspect, report, motor test
 app.include_router(fc_compliance.router, prefix="/api/v1/hardware/fc", tags=["hardware", "compliance"])
+app.include_router(assurance.router, prefix="/api/v1/assurance", tags=["assurance"])
 # LLM connection settings — local/Tailscale/OpenRouter mode switch
 app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
 # Fleet-level CBF threshold policy proposals — council-drafted, operator-approved
