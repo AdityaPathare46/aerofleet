@@ -1,0 +1,76 @@
+# AeroFleet 2.0 — Master Plan
+
+Status board for the rebuild. Update the checkboxes and the "Progress log" at the bottom after
+every working session. Product definition: `docs/aerofleet2/AeroFleet_2.0_Final_Definition.docx`
+(same content online: https://claude.ai/code/artifact/be7708f9-01ec-4308-a11f-458367a94c0d).
+Handoff notes for a new assistant/model: `docs/aerofleet2/CONTEXT.md`.
+
+## What AeroFleet 2.0 is
+
+A ground-based pre-flight assurance tool for multi-drone operations. It never controls a drone in
+flight. Four features, all deterministic code:
+
+1. Fleet plan deconfliction and multi-drone mission export.
+2. Pre-flight rule and battery-margin check, including wind at cruise altitude.
+3. Configuration drift check from an uploaded parameter file (vs fleet baseline and last inspection).
+4. Planned-versus-flown reconciliation from an uploaded flight log.
+
+VR: rehearse the whole fleet plan; replay planned vs flown. Language models: advisory only (review
+panel debating the likely cause of an already-flagged finding; plain-language intake; report text).
+
+## Hard rules (do not break)
+
+- No LLM calculates, checks or approves anything. Every number and verdict comes from code.
+- No in-flight control. No arm/takeoff/goto. MAVLink, if used at all, is read-only.
+- No drone hardware is required for any feature: everything works from uploaded files.
+- Never fabricate results. Run it, then report the measured number.
+- Do not claim "mathematically guaranteed", "tamper-proof" or "secure". See the definition doc.
+
+## Build order
+
+### Phase 1 — Parameter files and configuration drift  (sales wedge + paper data)
+- [x] 1.1 Parameter-file parser (`aerofleet/assurance/params.py`): Mission Planner / QGC / MAVProxy text formats
+- [x] 1.2 Drift engine (`aerofleet/assurance/drift.py`): diff vs baseline and vs previous, safety-critical catalogue, severity
+- [x] 1.3 Unit tests (`tests/unit/test_assurance_params.py`, `test_assurance_drift.py`)
+- [ ] 1.4 API: `POST /api/v1/assurance/params` (upload), `PUT/GET /assurance/baselines/{fleet}`, `GET /assurance/drift/{drone}`
+- [ ] 1.5 DB tables: `param_snapshots`, `fleet_baselines` (SQLAlchemy, same style as `FCInspection`)
+- [ ] 1.6 Feed an uploaded parameter file into the existing 59 FC checks (`hardware/compliance_rules.py`) without MAVLink
+- [ ] 1.7 Desktop UI panel: upload, baseline, drift table
+- [ ] 1.8 Drift test for the paper: seed known changes into real parameter files; report caught / false alarms
+
+### Phase 2 — Flight logs and planned-versus-flown
+- [ ] 2.1 Log reader: ArduPilot `.bin` (pymavlink DFReader) and `.tlog`; PX4 `.ulg` (pyulog) → common track + PARM + mode + events
+- [ ] 2.2 Reconciliation: flown track vs `.waypoints` plan → cross-track deviation, altitude deviation, zone entry, mode changes
+- [ ] 2.3 Variance report (JSON + PDF) and API
+- [ ] 2.4 Public-log mining script for the paper (parameter prevalence across many public logs)
+
+### Phase 3 — Deconfliction and VR rehearsal
+- [ ] 3.1 Automatic fix on top of `fleet/conflict_forecast.py`: altitude-band change or timed delay; re-verify
+- [ ] 3.2 Multi-drone `.waypoints` export (`integrations/mission_planner.py` does one drone today)
+- [ ] 3.3 Scale test: 10–300 planned drones over Pune; conflicts per flight hour, added delay
+- [ ] 3.4 VR: fleet-plan rehearsal (before/after fix) and planned-vs-flown replay (Unity app, `unity/AeroFleetVR`)
+
+### Phase 4 — Wind at altitude
+- [ ] 4.1 Forecast wind at cruise height (Open-Meteo has 80/120/180 m winds; verify) into the battery margin
+- [ ] 4.2 One-month Pune study: passes on ground wind but fails at altitude
+
+### Phase 5 — Signing and the review panel
+- [ ] 5.1 Signed, hash-chained reports (ordinary signatures; no TEE)
+- [ ] 5.2 Review panel: per-agent evidence slices, schema-constrained replies, claim check, fixed aggregation rule
+- [ ] 5.3 Evaluation: panel vs single agent vs no AI; poisoned-log attack success rate (`scenario_engine/prompt_injector.py`)
+
+### Phase 6 — Park the old live path
+- [ ] 6.1 Disable arm/takeoff/goto in `api/routes/orders.py` behind a default-off flag; keep code
+- [ ] 6.2 Hide the 16-agent dispatch council and live-control UI from the desktop app
+- [ ] 6.3 Update README and docs to the 2.0 framing
+
+### Demand and publication (not code)
+- [ ] D1 Check whether Indian agri/service fleets run ArduPilot/PX4 and whether AirData serves them
+- [ ] D2 Public "upload a log, get a report" release to ArduPilot/PX4 forums; count uploads for 6 weeks
+- [ ] D3 Free audit offer to 20 Indian makers/service firms; go only if ≥3 send logs or ≥100 public uploads
+- [ ] D4 Literature check for the primary paper (misconfiguration prevalence in field logs)
+- [ ] D5 VR-vs-desktop study (12–16 people); protocol draft exists in `research/user_study_protocol.md`
+
+## Progress log
+
+- 2026-10-08: Definition finalised. Master plan and context file written. Phase 1.1–1.3 built and tested.
