@@ -71,3 +71,14 @@ def test_bad_uploads_and_unknown_drones_get_clear_errors(api_client, auth_header
     assert api_client.get(f"{URL}/drones/NOPE/drift", headers=auth_headers).status_code == 404
     assert api_client.get(f"{URL}/baseline", headers=auth_headers).status_code == 404
     assert api_client.post(f"{URL}/drones/D1/params", files=_file(BASE)).status_code == 401
+
+
+def test_compliance_rules_run_on_the_uploaded_file(api_client, auth_headers):
+    assert api_client.get(f"{URL}/drones/D1/checks", headers=auth_headers).status_code == 404
+    api_client.post(f"{URL}/drones/D1/params", headers=auth_headers, files=_file(BASE.replace("FS_THR_ENABLE,1", "FS_THR_ENABLE,0")))
+    r = api_client.get(f"{URL}/drones/D1/checks", headers=auth_headers).json()
+    assert r["source"] == "param_file" and r["counts"]["total"] == 59 and r["verdict"] == "FAIL"
+    by_id = {c["id"]: c for c in r["evaluated"]}
+    assert by_id["fs.rc_loss"]["status"] == "FAIL" and by_id["fs.fence_enabled"]["status"] == "PASS"
+    assert by_id["dgca.uin"]["status"] == "FAIL"          # no UIN registered for D1
+    assert r["counts"]["needs_live"] > 0 and r["counts"]["manual"] > 0

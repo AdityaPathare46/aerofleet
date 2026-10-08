@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from aerofleet.api.routes.auth import get_current_active_user, get_current_operator_user, get_db
 from aerofleet.assurance.drift import drift_report
+from aerofleet.assurance.static_checks import checks_from_params
 from aerofleet.assurance.params import MAX_BYTES, ParamFile, ParamFileError, parse_param_bytes
 from aerofleet.data.models.models import FleetBaseline, ParamSnapshot, User
 
@@ -121,6 +122,26 @@ async def upload_params(fleet: str, drone_id: str, file: UploadFile = File(...),
 async def get_drift(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
                     db: Session = Depends(get_db)) -> Dict[str, Any]:
     return _drift(db, fleet, drone_id)
+
+
+@router.get("/fleets/{fleet}/drones/{drone_id}/checks")
+async def get_checks(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
+                     db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The flight-controller compliance rules run on the drone's latest uploaded parameter file."""
+    from aerofleet.fleet import registration
+    from aerofleet.hardware.compliance_rules import InspectionContext
+
+    snaps = _snapshots(db, fleet, drone_id, limit=1)
+    if not snaps:
+        raise HTTPException(status_code=404, detail=f"No parameter file uploaded for drone '{drone_id}' in fleet '{fleet}'")
+    reg = registration.get(db, drone_id)
+    ctx = InspectionContext(
+        bench_mode=True, drone_id=drone_id, registry_uin=reg.uin if reg else None, uin_status=registration.status_of(reg),
+        uin_verified_by=reg.verified_by if reg else None,
+        uin_verified_at=reg.verified_at.isoformat() if reg and reg.verified_at else None)
+    report = checks_from_params(snaps[0].params, ctx)
+    report.update({"drone_id": drone_id, "fleet": fleet, "snapshot_id": snaps[0].id, "uploaded_at": snaps[0].created_at.isoformat()})
+    return report
 
 
 @router.get("/fleets/{fleet}/drift")

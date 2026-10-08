@@ -34,7 +34,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 1.3 Unit tests (`tests/unit/test_assurance_params.py`, `test_assurance_drift.py`)
 - [x] 1.4 API (`aerofleet/api/routes/assurance.py`, prefix `/api/v1/assurance/fleets/{fleet}`): `POST|GET /baseline`, `POST /approvals`, `POST /drones/{id}/params`, `GET /drones/{id}/drift`, `GET /drift` (fleet summary)
 - [x] 1.5 DB tables `param_snapshots`, `fleet_baselines` (in `aerofleet/data/models/models.py`)
-- [ ] 1.6 Feed an uploaded parameter file into the existing 59 FC checks (`hardware/compliance_rules.py`) without MAVLink
+- [x] 1.6 59 FC checks on an uploaded file (`aerofleet/assurance/static_checks.py`, `GET .../drones/{id}/checks`): evaluated / needs_live / manual, verdict covers evaluated only
 - [ ] 1.7 Desktop UI panel: upload, baseline, drift table
 - [ ] 1.8 Drift test for the paper: seed known changes into real parameter files; report caught / false alarms
 
@@ -75,3 +75,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 
 - 2026-10-08: Definition finalised. Master plan and context file written. Phase 1.1–1.3 built and tested.
 - 2026-10-08: Phase 1.4–1.5 done: storage + API for baseline, approvals, upload and drift; 5 integration tests (`tests/integration/test_assurance_api.py`). Next: 1.6.
+- 2026-10-08: Phase 1.6 done. Next: 1.7 desktop UI panel (tauri-app/src/components), then 1.8.
