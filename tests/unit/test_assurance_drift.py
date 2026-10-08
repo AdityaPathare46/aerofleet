@@ -19,6 +19,16 @@ def test_severity_catalogue_on_known_parameters():
     assert severity_of("STAT_FLTTIME") is None and severity_of("COMPASS_OFS_X") is None
 
 
+def test_current_firmware_spellings_are_rated_like_the_old_ones():
+    # ArduPilot's current release renamed these; found by research/drift_catalogue_check.py
+    for old, new in (("RTL_ALT", "RTL_ALT_M"), ("ARMING_CHECK", "ARMING_SKIPCHK"), ("ANGLE_MAX", "ATC_ANGLE_MAX"),
+                     ("WPNAV_SPEED", "WP_SPD"), ("PILOT_SPEED_UP", "PILOT_SPD_UP"), ("SYSID_THISMAV", "MAV_SYSID")):
+        assert severity_of(old) == severity_of(new) != INFO, (old, new)
+    assert severity_of("ATC_ANGLE_MAX") == HIGH and severity_of("ATC_ANG_RLL_P") == TUNING     # most severe match wins
+    assert severity_of("COM_GNSSLOSS_ACT") == CRITICAL and severity_of("RC_FS_TIMEOUT") == CRITICAL
+    assert severity_of("AFS_ENABLE") == CRITICAL and severity_of("PCA9685_FAIL3") == HIGH
+
+
 def test_identical_configuration_has_no_drift():
     r = drift_report(dict(BASE), baseline=BASE)
     assert r["verdict"] == OK and r["vs_baseline"]["changes"] == []

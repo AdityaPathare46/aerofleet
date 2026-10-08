@@ -36,13 +36,13 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 1.5 DB tables `param_snapshots`, `fleet_baselines` (in `aerofleet/data/models/models.py`)
 - [x] 1.6 59 FC checks on an uploaded file (`aerofleet/assurance/static_checks.py`, `GET .../drones/{id}/checks`): evaluated / needs_live / manual, verdict covers evaluated only
 - [x] 1.7 Desktop screen `tauri-app/src/pages/FleetAssurance.tsx` (nav: Fleet Assurance): baseline, upload, fleet table, drift detail with approvals, file-only check summary
-- [ ] 1.8 Drift test for the paper: seed known changes into real parameter files; report caught / false alarms
+- [x] 1.8 Catalogue checked against the official ArduPilot Copter and PX4 parameter lists (`research/drift_catalogue_check.py`, results in `research/results/drift_catalogue_check.md`). The seeded-change test was dropped: a dictionary diff catches every change by construction. False-alarm rate moves to 2.4 (needs two files from the same drone).
 
 ### Phase 2 — Flight logs and planned-versus-flown
 - [ ] 2.1 Log reader: ArduPilot `.bin` (pymavlink DFReader) and `.tlog`; PX4 `.ulg` (pyulog) → common track + PARM + mode + events
 - [ ] 2.2 Reconciliation: flown track vs `.waypoints` plan → cross-track deviation, altitude deviation, zone entry, mode changes
 - [ ] 2.3 Variance report (JSON + PDF) and API
-- [ ] 2.4 Public-log mining script for the paper (parameter prevalence across many public logs)
+- [ ] 2.4 Public-log mining script for the paper (parameter prevalence across many public logs); also the drift false-alarm rate between consecutive logs of the same vehicle
 
 ### Phase 3 — Deconfliction and VR rehearsal
 - [ ] 3.1 Automatic fix on top of `fleet/conflict_forecast.py`: altitude-band change or timed delay; re-verify
@@ -77,3 +77,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 1.4–1.5 done: storage + API for baseline, approvals, upload and drift; 5 integration tests (`tests/integration/test_assurance_api.py`). Next: 1.6.
 - 2026-10-08: Phase 1.6 done. Next: 1.7 desktop UI panel (tauri-app/src/components), then 1.8.
 - 2026-10-08: Phase 1.7 done and checked in the browser. Note: the dev backend's database is `/tmp/aerofleet.db` (wiped on reboot, so test users vanish). Next: 1.8 drift catch-rate test, then Phase 2.
+- 2026-10-08: Phase 1.8 done. 20 of 113 catalogue names were older-firmware spellings (ArduPilot renamed RTL_ALT, ANGLE_MAX, ARMING_CHECK, WPNAV_* ...); both spellings now covered, plus gaps found by the documentation cross-check. Phase 1 complete. Next: 2.1 log reader.

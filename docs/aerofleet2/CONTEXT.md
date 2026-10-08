@@ -78,8 +78,8 @@ Decisions already made — do not reopen them without the user asking:
 - Novelty of the primary paper (short search only). Prior work to read: FSE'21 autopilot bug study
   (569 bugs), the 178-abnormal-log study, ArduCrash dataset, RouthSearch.
 - Regulatory citations: UAOP may no longer exist under Drone Rules 2021; verify every rule reference.
-- The drift severity catalogue (`aerofleet/assurance/drift.py`) was written from memory of the ArduPilot
-  Copter and PX4 parameter references, not checked name-by-name against a firmware version.
+- The drift severity catalogue was checked against the official parameter lists on 2026-10-08, but PX4's
+  per-output failsafe values are rated HIGH by judgement, and no fleet's actual firmware version was used.
 - Intel SGX availability on client CPUs (the old TEE note claimed it; likely wrong).
 
 ## 7. How to continue
