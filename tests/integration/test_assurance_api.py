@@ -14,9 +14,10 @@ def _file(text, name="drone.param"):
 @pytest.fixture(autouse=True)
 def _clean():
     from aerofleet.data.database import get_db_session
-    from aerofleet.data.models.models import FleetBaseline, ParamSnapshot
+    from aerofleet.data.models.models import FleetBaseline, FlightReview, ParamSnapshot
 
     with get_db_session() as db:
+        db.query(FlightReview).delete()
         db.query(ParamSnapshot).delete()
         db.query(FleetBaseline).delete()
         db.commit()
@@ -82,3 +83,54 @@ def test_compliance_rules_run_on_the_uploaded_file(api_client, auth_headers):
     assert by_id["fs.rc_loss"]["status"] == "FAIL" and by_id["fs.fence_enabled"]["status"] == "PASS"
     assert by_id["dgca.uin"]["status"] == "FAIL"          # no UIN registered for D1
     assert r["counts"]["needs_live"] > 0 and r["counts"]["manual"] > 0
+
+
+# ── planned versus flown ───────────────────────────────────────────────
+
+def _flight_files(tmp_path, offset_m=0.0, modes=((0.0, 4), (10.0, 3)), params=(("FS_THR_ENABLE", 1.0), ("FENCE_ENABLE", 1.0))):
+    import math
+
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+    from tests.unit.test_assurance_flightlog import write_tlog
+
+    home, dest, alt = (18.5200, 73.8500), (18.5290, 73.8500), 60.0
+    plan = build_waypoint_file({"origin_lat": home[0], "origin_lon": home[1], "dest_lat": dest[0], "dest_lon": dest[1], "altitude_m": alt})
+    east = offset_m / (111_320.0 * math.cos(math.radians(home[0])))
+    track = [(float(i), home[0], home[1], alt * i / 10) for i in range(10)]
+    track += [(10.0 + i, home[0] + (dest[0] - home[0]) * i / 99, home[1] + (east if 40 <= i < 60 else 0.0), alt) for i in range(100)]
+    path = write_tlog(str(tmp_path / "flight.tlog"), track, params=list(params), modes=list(modes))
+    return {"plan": ("mission.waypoints", plan.encode(), "text/plain"), "log": ("flight.tlog", open(path, "rb").read(), "application/octet-stream")}
+
+
+def test_a_flight_on_plan_conforms_and_its_parameters_feed_the_drift_check(api_client, auth_headers, operator_headers, tmp_path):
+    api_client.post(f"{URL}/baseline", headers=operator_headers, files=_file("FS_THR_ENABLE,1\nFENCE_ENABLE,1\n"))
+    r = api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=_flight_files(tmp_path))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["verdict"] == "CONFORMED" and body["report"]["episodes"] == [] and body["report"]["log"]["points"] == 110
+    assert body["drift"]["verdict"] == "OK" and body["drift"]["param_count"] == 2      # parameters came from the log
+    listed = api_client.get(f"{URL}/flights?drone_id=D1", headers=auth_headers).json()
+    assert [(x["verdict"], x["episodes"]) for x in listed] == [("CONFORMED", 0)]
+    assert api_client.get(f"{URL}/flights/{body['id']}", headers=auth_headers).json()["report"]["verdict"] == "CONFORMED"
+
+
+def test_an_excursion_and_a_disabled_failsafe_in_the_log_are_both_caught(api_client, auth_headers, operator_headers, tmp_path):
+    api_client.post(f"{URL}/baseline", headers=operator_headers, files=_file("FS_THR_ENABLE,1\nFENCE_ENABLE,1\n"))
+    files = _flight_files(tmp_path, offset_m=80.0, params=(("FS_THR_ENABLE", 0.0), ("FENCE_ENABLE", 1.0)))
+    body = api_client.post(f"{URL}/drones/D2/flights", headers=auth_headers, files=files).json()
+    assert body["verdict"] == "DEVIATED"
+    (episode,) = body["report"]["episodes"]
+    assert episode["kind"] == "off_route" and 79 < episode["max_m"] < 81
+    assert body["drift"]["verdict"] == "BLOCK"
+    tight = api_client.post(f"{URL}/drones/D2/flights?corridor_m=100", headers=auth_headers, files=_flight_files(tmp_path, offset_m=80.0))
+    assert tight.json()["verdict"] == "CONFORMED"                                      # the fleet's own tolerance
+
+
+def test_flight_upload_errors_are_clear(api_client, auth_headers, tmp_path):
+    files = _flight_files(tmp_path)
+    bad_plan = dict(files, plan=("mission.waypoints", b"not a mission", "text/plain"))
+    assert "Not a mission file" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=bad_plan).json()["detail"]
+    bad_log = dict(files, log=("flight.ulg", b"ULog\x01", "application/octet-stream"))
+    assert "Unsupported log type" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=bad_log).json()["detail"]
+    assert api_client.post(f"{URL}/drones/D1/flights", files=files).status_code == 401
+    assert api_client.get(f"{URL}/flights/999999", headers=auth_headers).status_code == 404

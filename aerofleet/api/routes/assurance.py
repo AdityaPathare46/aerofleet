@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -17,7 +17,7 @@ from aerofleet.api.routes.auth import get_current_active_user, get_current_opera
 from aerofleet.assurance.drift import drift_report
 from aerofleet.assurance.static_checks import checks_from_params
 from aerofleet.assurance.params import MAX_BYTES, ParamFile, ParamFileError, parse_param_bytes
-from aerofleet.data.models.models import FleetBaseline, ParamSnapshot, User
+from aerofleet.data.models.models import FleetBaseline, FlightReview, ParamSnapshot, User
 
 router = APIRouter()
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_\-]{0,49}$")
@@ -157,3 +157,88 @@ async def fleet_drift(fleet: str, user: User = Depends(get_current_active_user),
     verdicts = [r["verdict"] for r in rows]
     return {"fleet": fleet, "has_baseline": db.get(FleetBaseline, fleet) is not None, "drones": rows,
             "summary": {v: verdicts.count(v) for v in ("BLOCK", "REVIEW", "OK", "NO_REFERENCE")}}
+
+
+# ── planned versus flown ───────────────────────────────────────────────
+
+def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
+    out = {"id": row.id, "drone_id": row.drone_id, "fleet": row.fleet, "verdict": row.verdict, "plan_name": row.plan_name,
+           "log_name": row.log_name, "uploaded_by": row.uploaded_by, "uploaded_at": row.created_at.isoformat()}
+    if full:
+        out["report"] = row.report
+    else:
+        r = row.report
+        out.update({"flight_s": r["flight_s"], "max_off_route_m": r["horizontal_m"]["max"], "episodes": len(r["episodes"]),
+                    "manual_control": len(r["manual_control"])})
+    return out
+
+
+@router.post("/fleets/{fleet}/drones/{drone_id}/flights")
+async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...), log: UploadFile = File(...),
+                        city: Optional[str] = Query(None, description="Check the track against this city's no-fly zones"),
+                        corridor_m: float = Query(30.0, gt=0, le=1000), altitude_m: float = Query(15.0, gt=0, le=500),
+                        user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Compare a flight log (.tlog / .bin) with the approved mission file (.waypoints).
+
+    The parameters found in the log are also stored as the drone's newest snapshot, so the drift check
+    covers the configuration it actually flew with.
+    """
+    import os
+    import tempfile
+
+    from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX, FlightLogError, read_flight_log
+    from aerofleet.assurance.reconcile import PlanError, parse_waypoints, reconcile
+
+    _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
+    ext = os.path.splitext(log.filename or "")[1].lower()
+    try:
+        mission = parse_waypoints((await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"))
+    except PlanError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    zone_at = None
+    if city:
+        from aerofleet.fleet.state import get_fleet_state
+
+        airspace = get_fleet_state(city).airspace
+        zone_at = lambda lat, lon: airspace.zone_at(lat, lon).value  # noqa: E731
+    fd, tmp = tempfile.mkstemp(suffix=ext or ".unknown")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(await log.read(LOG_MAX + 1))
+        flight = read_flight_log(tmp)
+        report = reconcile(mission, flight.track, flight.modes, corridor_m=corridor_m, altitude_tol_m=altitude_m, zone_at=zone_at)
+    except (FlightLogError, PlanError) as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    finally:
+        os.unlink(tmp)
+    report["log"] = flight.summary()
+    report["zones_checked"] = city
+    if flight.params:
+        db.add(ParamSnapshot(drone_id=drone_id, fleet=fleet, params=flight.params, file_format=f"log:{flight.format}",
+                             filename=(log.filename or "")[:200], uploaded_by=user.username))
+    row = FlightReview(drone_id=drone_id, fleet=fleet, verdict=report["verdict"], report=report,
+                       plan_name=(plan.filename or "")[:200], log_name=(log.filename or "")[:200], uploaded_by=user.username)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    out = _review(row)
+    out["drift"] = _drift(db, fleet, drone_id) if flight.params else None
+    return out
+
+
+@router.get("/fleets/{fleet}/flights")
+async def list_flights(fleet: str, drone_id: Optional[str] = None, limit: int = Query(50, ge=1, le=200),
+                       user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+    q = db.query(FlightReview).filter(FlightReview.fleet == fleet)
+    if drone_id:
+        q = q.filter(FlightReview.drone_id == drone_id)
+    return [_review(r, full=False) for r in q.order_by(FlightReview.id.desc()).limit(limit).all()]
+
+
+@router.get("/fleets/{fleet}/flights/{review_id}")
+async def get_flight(fleet: str, review_id: int, user: User = Depends(get_current_active_user),
+                     db: Session = Depends(get_db)) -> Dict[str, Any]:
+    row = db.get(FlightReview, review_id)
+    if row is None or row.fleet != fleet:
+        raise HTTPException(status_code=404, detail="No such flight review in this fleet")
+    return _review(row)

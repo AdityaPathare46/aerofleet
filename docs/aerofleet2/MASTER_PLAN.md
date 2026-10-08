@@ -42,7 +42,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 2.1 Log reader `aerofleet/assurance/flightlog.py`: ArduPilot `.tlog` (tested on a generated log) and `.bin` (same code path, NOT yet run on a real onboard log) → track, parameters, mode changes
 - [ ] 2.1b Run the reader on real `.bin` logs; add PX4 `.ulg` (needs `pyulog`, not installed)
 - [x] 2.2 Reconciliation `aerofleet/assurance/reconcile.py`: `.waypoints` parser; per-point horizontal/vertical deviation; off-route / off-altitude / no-fly-zone episodes; manual-control takeovers; CONFORMED / DEVIATED
-- [ ] 2.3 Variance report (JSON + PDF) and API
+- [x] 2.3 API: `POST /fleets/{fleet}/drones/{id}/flights` (files `plan` + `log`; optional `city`, `corridor_m`, `altitude_m`), `GET /fleets/{fleet}/flights`, `GET .../flights/{review_id}`; table `flight_reviews`; log parameters are stored as a snapshot so drift covers the flown configuration
+- [ ] 2.3b Flights section in `tauri-app/src/pages/FleetAssurance.tsx` (upload plan + log, list, episode table); PDF export; test the `city` no-fly-zone option through the API (only unit-tested so far)
 - [ ] 2.4 Public-log mining script for the paper (parameter prevalence across many public logs); also the drift false-alarm rate between consecutive logs of the same vehicle
 
 ### Phase 3 — Deconfliction and VR rehearsal
@@ -80,3 +81,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 1.7 done and checked in the browser. Note: the dev backend's database is `/tmp/aerofleet.db` (wiped on reboot, so test users vanish). Next: 1.8 drift catch-rate test, then Phase 2.
 - 2026-10-08: Phase 1.8 done. 20 of 113 catalogue names were older-firmware spellings (ArduPilot renamed RTL_ALT, ANGLE_MAX, ARMING_CHECK, WPNAV_* ...); both spellings now covered, plus gaps found by the documentation cross-check. Phase 1 complete. Next: 2.1 log reader.
 - 2026-10-08: Phase 2.1–2.2 done (11 unit tests). Next: 2.3 API + report (upload plan + log per drone, store result, show in the Fleet Assurance screen), then 2.1b real `.bin` logs.
+- 2026-10-08: Phase 2.3 API done (3 new integration tests, 9 in the file). Next: 2.3b screen.

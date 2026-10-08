@@ -447,3 +447,19 @@ class ParamSnapshot(Base):
     filename = Column(String(200), nullable=True)
     uploaded_by = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class FlightReview(Base):
+    """One planned-versus-flown reconciliation: a mission file and a flight log for one drone."""
+
+    __tablename__ = "flight_reviews"
+
+    id = Column(Integer, primary_key=True)
+    drone_id = Column(String(50), nullable=False, index=True)
+    fleet = Column(String(50), nullable=False, index=True)
+    verdict = Column(String(20), nullable=False)          # CONFORMED | DEVIATED
+    report = Column(JSON, nullable=False)
+    plan_name = Column(String(200), nullable=True)
+    log_name = Column(String(200), nullable=True)
+    uploaded_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
