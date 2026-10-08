@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -242,3 +242,53 @@ async def get_flight(fleet: str, review_id: int, user: User = Depends(get_curren
     if row is None or row.fleet != fleet:
         raise HTTPException(status_code=404, detail="No such flight review in this fleet")
     return _review(row)
+
+
+# ── fleet plan deconfliction ───────────────────────────────────────────
+
+MAX_PLANS = 300
+
+
+@router.post("/plans/deconflict")
+async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = Form("{}"),
+                           user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """Check a set of mission files against each other and return a conflict-free launch schedule.
+
+    Each file is one mission; its id is the file name without the extension. `options` is JSON:
+    {"launch_s": {id: seconds}, "priority": {id: int}, "h_sep_m": 15, "v_sep_m": null,
+     "max_delay_s": 300}. With `v_sep_m` set, a different cruise height may be assigned and the
+    returned file for that mission carries the new height. Nothing is stored.
+    """
+    import json
+    import os
+
+    from aerofleet.assurance.deconflict import Mission, deconflict, retarget_altitude
+    from aerofleet.assurance.reconcile import PlanError, parse_waypoints
+
+    try:
+        opt = json.loads(options or "{}")
+        launch, priority = dict(opt.get("launch_s") or {}), dict(opt.get("priority") or {})
+        h_sep, v_sep = float(opt.get("h_sep_m", 15.0)), opt.get("v_sep_m")
+        v_sep = float(v_sep) if v_sep is not None else None
+        max_delay = float(opt.get("max_delay_s", 300.0))
+        if not (0 < h_sep <= 1000) or (v_sep is not None and not (0 < v_sep <= 500)) or not (0 <= max_delay <= 3600):
+            raise ValueError("a separation or delay value is out of range")
+    except (ValueError, TypeError, AttributeError) as e:
+        raise HTTPException(status_code=422, detail=f"Bad options: {e}")
+    if not (2 <= len(plans) <= MAX_PLANS):
+        raise HTTPException(status_code=422, detail=f"Upload between 2 and {MAX_PLANS} mission files")
+    missions, texts = [], {}
+    for f in plans:
+        mid = os.path.splitext(os.path.basename(f.filename or ""))[0]
+        if not _ID.match(mid) or mid in texts:
+            raise HTTPException(status_code=422, detail=f"File name '{f.filename}' must give a unique id of letters, digits, '-' or '_'")
+        texts[mid] = (await f.read(MAX_BYTES + 1)).decode("utf-8", errors="replace")
+        try:
+            missions.append(Mission(mid, parse_waypoints(texts[mid]), start_s=float(launch.get(mid, 0.0)), priority=int(priority.get(mid, 0))))
+        except (PlanError, ValueError) as e:
+            raise HTTPException(status_code=422, detail=f"{f.filename}: {e}")
+    result = deconflict(missions, h_sep_m=h_sep, v_sep_m=v_sep, max_delay_s=max_delay)
+    result.pop("missions")
+    new_alt = {c["id"]: c["new_altitude_m"] for c in result["changes"] if c["new_altitude_m"] is not None}
+    result["files"] = {mid: retarget_altitude(texts[mid], new_alt[mid]) if mid in new_alt else texts[mid] for mid in texts}
+    return result

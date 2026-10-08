@@ -134,3 +134,56 @@ def test_flight_upload_errors_are_clear(api_client, auth_headers, tmp_path):
     assert "Unsupported log type" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=bad_log).json()["detail"]
     assert api_client.post(f"{URL}/drones/D1/flights", files=files).status_code == 401
     assert api_client.get(f"{URL}/flights/999999", headers=auth_headers).status_code == 404
+
+
+# ── fleet plan deconfliction ───────────────────────────────────────────
+
+def _mission(origin, dest, alt=60.0):
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+
+    return build_waypoint_file({"origin_lat": origin[0], "origin_lon": origin[1], "dest_lat": dest[0], "dest_lon": dest[1], "altitude_m": alt})
+
+
+DECONFLICT = "/api/v1/assurance/plans/deconflict"
+DEPOT, NORTH = (18.5200, 73.8500), (18.5290, 73.8500)
+
+
+def _plans(**files):
+    return [("plans", (f"{name}.waypoints", text.encode(), "text/plain")) for name, text in files.items()]
+
+
+def test_same_depot_launches_get_a_staggered_schedule(api_client, auth_headers):
+    r = api_client.post(DECONFLICT, headers=auth_headers, files=_plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(DEPOT, NORTH)))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert len(body["before"]) == 1 and body["after"] == [] and body["resolved"] is True
+    assert [c["id"] for c in body["changes"]] == ["bravo"] and "missions" not in body
+    launch = {s["id"]: s["launch_at_s"] for s in body["schedule"]}
+    assert launch["alpha"] == 0.0 and launch["bravo"] > 0
+    assert body["files"]["alpha"] == _mission(DEPOT, NORTH)                    # untouched
+
+
+def test_priority_and_vertical_separation_options_and_the_rewritten_file(api_client, auth_headers):
+    import json
+
+    from aerofleet.assurance.reconcile import parse_waypoints
+
+    files = _plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(NORTH, DEPOT))
+    opts = {"priority": {"bravo": 5}, "v_sep_m": 20}
+    body = api_client.post(DECONFLICT, headers=auth_headers, files=files, data={"options": json.dumps(opts)}).json()
+    (change,) = body["changes"]
+    assert change["id"] == "alpha" and change["new_altitude_m"] != 60.0 and body["rule"]["vertical_separation_allowed"] is True
+    rewritten = parse_waypoints(body["files"]["alpha"])
+    assert rewritten.max_alt_m == change["new_altitude_m"] and rewritten.path[0][2] == 0.0     # home row untouched
+    assert parse_waypoints(body["files"]["bravo"]).max_alt_m == 60.0
+
+
+def test_deconflict_input_errors(api_client, auth_headers):
+    one = api_client.post(DECONFLICT, headers=auth_headers, files=_plans(alpha=_mission(DEPOT, NORTH)))
+    assert one.status_code == 422 and "between 2 and" in one.json()["detail"]
+    bad = api_client.post(DECONFLICT, headers=auth_headers, files=_plans(alpha=_mission(DEPOT, NORTH), bravo="nope"))
+    assert bad.status_code == 422 and "bravo.waypoints" in bad.json()["detail"]
+    opts = api_client.post(DECONFLICT, headers=auth_headers, files=_plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(DEPOT, NORTH)),
+                           data={"options": "{not json"})
+    assert opts.status_code == 422 and "Bad options" in opts.json()["detail"]
+    assert api_client.post(DECONFLICT, files=_plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(DEPOT, NORTH))).status_code == 401

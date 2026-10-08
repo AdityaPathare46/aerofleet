@@ -143,3 +143,16 @@ def deconflict(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Opti
         "missions": result,
         "note": "Separation holds only if every drone launches on schedule and flies its plan at the planned speeds.",
     }
+
+
+def retarget_altitude(waypoints_text: str, new_alt_m: float) -> str:
+    """The same mission file with every airborne takeoff/waypoint height set to `new_alt_m`.
+    Other commands, the home row and all other fields are left exactly as they were."""
+    out = []
+    for n, line in enumerate(waypoints_text.splitlines()):
+        parts = line.split("\t") if "\t" in line else line.split()
+        if n >= 2 and len(parts) >= 11 and parts[3] in ("16", "22") and float(parts[10]) > AIRBORNE_M:
+            parts[10] = repr(float(new_alt_m))
+            line = "\t".join(parts)
+        out.append(line)
+    return "\n".join(out) + "\n"
