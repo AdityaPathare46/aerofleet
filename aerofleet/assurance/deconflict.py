@@ -42,57 +42,52 @@ class Mission:
         return replace(self, plan=Plan(self.plan.home, path, self.plan.notes))
 
 
-def _trajectory(m: Mission, origin: Tuple[float, float]) -> Tuple[np.ndarray, np.ndarray]:
-    """(times, [x, y, alt]) at STEP_S, from launch to touchdown."""
+def _trajectory(m: Mission, origin: Tuple[float, float]) -> Tuple[int, np.ndarray]:
+    """(first grid index, [x, y, alt] per STEP_S) from launch to touchdown; NaN while on the ground.
+    Launch times are placed on the STEP_S grid."""
     cos = math.cos(math.radians(origin[0]))
     pts = [((lo - origin[1]) * M_PER_DEG * cos, (la - origin[0]) * M_PER_DEG, a) for la, lo, a in m.plan.path]
-    knots_t, t = [m.start_s], m.start_s
+    knots_t, t = [0.0], 0.0
     for (ax, ay, aa), (bx, by, ba) in zip(pts, pts[1:]):
         vertical = (ba - aa) / CLIMB_MPS if ba >= aa else (aa - ba) / DESCENT_MPS
         t += max(math.hypot(bx - ax, by - ay) / CRUISE_MPS, vertical, 1e-3)
         knots_t.append(t)
-    times = np.arange(m.start_s, knots_t[-1] + STEP_S, STEP_S)
+    times = np.arange(0.0, knots_t[-1] + STEP_S, STEP_S)
     arr = np.array(pts)
-    return times, np.stack([np.interp(times, knots_t, arr[:, k]) for k in range(3)], axis=1)
+    xyz = np.stack([np.interp(times, knots_t, arr[:, k]) for k in range(3)], axis=1)
+    xyz[xyz[:, 2] <= AIRBORNE_M] = np.nan                 # on the ground: not in the airspace
+    return int(round(m.start_s / STEP_S)), xyz
 
 
-def _grid(missions: Sequence[Mission]):
-    origin = missions[0].plan.home
-    trajs = [_trajectory(m, origin) for m in missions]
-    t0 = min(t[0] for t, _ in trajs)
-    n = int(round((max(t[-1] for t, _ in trajs) - t0) / STEP_S)) + 1
-    cube = np.full((len(missions), n, 3), np.nan)
-    for i, (times, xyz) in enumerate(trajs):
-        k = int(round((times[0] - t0) / STEP_S))
-        cube[i, k:k + len(times)] = xyz
-    cube[cube[:, :, 2] <= AIRBORNE_M] = np.nan            # on the ground: not in the airspace
-    return cube, t0
-
-
-def _pair(a: np.ndarray, b: np.ndarray, h_sep: float, v_sep: Optional[float]):
-    """Worst moment between two trajectories on the common grid, or None when they never conflict."""
-    h = np.hypot(a[:, 0] - b[:, 0], a[:, 1] - b[:, 1])
-    v = np.abs(a[:, 2] - b[:, 2])
-    bad = h < h_sep
+def _pair(a: Tuple[int, np.ndarray], b: Tuple[int, np.ndarray], h_sep: float, v_sep: Optional[float]):
+    """Worst moment between two trajectories, or None when they never conflict: (grid index, h, v, seconds)."""
+    lo, hi = max(a[0], b[0]), min(a[0] + len(a[1]), b[0] + len(b[1]))
+    if hi <= lo:
+        return None
+    pa, pb = a[1][lo - a[0]:hi - a[0]], b[1][lo - b[0]:hi - b[0]]
+    h = np.hypot(pa[:, 0] - pb[:, 0], pa[:, 1] - pb[:, 1])
+    v = np.abs(pa[:, 2] - pb[:, 2])
+    bad = h < h_sep                                       # NaN (either on the ground) compares False
     if v_sep is not None:
         bad &= v < v_sep
-    if not bad.any():                                     # NaN (either on the ground) compares False
+    if not bad.any():
         return None
     k = int(np.nanargmin(np.where(bad, h, np.nan)))
-    return k, float(h[k]), float(v[k]), float(bad.sum() * STEP_S)
+    return lo + k, float(h[k]), float(v[k]), float(bad.sum() * STEP_S)
 
 
 def find_conflicts(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Optional[float] = None) -> List[Dict[str, Any]]:
     if len(missions) < 2:
         return []
-    cube, t0 = _grid(missions)
+    origin = missions[0].plan.home
+    trajs = [_trajectory(m, origin) for m in missions]
     out = []
     for i in range(len(missions)):
         for j in range(i + 1, len(missions)):
-            hit = _pair(cube[i], cube[j], h_sep_m, v_sep_m)
+            hit = _pair(trajs[i], trajs[j], h_sep_m, v_sep_m)
             if hit:
                 k, h, v, dur = hit
-                out.append({"a": missions[i].id, "b": missions[j].id, "t_s": round(t0 + k * STEP_S, 1), "horizontal_m": round(h, 1),
+                out.append({"a": missions[i].id, "b": missions[j].id, "t_s": round(k * STEP_S, 1), "horizontal_m": round(h, 1),
                             "vertical_m": round(v, 1), "duration_s": dur})
     return sorted(out, key=lambda c: (c["t_s"], c["a"], c["b"]))
 
@@ -107,7 +102,9 @@ def deconflict(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Opti
         raise ValueError("Mission ids must be unique")
     before = find_conflicts(missions, h_sep_m, v_sep_m)
     order = sorted(missions, key=lambda m: (-m.priority, m.start_s, m.id))
+    origin = missions[0].plan.home
     fixed: List[Mission] = []
+    fixed_trajs: List[Tuple[int, np.ndarray]] = []
     changes: List[Dict[str, Any]] = []
     unresolved: List[str] = []
     for m in order:
@@ -119,14 +116,16 @@ def deconflict(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Opti
         options += [(d, d, None, replace(m, start_s=m.start_s + d)) for d in (delay_step_s * k for k in range(1, steps + 1))]
         chosen = None
         for cost, delay, band, cand in sorted(options, key=lambda o: (o[0], o[1])):
-            # only this candidate's own conflicts matter: an earlier unresolved pair must not block it
-            clashes = [c for c in find_conflicts(fixed + [cand], h_sep_m, v_sep_m) if cand.id in (c["a"], c["b"])]
-            if not clashes:
+            traj = _trajectory(cand, origin)
+            # only this candidate against the missions already fixed: an earlier unresolved pair must not block it
+            if not any(_pair(traj, other, h_sep_m, v_sep_m) for other in fixed_trajs):
                 chosen = (delay, band, cand)
+                fixed_trajs.append(traj)
                 break
         if chosen is None:
             unresolved.append(m.id)
             fixed.append(m)
+            fixed_trajs.append(_trajectory(m, origin))
             continue
         delay, band, cand = chosen
         fixed.append(cand)

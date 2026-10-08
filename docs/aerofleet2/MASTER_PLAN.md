@@ -50,7 +50,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 ### Phase 3 — Deconfliction and VR rehearsal
 - [x] 3.1 `aerofleet/assurance/deconflict.py`: time-parameterised plans, pairwise conflicts, greedy fix (launch delay; cruise-height change only when vertical separation is allowed), independent re-check, launch schedule. Standalone on `.waypoints` plans (does not use `fleet/conflict_forecast.py`)
 - [ ] 3.2 Multi-drone `.waypoints` export (`integrations/mission_planner.py` does one drone today)
-- [ ] 3.3 Scale test: 10–300 planned drones over Pune; conflicts per flight hour, added delay
+- [x] 3.3 Scale test `research/deconflict_scale.py` → `research/results/deconflict_scale.md` (10–300 missions, 3 seeds, two separation rules)
+- [ ] 3.3b Follow-ups from the scale test: allow longer delays / a second pass, model depot pad throughput explicitly, report conflicts per flight hour, try rerouting
 - [ ] 3.4 VR: fleet-plan rehearsal (before/after fix) and planned-vs-flown replay (Unity app, `unity/AeroFleetVR`)
 
 ### Phase 4 — Wind at altitude
@@ -86,3 +87,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 2.3b done and checked in the browser; fixed a stale-reply race when the fleet changes. Both wedge features now work end to end in the dev app. The Mac app bundle has NOT been rebuilt since phase 1. Next: 2.1b real `.bin` logs (needs sample downloads), then 2.4 or Phase 3.
 - 2026-10-08: Mac app rebuilt and installed to /Applications (includes Fleet Assurance: drift + flight reviews). Not launched or checked inside the bundle; the dev build was checked in the browser.
 - 2026-10-08: Phase 3.1 done (7 unit tests). Design note: default rule is horizontal-only, like the CBF gate, so height changes are offered only with `v_sep_m` set. Delays are a launch schedule, not edits to the mission file. Next: 3.2 API + multi-drone export, 3.3 scale test.
+- 2026-10-08: Phase 3.3 done. Fix time ~1 s for 300 missions. All conflicts cleared up to 10 missions (same height) and up to 50 (layered heights + vertical separation) in a 10-min window from 6 depots; beyond that the 5-min delay cap leaves missions unresolved (depots saturate). Next: 3.2 API + multi-drone export, then 3.4 VR rehearsal.
