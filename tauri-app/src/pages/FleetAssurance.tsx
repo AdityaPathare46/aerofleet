@@ -19,6 +19,21 @@ interface FleetRow { drone_id: string; verdict: Verdict; counts: Record<Severity
 interface Fleet { has_baseline: boolean; drones: FleetRow[]; summary: Record<Verdict, number> }
 interface Baseline { param_count: number; source: string | null; set_by: string; set_at: string; approved: Record<string, { value: number; by: string; note: string }> }
 interface Check { id: string; title: string; status: string; detail: string; fix: string }
+interface Episode { kind: 'off_route' | 'off_altitude' | 'in_no_fly_zone'; start_s: number; duration_s: number; max_m: number; lat: number; lon: number }
+interface FlightRow { id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number; episodes: number; manual_control: number }
+interface Review {
+  id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; plan_name: string | null; log_name: string | null
+  report: {
+    tolerances: { corridor_m: number; altitude_m: number; min_duration_s: number }
+    horizontal_m: { max: number; p95: number; median: number }; vertical_m: { max: number }
+    max_height_m: { flown: number; planned: number }; time_off_route_s: number; flight_s: number
+    episodes: Episode[]; manual_control: { mode: string; start_s: number; duration_s: number }[]; notes: string[]
+    log: { points: number; param_count: number; notes: string[] }
+  }
+  drift?: Drift | null
+}
+const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
 
 const VERDICT: Record<Verdict, { color: string; bg: string; label: string; meaning: string }> = {
@@ -34,9 +49,9 @@ function token(): Record<string, string> {
   return t ? { Authorization: `Bearer ${t}` } : {}
 }
 
-function Pill({ verdict }: { verdict: Verdict }) {
+function Pill({ verdict, label }: { verdict: Verdict; label?: string }) {
   const v = VERDICT[verdict]
-  return <span style={{ background: v.bg, color: v.color, padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>{v.label}</span>
+  return <span style={{ background: v.bg, color: v.color, padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>{label ?? v.label}</span>
 }
 
 const fmt = (x: number | null) => (x === null ? '—' : String(Number(x.toFixed(6))))
@@ -46,6 +61,8 @@ const when = (iso: string) => new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLo
 export default function FleetAssurancePage() {
   const { apiUrl } = useAppStore()
   const [fleet, setFleet] = useState('default')
+  const [fleetDraft, setFleetDraft] = useState('default')   // applied on Enter or blur, not on every keystroke
+  const epoch = useRef(0)                                    // discards replies that belong to a previous fleet
   const [droneId, setDroneId] = useState('')
   const [baseline, setBaseline] = useState<Baseline | null>(null)
   const [rows, setRows] = useState<Fleet | null>(null)
@@ -56,6 +73,12 @@ export default function FleetAssurancePage() {
   const [busy, setBusy] = useState(false)
   const baselineFile = useRef<HTMLInputElement>(null)
   const droneFile = useRef<HTMLInputElement>(null)
+  const planFile = useRef<HTMLInputElement>(null)
+  const logFile = useRef<HTMLInputElement>(null)
+  const [plan, setPlan] = useState<File | null>(null)
+  const [flightLog, setFlightLog] = useState<File | null>(null)
+  const [flights, setFlights] = useState<FlightRow[]>([])
+  const [review, setReview] = useState<Review | null>(null)
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
 
   const call = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -67,8 +90,11 @@ export default function FleetAssurancePage() {
   }, [base])
 
   const refresh = useCallback(async () => {
-    setBaseline(await call<Baseline>('/baseline').catch(() => null))
-    setRows(await call<Fleet>('/drift').catch(() => null))
+    const mine = epoch.current
+    const [b, r, f] = await Promise.all([call<Baseline>('/baseline').catch(() => null), call<Fleet>('/drift').catch(() => null),
+                                         call<FlightRow[]>('/flights').catch(() => [] as FlightRow[])])
+    if (mine !== epoch.current) return
+    setBaseline(b); setRows(r); setFlights(f)
   }, [call])
 
   const open = useCallback(async (id: string) => {
@@ -76,7 +102,7 @@ export default function FleetAssurancePage() {
     setChecks(await call<Checks>(`/drones/${encodeURIComponent(id)}/checks`).catch(() => null))
   }, [call])
 
-  useEffect(() => { setDrift(null); setChecks(null); refresh() }, [refresh])
+  useEffect(() => { epoch.current += 1; setBaseline(null); setRows(null); setFlights([]); setDrift(null); setChecks(null); setReview(null); refresh() }, [refresh])
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true); setError(null)
@@ -96,6 +122,16 @@ export default function FleetAssurancePage() {
     setNote(''); await refresh(); if (drift) await open(drift.drone_id)
   })
 
+  const compare = () => act(async () => {
+    const id = droneId.trim()
+    if (!id) throw new Error('Enter the drone id first.')
+    if (!plan || !flightLog) throw new Error('Choose both the mission file and the flight log.')
+    const body = new FormData(); body.append('plan', plan); body.append('log', flightLog)
+    const r = await call<Review>(`/drones/${encodeURIComponent(id)}/flights`, { method: 'POST', body })
+    setReview(r); if (r.drift) setDrift(r.drift); setPlan(null); setFlightLog(null); await refresh()
+  })
+  const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
+
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
   const newSince = drift?.vs_baseline && drift.vs_previous ? new Set(drift.vs_previous.changes.map((c) => c.name)) : null
   const failed = checks?.evaluated.filter((c) => c.status !== 'PASS') ?? []
@@ -112,7 +148,8 @@ export default function FleetAssurancePage() {
       <div className="card" style={{ padding: 16, display: 'grid', gap: 12 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
           <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Fleet
-            <input id="assurance-fleet" value={fleet} onChange={(e) => setFleet(e.target.value)} style={{ width: 160 }} />
+            <input id="assurance-fleet" value={fleetDraft} onChange={(e) => setFleetDraft(e.target.value)} style={{ width: 160 }}
+              onBlur={() => setFleet(fleetDraft.trim() || 'default')} onKeyDown={(e) => { if (e.key === 'Enter') setFleet(fleetDraft.trim() || 'default') }} />
           </label>
           <div style={{ fontSize: 13, flex: 1, minWidth: 240 }}>
             {baseline
@@ -129,6 +166,15 @@ export default function FleetAssurancePage() {
           <input ref={droneFile} type="file" hidden onChange={(e) => { onDrone(e.target.files?.[0]); e.target.value = '' }} />
           <button className="btn btn--primary" id="btn-upload-params" disabled={busy} onClick={() => droneFile.current?.click()}>Upload parameter file</button>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.param, .parm or .params saved from Mission Planner, MAVProxy or QGroundControl</span>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 12 }}>
+          <b style={{ fontSize: 13 }}>Did it fly the plan?</b>
+          <input ref={planFile} id="flight-plan-file" type="file" hidden onChange={(e) => { setPlan(e.target.files?.[0] ?? null); e.target.value = '' }} />
+          <input ref={logFile} id="flight-log-file" type="file" hidden onChange={(e) => { setFlightLog(e.target.files?.[0] ?? null); e.target.value = '' }} />
+          <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Choose mission file'}</button>
+          <button className="btn" disabled={busy} onClick={() => logFile.current?.click()}>{flightLog ? flightLog.name : 'Choose flight log'}</button>
+          <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !plan || !flightLog} onClick={compare}>Compare</button>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.waypoints mission and an ArduPilot .tlog or .bin log, for the drone id above</span>
         </div>
         {error && <div role="alert" style={{ color: 'var(--status-red)', fontSize: 13 }}>{error}</div>}
       </div>
@@ -195,6 +241,59 @@ export default function FleetAssurancePage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {flights.length > 0 && (
+        <div className="card" style={{ padding: 16 }} id="flight-list">
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Flight reviews · {flights.filter((f) => f.verdict === 'DEVIATED').length} deviated of {flights.length}</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Result</th><th>Flight time</th><th>Furthest off route</th><th>Excursions</th><th>Reviewed</th><th /></tr></thead>
+            <tbody>{flights.map((f) => (
+              <tr key={f.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                <td style={{ padding: '6px 0', fontWeight: 600 }}>{f.drone_id}</td>
+                <td><Pill verdict={f.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={f.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} /></td>
+                <td>{clock(f.flight_s)}</td><td>{f.max_off_route_m} m</td><td>{f.episodes + f.manual_control}</td><td>{when(f.uploaded_at)}</td>
+                <td><button className="btn" onClick={() => openReview(f.id)}>View</button></td>
+              </tr>))}</tbody>
+          </table>
+        </div>
+      )}
+
+      {review && (
+        <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="flight-detail">
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{review.drone_id} · flight review</span>
+            <Pill verdict={review.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={review.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{review.log_name} against {review.plan_name}</span>
+          </div>
+          <div style={{ fontSize: 13 }}>
+            Flight time {clock(review.report.flight_s)} · furthest off route <b>{review.report.horizontal_m.max} m</b> (typical {review.report.horizontal_m.median} m) ·
+            furthest off planned height <b>{review.report.vertical_m.max} m</b> · highest flown {review.report.max_height_m.flown} m against {review.report.max_height_m.planned} m planned
+          </div>
+          {review.report.episodes.length === 0 && review.report.manual_control.length === 0
+            ? <div style={{ fontSize: 13 }}>No excursions and no manual takeovers.</div>
+            : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>What happened</th><th>Starting at</th><th>For</th><th>Worst</th><th>Where</th></tr></thead>
+                <tbody>
+                  {review.report.episodes.map((e, i) => (
+                    <tr key={`e${i}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                      <td style={{ padding: '6px 0', fontWeight: 600, color: 'var(--status-red)' }}>{EPISODE_LABEL[e.kind]}</td>
+                      <td>{clock(e.start_s)}</td><td>{e.duration_s} s</td><td>{e.kind === 'in_no_fly_zone' ? '—' : `${e.max_m} m`}</td><td>{e.lat}, {e.lon}</td>
+                    </tr>))}
+                  {review.report.manual_control.map((m, i) => (
+                    <tr key={`m${i}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                      <td style={{ padding: '6px 0', fontWeight: 600, color: '#92400E' }}>Pilot took manual control ({m.mode})</td>
+                      <td>{clock(m.start_s)}</td><td>{m.duration_s} s</td><td>—</td><td>—</td>
+                    </tr>))}
+                </tbody>
+              </table>
+            )}
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Counted as a deviation beyond {review.report.tolerances.corridor_m} m sideways or {review.report.tolerances.altitude_m} m in height for {review.report.tolerances.min_duration_s} s or more; these are this fleet's tolerances, not regulatory limits.
+            {' '}{review.report.log.points} positions read from the log.{[...review.report.notes, ...review.report.log.notes].map((n) => ` ${n}.`)}
+          </div>
         </div>
       )}
     </div>
