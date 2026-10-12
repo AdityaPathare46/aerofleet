@@ -20,7 +20,7 @@ interface Fleet { has_baseline: boolean; drones: FleetRow[]; summary: Record<Ver
 interface Baseline { param_count: number; source: string | null; set_by: string; set_at: string; approved: Record<string, { value: number; by: string; note: string }> }
 interface Check { id: string; title: string; status: string; detail: string; fix: string }
 interface Episode { kind: 'off_route' | 'off_altitude' | 'in_no_fly_zone'; start_s: number; duration_s: number; max_m: number; lat: number; lon: number }
-interface FlightRow { id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number; episodes: number; manual_control: number }
+interface FlightRow { id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number; episodes: number; manual_control: number; settings_changed_critical?: number }
 interface Review {
   id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; plan_name: string | null; log_name: string | null
   report: {
@@ -29,6 +29,7 @@ interface Review {
     max_height_m: { flown: number; planned: number }; time_off_route_s: number; flight_s: number
     episodes: Episode[]; manual_control: { mode: string; start_s: number; duration_s: number }[]; notes: string[]
     log: { points: number; param_count: number; notes: string[] }
+    settings_changed_in_flight?: { count: number; safety_critical: number; flight_limit: number; changes: { t_s: number; name: string; old: number; new: number; severity: Severity }[] }
   }
   drift?: Drift | null
 }
@@ -321,12 +322,13 @@ export default function FleetAssurancePage() {
         <div className="card" style={{ padding: 16 }} id="flight-list">
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Flight reviews · {flights.filter((f) => f.verdict === 'DEVIATED').length} deviated of {flights.length}</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Result</th><th>Flight time</th><th>Furthest off route</th><th>Excursions</th><th>Reviewed</th><th /></tr></thead>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Result</th><th>Flight time</th><th>Furthest off route</th><th>Excursions</th><th>Settings changed in flight</th><th>Reviewed</th><th /></tr></thead>
             <tbody>{flights.map((f) => (
               <tr key={f.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
                 <td style={{ padding: '6px 0', fontWeight: 600 }}>{f.drone_id}</td>
                 <td><Pill verdict={f.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={f.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} /></td>
-                <td>{clock(f.flight_s)}</td><td>{f.max_off_route_m} m</td><td>{f.episodes + f.manual_control}</td><td>{when(f.uploaded_at)}</td>
+                <td>{clock(f.flight_s)}</td><td>{f.max_off_route_m} m</td><td>{f.episodes + f.manual_control}</td>
+                <td style={{ color: f.settings_changed_critical ? 'var(--status-red)' : 'var(--text-muted)', fontWeight: f.settings_changed_critical ? 700 : 400 }}>{f.settings_changed_critical ? `${f.settings_changed_critical} safety-critical` : 'none'}</td><td>{when(f.uploaded_at)}</td>
                 <td><button className="btn" onClick={() => openReview(f.id)}>View</button></td>
               </tr>))}</tbody>
           </table>
@@ -363,6 +365,29 @@ export default function FleetAssurancePage() {
                 </tbody>
               </table>
             )}
+          {review.report.settings_changed_in_flight && review.report.settings_changed_in_flight.count > 0 && (
+            <div id="inflight-changes" style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 13 }}>
+                <b>Settings changed during this flight: {review.report.settings_changed_in_flight.count}</b>
+                {review.report.settings_changed_in_flight.safety_critical > 0 && <span style={{ color: 'var(--status-red)', fontWeight: 700 }}> · {review.report.settings_changed_in_flight.safety_critical} safety-critical</span>}
+                {review.report.settings_changed_in_flight.flight_limit > 0 && <span style={{ color: '#92400E' }}> · {review.report.settings_changed_in_flight.flight_limit} flight-limit</span>}
+                <span style={{ color: 'var(--text-secondary)' }}> — a setting changed and put back before landing does not show in the final settings.</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>At</th><th>Setting</th><th>Kind</th><th>From</th><th>To</th></tr></thead>
+                <tbody>{review.report.settings_changed_in_flight.changes.filter((c) => c.severity === 'CRITICAL' || c.severity === 'HIGH').slice(0, 30).map((c, i) => (
+                  <tr key={i} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                    <td style={{ padding: '6px 0' }}>{clock(c.t_s)}</td>
+                    <td style={{ fontFamily: 'var(--font-mono, monospace)', fontWeight: 600 }}>{c.name}</td>
+                    <td style={{ color: c.severity === 'CRITICAL' ? 'var(--status-red)' : '#92400E', fontWeight: c.severity === 'CRITICAL' ? 700 : 400 }}>{SEVERITY_LABEL[c.severity]}</td>
+                    <td>{fmt(c.old)}</td><td style={{ fontWeight: 600 }}>{fmt(c.new)}</td>
+                  </tr>))}</tbody>
+              </table>
+              {review.report.settings_changed_in_flight.changes.every((c) => c.severity !== 'CRITICAL' && c.severity !== 'HIGH') && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Only tuning and other minor settings changed.</div>
+              )}
+            </div>
+          )}
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             Counted as a deviation beyond {review.report.tolerances.corridor_m} m sideways or {review.report.tolerances.altitude_m} m in height for {review.report.tolerances.min_duration_s} s or more; these are this fleet's tolerances, not regulatory limits.
             {' '}{review.report.log.points} positions read from the log.{[...review.report.notes, ...review.report.log.notes].map((n) => ` ${n}.`)}

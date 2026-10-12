@@ -221,3 +221,14 @@ def test_wind_check_without_a_forecast_says_how_to_continue(api_client, auth_hea
     plan = {"plan": ("m.waypoints", _mission(DEPOT, NORTH, alt=100.0).encode(), "text/plain")}
     r = api_client.post(WIND, headers=auth_headers, files=plan, data={"payload_kg": 1, "usable_wh": 20})
     assert r.status_code == 503 and "Supply the wind by hand" in r.json()["detail"]
+
+
+def test_settings_changed_during_a_flight_are_reported_in_the_review(api_client, auth_headers, tmp_path):
+    files = _flight_files(tmp_path, params=(("FENCE_ENABLE", 1.0), ("FS_THR_ENABLE", 1.0), ("FENCE_ENABLE", 0.0, 30.0), ("FENCE_ENABLE", 1.0, 80.0)))
+    body = api_client.post(f"{URL}/drones/D7/flights", headers=auth_headers, files=files).json()
+    changed = body["report"]["settings_changed_in_flight"]
+    assert changed["count"] == 2 and changed["safety_critical"] == 2
+    assert [(c["name"], c["new"], c["t_s"]) for c in changed["changes"]] == [("FENCE_ENABLE", 0.0, 30.0), ("FENCE_ENABLE", 1.0, 80.0)]   # to the position before it
+    assert body["drift"]["param_count"] == 2                               # the final settings alone look untouched
+    listed = api_client.get(f"{URL}/flights?drone_id=D7", headers=auth_headers).json()
+    assert listed[0]["settings_changed_critical"] == 2

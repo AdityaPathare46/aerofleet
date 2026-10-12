@@ -187,7 +187,8 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
     else:
         r = row.report
         out.update({"flight_s": r["flight_s"], "max_off_route_m": r["horizontal_m"]["max"], "episodes": len(r["episodes"]),
-                    "manual_control": len(r["manual_control"])})
+                    "manual_control": len(r["manual_control"]),
+                    "settings_changed_critical": (r.get("settings_changed_in_flight") or {}).get("safety_critical", 0)})
     return out
 
 

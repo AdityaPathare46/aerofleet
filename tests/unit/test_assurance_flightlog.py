@@ -18,12 +18,21 @@ def write_tlog(path, track, params=(), modes=(), gcs_heartbeats=True, battery=No
         def put(t, msg):
             f.write(struct.pack(">Q", int((t0 + t / wall_speedup) * 1e6)) + msg.pack(link))
 
-        for i, item in enumerate(params):
-            name, value, at = (*item, 0.0)[:3]                 # optional third element: seconds into the flight
-            put(at, mav.MAVLink_param_value_message(name.encode(), value, mav.MAV_PARAM_TYPE_REAL32, len(params), i))
+        timed = sorted(((*item, 0.0)[:3] for item in params), key=lambda x: x[2])   # optional third element: seconds into the flight
+        later = [x for x in timed if x[2] > 0]
+
+        def put_param(at, name, value):
+            put(at, mav.MAVLink_param_value_message(name.encode(), value, mav.MAV_PARAM_TYPE_REAL32, len(params), 0))
+
+        for name, value, at in timed:
+            if at <= 0:
+                put_param(0.0, name, value)
         mode_at = dict(modes)
         custom = 0
         for t, lat, lon, alt in track:
+            while later and later[0][2] < t:                  # a change made mid-flight arrives between positions
+                name, value, at = later.pop(0)
+                put_param(at, name, value)
             if t in mode_at:
                 custom = mode_at[t]
             put(t, mav.MAVLink_global_position_int_message(int(boot_ms(t)) if boot_ms else int(t * 1000), int(lat * 1e7), int(lon * 1e7),
