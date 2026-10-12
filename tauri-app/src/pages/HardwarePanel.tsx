@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import FcCompliancePanel from '../components/fc/FcCompliancePanel'
+import { useLiveControl } from '../lib/policy'
 
 // ── Types (mirrors aerofleet/api/schemas.py + hardware.py responses) ────────
 
@@ -54,6 +55,7 @@ const D2D_STATE_TONE: Record<string, string> = {
 
 export default function HardwarePanel() {
   const { apiUrl } = useAppStore()
+  const liveControl = useLiveControl(apiUrl)
   const [drones, setDrones] = useState<DroneDto[]>([])
   const [liveVehicles, setLiveVehicles] = useState<Record<string, LiveVehicleDto>>({})
   const [city] = useState('pune')
@@ -339,14 +341,20 @@ export default function HardwarePanel() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                    <button
-                      id={`btn-arm-${drone.drone_id}`}
-                      className="btn btn--ghost"
-                      onClick={() => handleArmDisarm(drone.drone_id, !(t?.armed ?? drone.armed))}
-                      disabled={busy === drone.drone_id}
-                    >
-                      {(t?.armed ?? drone.armed) ? 'Disarm' : 'Arm'}
-                    </button>
+                    {/* Disarm is always offered; Arm only when this install has live control switched on. */}
+                    {((t?.armed ?? drone.armed) || liveControl === true) && (
+                      <button
+                        id={`btn-arm-${drone.drone_id}`}
+                        className="btn btn--ghost"
+                        onClick={() => handleArmDisarm(drone.drone_id, !(t?.armed ?? drone.armed))}
+                        disabled={busy === drone.drone_id}
+                      >
+                        {(t?.armed ?? drone.armed) ? 'Disarm' : 'Arm'}
+                      </button>
+                    )}
+                    {liveControl === false && !(t?.armed ?? drone.armed) && (
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>Read-only: this install does not command aircraft.</span>
+                    )}
                     <button
                       id={`btn-disconnect-${drone.drone_id}`}
                       className="btn btn--ghost"

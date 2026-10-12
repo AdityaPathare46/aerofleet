@@ -125,7 +125,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
   // Navigation
-  activePage: 'dashboard',
+  activePage: 'assurance',
   setActivePage: (page) => set({ activePage: page }),
 
   // API

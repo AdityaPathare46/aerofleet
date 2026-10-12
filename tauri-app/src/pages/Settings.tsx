@@ -1,3 +1,4 @@
+import { setLegacyVisible, useLegacyVisible } from '../lib/policy'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { ROSTER_MODEL_TAGS } from '../lib/rosterModels'
@@ -43,6 +44,7 @@ function authHeaders(): Record<string, string> {
 }
 
 export default function SettingsPage() {
+  const showLegacy = useLegacyVisible()
   const { apiUrl, llmConnectionMode, setLlmConnectionMode, setSetupWizardCompleted } = useAppStore()
 
   const [activeTab, setActiveTab] = useState<Tab>(llmConnectionMode)
@@ -276,6 +278,18 @@ export default function SettingsPage() {
       </div>
 
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="card" style={{ padding: 16 }}>
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
+            <input type="checkbox" id="toggle-legacy" checked={showLegacy} onChange={(e) => setLegacyVisible(e.target.checked)} style={{ marginTop: 3 }} />
+            <span>
+              <b>Show legacy screens</b>
+              <span style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)' }}>
+                The AI council room and the live telemetry / agent roster side panel from the earlier dispatch product.
+                AeroFleet 2.0 does not use them: every check and verdict comes from deterministic code.
+              </span>
+            </span>
+          </label>
+        </div>
         {error && (
           <div className="card" style={{ borderColor: 'var(--status-red)' }}>
             <span style={{ color: 'var(--status-red)' }}>&#9888; {error}</span>

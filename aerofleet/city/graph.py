@@ -133,9 +133,18 @@ class CityGraph:
                 if d < best_dist:
                     best_node, best_dist = n, d
             return best_node
-        import osmnx as ox
+        # Nearest node by great-circle distance, computed directly. osmnx's nearest_nodes gives the same
+        # answer on an unprojected graph but needs scikit-learn -> scipy, whose binary for Python 3.10
+        # no longer loads on current macOS; this has no such dependency and is ~1 ms for a city graph.
+        import numpy as np
 
-        return ox.distance.nearest_nodes(g, lon, lat)
+        if getattr(self, "_node_index", None) is None or self._node_index[0] is not g:
+            ids = list(g.nodes)
+            self._node_index = (g, ids, np.radians([g.nodes[n]["y"] for n in ids]), np.radians([g.nodes[n]["x"] for n in ids]))
+        _, ids, lats, lons = self._node_index
+        la, lo = np.radians(lat), np.radians(lon)
+        h = np.sin((lats - la) / 2) ** 2 + np.cos(la) * np.cos(lats) * np.sin((lons - lo) / 2) ** 2
+        return ids[int(np.argmin(h))]
 
     def random_node(self, rng: Optional[random.Random] = None) -> int:
         g = self.load()

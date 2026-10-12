@@ -66,7 +66,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 
 ### Phase 6 — Park the old live path
 - [x] 6.1 `AEROFLEET_LIVE_CONTROL` (default off; `aerofleet/assurance/live_control.py`): arm, post-dispatch take-off/go-to and the bench motor test are refused; dispatch plans with simulated drones only; disarm, emergency stop and RTL/hold fallbacks stay available; `GET /api/v1/assurance/policy`
-- [ ] 6.2 Hide the 16-agent dispatch council and live-control UI from the desktop app
+- [x] 6.2 App opens on Fleet Assurance; Council Room and the telemetry/agent-roster side panel are hidden unless Settings ▸ Show legacy screens is on (`tauri-app/src/lib/policy.ts`); Arm button only when live control is on; header subtitle updated
+- [ ] 6.2b Still showing legacy framing: Ops Center, Dispatch Console, Incident Forensics, Fleet Policy, Scenario Lab pages — decide per page: keep, rename or move behind the legacy toggle
 - [ ] 6.3 Update README and docs to the 2.0 framing
 
 ### Demand and publication (not code)
@@ -93,3 +94,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 3.2b done, checked in the browser. The check showed the fix never combined a height change with a delay; added. Layered case after the change: all cleared up to 50, 0.3 unresolved at 100 (was 3.3), 139.7 at 300 (was 154.3); fix time 3.4 s at 300. Same-height table unchanged. Mac app not rebuilt since phase 2. Next: Phase 4 (wind) or 3.4 (VR rehearsal).
 - 2026-10-08: Mac app rebuilt and installed again; it now includes all three Fleet Assurance sections (drift, flight reviews, deconfliction). Not launched or checked inside the bundle.
 - 2026-10-12: Phase 6.1 done (6 tests, 1 skipped). ENVIRONMENT PROBLEM found: after a macOS upgrade the venv's scipy no longer loads, so scikit-learn fails and creating an order on the road graph (legacy dispatch, and the VR dispatch tests) raises ImportError. Assurance code is unaffected. Fix = reinstall scipy/scikit-learn in `.venv` (a download; ask the user first). Next: 6.2 hide council/live-control UI, or Phase 4.
+- 2026-10-12: scipy reinstall did NOT fix the import (the newest scipy for Python 3.10 ships a binary macOS 27 will not load). Worked around the one place it mattered: `CityGraph.nearest_node` now does its own great-circle search in numpy. Full suite: 579 passed, 2 failed (the known test_config baseline). Still degraded: `safety/cbf_gate.py` skips its optional scipy QP projection (it logs a warning). Real fix = rebuild `.venv` on Python ≥ 3.11 (large download; ask first). Phase 6.2 done, checked in the browser. Mac app not rebuilt.

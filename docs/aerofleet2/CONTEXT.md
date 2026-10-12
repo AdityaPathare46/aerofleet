@@ -49,9 +49,9 @@ Decisions already made — do not reopen them without the user asking:
   on an exFAT drive that creates `._*` files which break cargo; then `codesign --force --deep -s -`.
 - Quest APK: Unity menu AeroFleet ▸ Build ▸ Quest APK (10–40 min; blocks the editor).
 
-- Known environment problem (2026-10-12): the venv's scipy fails to load after a macOS upgrade, so anything that imports
-  scikit-learn (order creation on the real road graph, some legacy tests) raises ImportError until scipy/scikit-learn are
-  reinstalled. The `aerofleet/assurance/` code and tests do not depend on it.
+- Known environment problem (2026-10-12): on macOS 27 the venv's scipy (1.15.3, the newest for Python 3.10) cannot load
+  `scipy.sparse.linalg` / `scipy.optimize`, so scikit-learn cannot be imported. Reinstalling did not help. Worked around in
+  `CityGraph.nearest_node`; `safety/cbf_gate.py` skips its optional QP projection. Real fix: rebuild `.venv` on Python ≥ 3.11.
 - Live control is OFF by default (`AEROFLEET_LIVE_CONTROL`); tests enable it in `tests/conftest.py` for the legacy suites.
 
 ## 4. Working rules the user has set

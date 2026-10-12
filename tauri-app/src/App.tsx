@@ -20,6 +20,7 @@ import IncidentForensicsPage from './pages/IncidentForensics'
 
 // Component imports
 import RightPanel from './components/RightPanel'
+import { useLegacyVisible } from './lib/policy'
 import SetupWizard from './components/SetupWizard'
 
 // Icons (inline SVG)
@@ -38,8 +39,8 @@ const Icons = {
 }
 
 const PAGES = [
-  { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
+  { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
   { id: 'mission',     label: 'Dispatch Console',   Icon: Icons.Mission },
   { id: 'council',     label: 'Council Room',       Icon: Icons.Council },
   { id: 'incidents',   label: 'Incident Forensics', Icon: Icons.Incident },
@@ -51,6 +52,9 @@ const PAGES = [
   { id: 'knowledge',   label: 'Depot Network',      Icon: Icons.Knowledge },
   { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
 ]
+
+// From the earlier AI-dispatch product; hidden unless Settings ▸ Show legacy screens is on.
+const LEGACY_PAGES = ['council']
 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,
@@ -69,6 +73,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
 
 export default function App() {
   const { activePage, setActivePage, apiConnected, setApiConnected, apiUrl } = useAppStore()
+  const showLegacy = useLegacyVisible()
   const [backendError, setBackendError] = useState<string | null>(null)
   const [locating, setLocating] = useState(false)
 
@@ -131,14 +136,14 @@ export default function App() {
   const ActivePage = PAGE_COMPONENTS[activePage] || DashboardPage
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={showLegacy ? undefined : { gridTemplateColumns: 'var(--sidebar-width) 1fr' }}>
       {/* ── Top Header ── */}
       <header className="app-header">
         <div className="app-header__logo">
           <img src={logo} alt="AeroFleet" className="app-header__logo-icon" />
           <div>
             <div className="app-header__title">AeroFleet</div>
-            <div className="app-header__subtitle">11-Agent Council · CBF-Gated Dispatch</div>
+            <div className="app-header__subtitle">Pre-flight assurance for drone fleets</div>
           </div>
         </div>
 
@@ -184,7 +189,7 @@ export default function App() {
       {/* ── Left Sidebar ── */}
       <nav className="sidebar">
         <div className="sidebar__section-label">Navigation</div>
-        {PAGES.map(({ id, label, Icon }) => (
+        {PAGES.filter(({ id }) => showLegacy || !LEGACY_PAGES.includes(id)).map(({ id, label, Icon }) => (
           <button
             key={id}
             id={`nav-${id}`}
@@ -203,9 +208,11 @@ export default function App() {
       </main>
 
       {/* ── Right Panel ── */}
-      <aside className="right-panel">
-        <RightPanel />
-      </aside>
+      {showLegacy && (
+        <aside className="right-panel">
+          <RightPanel />
+        </aside>
+      )}
 
       <SetupWizard />
     </div>

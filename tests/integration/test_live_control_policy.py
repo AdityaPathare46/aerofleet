@@ -45,8 +45,6 @@ def test_with_the_switch_on_arm_reaches_the_normal_checks(api_client, operator_h
 
 
 def test_dispatch_never_selects_a_live_drone_while_off(api_client, auth_headers, live_off):
-    # creating an order snaps the destination to the road graph, which needs scikit-learn/scipy to load
-    pytest.importorskip("sklearn", reason="scikit-learn/scipy cannot be imported in this environment")
     from aerofleet.fleet.state import get_fleet_state
 
     fleet = get_fleet_state("pune")
