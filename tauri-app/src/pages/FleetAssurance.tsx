@@ -39,6 +39,21 @@ interface Deconflicted {
   schedule: { id: string; launch_at_s: number; cruise_altitude_m: number }[]
   rule: { h_sep_m: number; v_sep_m: number | null }; files: Record<string, string>
 }
+interface WindCase { energy_wh: number | null; flyable: boolean; margin_wh: number | null }
+interface WindReport {
+  verdict: 'PASS' | 'FAILS_AT_ALTITUDE' | 'FAIL'; cruise_height_m: number; usable_wh: number; hour_utc: string | null; wind_source: string
+  wind: { at_10m: { speed_mps: number; from_deg: number }; at_cruise: { speed_mps: number; from_deg: number }; ratio: number | null; over_limit: boolean; limit_mps: number | null }
+  still_air: WindCase; ground_wind: WindCase; cruise_wind: WindCase; assumptions: string
+}
+const WIND_VERDICT: Record<WindReport['verdict'], { tone: Verdict; label: string; meaning: string }> = {
+  PASS: { tone: 'OK', label: 'Enough battery', meaning: 'The mission has enough energy on the wind forecast at its cruise height.' },
+  FAILS_AT_ALTITUDE: { tone: 'BLOCK', label: 'Fails at cruise height', meaning: 'It passes on the ground-level wind but not on the stronger wind at cruise height — a ground check would miss this.' },
+  FAIL: { tone: 'BLOCK', label: 'Not enough battery', meaning: 'It does not have enough energy even on the ground-level wind.' },
+}
+interface LedgerEntry { seq: number; kind: string; subject: string; entry_hash: string; created_at: string; created_by: string }
+interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
+interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
+const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
@@ -90,6 +105,14 @@ export default function FleetAssurancePage() {
   const [missions, setMissions] = useState<File[]>([])
   const [layered, setLayered] = useState(false)
   const [plansResult, setPlansResult] = useState<Deconflicted | null>(null)
+  const windFile = useRef<HTMLInputElement>(null)
+  const [windPlan, setWindPlan] = useState<File | null>(null)
+  const [payloadKg, setPayloadKg] = useState('1')
+  const [usableWh, setUsableWh] = useState('')
+  const [windLimit, setWindLimit] = useState('')
+  const [windResult, setWindResult] = useState<WindReport | null>(null)
+  const [ledger, setLedger] = useState<Ledger | null>(null)
+  const [ledgerCheck, setLedgerCheck] = useState<LedgerCheck | null>(null)
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
 
   const call = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -150,11 +173,36 @@ export default function FleetAssurancePage() {
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
     setPlansResult(await r.json())
   })
-  const download = (id: string, text: string) => {
+  const download = (id: string, text: string, ext = '.waypoints') => {
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = `${id}.waypoints`; a.click()
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = `${id}${ext}`; a.click()
     URL.revokeObjectURL(a.href)
   }
+  const root = `${apiUrl}/api/v1/assurance`
+  const plain = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+    const r = await fetch(root + path, { ...init, headers: token() })
+    if (r.status === 401) throw new Error('Sign in to use fleet assurance.')
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+    return r.json()
+  }
+  const checkWind = () => act(async () => {
+    if (!windPlan) throw new Error('Choose the mission file first.')
+    if (!(Number(usableWh) > 0)) throw new Error('Enter the battery energy available above the landing reserve, in Wh.')
+    const body = new FormData(); body.append('plan', windPlan); body.append('payload_kg', payloadKg || '0'); body.append('usable_wh', usableWh)
+    if (Number(windLimit) > 0) body.append('max_wind_mps', windLimit)
+    setWindResult(await plain<WindReport>('/plans/wind-check', { method: 'POST', body }))
+  })
+  const loadLedger = useCallback(async () => {
+    const t = localStorage.getItem('aerofleet_token') || ''
+    const r = await fetch(`${apiUrl}/api/v1/assurance/ledger?limit=10`, { headers: t ? { Authorization: `Bearer ${t}` } : {} }).catch(() => null)
+    setLedger(r && r.ok ? await r.json() : null)
+  }, [apiUrl])
+  useEffect(() => { loadLedger() }, [loadLedger, rows, flights])
+  const verifyLedger = () => act(async () => { setLedgerCheck(await plain<LedgerCheck>('/ledger/verify')); await loadLedger() })
+  const exportLedger = () => act(async () => {
+    const all = await plain<Ledger>('/ledger?limit=1000')
+    download('aerofleet-signed-record.json', JSON.stringify({ public_key_pem: all.public_key_pem, entries: [...all.entries].reverse() }, null, 2), '')
+  })
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
@@ -360,6 +408,77 @@ export default function FleetAssurancePage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="wind-card">
+        <div>
+          <div style={{ fontWeight: 600 }}>Is there enough battery for the wind at cruise height?</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Wind is usually stronger aloft than near the ground. This uses the forecast for the mission's start point.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
+          <input ref={windFile} id="wind-plan-file" type="file" hidden onChange={(e) => { setWindPlan(e.target.files?.[0] ?? null); setWindResult(null); e.target.value = '' }} />
+          <button className="btn" disabled={busy} onClick={() => windFile.current?.click()}>{windPlan ? windPlan.name : 'Choose mission file'}</button>
+          <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Payload (kg)
+            <input id="wind-payload" value={payloadKg} onChange={(e) => setPayloadKg(e.target.value)} inputMode="decimal" style={{ width: 90 }} />
+          </label>
+          <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Battery above reserve (Wh)
+            <input id="wind-usable" value={usableWh} onChange={(e) => setUsableWh(e.target.value)} inputMode="decimal" style={{ width: 130 }} />
+          </label>
+          <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Wind limit (m/s, optional)
+            <input id="wind-limit" value={windLimit} onChange={(e) => setWindLimit(e.target.value)} inputMode="decimal" style={{ width: 130 }} />
+          </label>
+          <button className="btn btn--primary" id="btn-wind-check" disabled={busy || !windPlan} onClick={checkWind}>Check</button>
+        </div>
+        {windResult && (
+          <div id="wind-result" style={{ display: 'grid', gap: 8, fontSize: 13 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Pill verdict={WIND_VERDICT[windResult.verdict].tone} label={WIND_VERDICT[windResult.verdict].label} />
+              <span style={{ color: 'var(--text-secondary)' }}>{WIND_VERDICT[windResult.verdict].meaning}</span>
+            </div>
+            <div>
+              Wind at 10 m: <b>{windResult.wind.at_10m.speed_mps} m/s</b> · at {windResult.cruise_height_m} m cruise height: <b>{windResult.wind.at_cruise.speed_mps} m/s</b>
+              {windResult.wind.ratio !== null && <> ({windResult.wind.ratio}× the ground wind)</>}
+              {windResult.wind.over_limit && <span style={{ color: 'var(--status-red)' }}> · above the {windResult.wind.limit_mps} m/s limit</span>}
+            </div>
+            <table style={{ borderCollapse: 'collapse', maxWidth: 520 }}>
+              <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th style={{ paddingRight: 24 }}>Wind used</th><th style={{ paddingRight: 24 }}>Energy needed</th><th>Left over</th></tr></thead>
+              <tbody>{([['No wind', windResult.still_air], ['Ground-level wind', windResult.ground_wind], ['Wind at cruise height', windResult.cruise_wind]] as [string, WindCase][]).map(([name, c]) => (
+                <tr key={name} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                  <td style={{ padding: '6px 24px 6px 0' }}>{name}</td><td>{c.flyable ? `${c.energy_wh} Wh` : 'cannot make headway'}</td>
+                  <td style={{ fontWeight: 600, color: c.margin_wh !== null && c.margin_wh >= 0 ? 'var(--status-green)' : 'var(--status-red)' }}>{c.margin_wh !== null ? `${c.margin_wh} Wh` : '—'}</td>
+                </tr>))}</tbody>
+            </table>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{windResult.wind_source}{windResult.hour_utc ? `, ${windResult.hour_utc} UTC` : ''}. {windResult.assumptions}</div>
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="ledger-card">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ fontWeight: 600 }}>Signed record</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Every baseline, approval, settings check and flight review is signed and linked to the one before, so later edits can be detected.</div>
+          </div>
+          <button className="btn" id="btn-ledger-verify" disabled={busy} onClick={verifyLedger}>Check the record</button>
+          <button className="btn" id="btn-ledger-export" disabled={busy || !ledger?.entries.length} onClick={exportLedger}>Export for an auditor</button>
+        </div>
+        {ledgerCheck && (
+          <div id="ledger-check" style={{ fontSize: 13, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Pill verdict={ledgerCheck.ok ? 'OK' : 'BLOCK'} label={ledgerCheck.ok ? 'Record intact' : 'Record has been changed'} />
+            <span>{ledgerCheck.ok ? `${ledgerCheck.entries} entries checked. Latest fingerprint ${ledgerCheck.head ? ledgerCheck.head.slice(0, 16) + '…' : 'none yet'}` : ledgerCheck.problem}</span>
+          </div>
+        )}
+        {ledger && ledger.entries.length > 0 && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>#</th><th>What</th><th>For</th><th>When</th><th>By</th><th>Fingerprint</th></tr></thead>
+            <tbody>{ledger.entries.map((e) => (
+              <tr key={e.seq} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                <td style={{ padding: '6px 0' }}>{e.seq}</td><td>{KIND_LABEL[e.kind] ?? e.kind}</td><td>{e.subject}</td><td>{when(e.created_at)}</td><td>{e.created_by}</td>
+                <td style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>{e.entry_hash.slice(0, 12)}…</td>
+              </tr>))}</tbody>
+          </table>
+        )}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>This shows whether the record was altered afterwards. It does not prove the uploaded files were genuine.</div>
       </div>
     </div>
   )

@@ -67,3 +67,14 @@ def test_forecast_parsing_and_failures_without_touching_the_network():
 
     with pytest.raises(WindUnavailable, match="Could not get a wind forecast"):
         fetch_profiles(18.52, 73.86, fetch=offline)
+
+
+def test_with_no_hour_given_the_current_utc_hour_is_used_not_the_first_one():
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    stamps = [(now + timedelta(hours=k)).strftime("%Y-%m-%dT%H:%M") for k in (-2, -1, 0, 1)]
+    profiles = [(t, {10: (float(i), 0.0)}) for i, t in enumerate(stamps)]
+    assert profile_for(profiles, None) == (stamps[2], {10: (2.0, 0.0)})
+    with pytest.raises(WindUnavailable):
+        profile_for(profiles[:2], None)                      # a forecast that does not cover now is not silently used

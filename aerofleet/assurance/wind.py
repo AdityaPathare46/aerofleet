@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import datetime, timezone
 import urllib.parse
 import urllib.request
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
@@ -60,8 +61,8 @@ def fetch_profiles(lat: float, lon: float, past_days: int = 0, forecast_days: in
 
 
 def profile_for(profiles: Sequence[Tuple[str, Profile]], hour_utc: Optional[str]) -> Tuple[str, Profile]:
-    if hour_utc is None:
-        return profiles[0]
+    if hour_utc is None:                                    # default: the forecast hour we are in now
+        hour_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00")
     key = hour_utc[:13]
     for t, p in profiles:
         if t[:13] == key:
