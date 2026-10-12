@@ -271,6 +271,24 @@ async def get_flight(fleet: str, review_id: int, user: User = Depends(get_curren
     return _review(row)
 
 
+@router.get("/fleets/{fleet}/flights/{review_id}/report")
+async def flight_report(fleet: str, review_id: int, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    """A self-contained printable page for one flight review (save as PDF from the browser's print dialog)."""
+    from fastapi.responses import HTMLResponse
+
+    from aerofleet.assurance.report_html import flight_review_html
+    from aerofleet.data.models.models import AssuranceLedgerEntry
+
+    row = db.get(FlightReview, review_id)
+    if row is None or row.fleet != fleet:
+        raise HTTPException(status_code=404, detail="No such flight review in this fleet")
+    digest = ledger.payload_hash(row.report)
+    entry = (db.query(AssuranceLedgerEntry).filter(AssuranceLedgerEntry.kind == "flight_review", AssuranceLedgerEntry.payload_sha256 == digest)
+             .order_by(AssuranceLedgerEntry.seq.desc()).first())
+    return HTMLResponse(flight_review_html(_review(row), ledger.to_dict(entry) if entry else None, entry is not None),
+                        headers={"Content-Disposition": f'inline; filename="flight-review-{review_id}.html"', "Cache-Control": "no-store"})
+
+
 # ── fleet plan deconfliction ───────────────────────────────────────────
 
 MAX_PLANS = 300
@@ -278,13 +296,13 @@ MAX_PLANS = 300
 
 @router.post("/plans/deconflict")
 async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = Form("{}"),
-                           user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+                           user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Check a set of mission files against each other and return a conflict-free launch schedule.
 
     Each file is one mission; its id is the file name without the extension. `options` is JSON:
     {"launch_s": {id: seconds}, "priority": {id: int}, "h_sep_m": 15, "v_sep_m": null,
      "max_delay_s": 300}. With `v_sep_m` set, a different cruise height may be assigned and the
-    returned file for that mission carries the new height. Nothing is stored.
+    returned file for that mission carries the new height. Only the signed-record entry is stored.
     """
     import json
     import os
@@ -318,6 +336,9 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
     result.pop("missions")
     new_alt = {c["id"]: c["new_altitude_m"] for c in result["changes"] if c["new_altitude_m"] is not None}
     result["files"] = {mid: retarget_altitude(texts[mid], new_alt[mid]) if mid in new_alt else texts[mid] for mid in texts}
+    # the schedule and the exact files handed back are what gets signed
+    result["ledger_seq"] = ledger.append(db, "deconflict", ",".join(sorted(texts))[:120], result, user.username).seq
+    db.commit()
     return result
 
 
@@ -327,7 +348,7 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
 async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form(..., ge=0, le=500),
                           usable_wh: float = Form(..., gt=0, le=100000), hour_utc: Optional[str] = Form(None),
                           max_wind_mps: Optional[float] = Form(None, gt=0, le=60), profile: Optional[str] = Form(None),
-                          user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+                          user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Battery margin for a mission in still air, on the 10 m wind and on the wind at its cruise height.
 
     `usable_wh` is the battery energy above the landing reserve. The wind comes from the Open-Meteo
@@ -359,7 +380,9 @@ async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form
             raise HTTPException(status_code=503, detail=f"{e}. Supply the wind by hand with the 'profile' field to check offline.")
         source = "Open-Meteo forecast"
     report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps)
-    report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes)})
+    report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes), "plan_name": (plan.filename or "")[:120]})
+    report["ledger_seq"] = ledger.append(db, "wind_check", (plan.filename or "mission")[:120], report, user.username).seq
+    db.commit()
     return report
 
 

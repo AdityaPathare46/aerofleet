@@ -232,3 +232,64 @@ def test_settings_changed_during_a_flight_are_reported_in_the_review(api_client,
     assert body["drift"]["param_count"] == 2                               # the final settings alone look untouched
     listed = api_client.get(f"{URL}/flights?drone_id=D7", headers=auth_headers).json()
     assert listed[0]["settings_changed_critical"] == 2
+
+
+# ── printable report, no-fly zones through the API, signed record for stateless checks ──
+
+def test_printable_report_escapes_upload_text_and_checks_the_signed_record(api_client, auth_headers, tmp_path):
+    from aerofleet.data.database import get_db_session
+    from aerofleet.data.models.models import FlightReview
+
+    files = _flight_files(tmp_path, offset_m=80.0, params=(("FENCE_ENABLE", 1.0), ("FENCE_ENABLE", 0.0, 30.0)))
+    files["log"] = ("<script>alert(1)</script>.tlog", files["log"][1], files["log"][2])
+    body = api_client.post(f"{URL}/drones/D8/flights", headers=auth_headers, files=files).json()
+    r = api_client.get(f"{URL}/flights/{body['id']}/report", headers=auth_headers)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+    page = r.text
+    assert "<script>" not in page and "&lt;script&gt;alert(1)&lt;/script&gt;.tlog" in page
+    assert "Deviated from the plan" in page and "Off the planned route" in page and "FENCE_ENABLE" in page and "Safety-critical" in page
+    assert f"This review matches entry #{body['ledger_seq']} of the signed record" in page
+
+    with get_db_session() as db:                                   # someone edits the stored review afterwards
+        row = db.get(FlightReview, body["id"])
+        row.report = dict(row.report, verdict="CONFORMED", episodes=[])
+        db.commit()
+    tampered = api_client.get(f"{URL}/flights/{body['id']}/report", headers=auth_headers).text
+    assert "No entry in the signed record matches this review" in tampered
+    assert api_client.get(f"{URL}/flights/{body['id']}/report").status_code == 401
+    assert api_client.get(f"{URL}/flights/999999/report", headers=auth_headers).status_code == 404
+
+
+def test_time_inside_a_real_no_fly_zone_is_reported_when_a_city_is_given(api_client, auth_headers, tmp_path):
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+    from tests.unit.test_assurance_flightlog import write_tlog
+
+    red = next(z for z in api_client.get("/api/v1/geofence/zones?city=pune").json() if z["zone_type"] == "RED")
+    lat, lon = red["center_lat"], red["center_lon"]
+    plan = build_waypoint_file({"origin_lat": lat, "origin_lon": lon, "dest_lat": lat + 0.001, "dest_lon": lon, "altitude_m": 60.0})
+    track = [(float(i), lat, lon, 60.0 * i / 10) for i in range(10)] + [(10.0 + i, lat + 0.001 * i / 29, lon, 60.0) for i in range(30)]
+    log = write_tlog(str(tmp_path / "zone.tlog"), track, modes=[(0.0, 4), (10.0, 3)])
+
+    def files():
+        return {"plan": ("m.waypoints", plan.encode(), "text/plain"), "log": ("zone.tlog", open(log, "rb").read(), "application/octet-stream")}
+
+    without = api_client.post(f"{URL}/drones/Z1/flights", headers=auth_headers, files=files()).json()
+    assert without["verdict"] == "CONFORMED" and without["report"]["zones_checked"] is None       # on plan, zones not asked for
+    with_city = api_client.post(f"{URL}/drones/Z1/flights?city=pune", headers=auth_headers, files=files()).json()
+    assert with_city["verdict"] == "DEVIATED" and with_city["report"]["zones_checked"] == "pune"
+    kinds = [e["kind"] for e in with_city["report"]["episodes"]]
+    assert kinds == ["in_no_fly_zone"] and with_city["report"]["episodes"][0]["duration_s"] >= 30
+
+
+def test_deconfliction_and_wind_checks_are_written_to_the_signed_record(api_client, auth_headers):
+    import json
+
+    d = api_client.post(DECONFLICT, headers=auth_headers, files=_plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(DEPOT, NORTH))).json()
+    profile = json.dumps({"10": [2, 0], "80": [5, 0], "120": [7, 0], "180": [8, 0]})
+    w = api_client.post(WIND, headers=auth_headers, files={"plan": ("north.waypoints", _mission(DEPOT, NORTH, alt=100.0).encode(), "text/plain")},
+                        data={"payload_kg": 1, "usable_wh": 20, "profile": profile}).json()
+    assert w["ledger_seq"] == d["ledger_seq"] + 1
+    entries = {e["seq"]: e for e in api_client.get("/api/v1/assurance/ledger", headers=auth_headers).json()["entries"]}
+    assert (entries[d["ledger_seq"]]["kind"], entries[d["ledger_seq"]]["subject"]) == ("deconflict", "alpha,bravo")
+    assert (entries[w["ledger_seq"]]["kind"], entries[w["ledger_seq"]]["subject"]) == ("wind_check", "north.waypoints")
+    assert api_client.get("/api/v1/assurance/ledger/verify", headers=auth_headers).json()["ok"] is True

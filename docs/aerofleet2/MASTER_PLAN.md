@@ -46,7 +46,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 2.2 Reconciliation `aerofleet/assurance/reconcile.py`: `.waypoints` parser; per-point horizontal/vertical deviation; off-route / off-altitude / no-fly-zone episodes; manual-control takeovers; CONFORMED / DEVIATED
 - [x] 2.3 API: `POST /fleets/{fleet}/drones/{id}/flights` (files `plan` + `log`; optional `city`, `corridor_m`, `altitude_m`), `GET /fleets/{fleet}/flights`, `GET .../flights/{review_id}`; table `flight_reviews`; log parameters are stored as a snapshot so drift covers the flown configuration
 - [x] 2.3b Flights section in `tauri-app/src/pages/FleetAssurance.tsx`: choose mission + log, Compare, review list, episode table
-- [ ] 2.3c PDF export of a flight review; test the `city` no-fly-zone option through the API (only unit-tested so far)
+- [x] 2.3c Printable flight review (`GET .../flights/{id}/report`, self-contained escaped HTML; print to PDF from a browser — no PDF library is installed) with a signed-record match check; `city` no-fly-zone option tested through the API against a real Pune zone
 - [ ] 2.4 Public-log mining script for the paper (parameter prevalence across many public logs); also the drift false-alarm rate between consecutive logs of the same vehicle
 
 ### Phase 3 — Deconfliction and VR rehearsal
@@ -66,7 +66,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 ### Phase 5 — Signing and the review panel
 - [x] 5.1 `aerofleet/assurance/ledger.py` + table `assurance_ledger`: Ed25519-signed, hash-chained entry for every baseline, approval, drift upload and flight review; `GET /api/v1/assurance/ledger`, `GET .../ledger/verify`; key in the per-install config dir (`AEROFLEET_REPORT_KEY_FILE` overrides)
 - [x] 5.1b Signed-record section in the app: last 10 entries, Check the record, Export for an auditor (entries + public key as JSON)
-- [ ] 5.1c Record deconfliction and wind checks in the signed record too (they are stateless today)
+- [x] 5.1c Deconfliction and wind checks are written to the signed record (the result and the exact files returned)
 - [x] 5.2 `aerofleet/assurance/review_panel.py`: facts per episode in five slices (log reader now extracts battery + GPS numbers), fixed cause list, reply shape, own-evidence citation check, counts-only second round, fixed aggregation, NEEDS_HUMAN_REVIEW on disagreement, no-AI rule comparator. Tested with a scripted stand-in model only
 - [ ] 5.2b Wire the panel to flight reviews: store facts at upload, run as a background job (a real model takes minutes), endpoint + screen section, record the result in the signed ledger
 - [x] 5.3 (harness) `research/panel_eval/` — 60 cases, rule vs one agent vs panel, compromised-reviewer attack, planted-text test (0 of 40 reached a prompt). Per-model results files; runner scripts `research/college_pc_panel_eval.ps1|.sh`; instructions `docs/aerofleet2/PANEL_EVAL_RUNBOOK.md`
@@ -112,3 +112,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: In-flight setting changes on screen; checked end to end with a real `.BIN` uploaded through the API (448 positions, 8 safety-critical changes listed with times, ledger entry written). Mac app not rebuilt since this and the 5.2/2.1b changes.
 - 2026-10-12: Panel evaluation on the Mac stopped at 24/60 with llama3.2: rule 18 right / 0 wrong; one agent 4 / 0; panel 2 right / 17 wrong; one compromised reviewer could steer 13 of 24. Handed to the college PC (runbook written). 5.2b (wiring the panel into the app) is ON HOLD until those results are back.
 - 2026-10-12: README rewritten. VR rehearsal (3.4) is BLOCKED: the `/Volumes/UnityWork` drive with the Unity project is not attached and the editor is not running; the helper scripts in the scratch folder were lost to a reboot (they are small — `umcp.py` talked to the Unity MCP server over HTTP).
+- 2026-10-12: 2.3c + 5.1c done (3 new integration tests; 26 pass in the two files run). Printable report checked in the browser on the real-log review.

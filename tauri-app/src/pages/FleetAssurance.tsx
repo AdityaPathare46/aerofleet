@@ -54,7 +54,7 @@ const WIND_VERDICT: Record<WindReport['verdict'], { tone: Verdict; label: string
 interface LedgerEntry { seq: number; kind: string; subject: string; entry_hash: string; created_at: string; created_by: string }
 interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
-const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed' }
+const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', wind_check: 'Wind checked' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
@@ -204,6 +204,11 @@ export default function FleetAssurancePage() {
     const all = await plain<Ledger>('/ledger?limit=1000')
     download('aerofleet-signed-record.json', JSON.stringify({ public_key_pem: all.public_key_pem, entries: [...all.entries].reverse() }, null, 2), '')
   })
+  const printable = (id: number) => act(async () => {
+    const r = await fetch(`${base}/flights/${id}/report`, { headers: token() })
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+    download(`flight-review-${id}`, await r.text(), '.html')
+  })
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
@@ -340,7 +345,8 @@ export default function FleetAssurancePage() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 16 }}>{review.drone_id} · flight review</span>
             <Pill verdict={review.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={review.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{review.log_name} against {review.plan_name}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{review.log_name} against {review.plan_name}</span>
+            <button className="btn" id="btn-printable-report" disabled={busy} onClick={() => printable(review.id)} title="A self-contained page; open it and print to PDF">Printable report</button>
           </div>
           <div style={{ fontSize: 13 }}>
             Flight time {clock(review.report.flight_s)} · furthest off route <b>{review.report.horizontal_m.max} m</b> (typical {review.report.horizontal_m.median} m) ·
