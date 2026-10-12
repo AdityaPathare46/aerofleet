@@ -463,3 +463,19 @@ class FlightReview(Base):
     log_name = Column(String(200), nullable=True)
     uploaded_by = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class AssuranceLedgerEntry(Base):
+    """One link of the signed, hash-chained record of assurance results (aerofleet/assurance/ledger.py)."""
+
+    __tablename__ = "assurance_ledger"
+
+    seq = Column(Integer, primary_key=True, autoincrement=False)
+    kind = Column(String(40), nullable=False, index=True)      # baseline | approval | drift | flight_review
+    subject = Column(String(120), nullable=False, index=True)  # fleet or fleet/drone
+    payload_sha256 = Column(String(64), nullable=False)
+    prev_hash = Column(String(64), nullable=False)
+    entry_hash = Column(String(64), nullable=False, unique=True)
+    signature = Column(Text, nullable=False)
+    created_at = Column(String(32), nullable=False)             # ISO seconds, part of the signed body
+    created_by = Column(String(100), nullable=False)

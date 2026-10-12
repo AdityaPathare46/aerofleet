@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from aerofleet.api.routes.auth import get_current_active_user, get_current_operator_user, get_db
+from aerofleet.assurance import ledger
 from aerofleet.assurance.drift import drift_report
 from aerofleet.assurance.static_checks import checks_from_params
 from aerofleet.assurance.params import MAX_BYTES, ParamFile, ParamFileError, parse_param_bytes
@@ -69,9 +70,10 @@ async def set_baseline(fleet: str, file: UploadFile = File(...), user: User = De
     row.params, row.approved, row.source = parsed.params, {}, (file.filename or "")[:200]
     row.set_by, row.set_at = user.username, datetime.utcnow()
     db.add(row)
+    entry = ledger.append(db, "baseline", fleet, {"params": parsed.params, "source": row.source}, user.username)
     db.commit()
     return {"fleet": fleet, "param_count": len(parsed.params), "format": parsed.format, "rejected": len(parsed.rejected),
-            "set_by": row.set_by, "set_at": row.set_at.isoformat()}
+            "set_by": row.set_by, "set_at": row.set_at.isoformat(), "ledger_seq": entry.seq}
 
 
 @router.get("/fleets/{fleet}/baseline")
@@ -99,8 +101,9 @@ async def approve_change(fleet: str, body: Approval, user: User = Depends(get_cu
     approved = dict(row.approved or {})
     approved[body.name.upper()] = {"value": body.value, "by": user.username, "at": datetime.utcnow().isoformat(), "note": body.note}
     row.approved = approved
+    entry = ledger.append(db, "approval", fleet, {"name": body.name.upper(), **approved[body.name.upper()]}, user.username)
     db.commit()
-    return {"fleet": fleet, "approved": approved}
+    return {"fleet": fleet, "approved": approved, "ledger_seq": entry.seq}
 
 
 @router.post("/fleets/{fleet}/drones/{drone_id}/params")
@@ -111,8 +114,10 @@ async def upload_params(fleet: str, drone_id: str, file: UploadFile = File(...),
     parsed = await _read(file)
     db.add(ParamSnapshot(drone_id=drone_id, fleet=fleet, params=parsed.params, file_format=parsed.format,
                          filename=(file.filename or "")[:200], uploaded_by=user.username))
-    db.commit()
+    db.flush()
     report = _drift(db, fleet, drone_id)
+    report["ledger_seq"] = ledger.append(db, "drift", f"{fleet}/{drone_id}", report, user.username).seq
+    db.commit()
     report["file"] = {"format": parsed.format, "duplicates": parsed.duplicates,
                       "rejected": [{"line": n, "reason": r} for n, r in parsed.rejected]}
     return report
@@ -232,9 +237,11 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
     row = FlightReview(drone_id=drone_id, fleet=fleet, verdict=report["verdict"], report=report,
                        plan_name=(plan.filename or "")[:200], log_name=(log.filename or "")[:200], uploaded_by=user.username)
     db.add(row)
+    entry = ledger.append(db, "flight_review", f"{fleet}/{drone_id}", report, user.username)
     db.commit()
     db.refresh(row)
     out = _review(row)
+    out["ledger_seq"] = entry.seq
     out["drift"] = _drift(db, fleet, drone_id) if flight.params else None
     return out
 
@@ -347,3 +354,21 @@ async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form
     report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps)
     report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes)})
     return report
+
+
+# ── signed record ──────────────────────────────────────────────────────
+
+@router.get("/ledger")
+async def list_ledger(limit: int = Query(100, ge=1, le=1000), user: User = Depends(get_current_active_user),
+                      db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The newest entries of the signed record, and the public key that verifies them."""
+    from aerofleet.data.models.models import AssuranceLedgerEntry
+
+    rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq.desc()).limit(limit).all()
+    return {"public_key_pem": ledger.public_key_pem(), "entries": [ledger.to_dict(r) for r in rows]}
+
+
+@router.get("/ledger/verify")
+async def verify_ledger(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Re-check every link and signature. `ok: false` names the first entry that fails and why."""
+    return ledger.verify_chain(db)

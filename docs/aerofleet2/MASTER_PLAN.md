@@ -61,7 +61,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 4.2 `research/wind_altitude_study.py` → `research/results/wind_altitude_study.md` (30 days of hourly model wind for Pune)
 
 ### Phase 5 — Signing and the review panel
-- [ ] 5.1 Signed, hash-chained reports (ordinary signatures; no TEE)
+- [x] 5.1 `aerofleet/assurance/ledger.py` + table `assurance_ledger`: Ed25519-signed, hash-chained entry for every baseline, approval, drift upload and flight review; `GET /api/v1/assurance/ledger`, `GET .../ledger/verify`; key in the per-install config dir (`AEROFLEET_REPORT_KEY_FILE` overrides)
+- [ ] 5.1b Show the record and its verify result in the app; export entries + public key for an auditor; record deconfliction and wind checks too (they are stateless today)
 - [ ] 5.2 Review panel: per-agent evidence slices, schema-constrained replies, claim check, fixed aggregation rule
 - [ ] 5.3 Evaluation: panel vs single agent vs no AI; poisoned-log attack success rate (`scenario_engine/prompt_injector.py`)
 
@@ -97,3 +98,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: Phase 6.1 done (6 tests, 1 skipped). ENVIRONMENT PROBLEM found: after a macOS upgrade the venv's scipy no longer loads, so scikit-learn fails and creating an order on the road graph (legacy dispatch, and the VR dispatch tests) raises ImportError. Assurance code is unaffected. Fix = reinstall scipy/scikit-learn in `.venv` (a download; ask the user first). Next: 6.2 hide council/live-control UI, or Phase 4.
 - 2026-10-12: scipy reinstall did NOT fix the import (the newest scipy for Python 3.10 ships a binary macOS 27 will not load). Worked around the one place it mattered: `CityGraph.nearest_node` now does its own great-circle search in numpy. Full suite: 579 passed, 2 failed (the known test_config baseline). Still degraded: `safety/cbf_gate.py` skips its optional scipy QP projection (it logs a warning). Real fix = rebuild `.venv` on Python ≥ 3.11 (large download; ask first). Phase 6.2 done, checked in the browser. Mac app not rebuilt.
 - 2026-10-12: Phase 4.1–4.2 done (6 unit + 2 integration tests). Pune, 720 hours: median wind 2.2 m/s at 10 m vs 3.5 at 100 m (ratio 1.58, p90 2.04). A 3 km out-and-back at 100 m with a 20% battery margin fails only at altitude in 11.9% of mission-hours (27.5% at a 10% margin, 5.7% at 30%). Next: 4.1b screen, 5.1 signing.
+- 2026-10-12: Phase 5.1 done (8 integration tests). Next: 4.1b / 5.1b screens, then 5.2 review panel, 2.1b real `.bin` logs, 3.4 VR rehearsal. Mac app not rebuilt since 8 Oct.

@@ -56,6 +56,10 @@ os.environ["AEROFLEET_VR_NETWORK"] = "off"
 # suites exercise the live path against mocks, so it is enabled for tests; tests/integration/
 # test_live_control_policy.py switches it off to prove the default behaviour.
 os.environ.setdefault("AEROFLEET_LIVE_CONTROL", "on")
+# A throwaway report-signing key, never the install's real one.
+import tempfile as _tempfile  # noqa: E402
+
+os.environ["AEROFLEET_REPORT_KEY_FILE"] = os.path.join(_tempfile.mkdtemp(prefix="aerofleet-test-key-"), "report_signing_key.pem")
 
 
 @pytest.fixture(scope="session")
