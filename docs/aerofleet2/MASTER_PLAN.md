@@ -102,3 +102,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: Phase 4.1–4.2 done (6 unit + 2 integration tests). Pune, 720 hours: median wind 2.2 m/s at 10 m vs 3.5 at 100 m (ratio 1.58, p90 2.04). A 3 km out-and-back at 100 m with a 20% battery margin fails only at altitude in 11.9% of mission-hours (27.5% at a 10% margin, 5.7% at 30%). Next: 4.1b screen, 5.1 signing.
 - 2026-10-12: Phase 5.1 done (8 integration tests). Next: 4.1b / 5.1b screens, then 5.2 review panel, 2.1b real `.bin` logs, 3.4 VR rehearsal. Mac app not rebuilt since 8 Oct.
 - 2026-10-12: 4.1b + 5.1b screens done and checked in the browser (live forecast call worked). Fixed: with no hour given the wind check used the first forecast hour (midnight UTC) instead of the current hour.
+- 2026-10-12: Mac app rebuilt and installed with all five Fleet Assurance sections, the 2.0 navigation and the live-control switch. Not launched or checked inside the bundle.
