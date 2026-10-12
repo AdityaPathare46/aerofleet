@@ -76,6 +76,9 @@ Decisions already made — do not reopen them without the user asking:
 - VR dispatch from the headset exists behind a desktop permission; under 2.0 it becomes "plan
   rehearsal", not dispatch (Phase 6).
 
+- Waiting on the user: review-panel evaluation on the college PC (`docs/aerofleet2/PANEL_EVAL_RUNBOOK.md`). Do not wire the panel into
+  the app until `research/results/panel_eval/summary.md` shows it beating the no-AI rule for some model.
+
 ## 6. Unverified claims to check before relying on them
 
 - Whether Indian agri/service fleets use ArduPilot/PX4 logs, and whether AirData already serves them.
