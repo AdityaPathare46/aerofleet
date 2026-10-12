@@ -17,6 +17,7 @@ def test_severity_catalogue_on_known_parameters():
     assert severity_of("ATC_RAT_RLL_P") == TUNING and severity_of("MPC_XY_P") == TUNING
     assert severity_of("SCHED_LOOP_RATE") == INFO
     assert severity_of("STAT_FLTTIME") is None and severity_of("COMPASS_OFS_X") is None
+    assert severity_of("MOT_THST_HOVER") is None and severity_of("MOT_THST_EXPO") == HIGH      # the learned hover value only
 
 
 def test_current_firmware_spellings_are_rated_like_the_old_ones():

@@ -30,6 +30,7 @@ IGNORED_PATTERNS = (
     "STAT_*", "*_GND_PRESS", "BARO*_GND_*", "COMPASS_OFS*", "COMPASS_DIA*", "COMPASS_ODI*", "COMPASS_MOT*", "COMPASS_DEC",
     "INS_ACC*OFFS_*", "INS_ACC*SCAL_*", "INS_GYR*OFFS_*", "INS_ACC*_CALTEMP", "INS_GYR*_CALTEMP", "AHRS_TRIM_*", "CAL_*",
     "LND_FLIGHT_T_*", "COM_FLIGHT_UUID",
+    "MOT_THST_HOVER",                                                        # learned in flight when MOT_HOVER_LEARN is on (seen in real logs)
     "SYS_NUM_RESETS", "GND_ABS_PRESS*", "GND_TEMP", "LOG_LASTFILE",          # legacy names
 )
 # Checked in order, so a name is rated by the most severe group it matches. ArduPilot renamed many
@@ -141,3 +142,18 @@ def drift_report(current: Mapping[str, float], baseline: Optional[Mapping[str, f
     report["verdict"] = report[decided_by]["verdict"] if decided_by else "NO_REFERENCE"
     report["decided_by"] = decided_by
     return report
+
+
+def in_flight_changes(changes, t0: float = 0.0) -> List[Dict[str, Any]]:
+    """Settings that changed while the log was recording, most severe first.
+
+    `changes` is FlightLog.param_changes. A setting changed and then put back shows as two entries —
+    the final values alone would hide it. Self-rewritten values are left out.
+    """
+    out = []
+    for t, name, old, new in changes:
+        sev = severity_of(name)
+        if sev is not None:
+            out.append({"t_s": round(t - t0, 1), "name": name, "old": old, "new": new, "severity": sev})
+    out.sort(key=lambda c: (SEVERITY_ORDER[c["severity"]], c["t_s"], c["name"]))
+    return out

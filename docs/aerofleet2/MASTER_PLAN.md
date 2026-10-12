@@ -40,7 +40,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 
 ### Phase 2 — Flight logs and planned-versus-flown
 - [x] 2.1 Log reader `aerofleet/assurance/flightlog.py`: ArduPilot `.tlog` (tested on a generated log) and `.bin` (same code path, NOT yet run on a real onboard log) → track, parameters, mode changes
-- [ ] 2.1b Run the reader on real `.bin` logs; add PX4 `.ulg` (needs `pyulog`, not installed)
+- [x] 2.1b Reader run on 5 real ArduCopter `.BIN` and 2 real `.tlog` files from autotest.ardupilot.org (firmware-written logs of simulated flights). Fixes from it: vehicle clock instead of the recorder's clock, multi-boot logs, heartbeats from non-autopilot components ignored, vehicle type recorded, in-flight setting changes kept, learned hover throttle excluded from drift
+- [ ] 2.1c PX4 `.ulg` (needs `pyulog`); read the mission stored inside a `.BIN` (CMD records) so planned-versus-flown can work from one file; show in-flight setting changes in the app
 - [x] 2.2 Reconciliation `aerofleet/assurance/reconcile.py`: `.waypoints` parser; per-point horizontal/vertical deviation; off-route / off-altitude / no-fly-zone episodes; manual-control takeovers; CONFORMED / DEVIATED
 - [x] 2.3 API: `POST /fleets/{fleet}/drones/{id}/flights` (files `plan` + `log`; optional `city`, `corridor_m`, `altitude_m`), `GET /fleets/{fleet}/flights`, `GET .../flights/{review_id}`; table `flight_reviews`; log parameters are stored as a snapshot so drift covers the flown configuration
 - [x] 2.3b Flights section in `tauri-app/src/pages/FleetAssurance.tsx`: choose mission + log, Compare, review list, episode table
@@ -105,3 +106,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: 4.1b + 5.1b screens done and checked in the browser (live forecast call worked). Fixed: with no hour given the wind check used the first forecast hour (midnight UTC) instead of the current hour.
 - 2026-10-12: Mac app rebuilt and installed with all five Fleet Assurance sections, the 2.0 navigation and the live-control switch. Not launched or checked inside the bundle.
 - 2026-10-12: Phase 5.2 core done (16 unit tests + 1 for battery/GPS extraction). NOT yet run against a real language model — that is 5.3. Next: 5.2b wiring, then 5.3 evaluation.
+- 2026-10-12: Phase 2.1b done on real logs (downloaded to the scratch folder, not committed). A real parameter list has 1,431 entries: 49 safety-critical, 125 flight-limit, 231 tuning, 84 ignored. The 59 checks evaluate 25 from a full list (17 pass, 2 warn, 6 fail on simulator defaults). One real log showed the geofence enabled and its ceiling cut from 100 m to 50 m at 10.2 s, restored at 63.2 s: final values alone hide that. Panel evaluation still running.

@@ -231,6 +231,12 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
         os.unlink(tmp)
     report["log"] = flight.summary()
     report["zones_checked"] = city
+    from aerofleet.assurance.drift import in_flight_changes
+
+    changed = in_flight_changes(flight.param_changes, flight.track[0][0])
+    report["settings_changed_in_flight"] = {
+        "count": len(changed), "safety_critical": sum(1 for c in changed if c["severity"] == "CRITICAL"),
+        "flight_limit": sum(1 for c in changed if c["severity"] == "HIGH"), "changes": changed[:100]}
     if flight.params:
         db.add(ParamSnapshot(drone_id=drone_id, fleet=fleet, params=flight.params, file_format=f"log:{flight.format}",
                              filename=(log.filename or "")[:200], uploaded_by=user.username))

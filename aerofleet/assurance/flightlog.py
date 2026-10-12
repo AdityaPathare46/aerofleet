@@ -14,7 +14,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 MAX_BYTES = 200 * 1024 * 1024
 MAX_POINTS = 400_000
-GCS_TYPE = 6  # MAV_TYPE_GCS: a ground station's heartbeat says nothing about the aircraft's mode
+AUTOPILOT_INVALID = 8   # MAV_AUTOPILOT_INVALID: heartbeats from ground stations, gimbals, companions - not the flight controller
+VEHICLE_TYPES = {1: "fixed wing", 2: "quadcopter", 3: "coaxial", 4: "helicopter", 10: "ground rover", 11: "boat", 12: "submarine",
+                 13: "hexacopter", 14: "octocopter", 15: "tricopter", 19: "VTOL", 20: "VTOL", 21: "VTOL", 22: "VTOL", 29: "dodecacopter"}
+MULTIROTORS = {"quadcopter", "hexacopter", "octocopter", "tricopter", "coaxial", "dodecacopter"}
+REBOOT_GAP_S = 5.0      # the vehicle clock jumping back by more than this means the flight controller restarted
 
 
 class FlightLogError(ValueError):
@@ -28,6 +32,8 @@ class FlightLog:
     params: Dict[str, float] = field(default_factory=dict)
     modes: List[Tuple[float, str]] = field(default_factory=list)                   # (t_s, mode) on each change
     position_source: str = ""                                # the message the track came from
+    vehicle: Optional[str] = None                            # from the autopilot's heartbeat (.tlog only)
+    param_changes: List[Tuple[float, str, float, float]] = field(default_factory=list)  # (t_s, name, old, new) after first sight
     battery: List[Tuple[float, float, Optional[float]]] = field(default_factory=list)   # (t_s, volts, remaining % or None)
     gps: List[Tuple[float, int, Optional[float], int]] = field(default_factory=list)     # (t_s, satellites, HDOP or None, fix type)
     notes: List[str] = field(default_factory=list)
@@ -40,12 +46,21 @@ class FlightLog:
         return {"format": self.format, "points": len(self.track), "duration_s": round(self.duration_s, 1),
                 "param_count": len(self.params), "modes": [{"t_s": round(t - self.track[0][0], 1) if self.track else 0.0, "mode": m}
                                                            for t, m in self.modes],
-                "position_source": self.position_source, "battery_samples": len(self.battery), "gps_samples": len(self.gps),
+                "position_source": self.position_source, "vehicle": self.vehicle, "battery_samples": len(self.battery), "gps_samples": len(self.gps),
+                "param_changes": len(self.param_changes),
                 "notes": self.notes}
 
 
 def _valid(lat: float, lon: float) -> bool:
     return -90 <= lat <= 90 and -180 <= lon <= 180 and not (abs(lat) < 1e-7 and abs(lon) < 1e-7)
+
+
+def _set_param(log: FlightLog, t: float, name: str, value: float) -> None:
+    """Keep the latest value, and remember every time a value changed after it was first seen."""
+    old = log.params.get(name)
+    if old is not None and abs(old - value) > 1e-6 * max(1.0, abs(old), abs(value)) and len(log.param_changes) < 2000:
+        log.param_changes.append((t, name, old, value))
+    log.params[name] = value
 
 
 def read_flight_log(path: str) -> FlightLog:
@@ -68,6 +83,11 @@ def read_flight_log(path: str) -> FlightLog:
     wanted = (["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT"] if ext == ".tlog"
               else ["POS", "GPS", "PARM", "MODE", "BAT"])
     last_mode = None
+    # Telemetry logs are stamped by the recording computer; a replayed or sped-up recording (and any
+    # link delay) distorts that clock. The vehicle's own clock (time since boot) is used instead, made
+    # continuous across restarts. Messages without it take the time of the latest position.
+    is_tlog = ext == ".tlog"
+    vehicle_t, offset, last_boot, boots, system = 0.0, 0.0, None, 1, None
     while True:
         try:
             m = mlog.recv_match(type=wanted, blocking=False)
@@ -77,6 +97,18 @@ def read_flight_log(path: str) -> FlightLog:
         if m is None:
             break
         kind, t = m.get_type(), float(getattr(m, "_timestamp", 0.0) or 0.0)
+        if is_tlog:
+            if system is None and kind == "GLOBAL_POSITION_INT":
+                system = m.get_srcSystem()
+            if system is not None and m.get_srcSystem() != system:
+                continue                                      # another vehicle or device on the same link
+            if kind == "GLOBAL_POSITION_INT":
+                boot = m.time_boot_ms / 1000.0
+                if last_boot is not None and boot < last_boot - REBOOT_GAP_S:
+                    offset, boots = vehicle_t + 1.0, boots + 1
+                    offset -= boot
+                last_boot, vehicle_t = boot, boot + offset
+            t = vehicle_t
         # numbers only are taken from the log; free text (STATUSTEXT, MSG) is never read
         if kind == "SYS_STATUS":
             if m.voltage_battery not in (0, 65535) and len(log.battery) < MAX_POINTS:
@@ -104,14 +136,16 @@ def read_flight_log(path: str) -> FlightLog:
             point = (t, float(m.Lat), float(m.Lng), float(m.Alt))
         elif kind == "PARAM_VALUE":
             name = m.param_id if isinstance(m.param_id, str) else m.param_id.decode("ascii", "ignore")
-            log.params[name.rstrip("\x00").upper()] = float(m.param_value)
+            _set_param(log, t, name.rstrip("\x00").upper(), float(m.param_value))
             continue
         elif kind == "PARM":
-            log.params[str(m.Name).upper()] = float(m.Value)
+            _set_param(log, t, str(m.Name).upper(), float(m.Value))
             continue
         else:  # HEARTBEAT / MODE
-            if kind == "HEARTBEAT" and m.type == GCS_TYPE:
+            if kind == "HEARTBEAT" and (m.autopilot == AUTOPILOT_INVALID or m.get_srcComponent() != 1):
                 continue
+            if kind == "HEARTBEAT" and log.vehicle is None:
+                log.vehicle = VEHICLE_TYPES.get(int(m.type), f"type {int(m.type)}")
             mode = mavutil.mode_string_v10(m) if kind == "HEARTBEAT" else str(getattr(mlog, "flightmode", getattr(m, "Mode", "")))
             if mode != last_mode:
                 log.modes.append((t, mode))
@@ -130,6 +164,10 @@ def read_flight_log(path: str) -> FlightLog:
         home = log.track[0][3]
         log.track = [(t, la, lo, alt - home) for t, la, lo, alt in log.track]
         log.notes.append("Altitude is GPS altitude relative to the first fix (no POS records in this log)")
+    if log.vehicle is not None and log.vehicle not in MULTIROTORS:
+        log.notes.append(f"This log is from a {log.vehicle}; the planned-versus-flown comparison assumes a multirotor")
+    if boots > 1:
+        log.notes.append(f"The flight controller restarted {boots - 1} time(s) in this log; times run on across the restarts")
     if not log.track:
         raise FlightLogError("No position records found in the log — nothing to compare with a plan")
     return log
