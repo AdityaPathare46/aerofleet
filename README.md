@@ -115,6 +115,6 @@ MAVLink control, the dispatch console — is still here, hidden in the app behin
 legacy screens** and off by default in the backend. Its README is kept at
 [`docs/LEGACY_AI_DISPATCH_README.md`](docs/LEGACY_AI_DISPATCH_README.md).
 
-## License
+## Licence
 
-MIT — see [LICENSE](LICENSE).
+No licence file has been added to this repository yet, so no reuse terms are granted. (The earlier README showed an MIT badge, but there was never a `LICENSE` file.)
