@@ -76,7 +76,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 6.1 `AEROFLEET_LIVE_CONTROL` (default off; `aerofleet/assurance/live_control.py`): arm, post-dispatch take-off/go-to and the bench motor test are refused; dispatch plans with simulated drones only; disarm, emergency stop and RTL/hold fallbacks stay available; `GET /api/v1/assurance/policy`
 - [x] 6.2 App opens on Fleet Assurance; Council Room and the telemetry/agent-roster side panel are hidden unless Settings ▸ Show legacy screens is on (`tauri-app/src/lib/policy.ts`); Arm button only when live control is on; header subtitle updated
 - [ ] 6.2b Still showing legacy framing: Ops Center, Dispatch Console, Incident Forensics, Fleet Policy, Scenario Lab pages — decide per page: keep, rename or move behind the legacy toggle
-- [ ] 6.3 Update README and docs to the 2.0 framing
+- [x] 6.3 README rewritten for 2.0 (what it does, what was measured with links, where AI is not used, what it does not do); the old one moved to `docs/LEGACY_AI_DISPATCH_README.md`
 
 ### Demand and publication (not code)
 - [ ] D1 Check whether Indian agri/service fleets run ArduPilot/PX4 and whether AirData serves them
@@ -111,3 +111,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: Phase 2.1b done on real logs (downloaded to the scratch folder, not committed). A real parameter list has 1,431 entries: 49 safety-critical, 125 flight-limit, 231 tuning, 84 ignored. The 59 checks evaluate 25 from a full list (17 pass, 2 warn, 6 fail on simulator defaults). One real log showed the geofence enabled and its ceiling cut from 100 m to 50 m at 10.2 s, restored at 63.2 s: final values alone hide that. Panel evaluation still running.
 - 2026-10-12: In-flight setting changes on screen; checked end to end with a real `.BIN` uploaded through the API (448 positions, 8 safety-critical changes listed with times, ledger entry written). Mac app not rebuilt since this and the 5.2/2.1b changes.
 - 2026-10-12: Panel evaluation on the Mac stopped at 24/60 with llama3.2: rule 18 right / 0 wrong; one agent 4 / 0; panel 2 right / 17 wrong; one compromised reviewer could steer 13 of 24. Handed to the college PC (runbook written). 5.2b (wiring the panel into the app) is ON HOLD until those results are back.
+- 2026-10-12: README rewritten. VR rehearsal (3.4) is BLOCKED: the `/Volumes/UnityWork` drive with the Unity project is not attached and the editor is not running; the helper scripts in the scratch folder were lost to a reboot (they are small — `umcp.py` talked to the Unity MCP server over HTTP).
