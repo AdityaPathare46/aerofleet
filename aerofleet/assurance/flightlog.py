@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 MAX_BYTES = 200 * 1024 * 1024
 MAX_POINTS = 400_000
@@ -28,6 +28,8 @@ class FlightLog:
     params: Dict[str, float] = field(default_factory=dict)
     modes: List[Tuple[float, str]] = field(default_factory=list)                   # (t_s, mode) on each change
     position_source: str = ""                                # the message the track came from
+    battery: List[Tuple[float, float, Optional[float]]] = field(default_factory=list)   # (t_s, volts, remaining % or None)
+    gps: List[Tuple[float, int, Optional[float], int]] = field(default_factory=list)     # (t_s, satellites, HDOP or None, fix type)
     notes: List[str] = field(default_factory=list)
 
     @property
@@ -38,7 +40,8 @@ class FlightLog:
         return {"format": self.format, "points": len(self.track), "duration_s": round(self.duration_s, 1),
                 "param_count": len(self.params), "modes": [{"t_s": round(t - self.track[0][0], 1) if self.track else 0.0, "mode": m}
                                                            for t, m in self.modes],
-                "position_source": self.position_source, "notes": self.notes}
+                "position_source": self.position_source, "battery_samples": len(self.battery), "gps_samples": len(self.gps),
+                "notes": self.notes}
 
 
 def _valid(lat: float, lon: float) -> bool:
@@ -62,7 +65,8 @@ def read_flight_log(path: str) -> FlightLog:
 
     log = FlightLog(format=ext[1:])
     tracks: Dict[str, List[Tuple[float, float, float, float]]] = {}
-    wanted = ["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT"] if ext == ".tlog" else ["POS", "GPS", "PARM", "MODE"]
+    wanted = (["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT"] if ext == ".tlog"
+              else ["POS", "GPS", "PARM", "MODE", "BAT"])
     last_mode = None
     while True:
         try:
@@ -73,6 +77,23 @@ def read_flight_log(path: str) -> FlightLog:
         if m is None:
             break
         kind, t = m.get_type(), float(getattr(m, "_timestamp", 0.0) or 0.0)
+        # numbers only are taken from the log; free text (STATUSTEXT, MSG) is never read
+        if kind == "SYS_STATUS":
+            if m.voltage_battery not in (0, 65535) and len(log.battery) < MAX_POINTS:
+                log.battery.append((t, m.voltage_battery / 1000.0, float(m.battery_remaining) if m.battery_remaining >= 0 else None))
+            continue
+        if kind == "BAT":
+            if len(log.battery) < MAX_POINTS:
+                pct = getattr(m, "RemPct", None)
+                log.battery.append((t, float(m.Volt), float(pct) if pct is not None else None))
+            continue
+        if kind == "GPS_RAW_INT":
+            if len(log.gps) < MAX_POINTS:
+                log.gps.append((t, int(m.satellites_visible), m.eph / 100.0 if m.eph != 65535 else None, int(m.fix_type)))
+            continue
+        if kind == "GPS" and len(log.gps) < MAX_POINTS:
+            hdop = getattr(m, "HDop", None)
+            log.gps.append((t, int(getattr(m, "NSats", 0)), float(hdop) if hdop is not None else None, int(getattr(m, "Status", 0))))
         if kind == "GLOBAL_POSITION_INT":
             point = (t, m.lat / 1e7, m.lon / 1e7, m.relative_alt / 1000.0)
         elif kind == "POS":

@@ -65,7 +65,8 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 5.1 `aerofleet/assurance/ledger.py` + table `assurance_ledger`: Ed25519-signed, hash-chained entry for every baseline, approval, drift upload and flight review; `GET /api/v1/assurance/ledger`, `GET .../ledger/verify`; key in the per-install config dir (`AEROFLEET_REPORT_KEY_FILE` overrides)
 - [x] 5.1b Signed-record section in the app: last 10 entries, Check the record, Export for an auditor (entries + public key as JSON)
 - [ ] 5.1c Record deconfliction and wind checks in the signed record too (they are stateless today)
-- [ ] 5.2 Review panel: per-agent evidence slices, schema-constrained replies, claim check, fixed aggregation rule
+- [x] 5.2 `aerofleet/assurance/review_panel.py`: facts per episode in five slices (log reader now extracts battery + GPS numbers), fixed cause list, reply shape, own-evidence citation check, counts-only second round, fixed aggregation, NEEDS_HUMAN_REVIEW on disagreement, no-AI rule comparator. Tested with a scripted stand-in model only
+- [ ] 5.2b Wire the panel to flight reviews: store facts at upload, run as a background job (a real model takes minutes), endpoint + screen section, record the result in the signed ledger
 - [ ] 5.3 Evaluation: panel vs single agent vs no AI; poisoned-log attack success rate (`scenario_engine/prompt_injector.py`)
 
 ### Phase 6 — Park the old live path
@@ -103,3 +104,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: Phase 5.1 done (8 integration tests). Next: 4.1b / 5.1b screens, then 5.2 review panel, 2.1b real `.bin` logs, 3.4 VR rehearsal. Mac app not rebuilt since 8 Oct.
 - 2026-10-12: 4.1b + 5.1b screens done and checked in the browser (live forecast call worked). Fixed: with no hour given the wind check used the first forecast hour (midnight UTC) instead of the current hour.
 - 2026-10-12: Mac app rebuilt and installed with all five Fleet Assurance sections, the 2.0 navigation and the live-control switch. Not launched or checked inside the bundle.
+- 2026-10-12: Phase 5.2 core done (16 unit tests + 1 for battery/GPS extraction). NOT yet run against a real language model — that is 5.3. Next: 5.2b wiring, then 5.3 evaluation.
