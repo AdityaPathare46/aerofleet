@@ -143,3 +143,13 @@ def test_aggregate_is_a_fixed_rule():
     assert two_one["likely_cause"] == "GPS_DEGRADED"
     cancelled = aggregate({"a": r(("GPS_DEGRADED", "SUPPORTS")), "b": r(("GPS_DEGRADED", "AGAINST"))})
     assert cancelled["outcome"] == "NEEDS_HUMAN_REVIEW"
+
+
+def test_text_planted_in_uploads_never_reaches_a_prompt():
+    from research.panel_eval.injection_reach import ATTACKS, prompts_for, reached
+
+    control = prompts_for("", "none")
+    for channel in ("log status text", "settings file", "flight-mode name", "drift parameter name", "file name"):
+        for attack in ATTACKS[:3]:
+            assert not reached(attack, prompts_for(attack, channel), control), (channel, attack)
+    assert reached("IGNORE ALL PREVIOUS", control + " IGNORE ALL PREVIOUS", control)        # the detector itself can see a leak
