@@ -187,3 +187,37 @@ def test_deconflict_input_errors(api_client, auth_headers):
                            data={"options": "{not json"})
     assert opts.status_code == 422 and "Bad options" in opts.json()["detail"]
     assert api_client.post(DECONFLICT, files=_plans(alpha=_mission(DEPOT, NORTH), bravo=_mission(DEPOT, NORTH))).status_code == 401
+
+
+# ── wind at cruise height ──────────────────────────────────────────────
+
+WIND = "/api/v1/assurance/plans/wind-check"
+
+
+def test_wind_check_with_a_supplied_profile_and_its_errors(api_client, auth_headers):
+    import json
+
+    plan = {"plan": ("m.waypoints", _mission(DEPOT, NORTH, alt=100.0).encode(), "text/plain")}
+    profile = json.dumps({"10": [2, 0], "80": [5, 0], "120": [7, 0], "180": [8, 0]})
+    r = api_client.post(WIND, headers=auth_headers, files=plan, data={"payload_kg": 1, "usable_wh": 9.7, "profile": profile})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["verdict"] == "FAILS_AT_ALTITUDE" and body["wind"]["at_cruise"]["speed_mps"] == 6.0 and body["wind_source"] == "supplied by the user"
+    assert body["still_air"]["margin_wh"] > 0 > body["cruise_wind"]["margin_wh"]
+    ok = api_client.post(WIND, headers=auth_headers, files=plan, data={"payload_kg": 1, "usable_wh": 20, "profile": profile})
+    assert ok.json()["verdict"] == "PASS"
+    bad = api_client.post(WIND, headers=auth_headers, files=plan, data={"payload_kg": 1, "usable_wh": 20, "profile": "{oops"})
+    assert bad.status_code == 422 and "Bad wind profile" in bad.json()["detail"]
+    assert api_client.post(WIND, files=plan, data={"payload_kg": 1, "usable_wh": 20}).status_code == 401
+
+
+def test_wind_check_without_a_forecast_says_how_to_continue(api_client, auth_headers, monkeypatch):
+    from aerofleet.assurance import wind
+
+    def offline(url):
+        raise OSError("network is unreachable")
+
+    monkeypatch.setattr(wind.fetch_profiles, "__defaults__", (0, 1, offline))
+    plan = {"plan": ("m.waypoints", _mission(DEPOT, NORTH, alt=100.0).encode(), "text/plain")}
+    r = api_client.post(WIND, headers=auth_headers, files=plan, data={"payload_kg": 1, "usable_wh": 20})
+    assert r.status_code == 503 and "Supply the wind by hand" in r.json()["detail"]

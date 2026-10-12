@@ -56,8 +56,9 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [ ] 3.4 VR: fleet-plan rehearsal (before/after fix) and planned-vs-flown replay (Unity app, `unity/AeroFleetVR`)
 
 ### Phase 4 — Wind at altitude
-- [ ] 4.1 Forecast wind at cruise height (Open-Meteo has 80/120/180 m winds; verify) into the battery margin
-- [ ] 4.2 One-month Pune study: passes on ground wind but fails at altitude
+- [x] 4.1 `aerofleet/assurance/wind.py` + `POST /api/v1/assurance/plans/wind-check`: Open-Meteo profile (10/80/120/180 m, verified with a live call) interpolated to cruise height; per-leg wind triangle; PASS / FAILS_AT_ALTITUDE / FAIL; manual profile for offline use
+- [ ] 4.1b Wind section in the Fleet Assurance screen; feed the wind margin into the existing pre-flight compliance report
+- [x] 4.2 `research/wind_altitude_study.py` → `research/results/wind_altitude_study.md` (30 days of hourly model wind for Pune)
 
 ### Phase 5 — Signing and the review panel
 - [ ] 5.1 Signed, hash-chained reports (ordinary signatures; no TEE)
@@ -95,3 +96,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Mac app rebuilt and installed again; it now includes all three Fleet Assurance sections (drift, flight reviews, deconfliction). Not launched or checked inside the bundle.
 - 2026-10-12: Phase 6.1 done (6 tests, 1 skipped). ENVIRONMENT PROBLEM found: after a macOS upgrade the venv's scipy no longer loads, so scikit-learn fails and creating an order on the road graph (legacy dispatch, and the VR dispatch tests) raises ImportError. Assurance code is unaffected. Fix = reinstall scipy/scikit-learn in `.venv` (a download; ask the user first). Next: 6.2 hide council/live-control UI, or Phase 4.
 - 2026-10-12: scipy reinstall did NOT fix the import (the newest scipy for Python 3.10 ships a binary macOS 27 will not load). Worked around the one place it mattered: `CityGraph.nearest_node` now does its own great-circle search in numpy. Full suite: 579 passed, 2 failed (the known test_config baseline). Still degraded: `safety/cbf_gate.py` skips its optional scipy QP projection (it logs a warning). Real fix = rebuild `.venv` on Python ≥ 3.11 (large download; ask first). Phase 6.2 done, checked in the browser. Mac app not rebuilt.
+- 2026-10-12: Phase 4.1–4.2 done (6 unit + 2 integration tests). Pune, 720 hours: median wind 2.2 m/s at 10 m vs 3.5 at 100 m (ratio 1.58, p90 2.04). A 3 km out-and-back at 100 m with a 20% battery margin fails only at altitude in 11.9% of mission-hours (27.5% at a 10% margin, 5.7% at 30%). Next: 4.1b screen, 5.1 signing.

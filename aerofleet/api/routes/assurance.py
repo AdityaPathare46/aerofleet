@@ -305,3 +305,45 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
     new_alt = {c["id"]: c["new_altitude_m"] for c in result["changes"] if c["new_altitude_m"] is not None}
     result["files"] = {mid: retarget_altitude(texts[mid], new_alt[mid]) if mid in new_alt else texts[mid] for mid in texts}
     return result
+
+
+# ── wind at cruise height ──────────────────────────────────────────────
+
+@router.post("/plans/wind-check")
+async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form(..., ge=0, le=500),
+                          usable_wh: float = Form(..., gt=0, le=100000), hour_utc: Optional[str] = Form(None),
+                          max_wind_mps: Optional[float] = Form(None, gt=0, le=60), profile: Optional[str] = Form(None),
+                          user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """Battery margin for a mission in still air, on the 10 m wind and on the wind at its cruise height.
+
+    `usable_wh` is the battery energy above the landing reserve. The wind comes from the Open-Meteo
+    forecast for the mission's home position and `hour_utc` (default: the current forecast hour).
+    `profile` supplies the wind by hand instead — JSON {"10": [speed, from_deg], "80": [...], "120": [...],
+    "180": [...]} — for offline use. 503 when no forecast can be fetched and none was supplied.
+    """
+    import json
+
+    from aerofleet.assurance.reconcile import PlanError, parse_waypoints
+    from aerofleet.assurance.wind import WindUnavailable, fetch_profiles, profile_for, wind_check
+
+    try:
+        mission = parse_waypoints((await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"))
+    except PlanError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    if profile:
+        try:
+            wind = {int(h): (float(v[0]), float(v[1])) for h, v in json.loads(profile).items()}
+            if not wind or any(s < 0 or s > 80 for s, _ in wind.values()):
+                raise ValueError("wind speeds must be between 0 and 80 m/s")
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError) as e:
+            raise HTTPException(status_code=422, detail=f"Bad wind profile: {e}")
+        hour, source = hour_utc, "supplied by the user"
+    else:
+        try:
+            hour, wind = profile_for(fetch_profiles(mission.home[0], mission.home[1], forecast_days=3), hour_utc)
+        except WindUnavailable as e:
+            raise HTTPException(status_code=503, detail=f"{e}. Supply the wind by hand with the 'profile' field to check offline.")
+        source = "Open-Meteo forecast"
+    report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps)
+    report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes)})
+    return report

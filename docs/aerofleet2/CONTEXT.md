@@ -79,7 +79,7 @@ Decisions already made — do not reopen them without the user asking:
 ## 6. Unverified claims to check before relying on them
 
 - Whether Indian agri/service fleets use ArduPilot/PX4 logs, and whether AirData already serves them.
-- Open-Meteo provides wind at 80/120/180 m (believed, not checked).
+- (Checked 2026-10-12: Open-Meteo does provide wind at 10/80/120/180 m; it is forecast-model output, not measurement.)
 - Novelty of the primary paper (short search only). Prior work to read: FSE'21 autopilot bug study
   (569 bugs), the 178-abnormal-log study, ArduCrash dataset, RouthSearch.
 - Regulatory citations: UAOP may no longer exist under Drone Rules 2021; verify every rule reference.
