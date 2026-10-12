@@ -65,7 +65,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [ ] 5.3 Evaluation: panel vs single agent vs no AI; poisoned-log attack success rate (`scenario_engine/prompt_injector.py`)
 
 ### Phase 6 — Park the old live path
-- [ ] 6.1 Disable arm/takeoff/goto in `api/routes/orders.py` behind a default-off flag; keep code
+- [x] 6.1 `AEROFLEET_LIVE_CONTROL` (default off; `aerofleet/assurance/live_control.py`): arm, post-dispatch take-off/go-to and the bench motor test are refused; dispatch plans with simulated drones only; disarm, emergency stop and RTL/hold fallbacks stay available; `GET /api/v1/assurance/policy`
 - [ ] 6.2 Hide the 16-agent dispatch council and live-control UI from the desktop app
 - [ ] 6.3 Update README and docs to the 2.0 framing
 
@@ -92,3 +92,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-08: Phase 3.2 API done (3 new integration tests; 12 in the file). Next: 3.2b screen, then 3.4 VR rehearsal (Unity + APK build, the most expensive step left).
 - 2026-10-08: Phase 3.2b done, checked in the browser. The check showed the fix never combined a height change with a delay; added. Layered case after the change: all cleared up to 50, 0.3 unresolved at 100 (was 3.3), 139.7 at 300 (was 154.3); fix time 3.4 s at 300. Same-height table unchanged. Mac app not rebuilt since phase 2. Next: Phase 4 (wind) or 3.4 (VR rehearsal).
 - 2026-10-08: Mac app rebuilt and installed again; it now includes all three Fleet Assurance sections (drift, flight reviews, deconfliction). Not launched or checked inside the bundle.
+- 2026-10-12: Phase 6.1 done (6 tests, 1 skipped). ENVIRONMENT PROBLEM found: after a macOS upgrade the venv's scipy no longer loads, so scikit-learn fails and creating an order on the road graph (legacy dispatch, and the VR dispatch tests) raises ImportError. Assurance code is unaffected. Fix = reinstall scipy/scikit-learn in `.venv` (a download; ask the user first). Next: 6.2 hide council/live-control UI, or Phase 4.

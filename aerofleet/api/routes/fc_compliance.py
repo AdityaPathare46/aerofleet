@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from aerofleet.api.rate_limit import limiter
+from aerofleet.assurance.live_control import require_live_control
 from aerofleet.api.routes.auth import get_current_active_user, get_current_operator_user
 from aerofleet.api.routes.hardware import require_hardware_owner
 from aerofleet.city.registry import DEFAULT_CITY
@@ -302,6 +303,7 @@ def run_motor_test(
     body: MotorTestRequest,
     current_user: User = Depends(get_current_operator_user),
     _owner: None = Depends(require_hardware_owner),
+    _live: None = Depends(require_live_control),
 ):
     """Spin ONE motor, props off. Gates are enforced here, in this order:
     props-off confirmation, report ready, supported frame + valid letter,

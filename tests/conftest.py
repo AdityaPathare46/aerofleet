@@ -52,6 +52,10 @@ _database_module.init_db = _init_fresh_test_db
 os.environ["AEROFLEET_SECRET_KEY"] = "test-only-signing-key-0123456789abcdef0123456789abcdef"
 # VR pairing sessions work in-process in tests, but must not open LAN sockets (gateway/beacon).
 os.environ["AEROFLEET_VR_NETWORK"] = "off"
+# The product default is OFF (AeroFleet 2.0 does not command aircraft). The legacy hardware and dispatch
+# suites exercise the live path against mocks, so it is enabled for tests; tests/integration/
+# test_live_control_policy.py switches it off to prove the default behaviour.
+os.environ.setdefault("AEROFLEET_LIVE_CONTROL", "on")
 
 
 @pytest.fixture(scope="session")

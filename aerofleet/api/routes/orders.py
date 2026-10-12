@@ -156,11 +156,13 @@ async def dispatch_order(
         raise HTTPException(status_code=404, detail="Order not registered with fleet state")
 
     drones = fleet.list_drones()
-    # Asked from a VR headset (through aerofleet/vr/gateway.py, which tags the request): plan with
-    # simulated drones only — a headset never arms real hardware.
+    # Plan with simulated drones only — never arm real hardware — when the request came from a VR
+    # headset (aerofleet/vr/gateway.py tags it) or, the AeroFleet 2.0 default, whenever live control is
+    # switched off (aerofleet/assurance/live_control.py).
+    from aerofleet.assurance.live_control import live_control_enabled
     from aerofleet.vr.gateway import VR_TOKEN_HEADER
 
-    if request.headers.get(VR_TOKEN_HEADER):
+    if request.headers.get(VR_TOKEN_HEADER) or not live_control_enabled():
         drones = [d for d in drones if d.link_mode != "LIVE"]
     candidate = fleet.dispatch_engine.best_candidate(live_order, drones, fleet.depots)
     if candidate is None:
@@ -336,7 +338,7 @@ async def dispatch_order(
         # CBF gate has already approved this action above — this is the
         # ONLY place a hardware command may be issued as a result of
         # dispatch, and it only happens after that approval.
-        if drone.link_mode == "LIVE":
+        if drone.link_mode == "LIVE" and live_control_enabled():   # second guard: LIVE drones are already excluded when off
             from aerofleet.hardware.telemetry_service import get_drone_link_registry
 
             link = get_drone_link_registry().get_link(candidate.drone_id)

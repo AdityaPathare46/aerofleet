@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSo
 from pydantic import BaseModel
 
 from aerofleet.api.rate_limit import limiter
+from aerofleet.assurance.live_control import live_control_enabled, require_live_control
 from aerofleet.api.routes.auth import get_current_active_user, get_current_operator_user, get_user_from_token
 from aerofleet.city.registry import DEFAULT_CITY
 from aerofleet.data.database import get_db_session
@@ -161,6 +162,7 @@ async def arm_vehicle(
     drone_id: str,
     current_user: User = Depends(get_current_operator_user),
     _owner: None = Depends(require_hardware_owner),
+    _live: None = Depends(require_live_control),
 ):
     link = registry.get_link(drone_id)
     if link is None:

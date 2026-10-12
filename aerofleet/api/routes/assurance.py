@@ -159,6 +159,19 @@ async def fleet_drift(fleet: str, user: User = Depends(get_current_active_user),
             "summary": {v: verdicts.count(v) for v in ("BLOCK", "REVIEW", "OK", "NO_REFERENCE")}}
 
 
+@router.get("/policy")
+async def policy(user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """What this install will and will not do with a real aircraft."""
+    from aerofleet.assurance.live_control import ENV, live_control_enabled
+
+    on = live_control_enabled()
+    return {"live_control": on, "setting": ENV,
+            "blocked_when_off": ["arm", "take-off and go-to after dispatch", "bench motor test"],
+            "always_allowed": ["disarm", "emergency stop", "return-to-home and hold fallbacks", "reading files and telemetry"],
+            "summary": "Legacy live control is enabled on this install." if on
+                       else "Ground-side only: this install does not command real aircraft."}
+
+
 # ── planned versus flown ───────────────────────────────────────────────
 
 def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
