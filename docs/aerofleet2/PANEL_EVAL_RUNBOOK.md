@@ -10,22 +10,40 @@ language models.
 Nothing here touches a drone or the app. It reads 60 generated test cases, asks a local model, and
 writes a results folder.
 
-## Which model to run
+## Which models, and why only small ones
 
-Pick by what the PC has. If it has a graphics card, Ollama uses it automatically.
+AeroFleet is meant to run on the laptops of ordinary fleet operators. A typical laptop has 8–16 GB
+of memory and no graphics card, which comfortably runs a model of about **3–4 billion parameters
+(a 2–3.5 GB download)**. A 14B or 32B model would not run for most users, so it would not matter if
+it did well. The run therefore compares the small models that do fit:
 
-| The PC has | Run this | Download (approx.) | Why |
-|---|---|---|---|
-| A graphics card with 12 GB or more, or 32 GB of memory | `qwen2.5:14b` | 9 GB | The strongest model here that still fits; best chance of the panel working |
-| A graphics card with 6–8 GB, or 16 GB of memory | `qwen2.5:7b` | 4.7 GB | **The default.** Good at following a fixed reply format for its size |
-| No graphics card and 8 GB of memory | `llama3.2` | 2 GB | Baseline only. It already did badly on the Mac (see below) |
+| Model | Download (checked in the Ollama registry, Oct 2026) | Why it is in the run |
+|---|---|---|
+| `qwen2.5:3b` | 1.93 GB | Known for following a fixed reply format well for its size |
+| `phi4-mini` | 2.49 GB | Strong reasoning for its size; same family as the earlier forensics study |
+| `gemma3:4b` | 3.35 GB | A recent small model from Google |
+| `qwen3:4b` | 2.50 GB | Newer Qwen; a "thinking" model, which the runner tells to answer directly |
+| `llama3.2` | 2.02 GB | The baseline that already did badly on the Mac (below) |
 
-Recommended: **`qwen2.5:7b` first, then `llama3.2`** as the small baseline — that is what the script
-does by default. If the PC can take it, add `qwen2.5:14b`. Alternatives of similar size if a download
-fails: `llama3.1:8b` (about 4.9 GB) or `phi4` (about 9 GB).
+**The script runs all five by default.** Whether any of them is good at *this* task is unknown — that
+is what the run finds out.
 
-The download sizes for the Qwen and other models are from memory, not checked; `llama3.2` is 2.0 GB
-(measured). Whether Qwen is actually better on *this* task is unknown — that is what the run finds out.
+**Optional ceiling check, only if the PC has a graphics card with 12 GB or more:** add `qwen2.5:14b`
+(8.99 GB). It is not a model to ship to users. Its job is to answer one question: if even a 14B model
+cannot beat the no-AI rule, no small model will, and the AI part can be dropped without more testing.
+
+```powershell
+.\research\college_pc_panel_eval.ps1 -Models "qwen2.5:3b,phi4-mini,gemma3:4b,qwen3:4b,llama3.2,qwen2.5:14b"
+```
+
+### Two things that matter as much as the model
+
+- **The panel is slow on a laptop.** It makes 11 model calls per finding (about 90 seconds on the Mac
+  with a 3B model). The single-agent condition makes one call. If a small model does well as a single
+  agent, that is the practical design for users even if the panel scores slightly higher.
+- **The no-AI rule may be the answer.** It is instant, needs no download, cannot be manipulated, and on
+  the first 24 cases it was right 75% of the time with no wrong calls. If no small model beats it, the
+  product ships with the rule and AI stays optional.
 
 ## What you need
 
@@ -61,8 +79,17 @@ MODELS="qwen2.5:14b,qwen2.5:7b" N=30 bash research/college_pc_panel_eval.sh
 ## How long it takes
 
 Each case makes 11 model calls. On the Mac, `llama3.2` took about **94 seconds a case**, so 60 cases
-is roughly an hour and a half per model. A graphics card should be several times faster; a larger
-model is slower. The script prints one line per case, so the pace is visible after the first few.
+is roughly an hour and a half per model, and **the five default models take about seven to eight
+hours** without a graphics card. A graphics card should be several times faster. The script prints one
+line per case, so the pace is visible after the first few.
+
+To get a first answer sooner, run 30 cases first and the rest later — the second run continues from
+where the first stopped:
+
+```powershell
+.\research\college_pc_panel_eval.ps1 -N 30
+.\research\college_pc_panel_eval.ps1            # later: completes the remaining 30 for each model
+```
 
 **You can stop it at any time** (Ctrl+C, close the window, reboot) and run the same command again: it
 continues from the last finished case. Each model has its own results file, so models do not mix.
@@ -84,8 +111,8 @@ The first table has one row per model:
 
 Decision:
 
-- **"yes" for some model** — the panel goes into the app with that model, as advice only.
-- **"no" for every model** — the panel stays out of the app. The no-AI rule, which is already built,
+- **"yes" for some small model** — the AI suggestion goes into the app with that model, as advice only. If the single agent with that model also beats the rule, use the single agent: one call instead of eleven.
+- **"no" for every small model** — the panel stays out of the app. The no-AI rule, which is already built,
   gives the likely cause instead. That is a valid result and goes in the report as measured.
 
 Each model's own section also shows the subtle cases (where the plain rule is weak and the panel is
@@ -128,3 +155,4 @@ reached a model prompt** (`research/results/panel_eval/injection_reach.md`).
 | The PC freezes or Ollama crashes | The model is too big for the memory | Use the next smaller model in the table |
 | "run this from the extracted repo folder" | Wrong folder | `cd` into the folder that contains `research` |
 | Very slow (several minutes a case) | No graphics card in use | Let it run overnight, or use `-N 30` |
+| `qwen3:4b` fails with an error mentioning "think" | Ollama too old for the setting that turns thinking off | Update Ollama, or drop `qwen3:4b` from `-Models` |

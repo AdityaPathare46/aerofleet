@@ -2,14 +2,14 @@
 # Full instructions and how to read the result: docs\aerofleet2\PANEL_EVAL_RUNBOOK.md
 #
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-#   .\research\college_pc_panel_eval.ps1                                   # default models
-#   .\research\college_pc_panel_eval.ps1 -Models "qwen2.5:14b,qwen2.5:7b"  # choose models
+#   .\research\college_pc_panel_eval.ps1                                   # the five laptop-size models
+#   .\research\college_pc_panel_eval.ps1 -Models "qwen2.5:3b,phi4-mini"           # choose models
 #   .\research\college_pc_panel_eval.ps1 -N 30                             # fewer cases (faster)
 #
 # Safe to stop and re-run: every case is saved as it finishes and a re-run continues where it left off.
 # When it finishes, send back the folder:  research\results\panel_eval
 
-param([string]$Models = "qwen2.5:7b,llama3.2", [int]$N = 60)
+param([string]$Models = "qwen2.5:3b,phi4-mini,gemma3:4b,qwen3:4b,llama3.2", [int]$N = 60)
 $ErrorActionPreference = "Stop"
 Write-Host "=== AeroFleet review-panel evaluation: $N cases, models: $Models ===" -ForegroundColor Cyan
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # AeroFleet 2.0 — review-panel evaluation on Linux or macOS. Instructions: docs/aerofleet2/PANEL_EVAL_RUNBOOK.md
 #
-#   bash research/college_pc_panel_eval.sh                         # default models, 60 cases
-#   MODELS="qwen2.5:14b,qwen2.5:7b" N=30 bash research/college_pc_panel_eval.sh
+#   bash research/college_pc_panel_eval.sh                         # the five laptop-size models, 60 cases
+#   MODELS="qwen2.5:3b,phi4-mini" N=30 bash research/college_pc_panel_eval.sh
 #
 # Safe to stop and re-run: it continues where it left off. Send back: research/results/panel_eval
 set -euo pipefail
-MODELS="${MODELS:-qwen2.5:7b,llama3.2}"
+MODELS="${MODELS:-qwen2.5:3b,phi4-mini,gemma3:4b,qwen3:4b,llama3.2}"
 N="${N:-60}"
 [ -f research/panel_eval/run.py ] || { echo "Run this from the repo folder (the one containing 'research')."; exit 1; }
 command -v ollama >/dev/null || { echo "Ollama isn't installed: https://ollama.com/download"; exit 1; }

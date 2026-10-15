@@ -1,6 +1,6 @@
 """Evaluate the review panel against one agent and the no-AI rule on the same cases.
 
-  python -m research.panel_eval.run --n 60 --model qwen2.5:7b        (resumable; one results file per model)
+  python -m research.panel_eval.run --n 60 --model qwen2.5:3b        (resumable; one results file per model)
   python -m research.panel_eval.run --report                         -> research/results/panel_eval/summary.md (all models)
 
 How to run it on another machine: docs/aerofleet2/PANEL_EVAL_RUNBOOK.md
@@ -34,10 +34,14 @@ OWNER = {"PILOT_MANUAL_CONTROL": "pilot", "GPS_DEGRADED": "gps", "WIND_OR_ENVIRO
 def ollama_ask(model: str, host: str = "http://127.0.0.1:11434"):
     import requests
 
+    thinking = model.startswith(("qwen3", "deepseek-r1")) or "reasoning" in model
+
     def ask(system: str, user: str, schema: Dict[str, Any]) -> str:
-        r = requests.post(f"{host}/api/chat", timeout=600, json={
-            "model": model, "stream": False, "format": schema, "options": {"temperature": 0, "num_predict": 400},
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
+        body = {"model": model, "stream": False, "format": schema, "options": {"temperature": 0, "num_predict": 400},
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+        if thinking:
+            body["think"] = False          # thinking models (qwen3, deepseek-r1, *-reasoning) answer directly in the fixed format
+        r = requests.post(f"{host}/api/chat", timeout=600, json=body)
         r.raise_for_status()
         return r.json()["message"]["content"]
     return ask
@@ -170,7 +174,7 @@ def report() -> None:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=60)
-    ap.add_argument("--model", default="qwen2.5:7b")
+    ap.add_argument("--model", default="qwen2.5:3b")
     ap.add_argument("--report", action="store_true")
     a = ap.parse_args()
     report() if a.report else run(a.n, a.model)

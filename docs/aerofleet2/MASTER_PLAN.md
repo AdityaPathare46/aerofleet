@@ -70,7 +70,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 5.2 `aerofleet/assurance/review_panel.py`: facts per episode in five slices (log reader now extracts battery + GPS numbers), fixed cause list, reply shape, own-evidence citation check, counts-only second round, fixed aggregation, NEEDS_HUMAN_REVIEW on disagreement, no-AI rule comparator. Tested with a scripted stand-in model only
 - [ ] 5.2b Wire the panel to flight reviews: store facts at upload, run as a background job (a real model takes minutes), endpoint + screen section, record the result in the signed ledger
 - [x] 5.3 (harness) `research/panel_eval/` — 60 cases, rule vs one agent vs panel, compromised-reviewer attack, planted-text test (0 of 40 reached a prompt). Per-model results files; runner scripts `research/college_pc_panel_eval.ps1|.sh`; instructions `docs/aerofleet2/PANEL_EVAL_RUNBOOK.md`
-- [ ] 5.3b USER runs it on the college PC (qwen2.5:7b, llama3.2, and qwen2.5:14b if it fits) and sends back `research/results/panel_eval`. Decision rule is in the runbook: panel goes in the app only if it beats the no-AI rule
+- [ ] 5.3b USER runs it on the college PC (laptop-size models: qwen2.5:3b, phi4-mini, gemma3:4b, qwen3:4b, llama3.2; qwen2.5:14b only as a ceiling check) and sends back `research/results/panel_eval`. Decision rule is in the runbook: panel goes in the app only if it beats the no-AI rule
 
 ### Phase 6 — Park the old live path
 - [x] 6.1 `AEROFLEET_LIVE_CONTROL` (default off; `aerofleet/assurance/live_control.py`): arm, post-dispatch take-off/go-to and the bench motor test are refused; dispatch plans with simulated drones only; disarm, emergency stop and RTL/hold fallbacks stay available; `GET /api/v1/assurance/policy`
@@ -114,3 +114,4 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-12: README rewritten. VR rehearsal (3.4) is BLOCKED: the `/Volumes/UnityWork` drive with the Unity project is not attached and the editor is not running; the helper scripts in the scratch folder were lost to a reboot (they are small — `umcp.py` talked to the Unity MCP server over HTTP).
 - 2026-10-12: 2.3c + 5.1c done (3 new integration tests; 26 pass in the two files run). Printable report checked in the browser on the real-log review.
 - 2026-10-13: Mac app rebuilt and installed (in-flight setting changes, printable report, signed record for all five features, 2.0 navigation). Not launched or checked inside the bundle.
+- 2026-10-15: Panel evaluation re-aimed at models that run on an ordinary laptop (3-4B, 2-3.5 GB; names and sizes checked in the Ollama registry). Runner turns thinking off for thinking models. 1-case smoke test with llama3.2 passed.
