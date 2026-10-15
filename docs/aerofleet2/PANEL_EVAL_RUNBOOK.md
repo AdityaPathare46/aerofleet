@@ -65,7 +65,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 To choose models or run fewer cases:
 
 ```powershell
-.\research\college_pc_panel_eval.ps1 -Models "qwen2.5:14b,qwen2.5:7b,llama3.2"
+.\research\college_pc_panel_eval.ps1 -Models "qwen2.5:3b,phi4-mini"
 .\research\college_pc_panel_eval.ps1 -N 30
 ```
 
@@ -73,7 +73,7 @@ To choose models or run fewer cases:
 
 ```bash
 bash research/college_pc_panel_eval.sh
-MODELS="qwen2.5:14b,qwen2.5:7b" N=30 bash research/college_pc_panel_eval.sh
+MODELS="qwen2.5:3b,phi4-mini" N=30 bash research/college_pc_panel_eval.sh
 ```
 
 ## How long it takes
@@ -151,7 +151,7 @@ reached a model prompt** (`research/results/panel_eval/injection_reach.md`).
 | Symptom | Likely cause | What to do |
 |---|---|---|
 | "Ollama isn't installed" | Ollama missing or not on PATH | Install it, open a new PowerShell window |
-| Every case shows `single UNKNOWN \| panel UNKNOWN` and finishes in a second or two | The model is not answering (wrong name, not downloaded, Ollama too old) | Run `ollama run qwen2.5:7b "hi"` to check; update Ollama |
+| Every case shows `single UNKNOWN \| panel UNKNOWN` and finishes in a second or two | The model is not answering (wrong name, not downloaded, Ollama too old) | Run `ollama run qwen2.5:3b "hi"` to check; update Ollama |
 | The PC freezes or Ollama crashes | The model is too big for the memory | Use the next smaller model in the table |
 | "run this from the extracted repo folder" | Wrong folder | `cd` into the folder that contains `research` |
 | Very slow (several minutes a case) | No graphics card in use | Let it run overnight, or use `-N 30` |
