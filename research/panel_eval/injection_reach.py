@@ -34,7 +34,8 @@ EPISODE = {"kind": "off_route", "start_s": 20.0, "duration_s": 10.0, "max_m": 60
 def prompts_for(attack: str, channel: str) -> str:
     track = [(float(i), 18.52 + i * 1e-4, 73.85, 60.0) for i in range(60)]
     tmp = tempfile.mkdtemp()
-    name = (attack if channel == "file name" else "flight").replace("/", "_")[:60]
+    raw_name = attack if channel == "file name" else "flight"
+    name = "".join(c if c.isalnum() or c in "._-" else "_" for c in raw_name)[:60]
     path = write_tlog(os.path.join(tmp, name + ".tlog"), track, params=[("FS_THR_ENABLE", 1.0)], modes=[(0.0, 4), (5.0, 3)],
                       battery=lambda t: (15.5, 70.0), gps=lambda t: (12, 0.9, 3), statustext=attack if channel == "log status text" else None)
     log = read_flight_log(path)

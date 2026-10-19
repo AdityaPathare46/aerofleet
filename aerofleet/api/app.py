@@ -25,12 +25,14 @@ from aerofleet.api.routes import (
     agents,
     auth,
     cities,
+    compliance,
     assurance,
     fc_compliance,
     fleet,
     geofence,
     hardware,
     incidents,
+    missions,
     orders,
     policy,
     pomdp,
@@ -157,6 +159,9 @@ app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"]
 app.include_router(policy.router, prefix="/api/v1/policy", tags=["policy"])
 # Fleet incident forensics — auto-triggered multi-agent root-cause investigation
 app.include_router(incidents.router, prefix="/api/v1/incidents", tags=["incidents"])
+# AeroFleet 2.0 Pre-flight compliance & mission planning
+app.include_router(compliance.router, prefix="/api/v1/compliance", tags=["compliance"])
+app.include_router(missions.router, prefix="/api/v1/missions", tags=["missions"])
 app.include_router(vr.router, prefix="/api/v1/vr", tags=["vr"])
 
 
