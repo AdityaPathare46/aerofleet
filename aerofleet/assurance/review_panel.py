@@ -25,7 +25,7 @@ import json
 import statistics
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from aerofleet.assurance.drift import CRITICAL, HIGH
+from aerofleet.assurance.drift import CRITICAL, HIGH, severity_of
 from aerofleet.assurance.reconcile import PILOT_MODES
 
 CAUSES = ("PILOT_MANUAL_CONTROL", "GPS_DEGRADED", "WIND_OR_ENVIRONMENT", "LOW_BATTERY_RESPONSE", "CONFIGURATION", "PLAN_OR_ROUTE_ISSUE")
@@ -66,7 +66,8 @@ def _between(series, t0: float, t1: float):
 
 def episode_facts(episode: Dict[str, Any], track: Sequence[Tuple[float, float, float, float]], modes: Sequence[Tuple[float, str]],
                   battery: Sequence[Tuple[float, float, Optional[float]]] = (), gps: Sequence[Tuple[float, int, Optional[float], int]] = (),
-                  drift_changes: Optional[Sequence[Dict[str, Any]]] = None) -> Dict[str, List[Dict[str, Any]]]:
+                  drift_changes: Optional[Sequence[Dict[str, Any]]] = None,
+                  param_changes: Sequence[Tuple[float, str, float, float]] = ()) -> Dict[str, List[Dict[str, Any]]]:
     """Numbered facts about one episode, grouped by the slice that owns them."""
     start = track[0][0] + episode["start_s"]
     t0, t1 = start - WINDOW_S, start + episode["duration_s"] + WINDOW_S
@@ -110,7 +111,9 @@ def episode_facts(episode: Dict[str, Any], track: Sequence[Tuple[float, float, f
     open_changes = [c for c in (drift_changes or []) if not c.get("approved")]
     settings = [_fact("set.safety_critical", "unapproved safety-critical setting changes", sum(1 for c in open_changes if c["severity"] == CRITICAL)),
                 _fact("set.flight_limit", "unapproved flight-limit setting changes", sum(1 for c in open_changes if c["severity"] == HIGH)),
-                _fact("set.compared", "settings were compared with a baseline", drift_changes is not None)]
+                _fact("set.compared", "settings were compared with a baseline", drift_changes is not None),
+                _fact("set.changed_around_it", "safety-critical or flight-limit settings changed in flight around it",
+                      sum(1 for t, name, _, _ in param_changes if t0 - 30 <= t <= t1 and severity_of(name) in (CRITICAL, HIGH)))]
     return {"navigation": nav, "pilot": pilot, "gps": gps_f, "battery": batt, "settings": settings}
 
 
@@ -124,7 +127,7 @@ def rule_based_cause(facts: Dict[str, List[Dict[str, Any]]]) -> str:
         return "GPS_DEGRADED"
     if v.get("batt.min_pct") is not None and v["batt.min_pct"] < 20:
         return "LOW_BATTERY_RESPONSE"
-    if (v.get("set.safety_critical") or 0) + (v.get("set.flight_limit") or 0) > 0:
+    if (v.get("set.safety_critical") or 0) + (v.get("set.flight_limit") or 0) + (v.get("set.changed_around_it") or 0) > 0:
         return "CONFIGURATION"
     if v.get("nav.speed_before") and v.get("nav.speed_during") is not None and v["nav.speed_during"] < 0.7 * v["nav.speed_before"]:
         return "WIND_OR_ENVIRONMENT"
@@ -235,3 +238,32 @@ def model_ask(model: Optional[str] = None) -> Ask:
         return backend.reason(user, model=model, system_prompt_override=system, json_schema=schema, temperature=0.0)
 
     return ask
+
+
+# Facts a person reads first when the likely cause is shown, per cause.
+KEY_FACTS = {
+    "PILOT_MANUAL_CONTROL": ("pilot.manual_seconds", "pilot.mode_at_start", "pilot.mode_changes"),
+    "GPS_DEGRADED": ("gps.min_sats", "gps.sats_before", "gps.max_hdop", "gps.min_fix"),
+    "LOW_BATTERY_RESPONSE": ("batt.min_pct", "batt.min_volts", "batt.volts_before"),
+    "CONFIGURATION": ("set.safety_critical", "set.flight_limit", "set.changed_around_it"),
+    "WIND_OR_ENVIRONMENT": ("nav.speed_during", "nav.speed_before"),
+    "UNKNOWN": ("nav.max_m", "nav.duration_s"),
+}
+
+
+def likely_causes(report: Dict[str, Any], track, modes, battery=(), gps=(), drift_changes=None, param_changes=()) -> List[Dict[str, Any]]:
+    """The likely cause of each excursion in a flight review, from the fixed no-AI rule.
+
+    The language-model panel was tested against this rule on 60 cases with five small models and lost
+    every time (research/results/panel_eval/summary.md), so the rule is what the product uses.
+    """
+    out = []
+    for i, ep in enumerate(report.get("episodes", [])):
+        facts = episode_facts(ep, track, modes, battery=battery, gps=gps, drift_changes=drift_changes, param_changes=param_changes)
+        cause = rule_based_cause(facts)
+        values = {f["id"]: f for group in facts.values() for f in group}
+        out.append({"episode": i, "kind": ep["kind"], "start_s": ep["start_s"], "likely_cause": cause,
+                    "text": CAUSE_TEXT.get(cause, "no cause stands out in the evidence; a person should look"),
+                    "evidence": [{"label": values[k]["label"], "value": values[k]["value"], "unit": values[k]["unit"]}
+                                 for k in KEY_FACTS[cause] if k in values and values[k]["value"] is not None]})
+    return out

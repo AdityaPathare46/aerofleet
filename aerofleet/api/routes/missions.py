@@ -15,7 +15,10 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, File
 from pydantic import BaseModel, Field
 
+from sqlalchemy.orm import Session
+
 from aerofleet.api.routes.auth import get_current_active_user
+from aerofleet.api.routes.auth import get_current_active_user, get_current_operator_user, get_db
 from aerofleet.city.registry import DEFAULT_CITY
 from aerofleet.compliance.pre_flight import run_pre_flight_check
 from aerofleet.data.models.models import User
@@ -152,60 +155,26 @@ async def download_waypoints(
         )
 
 
-@router.post("/{mission_id}/reconcile", summary="Pre vs. Post Flight Reconciliation")
+@router.post("/{mission_id}/reconcile", summary="Planned vs flown, for a generated mission")
 async def reconcile_flight(
     mission_id: str,
     log_file: UploadFile = File(...),
+    drone_id: str = Query(..., description="Drone that flew it"),
+    fleet: str = Query("default"),
     current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
 ):
-    """Upload a post-flight log (.tlog, .bin, or .csv) to reconcile against the pre-flight plan.
+    """Compare a flight log (.tlog / .bin) with this mission's .waypoints file.
 
-    AeroFleet runs a deterministic diff between the TEE-signed pre-flight
-    waypoint plan and the actual GPS track flown. Any deviations (e.g. pilot
-    taking manual control, altitude deviations) are flagged for audit records.
+    Uses the same reader, comparison, likely-cause rule and signed record as the assurance flight upload.
     """
-    import asyncio
-    
+    from aerofleet.api.routes.assurance import review_flight
+    from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
+
     mission = _mission_store.get(mission_id)
     if not mission:
         raise HTTPException(status_code=404, detail=f"Mission {mission_id} not found")
-
-    if not log_file.filename.endswith((".tlog", ".bin", ".csv")):
-        raise HTTPException(status_code=400, detail="Invalid log file format. Expected .tlog, .bin, or .csv")
-
-    # Read a chunk to pretend we're parsing it
-    await log_file.read(1024)
-
-    # Simulate parsing delay
-    await asyncio.sleep(0.5)
-
-    # For the AeroFleet 2.0 demonstration, we return a structured reconciliation report.
-    # In a full implementation, this would parse the MAVLink GPS/Attitude messages 
-    # and spatially diff them against mission["mission_file"]["waypoints"].
-    report = {
-        "mission_id": mission_id,
-        "log_file": log_file.filename,
-        "reconciliation_status": "DEVIATION_DETECTED",
-        "planned_distance_km": 5.2,
-        "actual_distance_km": 5.8,
-        "deviations": [
-            {
-                "type": "ALTITUDE_EXCEEDANCE",
-                "severity": "HIGH",
-                "timestamp_ms": 1697483012000,
-                "planned_altitude_m": 60.0,
-                "actual_altitude_m": 92.5,
-                "note": "Pilot climbed above planned Yellow Zone altitude restriction (60m).",
-            },
-            {
-                "type": "MANUAL_INTERVENTION",
-                "severity": "LOW",
-                "timestamp_ms": 1697483500000,
-                "mode_changed_to": "LOITER",
-                "note": "Pilot switched out of AUTO mode to LOITER before final approach.",
-            }
-        ],
-        "compliance_impact": "Failed post-flight audit. Requires fleet manager review before pilot's next flight.",
-    }
-
-    return report
+    out = review_flight(db, current_user, fleet, drone_id, mission["mission_file"]["wpl_content"], f"{mission_id}.waypoints",
+                        await log_file.read(LOG_MAX + 1), log_file.filename or "", mission.get("city"))
+    out["mission_id"] = mission_id
+    return out

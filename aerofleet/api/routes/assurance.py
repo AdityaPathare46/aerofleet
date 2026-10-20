@@ -192,26 +192,25 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
     return out
 
 
-@router.post("/fleets/{fleet}/drones/{drone_id}/flights")
-async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...), log: UploadFile = File(...),
-                        city: Optional[str] = Query(None, description="Check the track against this city's no-fly zones"),
-                        corridor_m: float = Query(30.0, gt=0, le=1000), altitude_m: float = Query(15.0, gt=0, le=500),
-                        user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Compare a flight log (.tlog / .bin) with the approved mission file (.waypoints).
+def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: str, plan_name: str, log_bytes: bytes,
+                  log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0) -> Dict[str, Any]:
+    """Compare one flight log with its approved mission, store the review, sign it, and return it.
 
-    The parameters found in the log are also stored as the drone's newest snapshot, so the drift check
-    covers the configuration it actually flew with.
+    Shared by the assurance upload and POST /api/v1/missions/{id}/reconcile. Raises 422 on unusable files.
     """
     import os
     import tempfile
 
+    from aerofleet.assurance.drift import in_flight_changes
     from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX, FlightLogError, read_flight_log
     from aerofleet.assurance.reconcile import PlanError, parse_waypoints, reconcile
+    from aerofleet.assurance.review_panel import likely_causes
 
     _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
-    ext = os.path.splitext(log.filename or "")[1].lower()
+    if len(log_bytes) > LOG_MAX:
+        raise HTTPException(status_code=422, detail="The log file is larger than 200 MB")
     try:
-        mission = parse_waypoints((await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"))
+        mission = parse_waypoints(plan_text)
     except PlanError as e:
         raise HTTPException(status_code=422, detail=str(e))
     zone_at = None
@@ -220,10 +219,10 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
 
         airspace = get_fleet_state(city).airspace
         zone_at = lambda lat, lon: airspace.zone_at(lat, lon).value  # noqa: E731
-    fd, tmp = tempfile.mkstemp(suffix=ext or ".unknown")
+    fd, tmp = tempfile.mkstemp(suffix=os.path.splitext(log_name or "")[1].lower() or ".unknown")
     try:
         with os.fdopen(fd, "wb") as f:
-            f.write(await log.read(LOG_MAX + 1))
+            f.write(log_bytes)
         flight = read_flight_log(tmp)
         report = reconcile(mission, flight.track, flight.modes, corridor_m=corridor_m, altitude_tol_m=altitude_m, zone_at=zone_at)
     except (FlightLogError, PlanError) as e:
@@ -232,25 +231,46 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
         os.unlink(tmp)
     report["log"] = flight.summary()
     report["zones_checked"] = city
-    from aerofleet.assurance.drift import in_flight_changes
-
     changed = in_flight_changes(flight.param_changes, flight.track[0][0])
     report["settings_changed_in_flight"] = {
         "count": len(changed), "safety_critical": sum(1 for c in changed if c["severity"] == "CRITICAL"),
         "flight_limit": sum(1 for c in changed if c["severity"] == "HIGH"), "changes": changed[:100]}
+    drift = None
     if flight.params:
         db.add(ParamSnapshot(drone_id=drone_id, fleet=fleet, params=flight.params, file_format=f"log:{flight.format}",
-                             filename=(log.filename or "")[:200], uploaded_by=user.username))
+                             filename=(log_name or "")[:200], uploaded_by=user.username))
+        db.flush()
+        drift = _drift(db, fleet, drone_id)
+    baseline_changes = drift["vs_baseline"]["changes"] if drift and drift.get("vs_baseline") else None
+    report["likely_causes"] = likely_causes(report, flight.track, flight.modes, flight.battery, flight.gps,
+                                            drift_changes=baseline_changes, param_changes=flight.param_changes)
+    report["likely_cause_method"] = "fixed no-AI rule (aerofleet/assurance/review_panel.py rule_based_cause)"
     row = FlightReview(drone_id=drone_id, fleet=fleet, verdict=report["verdict"], report=report,
-                       plan_name=(plan.filename or "")[:200], log_name=(log.filename or "")[:200], uploaded_by=user.username)
+                       plan_name=(plan_name or "")[:200], log_name=(log_name or "")[:200], uploaded_by=user.username)
     db.add(row)
     entry = ledger.append(db, "flight_review", f"{fleet}/{drone_id}", report, user.username)
     db.commit()
     db.refresh(row)
     out = _review(row)
     out["ledger_seq"] = entry.seq
-    out["drift"] = _drift(db, fleet, drone_id) if flight.params else None
+    out["drift"] = drift
     return out
+
+
+@router.post("/fleets/{fleet}/drones/{drone_id}/flights")
+async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...), log: UploadFile = File(...),
+                        city: Optional[str] = Query(None, description="Check the track against this city's no-fly zones"),
+                        corridor_m: float = Query(30.0, gt=0, le=1000), altitude_m: float = Query(15.0, gt=0, le=500),
+                        user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Compare a flight log (.tlog / .bin) with the approved mission file (.waypoints).
+
+    The parameters found in the log are also stored as the drone's newest snapshot, so the drift check
+    covers the configuration it actually flew with. Each excursion gets a likely cause from the no-AI rule.
+    """
+    from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
+
+    return review_flight(db, user, fleet, drone_id, (await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"),
+                         plan.filename or "", await log.read(LOG_MAX + 1), log.filename or "", city, corridor_m, altitude_m)
 
 
 @router.get("/fleets/{fleet}/flights")

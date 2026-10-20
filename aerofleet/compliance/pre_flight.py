@@ -14,13 +14,12 @@ Domains:
   6. Document Checklist    — required paperwork by drone category
   7. Mission File Readiness— whether a compliant .waypoints file can be generated
 
-The report is signed with a local attestation key (mock TEE for dev/demo;
-production path uses Intel SGX or Azure Confidential Computing).
+The API writes every report to the per-install signed record (aerofleet/assurance/ledger.py): tamper-
+evident, no trusted hardware involved.
 """
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
 import os
 import time
@@ -39,11 +38,6 @@ from aerofleet.safety.cbf_gate import build_cbf_gate, build_trajectory_points_fr
 from aerofleet.utils.logging import get_logger
 
 logger = get_logger(__name__)
-
-# ── Mock TEE attestation key (dev/demo).
-# In production, replace with Intel SGX sealing or Azure Attestation.
-_ATTEST_KEY = os.environ.get("AEROFLEET_ATTEST_KEY", "aerofleet-dev-attestation-key-2025")
-
 
 class OverallStatus(str, Enum):
     COMPLIANT = "COMPLIANT"
@@ -71,42 +65,13 @@ class PreFlightReport:
     document_checklist: List[Dict[str, Any]]
     cbf_certificate: Dict[str, Any]
     mission_file_ready: bool
-    # Attestation — proves this report was produced by AeroFleet 2.0
-    attestation: Dict[str, str] = field(default_factory=dict)
+    # Filled in by the API from the signed record (aerofleet/assurance/ledger.py): a per-install Ed25519
+    # key, hash-chained. Earlier this was an HMAC with a key written in the source, which anyone could forge.
+    attestation: Dict[str, Any] = field(default_factory=dict)
 
 
 # ── Status severity ordering
 _SEVERITY = {DomainStatus.COMPLIANT.value: 0, DomainStatus.AT_RISK.value: 1, DomainStatus.NON_COMPLIANT.value: 2}
-
-
-def _sign_report(report_payload: str) -> Dict[str, str]:
-    """Mock TEE attestation: HMAC-SHA256 signature over the report payload.
-
-    In production this would be replaced by:
-      - Intel SGX: sgx_sign() with enclave's sealing key
-      - Azure Confidential Computing: Azure Attestation Service JWT
-      - Apple CryptoKit: SecureEnclave P-256 signing
-
-    The mock signature still proves the report hasn't been tampered with
-    after generation (integrity), though it doesn't prove it ran on specific
-    hardware (attestation). For a real demo/field deployment, swap the key
-    source to the TEE provider.
-    """
-    sig = hmac.new(
-        _ATTEST_KEY.encode(),
-        report_payload.encode(),
-        "sha256",
-    ).hexdigest()
-    return {
-        "method": "HMAC-SHA256-MOCK",
-        "signature": sig,
-        "key_id": "aerofleet-dev-key-v1",
-        "note": (
-            "Dev/demo attestation — not hardware-backed. "
-            "Replace AEROFLEET_ATTEST_KEY and this method with Intel SGX or "
-            "Azure Confidential Computing for production."
-        ),
-    }
 
 
 def _worst_status(*statuses: str) -> str:
@@ -205,16 +170,6 @@ def run_pre_flight_check(
         f"Pre-flight check complete: {mission_id} → {overall} in {elapsed_ms}ms"
     )
 
-    # ── Attestation ───────────────────────────────────────────────────────
-    report_core = {
-        "mission_id": mission_id,
-        "city": city,
-        "overall_status": overall,
-        "cbf_passed": cbf_certificate.get("passed", False),
-        "elapsed_ms": elapsed_ms,
-    }
-    attestation = _sign_report(json.dumps(report_core, sort_keys=True))
-
     return PreFlightReport(
         mission_id=mission_id,
         city=city,
@@ -224,7 +179,7 @@ def run_pre_flight_check(
         document_checklist=checklist,
         cbf_certificate=cbf_certificate,
         mission_file_ready=mission_file_ready,
-        attestation=attestation,
+        attestation={},
     )
 
 

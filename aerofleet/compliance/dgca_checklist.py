@@ -11,6 +11,11 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 
+# The UAOP (Unmanned Aircraft Operator Permit) is deliberately absent: the Drone Rules 2021 abolished it
+# (Ministry of Civil Aviation / PIB release of 26 Aug 2021, PRID 1749154). It was required under the
+# earlier UAS Rules 2021.
+
+
 def build_dgca_checklist(drone_category: str, mission_plan: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Build a DGCA document checklist for the given drone category.
 
@@ -42,17 +47,6 @@ def build_dgca_checklist(drone_category: str, mission_plan: Dict[str, Any]) -> L
         "how_to_obtain": "Register on https://digitalsky.dgca.gov.in",
     })
 
-    # UAOP — required for Medium/Large and all BVLOS
-    uaop_required = cat in ("Medium", "Large") or is_bvlos
-    checklist.append({
-        "item": "UAOP (Unmanned Aircraft Operator Permit)",
-        "description": "Permit for commercial drone operations.",
-        "required": uaop_required,
-        "provided": bool(mission_plan.get("uaop_provided", False)),
-        "rule_citation": "DGCA Drone Rules 2021 — Rule 19",
-        "how_to_obtain": "Apply via Digital Sky NPNT platform with flight plan",
-    })
-
     # Remote Pilot Certificate — required for all commercial ops
     checklist.append({
         "item": "Remote Pilot Certificate",
@@ -63,11 +57,12 @@ def build_dgca_checklist(drone_category: str, mission_plan: Dict[str, Any]) -> L
         "how_to_obtain": "Complete DGCA-approved remote pilot training",
     })
 
-    # Insurance — required for Medium/Large
+    # Insurance — third-party insurance is mandatory for every drone except nano (legal summaries of the
+    # Drone Rules 2021; not checked against the Gazette text)
     checklist.append({
         "item": "Third-Party Insurance",
         "description": "Liability insurance covering third-party damage.",
-        "required": cat in ("Medium", "Large"),
+        "required": not is_nano,
         "provided": bool(mission_plan.get("insurance_provided", False)),
         "rule_citation": "DGCA Drone Rules 2021 — Rule 26",
         "how_to_obtain": "Obtain from IRDAI-registered insurer",
@@ -113,4 +108,7 @@ def build_dgca_checklist(drone_category: str, mission_plan: Dict[str, Any]) -> L
         "how_to_obtain": "Assign a trained remote pilot as BVLOS observer",
     })
 
+    # None of the rule numbers above has been checked against the Gazette text of the Drone Rules 2021.
+    for item in checklist:
+        item["citation_verified"] = False
     return checklist
