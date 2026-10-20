@@ -80,7 +80,7 @@ def main() -> None:
               "model or reviewer, which is measured separately in summary.md."]
     out = Path("research/results/panel_eval/injection_reach.md")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(lines) + "\n")
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")   # Windows would otherwise write cp1252
     print("\n".join(lines))
 
 
