@@ -60,3 +60,6 @@ pymavlink>=2.4.49
 cryptography>=42.0.0            # Ed25519 signatures for the signed record (aerofleet/assurance/ledger.py)
 # USB flight-controller discovery (aerofleet/hardware/fc_discovery.py)
 pyserial>=3.5
+
+# Research only: PX4 .ulg reader for research/px4_log_study
+pyulog>=1.2.0
