@@ -2,6 +2,16 @@
 
 Read this first, then `docs/aerofleet2/MASTER_PLAN.md` (the checklist: do the first unchecked item).
 
+## 0. Latest direction (20 Oct 2026) — read before section 1
+
+Measured results replaced several assumptions below. Settings drift does NOT separate crashes from good flights
+in public PX4 logs; simple rules and small LLMs cannot tell pilot from drone; the panel stays out of the product.
+The work now centres on a **public crash-diagnosis benchmark from PX4 Flight Review logs** (paper) and, as a
+product hypothesis, a **test-flight acceptance check** after a build or repair (tuning, vibration, compass/GPS),
+because forum experts name tuning/configuration most often. Details and numbers: MASTER_PLAN progress log for
+2026-10-20 and `research/results/px4_log_study/`. Forum text and review sheets are git-ignored (rebuild with the
+scripts). Large log downloads live in the session scratch folder, not the repo.
+
 ## 1. What is being built and why
 
 AeroFleet started as an AI multi-agent drone *dispatch* system with a VR safety view. A senior
