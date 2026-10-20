@@ -151,7 +151,7 @@ def evidence(u):
     ev["D_ERR"] = bool(errs)
 
     cpu = topic(u, "cpuload")
-    if cpu is not None:
+    if cpu is not None and "load" in cpu:  # bug fix after the first run: some logs have cpuload without "load"
         ev["D_CPU"] = bool((cpu["load"][between(cpu, t_arm, t_c)] > 0.95).any())
 
     ev["D_FAILSAFE"] = bool("failsafe" in st and st["failsafe"][m_st].any())
