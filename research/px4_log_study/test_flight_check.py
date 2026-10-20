@@ -20,7 +20,11 @@ Matching expert causes (forum_expert_labels.csv, expert_conclusion = drone):
 A check counts as USEFUL if it fires on >= 50% of the logs whose expert named its cause AND on <= 10% of the
 normal (good/great) flights. Reported per check, with counts; no overall pass mark.
 
-    python research/px4_log_study/test_flight_check.py LABELS_CSV FORUM_LOG_DIR NORMAL_CSV NORMAL_LOG_DIR OUT_DIR
+SECOND RUN, declared after the first results and before running it: the first run's window ran up to the crash,
+so checks could fire on the crash itself. With END_MARGIN_S = 10 the window stops 10 s before t_c (logs with less
+than 10 s left are dropped). Same checks, same thresholds, same pass marks. Set by the 6th argument.
+
+    python research/px4_log_study/test_flight_check.py LABELS_CSV FORUM_LOG_DIR NORMAL_CSV NORMAL_LOG_DIR OUT_DIR [END_MARGIN_S]
 """
 import csv
 import json
@@ -37,6 +41,7 @@ TOPICS = ["vehicle_status", "vehicle_land_detected", "vehicle_attitude", "vehicl
           "vehicle_angular_velocity", "vehicle_imu_status", "estimator_status", "vehicle_gps_position", "sensor_gps",
           "actuator_motors", "actuator_outputs", "battery_status"]
 CHECKS = ("C_TUNE", "C_VIBE", "C_MAG", "C_GPS", "C_MOTOR", "C_BATT")
+END_MARGIN_S = 0.0
 CAUSE_CHECKS = {"tuning / configuration": ("C_TUNE",), "vibration / mounting": ("C_VIBE",),
                 "GPS / compass / estimator": ("C_MAG", "C_GPS"), "motor / ESC / propeller": ("C_MOTOR",),
                 "battery / power": ("C_BATT",)}
@@ -51,13 +56,15 @@ def checks(u):
         return None, "never armed"
     t_arm, t_end = per
     rotary = bool(st["is_rotary_wing"][-1]) if "is_rotary_wing" in st else True
-    t_c = crash_time(u, t_arm, t_end, rotary)
+    t_c = crash_time(u, t_arm, t_end, rotary) - END_MARGIN_S * 1e6
     land = topic(u, "vehicle_land_detected")
     t0 = t_arm
     if land is not None:
         m = between(land, t_arm, t_c) & (land["landed"] == 0)
         if m.any():
             t0 = land["timestamp"][m][0]
+    if t_c - t0 < 10e6:
+        return None, "less than 10 s airborne in the window"
     out = {}
 
     sp, av = topic(u, "vehicle_rates_setpoint"), topic(u, "vehicle_angular_velocity")
@@ -120,7 +127,10 @@ def run(path):
         return None, type(e).__name__
 
 
-def main(labels_csv, forum_dir, normal_csv, normal_dir, out_dir):
+def main(labels_csv, forum_dir, normal_csv, normal_dir, out_dir, end_margin_s="0"):
+    global END_MARGIN_S
+    END_MARGIN_S = float(end_margin_s)
+    tag = "" if END_MARGIN_S == 0 else f"_minus{int(END_MARGIN_S)}s"
     res, skipped = [], Counter()
     for r in csv.DictReader(open(labels_csv)):
         if r["is_crash"] != "yes" or r["expert_conclusion"] != "drone" or r["cause"] not in CAUSE_CHECKS:
@@ -144,13 +154,13 @@ def main(labels_csv, forum_dir, normal_csv, normal_dir, out_dir):
             continue
         out.update(group="normal", log_id=r["log_id"])
         res.append(out)
-    with open(os.path.join(out_dir, "test_flight_check.jsonl"), "w") as f:
+    with open(os.path.join(out_dir, f"test_flight_check{tag}.jsonl"), "w") as f:
         for x in res:
             f.write(json.dumps(x) + "\n")
 
     normal = [x for x in res if x["group"] == "normal"]
     forum = [x for x in res if x["group"] == "forum"]
-    L = ["# Test-flight check against expert-diagnosed crashes", "",
+    L = [f"# Test-flight check against expert-diagnosed crashes (window ends {END_MARGIN_S:.0f} s before the crash)", "",
          f"Forum crash logs (expert said drone, named a matching cause): {len(forum)}; normal flights: {len(normal)}. "
          f"Skipped: {dict(skipped)}.", "Checks and pass marks were committed before the forum logs were downloaded.", "",
          "| Expert cause | Check | Fires on expert-cause logs | Fires on normal flights | Useful? |", "|---|---|---|---|---|"]
@@ -173,9 +183,9 @@ def main(labels_csv, forum_dir, normal_csv, normal_dir, out_dir):
           "- Forum labels were recorded with AI assistance and reviewed by the project owner; quotes verified by script.",
           "- Forum logs include the crash itself; a check that fires only because of the crash is not a pre-flight finding.",
           "- Small numbers per cause. Thresholds are first guesses, declared in advance."]
-    open(os.path.join(out_dir, "test_flight_check.md"), "w").write("\n".join(L) + "\n")
+    open(os.path.join(out_dir, f"test_flight_check{tag}.md"), "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:6])
+    main(*sys.argv[1:7])
