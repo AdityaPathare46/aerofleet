@@ -30,9 +30,13 @@ interface Review {
     episodes: Episode[]; manual_control: { mode: string; start_s: number; duration_s: number }[]; notes: string[]
     log: { points: number; param_count: number; notes: string[] }
     settings_changed_in_flight?: { count: number; safety_critical: number; flight_limit: number; changes: { t_s: number; name: string; old: number; new: number; severity: Severity }[] }
+    evidence_timeline?: TimelineEvent[]
+    around_episodes?: { episode: number; kind: Episode['kind']; start_s: number; summary: string }[]
   }
   drift?: Drift | null
 }
+interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
+const LEVEL_COLOR: Record<TimelineEvent['level'], string> = { warning: 'var(--status-red)', notice: '#92400E', info: 'var(--text-secondary)' }
 interface Conflict { a: string; b: string; t_s: number; horizontal_m: number; vertical_m: number; duration_s: number }
 interface Deconflicted {
   before: Conflict[]; after: Conflict[]; resolved: boolean; unresolved: string[]; note: string
@@ -56,7 +60,8 @@ interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
 const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', wind_check: 'Wind checked' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
+// rounds the total first: 299.9 s is 5:00, not 4:60
+const clock = (s: number) => { const t = Math.max(0, Math.round(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` }
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
 
 const VERDICT: Record<Verdict, { color: string; bg: string; label: string; meaning: string }> = {
@@ -392,6 +397,25 @@ export default function FleetAssurancePage() {
               {review.report.settings_changed_in_flight.changes.every((c) => c.severity !== 'CRITICAL' && c.severity !== 'HIGH') && (
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Only tuning and other minor settings changed.</div>
               )}
+            </div>
+          )}
+          {review.report.evidence_timeline && review.report.evidence_timeline.length > 1 && (
+            <div id="evidence-timeline" style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 13 }}><b>Timeline from the log</b>
+                <span style={{ color: 'var(--text-secondary)' }}> — what happened and when. AeroFleet does not name a cause: on real crash logs a fixed rule could not reliably tell pilot error from an aircraft fault, so that call is yours.</span>
+              </div>
+              {(review.report.around_episodes ?? []).map((a) => (
+                <div key={a.episode} style={{ fontSize: 13, padding: '6px 10px', borderLeft: '3px solid var(--status-red)', background: 'var(--bg-secondary, #F8FAFC)' }}>
+                  <b>{EPISODE_LABEL[a.kind]} at {clock(a.start_s)}</b> — around it: {a.summary}
+                </div>))}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th style={{ width: 70 }}>At</th><th>Event</th></tr></thead>
+                <tbody>{review.report.evidence_timeline.slice(0, 200).map((ev, i) => (
+                  <tr key={i} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                    <td style={{ padding: '5px 0', fontVariantNumeric: 'tabular-nums' }}>{clock(ev.t_s)}</td>
+                    <td style={{ color: LEVEL_COLOR[ev.level], fontWeight: ev.level === 'warning' ? 600 : 400 }}>{ev.text}</td>
+                  </tr>))}</tbody>
+              </table>
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>

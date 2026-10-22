@@ -19,7 +19,8 @@ CSS = ("body{font:14px/1.45 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;co
 
 
 def _clock(s: float) -> str:
-    return f"{int(s // 60)}:{int(round(s % 60)):02d}"
+    t = max(0, int(round(s)))          # round the total first: 299.9 s is 5:00, not 4:60
+    return f"{t // 60}:{t % 60:02d}"
 
 
 def _table(head, rows) -> str:
@@ -57,6 +58,18 @@ def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, 
         parts += [f"<h2>Settings changed during the flight ({e(str(changed['count']))})</h2>",
                   _table(["At", "Setting", "Kind", "From", "To"], rows) or "<p>Only tuning and other minor settings changed.</p>",
                   "<p class='muted'>A setting changed and put back before landing does not show in the final settings.</p>"]
+    timeline = r.get("evidence_timeline") or []
+    if timeline:
+        level = {"warning": "bad", "notice": "", "info": "muted"}
+        rows = [[e(_clock(x["t_s"])), f"<span class='{level.get(x['level'], '')}'>{e(x['text'])}</span>"] for x in timeline]
+        parts += ["<h2>Timeline from the log</h2>", _table(["At", "Event"], rows)]
+        around = r.get("around_episodes") or []
+        if around:
+            parts += ["<p><b>Around each deviation</b> (from 30 s before it to its end):</p><ul>"
+                      + "".join(f"<li>{e(KIND.get(a['kind'], a['kind']))} at {e(_clock(a['start_s']))}: {e(a['summary'])}</li>" for a in around)
+                      + "</ul>",
+                      "<p class='muted'>AeroFleet lists these facts but does not name a cause: on public PX4 crash logs a fixed rule "
+                      "could not reliably tell a pilot error from an aircraft fault, so that judgement is left to a person.</p>"]
     parts += ["<h2>How this was judged</h2>",
               f"<p class='muted'>Counted as a deviation beyond {e(str(tol['corridor_m']))} m sideways or {e(str(tol['altitude_m']))} m in height for "
               f"{e(str(tol['min_duration_s']))} s or more. These are the fleet's tolerances, not regulatory limits. Every figure was computed by "
