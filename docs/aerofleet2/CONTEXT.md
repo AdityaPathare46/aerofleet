@@ -9,7 +9,9 @@ in public PX4 logs; simple rules and small LLMs cannot tell pilot from drone; th
 The work now centres on a **public crash-diagnosis benchmark from PX4 Flight Review logs** (paper) and, as a
 product hypothesis, a **test-flight acceptance check** after a build or repair (tuning, vibration, compass/GPS),
 because forum experts name tuning/configuration most often. Details and numbers: MASTER_PLAN progress log for
-2026-10-20 and `research/results/px4_log_study/`. Forum text and review sheets are git-ignored (rebuild with the
+2026-10-20 and 2026-10-22, and `research/results/px4_log_study/`. As of 22 Oct the product contains no AI and
+names no cause; flight reviews show an evidence timeline and can be replayed on the VR table (web view checked;
+Quest app compiled only). Test account for checking the app locally: see `AEROFLEET_DEV_TEST_*` in `.env`. Forum text and review sheets are git-ignored (rebuild with the
 scripts). Large log downloads live in the session scratch folder, not the repo.
 
 ## 1. What is being built and why

@@ -119,7 +119,22 @@ Each model's own section also shows the subtle cases (where the plain rule is we
 supposed to help), how many votes the checks threw out, and how often one compromised reviewer could
 swing the panel.
 
-## What we already know
+## Result (college PC, October 2026) — the decision is made
+
+Atharv ran 60 cases with four small models. The no-AI rule was right 45 times and wrong 0 times in every run.
+
+| Model | One agent (right / wrong) | Panel (right / wrong) | One compromised reviewer changed the panel's answer |
+|---|---|---|---|
+| `gemma3:4b` | 10 / 0 (almost always deferred) | 3 / 36 | 49 of 60 |
+| `phi4-mini` | 10 / 0 | 20 / 19 | 56 of 60 |
+| `qwen2.5:3b` | 9 / 44 | 10 / 6 | 54 of 60 |
+| `qwen3:4b` | 0 / 41 | 17 / 38 | 45 of 60 |
+
+By the rule declared above, the panel stays out of the app. The product names no cause at all (the plain
+rule also failed on real PX4 crash logs — `research/results/px4_log_study/`); flight reviews show an evidence
+timeline instead. The rest of this runbook is kept so the test can be repeated.
+
+## What we knew before the college run
 
 **Mac, `llama3.2`, first 24 of 60 cases (run stopped early, 12 October 2026):**
 
