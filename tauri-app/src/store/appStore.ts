@@ -60,6 +60,10 @@ interface AppState {
   activePage: string
   setActivePage: (page: string) => void
 
+  // The flight review the VR view replays (set from Fleet Assurance ▸ Show on the VR table)
+  vrFlight: { fleet: string; id: number } | null
+  setVrFlight: (f: { fleet: string; id: number } | null) => void
+
   // API Connection
   apiUrl: string
   setApiUrl: (url: string) => void
@@ -127,6 +131,8 @@ export const useAppStore = create<AppState>()(
   // Navigation
   activePage: 'assurance',
   setActivePage: (page) => set({ activePage: page }),
+  vrFlight: null,
+  setVrFlight: (f) => set({ vrFlight: f }),
 
   // API
   apiUrl: 'http://localhost:8000',

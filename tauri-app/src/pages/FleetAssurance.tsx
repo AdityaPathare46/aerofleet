@@ -87,7 +87,7 @@ const fmt = (x: number | null) => (x === null ? '—' : String(Number(x.toFixed(
 const when = (iso: string) => new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function FleetAssurancePage() {
-  const { apiUrl } = useAppStore()
+  const { apiUrl, setVrFlight, setActivePage } = useAppStore()
   const [fleet, setFleet] = useState('default')
   const [fleetDraft, setFleetDraft] = useState('default')   // applied on Enter or blur, not on every keystroke
   const epoch = useRef(0)                                    // discards replies that belong to a previous fleet
@@ -352,6 +352,8 @@ export default function FleetAssurancePage() {
             <Pill verdict={review.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={review.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />
             <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{review.log_name} against {review.plan_name}</span>
             <button className="btn" id="btn-printable-report" disabled={busy} onClick={() => printable(review.id)} title="A self-contained page; open it and print to PDF">Printable report</button>
+            <button className="btn" id="btn-show-vr" onClick={() => { setVrFlight({ fleet: fleet.trim() || 'default', id: review.id }); setActivePage('vr') }}
+              title="Replay this flight on the VR table: plan against flown track, with the log's events; a paired headset follows">Show on the VR table</button>
           </div>
           <div style={{ fontSize: 13 }}>
             Flight time {clock(review.report.flight_s)} · furthest off route <b>{review.report.horizontal_m.max} m</b> (typical {review.report.horizontal_m.median} m) ·

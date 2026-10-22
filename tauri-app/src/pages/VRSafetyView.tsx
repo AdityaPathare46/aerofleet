@@ -12,6 +12,7 @@ import { Swarm } from '../components/vr/Swarm'
 import { ClaimPanel, FleetPanel, ViewControls } from '../components/vr/Panels'
 import { ReplayGeometry, replayFrame } from '../components/vr/Replay'
 import { LiveBoard, ReplayBoard } from '../components/vr/HtmlBoards'
+import { FlightBoard, FlightGeometry, flightFrame, type FlightReplayDto } from '../components/vr/Flight'
 import { UIMode } from '../components/vr/uiMode'
 import { C } from '../components/vr/theme'
 import type {
@@ -65,8 +66,13 @@ function Room() {
   )
 }
 
+type Mode = 'live' | 'replay' | 'flight'
+
 interface SceneProps {
-  mode: 'live' | 'replay'
+  mode: Mode
+  flight: FlightReplayDto | null
+  flightCenter: [number, number]
+  flightT: number
   live: LiveMarginsDto | null
   scene: VRSceneDto | null
   zones: ZoneDto[]
@@ -105,13 +111,14 @@ function SceneContent(p: SceneProps) {
       <group position={inXR ? [0, p.tableHeight, XR_TABLE_Z] : [0, 0, 0]}>
         <group rotation={[0, (p.rotationDeg * Math.PI) / 180, 0]}>
           <Table d={p.diorama} showPlinth={inXR && !isAR} />
-          {p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
-          {p.buildings && p.controls.showBuildings && (
+          {/* City layers are drawn around the city centre; a reviewed flight can be anywhere, so they are left off. */}
+          {p.mode !== 'flight' && p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
+          {p.mode !== 'flight' && p.buildings && p.controls.showBuildings && (
             <Buildings data={p.buildings} d={p.diorama} cityCenter={p.cityCenter} onStats={p.onBuildingStats} />
           )}
-          <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />
+          {p.mode !== 'flight' && <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />}
           <Ceilings d={p.diorama} opsCeilingM={ops} legalCeilingM={legal} />
-          <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />
+          {p.mode !== 'flight' && <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />}
           <AltitudeRuler d={p.diorama} />
           <ScaleAndNorth d={p.diorama} />
           {p.mode === 'live' && p.live && (
@@ -120,11 +127,12 @@ function SceneContent(p: SceneProps) {
               onSelect={(id) => p.setSelected(p.selected === id ? null : id)} />
           )}
           {p.mode === 'replay' && p.scene && <ReplayGeometry scene={p.scene} d={p.diorama} cityCenter={p.cityCenter} />}
+          {p.mode === 'flight' && p.flight && <FlightGeometry f={p.flight} d={p.diorama} center={p.flightCenter} t={p.flightT} />}
         </group>
 
         {/* In a headset the boards are in-world (HTML can't render there); on desktop they're
             HTML overlays rendered by the page instead. */}
-        {inXR && (
+        {inXR && p.mode !== 'flight' && (
           <group position={[0, p.mode === 'live' ? 0.5 : 0.52, -TABLE_HALF - 0.18]} rotation={[-0.12, 0, 0]} scale={1.35}>
             {p.mode === 'live'
               ? <FleetPanel data={p.live} cityName={p.cityName} ageS={p.ageS} vExag={p.diorama.vExag} controls={controls} />
@@ -144,7 +152,7 @@ function SceneContent(p: SceneProps) {
 // ── page ─────────────────────────────────────────────────────────────
 
 export default function VRSafetyView() {
-  const { apiUrl } = useAppStore()
+  const { apiUrl, vrFlight } = useAppStore()
   const [city, setCity] = useState('pune')
   const [cities, setCities] = useState<CityDto[]>([])
   const [zones, setZones] = useState<ZoneDto[]>([])
@@ -161,7 +169,10 @@ export default function VRSafetyView() {
   const [needsAuth, setNeedsAuth] = useState(false)
   const [authNonce, setAuthNonce] = useState(0)
 
-  const [mode, setMode] = useState<'live' | 'replay'>('live')
+  const [mode, setMode] = useState<Mode>(vrFlight ? 'flight' : 'live')
+  const [flight, setFlight] = useState<FlightReplayDto | null>(null)
+  const [flightT, setFlightT] = useState(0)
+  const [playing, setPlaying] = useState(false)
   const [incidents, setIncidents] = useState<IncidentSummaryDto[]>([])
   const [selectedIncidentId, setSelectedIncidentId] = useState('')
   const [scene, setScene] = useState<VRSceneDto | null>(null)
@@ -230,6 +241,28 @@ export default function VRSafetyView() {
       .catch((e) => { setScene(null); if (!onAuthError(e)) setError(String((e as Error).message || e)) })
   }, [apiUrl, selectedIncidentId, mode, authNonce, onAuthError])
 
+  useEffect(() => {
+    if (mode !== 'flight' || !vrFlight) { setFlight(null); return }
+    getJson<{ id: number; drone_id: string; fleet: string; verdict: FlightReplayDto['verdict']; plan_name: string | null; log_name: string | null
+      report: { replay?: FlightReplayDto['replay']; episodes: FlightReplayDto['episodes']; evidence_timeline?: FlightReplayDto['timeline']
+        tolerances: FlightReplayDto['tolerances']; flight_s: number } }>(
+      `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(vrFlight.fleet)}/flights/${vrFlight.id}`, true)
+      .then((r) => {
+        if (!r.report.replay) { setFlight(null); setError('This flight review was made before replays were stored — upload the flight again to replay it.'); return }
+        setFlight({ id: r.id, drone_id: r.drone_id, fleet: r.fleet, verdict: r.verdict, plan_name: r.plan_name, log_name: r.log_name,
+          replay: r.report.replay, episodes: r.report.episodes, timeline: r.report.evidence_timeline ?? [], tolerances: r.report.tolerances, flight_s: r.report.flight_s })
+        setFlightT(0); setPlaying(false); setError(null)
+      })
+      .catch((e) => { setFlight(null); if (!onAuthError(e)) setError(String((e as Error).message || e)) })
+  }, [apiUrl, mode, vrFlight, authNonce, onAuthError])
+
+  useEffect(() => {
+    if (!playing || !flight) return
+    const end = flight.replay.flown[flight.replay.flown.length - 1]?.[0] ?? 0
+    const id = setInterval(() => setFlightT((t) => { if (t + 2 >= end) { setPlaying(false); return end } return t + 2 }), 200)   // ×10
+    return () => clearInterval(id)
+  }, [playing, flight])
+
   const cityCfg = cities.find((c) => c.slug === city)
   const cityCenter = useMemo<[number, number]>(() => cityCfg?.center ?? [18.5204, 73.8567], [cityCfg])
   const cityName = cityCfg?.name?.split(',')[0] ?? city
@@ -250,12 +283,14 @@ export default function VRSafetyView() {
 
   const diorama = useMemo(() => {
     const legal = live?.constants.legal_ceiling_m ?? 120
+    if (mode === 'flight' && flight) return flightFrame(flight).d
     if (mode === 'replay' && scene) {
       const f = replayFrame(scene, cityCenter)
       if (f) return new Diorama(f.east, f.north, f.extentM, TABLE_HALF, 0.32, legal)
     }
     return new Diorama(focus[0], focus[1], rangeKm * 1000, TABLE_HALF, 0.32, legal)
-  }, [mode, scene, cityCenter, focus, rangeKm, live?.constants.legal_ceiling_m])
+  }, [mode, scene, flight, cityCenter, focus, rangeKm, live?.constants.legal_ceiling_m])
+  const flightCenter = useMemo<[number, number]>(() => flight?.replay.home ?? [0, 0], [flight])
 
   const controls: ViewControls = {
     rangeKm, setRangeKm: changeRange, detailAll, setDetailAll,
@@ -271,7 +306,8 @@ export default function VRSafetyView() {
   const vrScenario = useMemo<VrScenario>(() => ({
     city, mode, incident_id: mode === 'replay' ? selectedIncidentId || null : null, selected_drone: selected,
     range_km: rangeKm, detail_all: detailAll, show_buildings: showBuildings,
-  }), [city, mode, selectedIncidentId, selected, rangeKm, detailAll, showBuildings])
+    ...(mode === 'flight' && vrFlight ? { flight_review_id: vrFlight.id } : {}),
+  }), [city, mode, selectedIncidentId, selected, rangeKm, detailAll, showBuildings, vrFlight])
 
   const ageS = lastFetch ? (now - lastFetch) / 1000 : null
   const droneCount = live?.drone_count ?? 0
@@ -285,13 +321,18 @@ export default function VRSafetyView() {
           <div className="page-subtitle">
             {mode === 'live'
               ? <>Walk-around tabletop of the live airspace — {droneCount} airborne · separation, altitude and battery for every drone, in stereo depth</>
-              : <>Incident Replay — every AI council claim checked against the real rejection geometry</>}
+              : mode === 'flight'
+                ? <>Flight replay — the approved plan against what was flown, with the log's events where they happened</>
+                : <>Incident Replay — every AI council claim checked against the real rejection geometry</>}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 4 }}>
             <button className={`btn ${mode === 'live' ? 'btn--primary' : ''}`} onClick={() => setMode('live')}>Live swarm</button>
             <button className={`btn ${mode === 'replay' ? 'btn--primary' : ''}`} onClick={() => setMode('replay')}>Incident replay</button>
+            <button className={`btn ${mode === 'flight' ? 'btn--primary' : ''}`} id="btn-flight-replay" disabled={!vrFlight}
+              title={vrFlight ? `Flight review #${vrFlight.id} (fleet ${vrFlight.fleet})` : 'Open a flight review in Fleet Assurance and choose "Show on the VR table"'}
+              onClick={() => setMode('flight')}>Flight replay</button>
           </div>
           {mode === 'replay' && (
             <select className="form-select" style={{ width: 'auto', maxWidth: 300 }} value={selectedIncidentId} onChange={(e) => setSelectedIncidentId(e.target.value)}>
@@ -301,11 +342,11 @@ export default function VRSafetyView() {
               ))}
             </select>
           )}
-          <select className="form-select" style={{ width: 'auto' }} value={city} onChange={(e) => { setCity(e.target.value); setSelected(null); setFocus([0, 0]) }}>
+          {mode !== 'flight' && <select className="form-select" style={{ width: 'auto' }} value={city} onChange={(e) => { setCity(e.target.value); setSelected(null); setFocus([0, 0]) }}>
             {cities.length === 0 && <option value="pune">pune</option>}
             {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name?.split(',')[0] ?? c.slug}</option>)}
-          </select>
-          <VrConnect apiUrl={apiUrl} scenario={vrScenario} signedIn={!needsAuth && (lastFetch != null || scene != null || incidents.length > 0)} />
+          </select>}
+          <VrConnect apiUrl={apiUrl} scenario={vrScenario} signedIn={!needsAuth && (lastFetch != null || scene != null || flight != null || incidents.length > 0)} />
           <button className="btn btn--primary" id="btn-enter-vr"
             title={xrSupport.vr ? 'Enter immersive VR' : 'No headset detected — open this page in the Quest 3 browser (see docs/VR_QUEST3_GUIDE.md)'}
             onClick={() => xrStore.enterVR().catch((e) => setError(`WebXR VR unavailable: ${e}`))}>
@@ -362,7 +403,7 @@ export default function VRSafetyView() {
               <XR store={xrStore}>
                 <Suspense fallback={null}>
                   <SceneContent
-                    mode={mode} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
+                    mode={mode} flight={flight} flightCenter={flightCenter} flightT={flightT} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
                     buildings={buildings} onBuildingStats={onBuildingStats}
                     cityCenter={cityCenter} cityName={cityName} diorama={diorama} selected={selected}
                     setSelected={selectDrone} controls={controls} rotationDeg={rotationDeg}
@@ -375,6 +416,7 @@ export default function VRSafetyView() {
               <LiveBoard data={live} cityName={cityName} ageS={ageS} vExag={diorama.vExag} controls={controls} />
             )}
             {mode === 'replay' && scene && scene.position.lat != null && <ReplayBoard scene={scene} />}
+            {mode === 'flight' && flight && <FlightBoard f={flight} t={flightT} setT={setFlightT} playing={playing} setPlaying={setPlaying} />}
             <div style={{
               position: 'absolute', right: 16, bottom: 14, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11,
               color: '#93A8C4', pointerEvents: 'none', lineHeight: 1.6,

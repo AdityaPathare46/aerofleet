@@ -13,8 +13,9 @@ import { isTauri, tauriInvoke } from '../../lib/tauriBridge'
 
 export interface VrScenario {
   city: string
-  mode: 'live' | 'replay'
+  mode: 'live' | 'replay' | 'flight'
   incident_id: string | null
+  flight_review_id?: number
   selected_drone: string | null
   range_km: number
   detail_all: boolean
