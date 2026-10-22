@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AeroFleet.VR
 {
-    public enum ViewMode { Live, Replay }
+    public enum ViewMode { Live, Replay, Flight }
 
     /// <summary>
     /// Where the headset app gets its connection settings, lowest to highest priority:

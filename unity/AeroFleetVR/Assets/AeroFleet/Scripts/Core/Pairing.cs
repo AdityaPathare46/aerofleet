@@ -46,6 +46,8 @@ namespace AeroFleet.VR
         [JsonProperty("range_km")] public int RangeKm = 4;
         [JsonProperty("detail_all")] public bool DetailAll;
         [JsonProperty("show_buildings")] public bool ShowBuildings = true;
+        /// <summary>mode "flight": the flight review the desktop is replaying.</summary>
+        [JsonProperty("flight_review_id")] public int? FlightReviewId;
     }
 
     public class ScenarioEnvelope

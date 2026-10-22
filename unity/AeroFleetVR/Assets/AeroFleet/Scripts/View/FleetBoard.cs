@@ -114,6 +114,8 @@ namespace AeroFleet.VR.View
             buildingsButton.SetOn(app.ShowBuildings);
             subtitle.text = app.StatusLine;
             subtitle.color = app.StatusIsError ? Palette.Bad : Palette.TextDim;
+            if (app.Mode == ViewMode.Flight) { RefreshFlight(app); return; }
+            for (int i = 0; i < rows.Count; i++) rows[i].label.text = Vocab.Constraints[i].label;   // flight mode reuses the rows
             if (isLive) RefreshLive(app.Live, app.Diorama, app); else RefreshReplay(app);
         }
 
@@ -197,6 +199,40 @@ namespace AeroFleet.VR.View
             legend.text = "Red rod = the cruise altitude the gate checked · ring = the ceiling that applied there · " +
                           "dashed leg = planned straight line from the origin depot (the flown path is not stored) · " +
                           "the right-hand board checks the AI council's causal claims against these violations." + BuildingNote(app);
+        }
+
+        /// <summary>Flight replay: the verdict, then the log's warnings and notices in time order. No cause is named.</summary>
+        void RefreshFlight(AeroFleetApp app)
+        {
+            var f = app.Flight;
+            replay.SetOn(false);
+            prev.SetEnabled(false);
+            next.SetEnabled(false);
+            title.text = f != null ? $"FLIGHT REPLAY · {f.DroneId}" : "FLIGHT REPLAY · LOADING";
+            tableHeader.text = "FROM THE LOG — NO CAUSE IS NAMED";
+            bool deviated = f?.Verdict == "DEVIATED";
+            SetKpi(0, "RESULT", f == null ? "—" : deviated ? "DEVIATED" : "ON PLAN", f == null ? Palette.Text : deviated ? Palette.Bad : Palette.Ok,
+                f != null && f.Tolerances.TryGetValue("corridor_m", out double c) ? $"tolerance {c:0} m sideways" : "");
+            SetKpi(1, "DEVIATIONS", f?.Episodes.Count.ToString() ?? "—", (f?.Episodes.Count ?? 0) > 0 ? Palette.Bad : Palette.Ok, "stretches off plan");
+            SetKpi(2, "FLIGHT", f?.FlightS != null ? FlightView.Clock(f.FlightS.Value) : "—", Palette.Text, "min:s of track");
+            SetKpi(3, "NOW", FlightView.Clock(app.FlightTimeS), Palette.Text, "replay ×10, loops");
+            var notable = new List<FlightEventDto>();
+            if (f != null) foreach (var e in f.Timeline) if (e.Level != "info" && e.Kind != "end") notable.Add(e);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (i < notable.Count)
+                {
+                    var e = notable[i];
+                    string text = $"{FlightView.Clock(e.TS)}  {e.Text}";
+                    rows[i].label.text = text.Length > 54 ? text.Substring(0, 53) + "…" : text;
+                    Color col = e.Level == "warning" ? Palette.Bad : Palette.Warn;
+                    SetRow(i, "", col, e.Level.ToUpperInvariant(), col);
+                    rows[i].label.color = col;
+                }
+                else { rows[i].label.text = ""; SetRow(i, "", Palette.TextFaint, "", Palette.TextFaint); }
+            }
+            legend.text = "Dashed = the approved mission · green = flown within the fleet's tolerance · red = a deviation · " +
+                          "pins = the log's warnings and notices where they happened · the desktop's flight review has the full timeline and the signed record";
         }
 
         void SetKpi(int i, string key, string value, Color color, string sub)

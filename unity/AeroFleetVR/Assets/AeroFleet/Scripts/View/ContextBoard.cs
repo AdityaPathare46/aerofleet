@@ -33,6 +33,8 @@ namespace AeroFleet.VR.View
         {
             string key = app.ActiveTool != AeroFleetApp.Tool.None
                 ? $"tool:{app.ActiveTool}:{app.UiVersion}:{app.AllowDispatch}:{app.PlanBusy}"
+                : app.Mode == ViewMode.Flight
+                ? "flight:" + (app.Flight?.Id.ToString() ?? "none")
                 : app.Mode == ViewMode.Replay
                 ? "replay:" + (app.Scene?.IncidentId ?? "none")
                 : "live:" + (app.Selected == null ? "" : app.Selected + ":" + app.FollowSelected + ":" +
@@ -47,6 +49,7 @@ namespace AeroFleet.VR.View
             content.SetParent(transform, false);
             if (app.ActiveTool == AeroFleetApp.Tool.Build) BuildBuilder(app);
             else if (app.ActiveTool == AeroFleetApp.Tool.Plan) BuildPlanner(app);
+            else if (app.Mode == ViewMode.Flight) BuildFlight(app.Flight);
             else if (app.Mode == ViewMode.Replay) BuildReplay(app.Scene);
             else if (app.Selected != null && app.Live != null && app.Live.Drones.TryGetValue(app.Selected, out var sel)) BuildInspection(app, app.Selected, sel);
             else BuildLive(app);
@@ -74,6 +77,25 @@ namespace AeroFleet.VR.View
         }
 
         // ── replay: claim check ────────────────────────────────────────────
+
+        void BuildFlight(FlightReviewDto f)
+        {
+            var title = T("PLANNED AGAINST FLOWN", M, 0.045f, 0.022f, Palette.Accent, s: FontStyles.Bold);
+            title.characterSpacing = 2;
+            if (f == null) { T("Loading the flight review the desktop chose…", M, 0.09f, 0.017f, Palette.TextDim, wrap: Width - 2 * M); return; }
+            T($"{f.LogName} against {f.PlanName} · fleet {f.Fleet}", M, 0.088f, 0.015f, Palette.TextDim, wrap: Width - 2 * M);
+            float y = 0.15f;
+            foreach (var e in f.Episodes)
+            {
+                if (y > Height - 0.2f) break;
+                string what = e.Kind == "off_route" ? "Off the planned route" : e.Kind == "off_altitude" ? "Off the planned height" : "Inside a no-fly zone";
+                T($"{FlightView.Clock(e.StartS)}  {what} for {e.DurationS:0} s{(e.MaxM != null ? $", up to {e.MaxM:0} m" : "")}", M, y, 0.0175f, Palette.Bad, wrap: Width - 2 * M);
+                y += 0.034f;
+            }
+            if (f.Episodes.Count == 0) { T("No deviations beyond the fleet's tolerances.", M, y, 0.0175f, Palette.Ok); y += 0.034f; }
+            T("AeroFleet does not name a cause. On public PX4 crash logs a fixed rule could not reliably tell a pilot error " +
+              "from an aircraft fault, so the events are shown for a person to judge.", M, y + 0.02f, 0.015f, Palette.TextFaint, wrap: Width - 2 * M);
+        }
 
         void BuildReplay(VrSceneDto s)
         {

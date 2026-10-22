@@ -261,4 +261,44 @@ namespace AeroFleet.VR.Data
     {
         [JsonProperty("access_token")] public string AccessToken;
     }
+
+    // ── flight replay (GET /api/v1/vr/device/flight-review) ─────────────────────────────
+
+    public class FlightReplayData
+    {
+        [JsonProperty("home")] public double[] Home;                 // lat, lon
+        [JsonProperty("planned")] public List<double[]> Planned;      // lat, lon, height above home m
+        [JsonProperty("flown")] public List<double[]> Flown;          // t_s, lat, lon, height above home m
+    }
+
+    public class FlightEpisodeDto
+    {
+        [JsonProperty("kind")] public string Kind;                   // off_route | off_altitude | in_no_fly_zone
+        [JsonProperty("start_s")] public double StartS;
+        [JsonProperty("duration_s")] public double DurationS;
+        [JsonProperty("max_m")] public double? MaxM;
+    }
+
+    public class FlightEventDto
+    {
+        [JsonProperty("t_s")] public double TS;
+        [JsonProperty("kind")] public string Kind;                   // mode | setting | battery | gps | plan | end
+        [JsonProperty("level")] public string Level;                 // warning | notice | info
+        [JsonProperty("text")] public string Text;
+    }
+
+    public class FlightReviewDto
+    {
+        [JsonProperty("id")] public int Id;
+        [JsonProperty("drone_id")] public string DroneId;
+        [JsonProperty("fleet")] public string Fleet;
+        [JsonProperty("verdict")] public string Verdict;             // CONFORMED | DEVIATED
+        [JsonProperty("plan_name")] public string PlanName;
+        [JsonProperty("log_name")] public string LogName;
+        [JsonProperty("replay")] public FlightReplayData Replay;
+        [JsonProperty("episodes")] public List<FlightEpisodeDto> Episodes = new List<FlightEpisodeDto>();
+        [JsonProperty("timeline")] public List<FlightEventDto> Timeline = new List<FlightEventDto>();
+        [JsonProperty("tolerances")] public Dictionary<string, double> Tolerances = new Dictionary<string, double>();
+        [JsonProperty("flight_s")] public double? FlightS;
+    }
 }

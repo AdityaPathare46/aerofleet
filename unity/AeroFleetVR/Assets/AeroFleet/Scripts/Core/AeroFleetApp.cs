@@ -39,6 +39,9 @@ namespace AeroFleet.VR
         public List<IncidentSummaryDto> Incidents { get; private set; } = new List<IncidentSummaryDto>();
         public int IncidentIndex { get; private set; }
         public VrSceneDto Scene { get; private set; }
+        /// <summary>Mode Flight: the flight review the desktop chose (plan vs flown, the log's events).</summary>
+        public FlightReviewDto Flight { get; private set; }
+        public float FlightTimeS => flightView != null ? flightView.TimeS : 0f;
         public Diorama Diorama { get; private set; }
         public string StatusLine => (Following ? $"following {FollowingHost} · " : "") + statusText;
         string statusText = "connecting…";
@@ -107,6 +110,7 @@ namespace AeroFleet.VR
         BuildingsView buildingsView;
         SwarmView swarm;
         ReplayView replay;
+        FlightView flightView;
         ForecastPreview preview;
         PlanView planView;
         InspectionBench bench;
@@ -352,7 +356,8 @@ namespace AeroFleet.VR
                     nextBeat = Time.realtimeSinceStartup + 3f;
                     string status = Newtonsoft.Json.JsonConvert.SerializeObject(new
                     {
-                        mode = Mode == ViewMode.Replay ? "replay" : "live", city = CitySlug,
+                        mode = Mode == ViewMode.Replay ? "replay" : Mode == ViewMode.Flight ? "flight" : "live", city = CitySlug,
+                        flight_review_id = Flight?.Id,
                         incident_id = Scene?.IncidentId, selected = Selected, in_headset = InHeadset,
                     });
                     yield return PairingClient.Send("POST", api.BaseUrl + "/api/v1/vr/device/heartbeat", status, api.Token, null, null);
@@ -396,6 +401,11 @@ namespace AeroFleet.VR
             {
                 ShowBuildings = s.ShowBuildings;
                 if (Diorama != null) buildingsView.Build(Diorama, center, ShowBuildings ? Buildings : null);
+            }
+            if (s.Mode == "flight")
+            {
+                if (Mode != ViewMode.Flight || Flight == null || Flight.Id != s.FlightReviewId) yield return EnterFlight();
+                yield break;
             }
             if (s.Mode == "replay")
             {
@@ -445,6 +455,8 @@ namespace AeroFleet.VR
             swarm.OnSelect = Select;
             replay = new GameObject("Replay").AddComponent<ReplayView>();
             replay.transform.SetParent(tableSpin, false);
+            flightView = new GameObject("FlightReplay").AddComponent<FlightView>();
+            flightView.transform.SetParent(tableSpin, false);
             preview = new GameObject("Preview").AddComponent<ForecastPreview>();
             preview.transform.SetParent(tableSpin, false);
             preview.gameObject.SetActive(false);
@@ -537,6 +549,8 @@ namespace AeroFleet.VR
         {
             Mode = ViewMode.Live;
             replay.Hide();
+            flightView.Hide();
+            Flight = null;
             swarm.gameObject.SetActive(true);
             RebuildDiorama();
             if (poller == null) poller = StartCoroutine(PollLive());
@@ -575,9 +589,33 @@ namespace AeroFleet.VR
             swarm.Apply(data, Diorama, center, Selected, DetailAll);
         }
 
+        /// <summary>Replay the flight review the desktop chose. The table is centred on the flight's home, so the
+        /// city's streets, zones and depots are left off (a reviewed flight can be anywhere).</summary>
+        IEnumerator EnterFlight()
+        {
+            Mode = ViewMode.Flight;
+            preview.Stop();
+            if (ActiveTool != Tool.None) SetTool(Tool.None);
+            swarm.Clear();
+            swarm.gameObject.SetActive(false);
+            replay.Hide();
+            Scene = null;
+            SetStatus("flight replay · loading…");
+            FlightReviewDto r = null;
+            yield return api.Get<FlightReviewDto>("/api/v1/vr/device/flight-review", true, x => r = x,
+                (_, e) => SetStatus($"Flight replay: {e}", true));
+            if (Mode != ViewMode.Flight || r == null || r.Replay == null || r.Replay.Flown == null || r.Replay.Flown.Count == 0) yield break;
+            Flight = r;
+            SetStatus($"flight replay · {r.DroneId} · {(r.Verdict == "DEVIATED" ? $"{r.Episodes.Count} deviation(s)" : "flew the plan")}");
+            RebuildDiorama();
+            flightView.Show(Flight, Diorama);
+        }
+
         IEnumerator EnterReplay(string preferredIncident)
         {
             Mode = ViewMode.Replay;
+            flightView.Hide();
+            Flight = null;
             swarm.Clear();
             swarm.gameObject.SetActive(false);
             SetStatus($"{CityName} · replay · loading incidents…");
@@ -615,6 +653,19 @@ namespace AeroFleet.VR
         void RebuildDiorama()
         {
             float legal = (float)(Live?.Constants.LegalCeilingM ?? 120);
+            if (Mode == ViewMode.Flight)
+            {
+                if (Flight == null) return;
+                var (fe, fn, fx) = FlightView.Frame(Flight);
+                string fkey = $"flight|{Flight.Id}|{fe:0}|{fn:0}|{fx:0}|{legal:0}";
+                if (fkey == builtDioramaKey) return;
+                builtDioramaKey = fkey;
+                var home = new Vector2d(Flight.Replay.Home[0], Flight.Replay.Home[1]);
+                Diorama = new Diorama(fe, fn, fx, TableHalf, ColumnHeight, legal);
+                table.Build(Diorama, home, null, new List<ZoneDto>(), new List<DepotDto>(), Live?.Constants ?? new LiveConstants(), showPlinth: true);
+                buildingsView.Build(Diorama, home, null);
+                return;
+            }
             float e = focus.x, n = focus.y, extent = RangeKm * 1000f;
             if (Mode == ViewMode.Replay && Scene != null)
             {
