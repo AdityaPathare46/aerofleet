@@ -51,6 +51,7 @@ _PUBLIC = [
 _DEVICE = [
     ("GET", re.compile(r"^/api/v1/vr/device/scenario$")),
     ("POST", re.compile(r"^/api/v1/vr/device/heartbeat$")),
+    ("GET", re.compile(r"^/api/v1/vr/device/flight-review$")),       # only the review the desktop chose to show
 ]
 _READ = [re.compile(p) for p in (
     r"^/api/v1/cities/?$",

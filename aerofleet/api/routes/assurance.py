@@ -192,6 +192,9 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
     return out
 
 
+REPLAY_POINTS = 1500
+
+
 def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: str, plan_name: str, log_bytes: bytes,
                   log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0) -> Dict[str, Any]:
     """Compare one flight log with its approved mission, store the review, sign it, and return it.
@@ -242,6 +245,12 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
         db.flush()
         drift = _drift(db, fleet, drone_id)
     baseline_changes = drift["vs_baseline"]["changes"] if drift and drift.get("vs_baseline") else None
+    step = max(1, len(flight.track) // REPLAY_POINTS + 1)
+    t0 = flight.track[0][0]
+    report["replay"] = {          # what the VR table and the desktop draw: the plan and a thinned copy of the flown track
+        "home": [round(mission.home[0], 7), round(mission.home[1], 7)],
+        "planned": [[round(la, 7), round(lo, 7), round(h, 1)] for la, lo, h in mission.path],
+        "flown": [[round(t - t0, 1), round(la, 7), round(lo, 7), round(h, 1)] for t, la, lo, h in flight.track[::step]]}
     events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes)
     report["evidence_timeline"] = events
     report["around_episodes"] = around_episodes(report, events)

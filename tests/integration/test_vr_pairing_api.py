@@ -145,3 +145,22 @@ def test_vr_dispatch_never_picks_a_live_hardware_drone(api_client, auth_headers,
     finally:
         for d in fleet.list_drones():
             d.link_mode = saved.get(d.drone_id, "SIMULATED")
+
+
+def test_headset_replays_only_the_flight_review_the_desktop_chose(api_client, auth_headers, gateway, tmp_path):
+    from tests.integration.test_assurance_api import _flight_files
+
+    r = api_client.post("/api/v1/assurance/fleets/vr-demo/drones/D9/flights", headers=auth_headers,
+                        files=_flight_files(tmp_path, offset_m=80.0))
+    review_id = r.json()["id"]
+    vr = _pair(api_client, auth_headers, gateway)
+    assert gateway.get("/api/v1/vr/device/flight-review", headers=vr).status_code == 404       # nothing chosen yet
+    bad = api_client.put("/api/v1/vr/session/scenario", headers=auth_headers, json={"mode": "flight", "flight_review_id": 999999})
+    assert bad.status_code == 422
+    api_client.put("/api/v1/vr/session/scenario", headers=auth_headers, json={"mode": "flight", "flight_review_id": review_id})
+    assert gateway.get("/api/v1/vr/device/scenario", headers=vr).json()["scenario"]["flight_review_id"] == review_id
+    body = gateway.get("/api/v1/vr/device/flight-review", headers=vr).json()
+    assert body["id"] == review_id and body["verdict"] == "DEVIATED" and len(body["replay"]["flown"]) == 110
+    assert body["replay"]["planned"][0][:2] == body["replay"]["home"] or len(body["replay"]["planned"]) >= 2
+    assert any(e["kind"] == "plan" for e in body["timeline"])
+    assert gateway.get(f"/api/v1/assurance/fleets/vr-demo/flights/{review_id}", headers=vr).status_code in (403, 404)

@@ -13,9 +13,10 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
-from aerofleet.api.routes.auth import get_current_active_user
-from aerofleet.data.models.models import User
+from aerofleet.api.routes.auth import get_current_active_user, get_db
+from aerofleet.data.models.models import FlightReview, User
 from aerofleet.utils.logging import get_logger
 from aerofleet.vr.beacon import Beacon, lan_addresses
 from aerofleet.vr.gateway import GATEWAY_PORT, VR_TOKEN_HEADER, GatewayServer
@@ -76,8 +77,9 @@ def _desktop_view(s: VrSession) -> Dict[str, Any]:
 
 class Scenario(BaseModel):
     city: str = "pune"
-    mode: str = Field("live", pattern="^(live|replay)$")
+    mode: str = Field("live", pattern="^(live|replay|flight)$")
     incident_id: Optional[str] = None
+    flight_review_id: Optional[int] = Field(None, description="mode 'flight': the flight review to replay on the table")
     selected_drone: Optional[str] = None
     range_km: int = 4
     detail_all: bool = False
@@ -106,9 +108,16 @@ async def close_session(user: User = Depends(get_current_active_user)) -> Dict[s
 
 
 @router.put("/session/scenario")
-async def push_scenario(scenario: Scenario, user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+async def push_scenario(scenario: Scenario, user: User = Depends(get_current_active_user),
+                        db: Session = Depends(get_db)) -> Dict[str, Any]:
+    if scenario.mode == "flight":
+        if scenario.flight_review_id is None or db.get(FlightReview, scenario.flight_review_id) is None:
+            raise HTTPException(status_code=422, detail="mode 'flight' needs an existing flight_review_id")
     try:
-        return {"scenario_version": _registry.set_scenario(user.username, scenario.model_dump())}
+        data = scenario.model_dump()
+        if data["flight_review_id"] is None:
+            data.pop("flight_review_id")          # unchanged shape for live/replay scenarios
+        return {"scenario_version": _registry.set_scenario(user.username, data)}
     except SessionError as e:
         _raise(e)
 
@@ -206,6 +215,24 @@ async def device_scenario(x_aerofleet_vr_token: Optional[str] = Header(None, ali
     s = _device_session(x_aerofleet_vr_token)
     return {"scenario_version": s.scenario_version, "scenario": s.scenario, "owner": s.owner,
             "allow_dispatch": s.allow_dispatch}
+
+
+@router.get("/device/flight-review")
+async def device_flight_review(x_aerofleet_vr_token: Optional[str] = Header(None, alias=VR_TOKEN_HEADER),
+                               db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The flight review the desktop chose to show (scenario mode 'flight'); a headset can read no other."""
+    s = _device_session(x_aerofleet_vr_token)
+    rid = (s.scenario or {}).get("flight_review_id") if (s.scenario or {}).get("mode") == "flight" else None
+    row = db.get(FlightReview, rid) if rid is not None else None
+    if row is None:
+        raise HTTPException(status_code=404, detail="The desktop is not showing a flight review")
+    r = row.report
+    if "replay" not in r:
+        raise HTTPException(status_code=409, detail="This review was made before replays were stored; upload the flight again")
+    return {"id": row.id, "drone_id": row.drone_id, "fleet": row.fleet, "verdict": row.verdict, "plan_name": row.plan_name,
+            "log_name": row.log_name, "replay": r["replay"], "episodes": r.get("episodes", []),
+            "timeline": r.get("evidence_timeline", []), "tolerances": r.get("tolerances", {}),
+            "max_height_m": r.get("max_height_m", {}), "flight_s": r.get("flight_s")}
 
 
 @router.post("/device/heartbeat")
