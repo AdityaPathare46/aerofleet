@@ -204,7 +204,7 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     from aerofleet.assurance.drift import in_flight_changes
     from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX, FlightLogError, read_flight_log
     from aerofleet.assurance.reconcile import PlanError, parse_waypoints, reconcile
-    from aerofleet.assurance.review_panel import likely_causes
+    from aerofleet.assurance.evidence import around_episodes, timeline
 
     _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
     if len(log_bytes) > LOG_MAX:
@@ -242,9 +242,9 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
         db.flush()
         drift = _drift(db, fleet, drone_id)
     baseline_changes = drift["vs_baseline"]["changes"] if drift and drift.get("vs_baseline") else None
-    report["likely_causes"] = likely_causes(report, flight.track, flight.modes, flight.battery, flight.gps,
-                                            drift_changes=baseline_changes, param_changes=flight.param_changes)
-    report["likely_cause_method"] = "fixed no-AI rule (aerofleet/assurance/review_panel.py rule_based_cause)"
+    events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes)
+    report["evidence_timeline"] = events
+    report["around_episodes"] = around_episodes(report, events)
     row = FlightReview(drone_id=drone_id, fleet=fleet, verdict=report["verdict"], report=report,
                        plan_name=(plan_name or "")[:200], log_name=(log_name or "")[:200], uploaded_by=user.username)
     db.add(row)
@@ -265,7 +265,7 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
     """Compare a flight log (.tlog / .bin) with the approved mission file (.waypoints).
 
     The parameters found in the log are also stored as the drone's newest snapshot, so the drift check
-    covers the configuration it actually flew with. Each excursion gets a likely cause from the no-AI rule.
+    covers the configuration it actually flew with. The review lists the log's events in time order (no cause is named).
     """
     from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
 

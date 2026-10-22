@@ -130,8 +130,10 @@ def test_flight_upload_errors_are_clear(api_client, auth_headers, tmp_path):
     files = _flight_files(tmp_path)
     bad_plan = dict(files, plan=("mission.waypoints", b"not a mission", "text/plain"))
     assert "Not a mission file" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=bad_plan).json()["detail"]
-    bad_log = dict(files, log=("flight.ulg", b"ULog\x01", "application/octet-stream"))
+    bad_log = dict(files, log=("flight.csv", b"t,lat,lon", "text/csv"))
     assert "Unsupported log type" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=bad_log).json()["detail"]
+    broken = dict(files, log=("flight.ulg", b"ULog\x01", "application/octet-stream"))
+    assert "Could not open the log" in api_client.post(f"{URL}/drones/D1/flights", headers=auth_headers, files=broken).json()["detail"]
     assert api_client.post(f"{URL}/drones/D1/flights", files=files).status_code == 401
     assert api_client.get(f"{URL}/flights/999999", headers=auth_headers).status_code == 404
 

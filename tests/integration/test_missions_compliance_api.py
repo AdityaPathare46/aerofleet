@@ -104,6 +104,6 @@ def test_reconcile_runs_the_real_flight_review_against_the_stored_mission(api_cl
     body = r.json()
     assert body["mission_id"] == out["mission_id"] and body["drone_id"] == "PUNE-08"
     assert body["verdict"] == "CONFORMED", body["report"]["episodes"]
-    assert body["report"]["log"]["points"] == len(track) and "likely_causes" in body["report"]
+    assert body["report"]["log"]["points"] == len(track) and body["report"]["evidence_timeline"][-1]["kind"] == "end"
     assert body["ledger_seq"] > out["attestation"]["ledger_seq"]
     assert "deviations" not in body                                       # the old hard-coded report is gone

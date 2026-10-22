@@ -242,31 +242,3 @@ def model_ask(model: Optional[str] = None) -> Ask:
 
     return ask
 
-
-# Facts a person reads first when the likely cause is shown, per cause.
-KEY_FACTS = {
-    "PILOT_MANUAL_CONTROL": ("pilot.manual_seconds", "pilot.mode_at_start", "pilot.mode_changes"),
-    "GPS_DEGRADED": ("gps.min_sats", "gps.sats_before", "gps.max_hdop", "gps.min_fix"),
-    "LOW_BATTERY_RESPONSE": ("batt.min_pct", "batt.min_volts", "batt.volts_before"),
-    "CONFIGURATION": ("set.safety_critical", "set.flight_limit", "set.changed_around_it"),
-    "WIND_OR_ENVIRONMENT": ("nav.speed_during", "nav.speed_before"),
-    "UNKNOWN": ("nav.max_m", "nav.duration_s"),
-}
-
-
-def likely_causes(report: Dict[str, Any], track, modes, battery=(), gps=(), drift_changes=None, param_changes=()) -> List[Dict[str, Any]]:
-    """The likely cause of each excursion in a flight review, from the fixed no-AI rule.
-
-    The language-model panel was tested against this rule on 60 cases with five small models and lost
-    every time (research/results/panel_eval/summary.md), so the rule is what the product uses.
-    """
-    out = []
-    for i, ep in enumerate(report.get("episodes", [])):
-        facts = episode_facts(ep, track, modes, battery=battery, gps=gps, drift_changes=drift_changes, param_changes=param_changes)
-        cause = rule_based_cause(facts)
-        values = {f["id"]: f for group in facts.values() for f in group}
-        out.append({"episode": i, "kind": ep["kind"], "start_s": ep["start_s"], "likely_cause": cause,
-                    "text": CAUSE_TEXT.get(cause, "no cause stands out in the evidence; a person should look"),
-                    "evidence": [{"label": values[k]["label"], "value": values[k]["value"], "unit": values[k]["unit"]}
-                                 for k in KEY_FACTS[cause] if k in values and values[k]["value"] is not None]})
-    return out
