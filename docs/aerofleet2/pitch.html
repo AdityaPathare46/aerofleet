@@ -1,0 +1,142 @@
+<title>AeroFleet Pitch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single logbook sheet — headline band, two working columns, a sample record strip, then the ask. */
+:root {
+  --bg: #F3F6F9;
+  --sheet: #FFFFFF;
+  --ink: #13202E;
+  --muted: #55667A;
+  --rule: #D6DEE7;
+  --accent: #0E5A9C;
+  --accent-soft: #E3EEF8;
+  --ok: #17804B;
+  --warn: #A55A00;
+  --bad: #B42318;
+  --record: #0F1B28;
+  --record-ink: #D8E4F0;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B121B; --sheet: #121C28; --ink: #E6EDF5; --muted: #9AABBF; --rule: #263547;
+    --accent: #7DB7F0; --accent-soft: #16283C; --ok: #4CC38A; --warn: #F0A33A; --bad: #F2786D;
+    --record: #070D14; --record-ink: #CFDCEA; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B121B; --sheet: #121C28; --ink: #E6EDF5; --muted: #9AABBF; --rule: #263547;
+  --accent: #7DB7F0; --accent-soft: #16283C; --ok: #4CC38A; --warn: #F0A33A; --bad: #F2786D;
+  --record: #070D14; --record-ink: #CFDCEA; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px;
+}
+.sheet {
+  max-width: 920px; margin: 0 auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 32px clamp(18px, 4vw, 40px); display: grid; gap: 24px;
+}
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 4.2vw, 38px); line-height: 1.12; margin: 6px 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { font-size: 17px; color: var(--muted); max-width: 68ch; margin: 0; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 10px; color: var(--ink); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.cols > * { min-width: 0; }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
+li::marker { color: var(--accent); }
+.feat { display: grid; gap: 10px; }
+.feat div { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: baseline; border-top: 1px solid var(--rule); padding-top: 8px; }
+.feat b { font-family: var(--display); font-weight: 700; font-size: 14px; }
+.feat span { color: var(--muted); }
+.record { background: var(--record); color: var(--record-ink); border-radius: 6px; padding: 16px 18px; font-family: var(--mono); font-size: 12.5px; overflow-x: auto; }
+.record .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: #8FA6BF; margin-bottom: 10px; }
+.record table { border-collapse: collapse; width: 100%; min-width: 520px; }
+.record td { padding: 3px 14px 3px 0; vertical-align: top; white-space: nowrap; }
+.record td:last-child { white-space: normal; }
+.t { color: #8FA6BF; font-variant-numeric: tabular-nums; }
+.w { color: #FF8A80; } .n { color: #F6B860; } .i { color: var(--record-ink); }
+.sig { margin-top: 10px; color: #7FD3A4; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.fact { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 12px; border-radius: 0 4px 4px 0; min-width: 0; }
+.fact strong { display: block; font-family: var(--display); font-size: 18px; font-weight: 800; color: var(--ink); }
+.fact span { font-size: 13.5px; color: var(--muted); }
+.ask { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; border-top: 2px solid var(--ink); padding-top: 18px; }
+.ask > * { min-width: 0; }
+.status { font-size: 13.5px; color: var(--muted); }
+.status b { color: var(--ink); }
+.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 10px; }
+@media (max-width: 720px) {
+  .cols, .ask, .facts { grid-template-columns: 1fr; }
+  .feat div { grid-template-columns: 1fr; gap: 2px; }
+}
+</style>
+
+<main class="sheet">
+  <header>
+    <div class="eyebrow">AeroFleet · flight records for ArduPilot &amp; PX4 fleets</div>
+    <h1>Every flight checked against its approved plan, and the record kept so nobody can quietly change it.</h1>
+    <p class="lede">Upload the flight log and the mission file. AeroFleet tells you whether the drone flew what was approved, which settings were different, and what happened when. Every result goes into a signed record you can hand to an auditor, an insurer or an accident investigator.</p>
+  </header>
+
+  <section class="cols">
+    <div>
+      <h2>The problem</h2>
+      <ul>
+        <li>Operators flying under a UK or EU authorisation must keep a <b>technical log for each aircraft</b>: checks, defects and configuration changes, kept for at least 3 years and protected from alteration.</li>
+        <li>Logbook tools are built around DJI. DJI stopped flight-log sync for US users in June 2024, and the tools we checked do not compare an ArduPilot or PX4 flight with its mission or track setting changes.</li>
+        <li>After an incident, someone opens dozens of plots by hand. The PX4 forum alone has about 410 crash threads where people post a log and ask what happened.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What AeroFleet does</h2>
+      <div class="feat">
+        <div><b>Flew the plan?</b><span>Distance off route and off height, for how long, where; manual takeovers; time in a no-fly zone.</span></div>
+        <div><b>Settings</b><span>Each drone against the fleet's approved setup, graded block, review or ignore; settings changed mid-flight.</span></div>
+        <div><b>Timeline</b><span>Mode changes, low battery, poor GPS, the pilot taking over, in time order next to each deviation.</span></div>
+        <div><b>Signed record</b><span>Every result signed and linked to the one before, so any later edit shows. Printable report.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="record" aria-label="Excerpt of a real flight review">
+    <div class="hd"><span>FLIGHT REVIEW · PX4-DEMO · real PX4 log, 13:40 flown</span><span>DEVIATED · 4 stretches outside 40 m / 25 m</span></div>
+    <table>
+      <tr><td class="t">2:45</td><td class="i">Flight mode HOLD → MISSION</td></tr>
+      <tr><td class="t">2:46</td><td class="n">Flight mode MISSION → POSCTL (pilot took control)</td></tr>
+      <tr><td class="t">4:41</td><td class="w">Off the planned route for 5 s, up to 50 m</td></tr>
+      <tr><td class="t">5:00</td><td class="w">Off the planned route for 8 s, up to 70 m</td></tr>
+      <tr><td class="t">11:03</td><td class="i">Flight mode MISSION → RTL</td></tr>
+    </table>
+    <div class="sig">✓ This review matches entry #2 of the signed record</div>
+  </section>
+
+  <section>
+    <h2>Why trust it</h2>
+    <div class="facts">
+      <div class="fact"><strong>No AI, no guessing</strong><span>Every number comes from the log. We tested automatic "pilot or drone?" verdicts on public PX4 crash logs and they scored no better than chance, so AeroFleet shows the facts and leaves the judgement to a person.</span></div>
+      <div class="fact"><strong>Your autopilot, your files</strong><span>Reads ArduPilot <code>.tlog</code> and <code>.bin</code> and PX4 <code>.ulg</code>, plus standard <code>.waypoints</code> missions. Runs on your own computer; no drone connection needed.</span></div>
+      <div class="fact"><strong>Built to be checked</strong><span>Run on real ArduPilot and PX4 logs; 635 automated tests. Every study behind it is published with its code and data.</span></div>
+    </div>
+  </section>
+
+  <section class="ask">
+    <div>
+      <h2>Who it is for</h2>
+      <p style="margin:0">Survey, inspection, agriculture and delivery operators running five or more ArduPilot or PX4 drones under an operational authorisation, who need flight records that stand up in an audit or after an incident. Also usable for the 48-hour accident reports required in India and the 10-day reports in the US.</p>
+    </div>
+    <div>
+      <h2>What we are asking for</h2>
+      <p style="margin:0 0 8px">Three operators to try it. Send one flight log and its mission file; we send back the report. If it replaces something you do by hand today, tell us what it is worth to you.</p>
+      <p class="status"><b>Status:</b> working software, tested on real logs. Not yet used by an operator: that is the next step.</p>
+    </div>
+  </section>
+
+  <div class="foot">AeroFleet 2.0 · October 2026 · Also shows a reviewed flight in 3D on a VR table (desktop, Quest browser and Quest app).</div>
+</main>
