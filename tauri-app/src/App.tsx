@@ -53,8 +53,10 @@ const PAGES = [
   { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
 ]
 
-// From the earlier AI-dispatch product; hidden unless Settings ▸ Show legacy screens is on.
-const LEGACY_PAGES = ['council']
+// From the earlier AI-dispatch product (live dispatch, the agent council, policy proposals, dispatch incidents,
+// scenario runs, the depot graph); hidden unless Settings ▸ Show legacy screens is on. The 2.0 screens are
+// Fleet Assurance, the airspace map, VR, Hardware (FC checks and UIN registry) and Settings.
+const LEGACY_PAGES = ['dashboard', 'mission', 'council', 'incidents', 'policy', 'scenarios', 'knowledge']
 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,

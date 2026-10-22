@@ -284,7 +284,8 @@ export default function SettingsPage() {
             <span>
               <b>Show legacy screens</b>
               <span style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)' }}>
-                The AI council room and the live telemetry / agent roster side panel from the earlier dispatch product.
+                Screens from the earlier AI dispatch product: Ops Center, Dispatch Console, the AI council room, Incident Forensics,
+                Fleet Policy, Scenario Lab, Depot Network, and the live telemetry / agent roster side panel.
                 AeroFleet 2.0 does not use them: every check and verdict comes from deterministic code.
               </span>
             </span>
