@@ -127,8 +127,9 @@ def run_pre_flight_check(
     )
 
     # ── 2. Airworthiness Domain ───────────────────────────────────────────
-    drone_weight = float(mission_plan.get("drone_weight_kg", 0.0)) or None
-    payload_kg = float(mission_plan.get("payload_kg", 0.0))
+    # `or 0.0`: the API sends None when no weight is given, which float() rejected (every request without a weight failed)
+    drone_weight = float(mission_plan.get("drone_weight_kg") or 0.0) or None
+    payload_kg = float(mission_plan.get("payload_kg") or 0.0)
     airworthiness_domain = _check_airworthiness(drone_weight, payload_kg)
 
     # ── 3. Energy / Battery Domain ────────────────────────────────────────

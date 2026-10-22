@@ -17,8 +17,10 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
-from aerofleet.api.routes.auth import get_current_active_user
+from aerofleet.api.routes.auth import get_current_active_user, get_db
+from aerofleet.assurance import ledger
 from aerofleet.city.airspace import AirspaceModel
 from aerofleet.city.registry import CITY_REGISTRY, DEFAULT_CITY, get_city_config
 from aerofleet.city.restricted_sites import PUNE_RESTRICTED_SITES, MUMBAI_RESTRICTED_SITES
@@ -41,6 +43,8 @@ _RESTRICTED_SITES_BY_CITY = {
 
 class MissionPlanRequest(BaseModel):
     """Mission plan parameters for pre-flight check."""
+    drone_id: Optional[str] = Field(None, description="If given, the UIN status is read from the registration registry")
+
     # Location
     origin_lat: float = Field(..., description="Origin latitude")
     origin_lon: float = Field(..., description="Origin longitude")
@@ -62,7 +66,7 @@ class MissionPlanRequest(BaseModel):
     deadline_minutes: float = Field(60.0, description="Delivery deadline (minutes)")
 
     # Regulatory status
-    uin_registered: bool = Field(False, description="UIN registered on Digital Sky")
+    uin_registered: bool = Field(False, description="UIN registered on Digital Sky (ignored when drone_id is given)")
     uaop_provided: bool = Field(False, description="UAOP permit available")
     atc_permission: bool = Field(False, description="ATC/ATS permission obtained")
     rpc_provided: bool = Field(False, description="Remote Pilot Certificate held")
@@ -83,6 +87,37 @@ class MissionPlanRequest(BaseModel):
     wind_speed_mps: float = Field(3.0, description="Wind speed (m/s)")
     visibility_m: float = Field(5000.0, description="Visibility (m)")
     precipitation: bool = Field(False, description="Active precipitation")
+
+
+# ── Registry facts and signing (shared with missions.py) ──────────────────────
+
+# Answers the operator types in; AeroFleet has no way to check them, so reports say so.
+OPERATOR_DECLARED = ("uaop_provided", "atc_permission", "rpc_provided", "insurance_provided", "flight_plan_filed",
+                     "maintenance_log_current", "safety_pilot_present", "mavlink_signing_enabled", "c2_encryption",
+                     "dual_frequency_gnss", "gnss_anti_spoofing")
+
+
+def registry_facts(db: Session, plan: Dict[str, Any], drone_id: Optional[str]) -> Dict[str, Any]:
+    """Take the UIN status from the registration registry when a drone is named (like dispatch does)."""
+    facts: Dict[str, Any] = {"operator_declared": [k for k in OPERATOR_DECLARED if k in plan]}
+    if drone_id:
+        from aerofleet.fleet import registration
+
+        status = registration.status_of(registration.get(db, drone_id))
+        plan["uin_registered"] = status in (registration.RECORDED, registration.VERIFIED)
+        facts.update(uin_source="registry", uin_status=status)
+    else:
+        facts.update(uin_source="operator-declared", uin_status=None)
+        facts["operator_declared"].insert(0, "uin_registered")
+    return facts
+
+
+def sign(db: Session, kind: str, subject: str, payload: Dict[str, Any], user: User) -> Dict[str, Any]:
+    """Record `payload` in the signed ledger and return the attestation to show with it."""
+    entry = ledger.append(db, kind, subject, payload, user.username)
+    db.commit()
+    return {"ledger_seq": entry.seq, "entry_hash": entry.entry_hash, "payload_sha256": entry.payload_sha256,
+            "method": "Ed25519-signed, hash-chained AeroFleet record", "verify_at": "/api/v1/assurance/ledger/verify"}
 
 
 # ── Zone auto-classification helper ──────────────────────────────────────────
@@ -149,6 +184,7 @@ def _classify_point_zones(lat: float, lon: float, city: str) -> Dict[str, Any]:
 async def pre_flight_compliance(
     body: MissionPlanRequest,
     current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """Run the full pre-flight compliance check for a mission plan.
 
@@ -162,6 +198,8 @@ async def pre_flight_compliance(
     for a narrative explanation.
     """
     plan = body.model_dump()
+    drone_id = plan.pop("drone_id")
+    facts = registry_facts(db, plan, drone_id)
 
     # Auto-classify origin and destination zones
     origin_zone = _classify_point_zones(body.origin_lat, body.origin_lon, body.city)
@@ -193,14 +231,18 @@ async def pre_flight_compliance(
         logger.error(f"Pre-flight check failed: {exc}")
         raise HTTPException(status_code=500, detail=f"Compliance check failed: {exc}")
 
-    return {
+    out = {
         **dataclasses.asdict(report),
+        "inputs": facts,
         "zone_info": {
             "origin": origin_zone,
             "destination": dest_zone,
         },
         "estimated_distance_km": plan["distance_km"],
     }
+    out.pop("attestation", None)
+    out["attestation"] = sign(db, "pre_flight_check", drone_id or mission_id, out, current_user)
+    return out
 
 
 @router.get("/zone", summary="Classify a coordinate against DGCA zones")
