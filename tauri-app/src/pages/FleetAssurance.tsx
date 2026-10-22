@@ -253,7 +253,7 @@ export default function FleetAssurancePage() {
           <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Choose mission file'}</button>
           <button className="btn" disabled={busy} onClick={() => logFile.current?.click()}>{flightLog ? flightLog.name : 'Choose flight log'}</button>
           <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !plan || !flightLog} onClick={compare}>Compare</button>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.waypoints mission and an ArduPilot .tlog or .bin log, for the drone id above</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.waypoints mission and a flight log (ArduPilot .tlog or .bin, PX4 .ulg), for the drone id above</span>
         </div>
         {error && <div role="alert" style={{ color: 'var(--status-red)', fontSize: 13 }}>{error}</div>}
       </div>

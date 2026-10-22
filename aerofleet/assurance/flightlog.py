@@ -1,10 +1,9 @@
 """Read an uploaded flight log into one plain structure — the track flown, the parameters on board,
 and the flight-mode changes. No drone is contacted.
 
-Supported: ArduPilot telemetry logs (.tlog) and ArduPilot onboard DataFlash logs (.bin), both through
-pymavlink. PX4 .ulg is not supported yet (needs pyulog). The .tlog path is covered by tests that build
-a real log; the .bin path uses the same code with DataFlash message names and has not yet been run
-against a real onboard log (MASTER_PLAN 2.1).
+Supported: ArduPilot telemetry logs (.tlog) and onboard DataFlash logs (.bin), through pymavlink, and
+PX4 onboard logs (.ulg), through pyulog. The .tlog and .ulg paths are covered by tests that build a real
+log; .bin and .ulg have also been run on real logs (ArduPilot autotest logs, PX4 Flight Review logs).
 """
 from __future__ import annotations
 
@@ -27,7 +26,7 @@ class FlightLogError(ValueError):
 
 @dataclass
 class FlightLog:
-    format: str                                              # tlog | bin
+    format: str                                              # tlog | bin | ulg
     track: List[Tuple[float, float, float, float]] = field(default_factory=list)   # (t_s, lat, lon, alt above home m)
     params: Dict[str, float] = field(default_factory=dict)
     modes: List[Tuple[float, str]] = field(default_factory=list)                   # (t_s, mode) on each change
@@ -63,14 +62,100 @@ def _set_param(log: FlightLog, t: float, name: str, value: float) -> None:
     log.params[name] = value
 
 
+# PX4 vehicle_status.nav_state. PX4's automatic "hold" is called HOLD here so it is not mistaken for
+# ArduPilot's pilot-flown LOITER.
+PX4_NAV_STATES = {0: "MANUAL", 1: "ALTCTL", 2: "POSCTL", 3: "MISSION", 4: "HOLD", 5: "RTL", 6: "RC_RECOVER", 7: "RTGS",
+                  8: "LAND_ENG_FAIL", 9: "LAND_GPS_FAIL", 10: "ACRO", 12: "DESCEND", 13: "TERMINATION", 14: "OFFBOARD",
+                  15: "STABILIZE", 16: "RATTITUDE", 17: "TAKEOFF", 18: "LAND", 19: "FOLLOW", 20: "PRECLAND", 21: "ORBIT",
+                  22: "VTOL_TAKEOFF"}
+ULOG_TOPICS = ["vehicle_global_position", "home_position", "vehicle_gps_position", "sensor_gps", "vehicle_status",
+               "battery_status"]
+
+
+def _read_ulog(path: str) -> FlightLog:
+    """PX4 onboard log. Times are seconds since the log started; only numbers are read (no logged text)."""
+    from pyulog import ULog
+
+    try:
+        u = ULog(path, message_name_filter_list=ULOG_TOPICS)
+    except Exception as e:  # pyulog raises many types on a damaged file
+        raise FlightLogError(f"Could not open the log: {e}") from None
+    t0 = u.start_timestamp
+    sec = lambda ts: (float(ts) - t0) / 1e6  # noqa: E731
+    data = {}
+    for d in u.data_list:
+        if d.name not in data or d.multi_id == 0:
+            data[d.name] = d.data
+    log = FlightLog(format="ulg")
+    log.params = {k.upper(): float(v) for k, v in u.initial_parameters.items()}
+    for ts, name, value in u.changed_parameters:
+        if ts > t0:
+            _set_param(log, sec(ts), name.upper(), float(value))
+    mav_type = log.params.get("MAV_TYPE")
+    if mav_type is not None:
+        log.vehicle = VEHICLE_TYPES.get(int(mav_type), f"type {int(mav_type)}")
+
+    gp = data.get("vehicle_global_position")
+    if gp is not None and len(gp["timestamp"]):
+        home = data.get("home_position")
+        if home is not None and len(home["timestamp"]) and "alt" in home:
+            home_alt = float(home["alt"][0])
+        else:
+            home_alt = float(gp["alt"][0])
+            log.notes.append("No home position in this log; heights are relative to the first position")
+        step = max(1, len(gp["timestamp"]) // MAX_POINTS + 1)
+        log.track = [(sec(t), float(la), float(lo), float(al) - home_alt)
+                     for t, la, lo, al in zip(gp["timestamp"][::step], gp["lat"][::step], gp["lon"][::step], gp["alt"][::step])
+                     if _valid(float(la), float(lo))]
+        log.position_source = "vehicle_global_position"
+    g = data.get("vehicle_gps_position", data.get("sensor_gps"))
+    if g is not None:
+        lat = g["latitude_deg"] if "latitude_deg" in g else g["lat"] / 1e7
+        lon = g["longitude_deg"] if "longitude_deg" in g else g["lon"] / 1e7
+        alt = g["altitude_msl_m"] if "altitude_msl_m" in g else g["alt"] / 1e3
+        sats = g["satellites_used"]
+        hdop = g["hdop"] if "hdop" in g else [None] * len(sats)
+        for t, n, h, fix in list(zip(g["timestamp"], sats, hdop, g["fix_type"]))[:MAX_POINTS]:
+            log.gps.append((sec(t), int(n), float(h) if h is not None else None, int(fix)))
+        if not log.track:
+            pts = [(sec(t), float(la), float(lo), float(al)) for t, la, lo, al, fix in
+                   zip(g["timestamp"], lat, lon, alt, g["fix_type"]) if fix >= 3 and _valid(float(la), float(lo))][:MAX_POINTS]
+            if pts:
+                log.track = [(t, la, lo, al - pts[0][3]) for t, la, lo, al in pts]
+                log.position_source = "vehicle_gps_position"
+                log.notes.append("Altitude is GPS altitude relative to the first fix (no estimator position in this log)")
+    b = data.get("battery_status")
+    if b is not None:
+        volts = b["voltage_v"] if "voltage_v" in b else b.get("voltage_filtered_v")
+        if volts is not None:
+            for t, v, r in list(zip(b["timestamp"], volts, b.get("remaining", [None] * len(volts))))[:MAX_POINTS]:
+                if v > 0:
+                    log.battery.append((sec(t), float(v), float(r) * 100.0 if r is not None and r >= 0 else None))
+    st = data.get("vehicle_status")
+    if st is not None:
+        last = None
+        for t, n in zip(st["timestamp"], st["nav_state"]):
+            mode = PX4_NAV_STATES.get(int(n), f"NAV_STATE_{int(n)}")
+            if mode != last:
+                log.modes.append((sec(t), mode))
+                last = mode
+    if log.vehicle is not None and log.vehicle not in MULTIROTORS:
+        log.notes.append(f"This log is from a {log.vehicle}; the planned-versus-flown comparison assumes a multirotor")
+    if not log.track:
+        raise FlightLogError("No position records found in the log — nothing to compare with a plan")
+    return log
+
+
 def read_flight_log(path: str) -> FlightLog:
     ext = os.path.splitext(path)[1].lower()
-    if ext not in (".tlog", ".bin"):
-        raise FlightLogError("Unsupported log type — upload an ArduPilot .tlog or .bin file (PX4 .ulg is not supported yet)")
+    if ext not in (".tlog", ".bin", ".ulg"):
+        raise FlightLogError("Unsupported log type — upload an ArduPilot .tlog or .bin file, or a PX4 .ulg file")
     if not os.path.isfile(path) or os.path.getsize(path) == 0:
         raise FlightLogError("The log file is empty")
     if os.path.getsize(path) > MAX_BYTES:
         raise FlightLogError("The log file is larger than 200 MB")
+    if ext == ".ulg":
+        return _read_ulog(path)
     from pymavlink import mavutil
 
     try:

@@ -38,7 +38,10 @@ CAUSE_TEXT = {
     "PLAN_OR_ROUTE_ISSUE": "the plan itself (the route could not be flown as drawn)",
 }
 SLICES = ("navigation", "pilot", "gps", "battery", "settings")
-KNOWN_MODES = PILOT_MODES | {"AUTO", "MISSION", "RTL", "LAND", "GUIDED", "BRAKE", "SMART_RTL", "CIRCLE", "AUTOTUNE"}
+KNOWN_MODES = PILOT_MODES | {"AUTO", "MISSION", "RTL", "LAND", "GUIDED", "BRAKE", "SMART_RTL", "CIRCLE", "AUTOTUNE",
+                             # PX4 (flightlog.PX4_NAV_STATES)
+                             "HOLD", "TAKEOFF", "DESCEND", "OFFBOARD", "STABILIZE", "PRECLAND", "ORBIT", "FOLLOW",
+                             "TERMINATION", "VTOL_TAKEOFF"}
 SEVERITIES = ("LOW", "MEDIUM", "HIGH")
 WINDOW_S = 5.0
 Ask = Callable[[str, str, Dict[str, Any]], str]          # (system prompt, user prompt, reply schema) -> raw reply

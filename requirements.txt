@@ -61,5 +61,5 @@ cryptography>=42.0.0            # Ed25519 signatures for the signed record (aero
 # USB flight-controller discovery (aerofleet/hardware/fc_discovery.py)
 pyserial>=3.5
 
-# Research only: PX4 .ulg reader for research/px4_log_study
+# PX4 .ulg flight logs (aerofleet/assurance/flightlog.py and research/px4_log_study)
 pyulog>=1.2.0

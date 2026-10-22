@@ -293,3 +293,20 @@ def test_deconfliction_and_wind_checks_are_written_to_the_signed_record(api_clie
     assert (entries[d["ledger_seq"]]["kind"], entries[d["ledger_seq"]]["subject"]) == ("deconflict", "alpha,bravo")
     assert (entries[w["ledger_seq"]]["kind"], entries[w["ledger_seq"]]["subject"]) == ("wind_check", "north.waypoints")
     assert api_client.get("/api/v1/assurance/ledger/verify", headers=auth_headers).json()["ok"] is True
+
+
+def test_a_px4_ulg_log_is_reviewed_like_an_ardupilot_one(api_client, auth_headers, tmp_path):
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+    from tests.unit.test_assurance_ulog import write_ulog
+
+    home, dest, alt = (18.5200, 73.8500), (18.5290, 73.8500), 60.0
+    plan = build_waypoint_file({"origin_lat": home[0], "origin_lon": home[1], "dest_lat": dest[0], "dest_lon": dest[1], "altitude_m": alt})
+    track = [(float(i), home[0], home[1], alt * i / 10) for i in range(10)]
+    track += [(10.0 + i, home[0] + (dest[0] - home[0]) * i / 99, home[1], alt) for i in range(100)]
+    log = write_ulog(str(tmp_path / "px4.ulg"), track, params=[("MAV_TYPE", 2), ("GF_ACTION", 1)], nav_states=[(0.0, 17), (10.0, 3)])
+    files = {"plan": ("mission.waypoints", plan.encode(), "text/plain"), "log": ("px4.ulg", open(log, "rb").read(), "application/octet-stream")}
+    r = api_client.post(f"{URL}/drones/PX1/flights", headers=auth_headers, files=files)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["verdict"] == "CONFORMED" and body["report"]["log"]["format"] == "ulg" and body["report"]["log"]["points"] == 110
+    assert body["drift"]["param_count"] == 2                                            # PX4 settings feed the drift check too
