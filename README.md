@@ -19,6 +19,7 @@ ordinary deterministic code.
 | **Settings drift** | A failsafe or limit is changed in the field and forgotten | Compares a drone's settings with the fleet's approved baseline and its own last upload. Safety-critical changes block; flight-limit changes need review; an operator can approve an exact value with a reason |
 | **Did it fly the plan?** | A compliant plan proves nothing if something else was flown | Compares a flight log (ArduPilot `.tlog` / `.bin`, PX4 `.ulg`) with the approved mission file: how far off route and off height, for how long, where; manual takeovers; time in a no-fly zone; settings changed during the flight |
 | **Evidence timeline** | Finding out what happened means opening many plots | Puts the log's events in time order — mode changes (the pilot taking over from an automatic mode is flagged), safety settings changed in flight, low battery and voltage drops, poor GPS, the plan deviations — and lists what happened around each deviation. **It does not name a cause** (see below) |
+| **Vibration across the fleet** | Problem airframes look normal flight by flight | Records each flight's vibration and ranks the fleet's drones against others measured the same way; drones above the group's upper quartile are flagged for inspection (mounting, propellers, motors). Not a crash prediction |
 | **Replay on the VR table** | A table of numbers is hard to picture | Shows a reviewed flight in 3D: the plan dashed, the flown track green within tolerance and red where it deviated, the events pinned where they happened, a playhead. In the app's VR view (desktop or Quest browser) and in the Quest app |
 | **Will these missions conflict?** | Drones planned separately can cross at the same place and time | Checks mission files against each other and fixes conflicts with a launch delay or, if allowed, a different cruise height |
 | **Battery for the wind aloft** | Wind at 100 m is often much stronger than at ground level | Fetches the forecast wind at cruise height and recomputes the mission's energy leg by leg |
@@ -35,6 +36,12 @@ declared (rule, thresholds and pass mark committed) before they were run.
   crashes** (0.50 is guessing), and flagged 39% of normal flights. Two signals seen in the first run did not
   hold up on the held-out set. This is why the product shows evidence and names no cause.
   [`research/results/px4_log_study/`](research/results/px4_log_study/)
+- **Which drones crash: the one useful signal.** Against matched drones with no recorded crash (same flight
+  controller, firmware and vehicle type), drones that later crashed were already vibrating more on their ordinary
+  flights (60 matched sets, mean rank 0.67, p = 0.002). But the flight that crashed was no rougher than the same
+  drone's earlier flights (61 drones, 0.48, p = 0.67). Logs show which drones are at risk, not which flight will
+  crash; that is what the fleet vibration ranking uses. [`rough_drone.md`](research/results/px4_log_study/rough_drone.md),
+  [`within_drone.md`](research/results/px4_log_study/within_drone.md), [`leak_curve.md`](research/results/px4_log_study/leak_curve.md)
 - **Do crashed drones fly with different settings?** No: a protection was switched off (versus the firmware
   default) in 51% of crash logs and 46% of good ones (p = 0.63), and 0 of 100 crash logs changed a safety
   setting in flight. [`summary.md`](research/results/px4_log_study/summary.md)
@@ -111,12 +118,13 @@ earlier product. Guide: [`docs/VR_QUEST3_GUIDE.md`](docs/VR_QUEST3_GUIDE.md).
 
 | Path | What is there |
 |---|---|
-| `aerofleet/assurance/` | The 2.0 code: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot and PX4), `reconcile`, `evidence`, `deconflict`, `wind`, `ledger`, `report_html`, `live_control`; `review_panel` is research only |
+| `aerofleet/assurance/` | The 2.0 code: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot and PX4), `reconcile`, `evidence`, `vibration`, `deconflict`, `wind`, `ledger`, `report_html`, `live_control`; `review_panel` is research only |
 | `aerofleet/api/routes/` | `assurance.py`, `compliance.py`, `missions.py`, `vr.py` |
 | `tauri-app/src/pages/FleetAssurance.tsx`, `VRSafetyView.tsx` | The app screens |
 | `unity/AeroFleetVR/` | Mirror of the Quest app's scripts |
 | `research/` | Studies and their results; `px4_log_study/` is the crash-log benchmark, `panel_eval/` the AI-panel test |
-| `docs/aerofleet2/` | Master plan, context for whoever continues, product definition, panel runbook, competitor check |
+| `docs/aerofleet2/` | Master plan, context for whoever continues, product definition, panel runbook, competitor check, pitch |
+| `docs/paper/` | The research paper draft (manuscript, figures, build script) and where to submit it |
 | `tests/` | `test_assurance_*`, `test_missions_compliance_api.py`, `test_vr_pairing_api.py` for 2.0; the rest covers the earlier product |
 
 ## The earlier product

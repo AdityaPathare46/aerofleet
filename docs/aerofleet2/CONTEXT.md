@@ -11,7 +11,9 @@ product hypothesis, a **test-flight acceptance check** after a build or repair (
 because forum experts name tuning/configuration most often. Details and numbers: MASTER_PLAN progress log for
 2026-10-20 and 2026-10-22, and `research/results/px4_log_study/`. As of 22 Oct the product contains no AI and
 names no cause; flight reviews show an evidence timeline and can be replayed on the VR table (web view checked;
-Quest app compiled only). Test account for checking the app locally: see `AEROFLEET_DEV_TEST_*` in `.env`. Forum text and review sheets are git-ignored (rebuild with the
+Quest app compiled only). Test account for checking the app locally: see `AEROFLEET_DEV_TEST_*` in `.env`. As of 23 Oct: one positive research
+result (rough drones crash more; within-flight no warning) became the fleet vibration ranking; the paper draft and
+its submission plan are in `docs/paper/README.md`. Forum text and review sheets are git-ignored (rebuild with the
 scripts). Large log downloads live in the session scratch folder, not the repo.
 
 ## 1. What is being built and why
