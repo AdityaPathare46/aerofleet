@@ -114,3 +114,15 @@ What was done:
   forum titles, not operators' reports.
 - Language-model cases were written by the authors; the blind set is still to come.
 - Author names, affiliations, repository URL and archived DOI are placeholders.
+
+## Fourth pass: the three remaining weaknesses (24 October 2026)
+
+| Weakness | What was done | Status |
+|---|---|---|
+| One forum recorder | Blind second coding set up on the existing reviewer-B sheet; `SECOND_CODER.md`; scoring compares it with the first recording; pass mark kappa >= 0.60 declared | **Waiting for Atharv** (about a day) |
+| Newer vibration metric only 12 sets | Declared replication with every eligible newer-firmware drone (`rough_drone_newer.py`, 170 logs downloaded): 19 usable sets, mean rank 0.58, 95% CI 0.39-0.76, p = 0.25. **Not confirmed.** Reported in the abstract, results, discussion, threats, conclusion and a highlight | Done; the headline is now qualified |
+| No prospective test, no users | Both declared in `research/protocols/prospective_and_user_study.md` with outcomes and pass marks; cited in Future work | Needs partner fleets and 12-16 participants; cannot be done today |
+
+Rating stays at **7.5/10**. The replication honestly weakens the positive result (the archive has no more
+newer-firmware cases), and the transparency strengthens the paper. The next real gain is the kappa from the second
+coding.

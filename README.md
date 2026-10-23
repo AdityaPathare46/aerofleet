@@ -47,7 +47,9 @@ declared (rule, thresholds and pass mark committed) before they were run.
   controller, firmware and vehicle type), drones that later crashed were already vibrating more on their ordinary
   flights (60 matched sets, mean rank 0.67, p = 0.002). But the flight that crashed was no rougher than the same
   drone's earlier flights (61 drones, 0.48, p = 0.67). Logs show which drones are at risk, not which flight will
-  crash; that is what the fleet vibration ranking uses. [`rough_drone.md`](research/results/px4_log_study/rough_drone.md),
+  crash; that is what the fleet vibration ranking uses. The effect comes mostly from the older vibration
+  estimate: a declared replication on the newer accelerometer metric (19 sets) was inconclusive (0.58, p = 0.25,
+  [`rough_drone_newer.md`](research/results/px4_log_study/rough_drone_newer.md)). [`rough_drone.md`](research/results/px4_log_study/rough_drone.md),
   [`within_drone.md`](research/results/px4_log_study/within_drone.md), [`leak_curve.md`](research/results/px4_log_study/leak_curve.md)
 - **Do crashed drones fly with different settings?** No: a protection was switched off (versus the firmware
   default) in 51% of crash logs and 46% of good ones (p = 0.63), and 0 of 100 crash logs changed a safety
