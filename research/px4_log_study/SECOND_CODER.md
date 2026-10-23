@@ -14,6 +14,12 @@ answer, and it is the cheapest real improvement to the paper.
    *Is it a crash*, *Expert's conclusion*, *Cause the expert names*, *Who gave it*, *Did the poster confirm?*, and paste
    the sentence that gives the diagnosis.
 3. You record what the **expert** concluded. You do not judge the crash yourself.
+   - **The quote must be copied from that thread**: the exact sentence in which the expert gives the diagnosis.
+     The scoring script checks every quote against its own thread and rejects quotes that are not found there or that
+     are pasted into several rows. If the expert gives no diagnosis, leave the quote empty and choose
+     *no diagnosis given* or *unclear*; that is a valid and common answer.
+   - Expect a mix: in many threads the expert never commits to a cause. Do not choose *drone* unless the expert says
+     the aircraft (hardware, tuning, firmware) caused it.
 4. **Do not look at** `forum_review/forum_key_DO_NOT_OPEN.csv`, `results/px4_log_study/forum_expert_labels.csv` or
    `forum_expert_labels.md`, and do not discuss threads with Aditya until you have finished. That is what makes the
    check independent.
@@ -25,7 +31,7 @@ answer, and it is the cheapest real improvement to the paper.
 cd research
 ../.venv/bin/python px4_log_study/score_forum.py results/px4_log_study/forum_expert_labels.csv \
     px4_log_study/forum_review/forum_diagnosis_reviewer_B.xlsx px4_log_study/forum_review/forum_key_DO_NOT_OPEN.csv \
-    results/px4_log_study/forum_agreement.md
+    results/px4_log_study/forum_agreement.md "/Volumes/One Touch/AeroFleet_px4_data/forum_cache"
 ```
 
 Declared before the second coding (24 Oct 2026): the labels are reported as reliable if kappa is at least 0.60 for

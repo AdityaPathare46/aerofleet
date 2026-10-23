@@ -1,6 +1,11 @@
 """Score the forum expert-diagnosis recording: do the two recorders agree, and do experts agree with uploaders?
 
-    python research/px4_log_study/score_forum.py REVIEWER_A.xlsx REVIEWER_B.xlsx FORUM_KEY_CSV [OUT_MD]
+    python research/px4_log_study/score_forum.py REVIEWER_A.xlsx REVIEWER_B.xlsx FORUM_KEY_CSV [OUT_MD] [FORUM_CACHE_DIR]
+
+With FORUM_CACHE_DIR (the cached thread JSON), each quote in sheet B is checked against its own thread: a row
+counts as read only if its quote matches a sentence of that thread (similarity >= 0.8) and the quote is not
+pasted into other threads. Agreement is reported on read rows only; if fewer than 80% of rows pass, the sheet is
+reported as not usable for the reliability check.
 
 REVIEWER_A may also be the first recording as a CSV (results/px4_log_study/forum_expert_labels.csv), which is
 how the 161 threads were first recorded; it is matched to the sheet rows through the key's topic_id. Agreement
@@ -26,11 +31,42 @@ def read(path, key=None):
             for r in ws.iter_rows(min_row=2, values_only=True) if r[0]}
 
 
-def main(a_path, b_path, key_path, out=None):
+def quotes_read(b_path, key, cache):
+    """Rows of sheet B whose quote is a sentence of that row's thread and is not repeated across threads."""
+    import difflib
+    import html
+    import json
+    import os
+    import re
+    ws = load_workbook(b_path, data_only=True)["Threads"]
+    rows = {int(r[0]): (r[11] or "").strip() for r in ws.iter_rows(min_row=2, values_only=True) if r[0] and r[7]}
+    repeats = Counter(q for q in rows.values() if q)
+    ok = set()
+    for i, q in rows.items():
+        path = os.path.join(cache, f"t_{key[i]['topic_id']}.json")
+        if not q or repeats[q] > 1 or not os.path.exists(path):
+            continue
+        posts = json.load(open(path)).get("post_stream", {}).get("posts", [])
+        text = " ".join(re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", p.get("cooked", "")))) for p in posts)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+        if max((difflib.SequenceMatcher(None, q.lower(), s.lower()).ratio() for s in sentences if s), default=0) >= 0.8:
+            ok.add(i)
+    return ok, len(rows)
+
+
+def main(a_path, b_path, key_path, out=None, cache=None):
     key = {int(r["#"]): r for r in csv.DictReader(open(key_path))}
     A, B = read(a_path, key), read(b_path)
     both = [i for i in key if A.get(i, {}).get("verdict") and B.get(i, {}).get("verdict")]
-    L = ["# Forum expert diagnoses: recording agreement", "", f"Threads recorded by both: {len(both)}", ""]
+    L = ["# Forum expert diagnoses: recording agreement", ""]
+    if cache:
+        ok, n = quotes_read(b_path, key, cache)
+        L += [f"Quote check: {len(ok)} of {n} rows of sheet B quote a sentence of their own thread (not pasted elsewhere).", ""]
+        if len(ok) < 0.8 * n:
+            L += ["**Sheet B is not usable for the reliability check**: most quotes are not from the row's thread. "
+                  "Agreement below is shown for information only.", ""]
+        both = [i for i in both if i in ok] if len(ok) >= 0.8 * n else both
+    L += [f"Threads recorded by both: {len(both)}", ""]
     for field in ("crash", "verdict", "cause", "confirmed"):
         k, n = kappa([(A[i][field], B[i][field]) for i in both])
         L.append(f"- {field}: A and B agree on {sum(A[i][field] == B[i][field] for i in both)} of {n}; kappa {k:.2f}")
@@ -48,4 +84,4 @@ def main(a_path, b_path, key_path, out=None):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:6])
