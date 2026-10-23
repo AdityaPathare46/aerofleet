@@ -31,6 +31,7 @@ interface Review {
     log: { points: number; param_count: number; notes: string[] }
     settings_changed_in_flight?: { count: number; safety_critical: number; flight_limit: number; changes: { t_s: number; name: string; old: number; new: number; severity: Severity }[] }
     evidence_timeline?: TimelineEvent[]
+    data_quality?: { position_rate_hz: number | null; longest_gap_s: number | null; gps_satellites_median: number | null; gps_hdop_median: number | null; gps_hdop_worst: number | null; height_reference: string; clock: string; note: string }
     around_episodes?: { episode: number; kind: Episode['kind']; start_s: number; summary: string }[]
   }
   drift?: Drift | null
@@ -422,6 +423,13 @@ export default function FleetAssurancePage() {
                     <td style={{ color: LEVEL_COLOR[ev.level], fontWeight: ev.level === 'warning' ? 600 : 400 }}>{ev.text}</td>
                   </tr>))}</tbody>
               </table>
+            </div>
+          )}
+          {review.report.data_quality && (
+            <div id="data-quality" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              <b>Evidence quality:</b> positions {review.report.data_quality.position_rate_hz ?? '?'} per second (longest gap {review.report.data_quality.longest_gap_s ?? '?'} s)
+              {' '}· GPS {review.report.data_quality.gps_satellites_median ?? '?'} satellites, HDOP {review.report.data_quality.gps_hdop_median ?? '?'} median / {review.report.data_quality.gps_hdop_worst ?? '?'} worst
+              {' '}· height: {review.report.data_quality.height_reference} · times: {review.report.data_quality.clock}. {review.report.data_quality.note}
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>

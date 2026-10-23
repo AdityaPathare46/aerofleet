@@ -70,6 +70,17 @@ def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, 
                       + "</ul>",
                       "<p class='muted'>AeroFleet lists these facts but does not name a cause: on public PX4 crash logs a fixed rule "
                       "could not reliably tell a pilot error from an aircraft fault, so that judgement is left to a person.</p>"]
+    dq = r.get("data_quality")
+    if dq:
+        def v(x, unit=""):
+            return "not recorded" if x is None else f"{e(str(x))}{unit}"
+        parts += ["<h2>Quality of the evidence</h2>", _table(["Measure", "Value"], [
+            ["Position samples", f"{v(dq.get('position_rate_hz'), ' per second')} (longest gap {v(dq.get('longest_gap_s'), ' s')})"],
+            ["GPS satellites (median)", v(dq.get("gps_satellites_median"))],
+            ["GPS HDOP (median / worst)", f"{v(dq.get('gps_hdop_median'))} / {v(dq.get('gps_hdop_worst'))}"],
+            ["Height measured as", e(str(dq.get("height_reference") or ""))],
+            ["Times are", e(str(dq.get("clock") or ""))]]),
+            f"<p class='muted'>{e(dq.get('note') or '')}</p>"]
     parts += ["<h2>How this was judged</h2>",
               f"<p class='muted'>Counted as a deviation beyond {e(str(tol['corridor_m']))} m sideways or {e(str(tol['altitude_m']))} m in height for "
               f"{e(str(tol['min_duration_s']))} s or more. These are the fleet's tolerances, not regulatory limits. Every figure was computed by "

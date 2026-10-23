@@ -328,3 +328,13 @@ def test_fleet_vibration_ranks_drones_from_their_reviewed_flights(api_client, au
         assert api_client.post(f"{URL}/drones/V{k}/flights", headers=auth_headers, files=files).status_code == 200
     out = api_client.get(f"{URL}/vibration", headers=auth_headers).json()
     assert [d["drone_id"] for d in out["drones"]] == ["V3", "V2", "V1", "V0"] and out["flagged"] == ["V3"]
+
+
+def test_a_review_states_the_quality_of_its_evidence(api_client, auth_headers, tmp_path):
+    body = api_client.post(f"{URL}/drones/DQ/flights", headers=auth_headers, files=_flight_files(tmp_path)).json()
+    dq = body["report"]["data_quality"]
+    assert dq["position_rate_hz"] == 1.0 and dq["longest_gap_s"] == 1.0
+    assert "relative_alt" in dq["height_reference"] and "time since boot" in dq["clock"]
+    assert dq["tolerances"] == {"corridor_m": 30.0, "altitude_m": 15.0} and "not reported" in dq["note"]
+    html = api_client.get(f"{URL}/flights/{body['id']}/report", headers=auth_headers).text
+    assert "Quality of the evidence" in html

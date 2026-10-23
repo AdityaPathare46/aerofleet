@@ -197,6 +197,41 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
 
 REPLAY_POINTS = 1500
 
+HEIGHT_REFERENCE = {
+    "GLOBAL_POSITION_INT": "height above home from the autopilot's position estimate (relative_alt)",
+    "POS": "height above home from the autopilot's position estimate (RelHomeAlt)",
+    "vehicle_global_position": "estimator altitude minus the home altitude",
+    "GPS": "GPS altitude relative to the first fix (no estimator position in the log)",
+    "vehicle_gps_position": "GPS altitude relative to the first fix (no estimator position in the log)",
+}
+CLOCK = {"tlog": "the flight controller's time since boot (not the recording computer's clock)",
+         "bin": "the flight controller's time since boot", "ulg": "time since the log started"}
+
+
+def _data_quality(flight, corridor_m: float, altitude_m: float) -> Dict[str, Any]:
+    """How good the evidence behind a verdict is: sampling, GPS quality, height reference and clock.
+
+    Deviations smaller than the tolerances are not reported, and positions are only as good as the GPS."""
+    import statistics
+
+    times = [p[0] for p in flight.track]
+    gaps = [b - a for a, b in zip(times, times[1:]) if b > a]
+    rate = round(1.0 / statistics.median(gaps), 1) if gaps else None
+    sats = [g[1] for g in flight.gps if g[1] is not None]
+    hdop = [g[2] for g in flight.gps if g[2] is not None]
+    return {
+        "position_rate_hz": rate,
+        "longest_gap_s": round(max(gaps), 1) if gaps else None,
+        "gps_satellites_median": statistics.median(sats) if sats else None,
+        "gps_hdop_median": round(statistics.median(hdop), 2) if hdop else None,
+        "gps_hdop_worst": round(max(hdop), 2) if hdop else None,
+        "height_reference": HEIGHT_REFERENCE.get(flight.position_source, flight.position_source),
+        "clock": CLOCK.get(flight.format, flight.format),
+        "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_m},
+        "note": ("Positions are only as accurate as the GPS (typically a few metres horizontally, more vertically). "
+                 f"Deviations under {corridor_m:g} m sideways or {altitude_m:g} m in height are not reported."),
+    }
+
 
 def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: str, plan_name: str, log_bytes: bytes,
                   log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0,
@@ -237,6 +272,7 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     finally:
         os.unlink(tmp)
     report["log"] = flight.summary()
+    report["data_quality"] = _data_quality(flight, corridor_m, altitude_m)
     report["input_files"] = {"plan": ledger.file_fingerprint(plan_name, plan_bytes if plan_bytes is not None else plan_text.encode()),
                              "log": ledger.file_fingerprint(log_name, log_bytes)}
     report["zones_checked"] = city
