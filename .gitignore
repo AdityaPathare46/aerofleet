@@ -154,3 +154,5 @@ node_modules/
 target/
 research/px4_log_study/label_review/key_DO_NOT_OPEN.csv
 research/px4_log_study/forum_review/
+docs/paper/originality/abs_*
+docs/paper/latex/*.log

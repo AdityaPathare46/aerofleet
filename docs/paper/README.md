@@ -1,11 +1,26 @@
 # Paper: where to submit, and what is left before submitting
 
-Manuscript: `AeroFleet_flight_log_crash_study_manuscript.docx` (PDF preview alongside). Rebuild after any edit:
+**Final manuscript (Elsevier `elsarticle` LaTeX, numbered references):** `latex/main.tex` + `latex/refs.bib`.
+It builds to `submission/manuscript.pdf`: 24 pages, about 4,700 words of text, 8 tables, 6 figures, 33 verified
+references, and a 242-word abstract.
+
+| File | What it is |
+|---|---|
+| `submission/manuscript.pdf` | The manuscript as it will be reviewed (line-numbered) |
+| `submission/latex_source_for_overleaf.zip` | Everything needed to build it; upload to Overleaf or attach as source files |
+| `submission/highlights.txt` | Five highlights, each 85 characters or fewer (Elsevier asks for a separate file) |
+| `submission/cover_letter.pdf` | Cover letter to the editor (placeholders for names) |
+| `critical_review.md` | The internal reviewer's report and what was changed in response |
+| `originality_check.md` | Partial similarity check against the cited arXiv abstracts |
+
+Rebuild after any edit:
 
 ```bash
 python3 research/px4_log_study/paper_figures.py docs/paper/figures
-python3 docs/paper/build_manuscript.py
+cd docs/paper/latex && tectonic -X compile main.tex
 ```
+
+The first Word draft was replaced by this version; it remains in the git history (commit `87394f7`).
 
 ## Journal choice
 
@@ -41,6 +56,9 @@ Sources: [RESS metrics (SciJournal)](https://www.scijournal.org/reliab-eng-syst-
 5. **A timely negative result on small language models** used as safety reviewers.
 
 ## Before submitting (in order)
+
+Items 2, 3 and 6 below were done in the revision (references verified, text and methods expanded, Elsevier format).
+Still open: 1, 4, 5 and 7, plus an iThenticate check through the institution.
 
 1. **Second recorder for the forum labels.** Add Atharv's independent recording and report agreement (kappa),
    or measure the error rate on a random 30-thread sample. Reviewers will ask for this.

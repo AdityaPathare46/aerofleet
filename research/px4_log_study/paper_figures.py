@@ -30,7 +30,7 @@ def leak_curve(out):
     m_, a, asd, b, bsd = (np.array(c) for c in zip(*rows))
     fig, ax = plt.subplots(figsize=(4.2, 2.8))
     ax.errorbar(m_, a, yerr=asd, marker="o", color=BLUE, capsize=3, label="Crash vs normal flight")
-    ax.errorbar(m_, b, yerr=bsd, marker="s", color=RED, capsize=3, label="Pilot- vs drone-blamed crash")
+    ax.errorbar(m_, b, yerr=bsd, marker="s", color=RED, capsize=3, label="Pilot- vs aircraft-caused crash")
     ax.axhline(0.5, color=GREY, lw=0.8, ls="--")
     ax.text(30, 0.515, "chance", color=GREY, ha="right", fontsize=8)
     ax.set_xlabel("Seconds removed before the crash moment")
@@ -38,7 +38,7 @@ def leak_curve(out):
     ax.set_ylim(0.35, 1.0)
     ax.legend(frameon=False, loc="center right", fontsize=8)
     fig.tight_layout()
-    fig.savefig(out, dpi=300)
+    fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -111,7 +111,7 @@ def within_between(out):
     ax.invert_yaxis()
     ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)")
     fig.tight_layout()
-    fig.savefig(out, dpi=300)
+    fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -130,7 +130,94 @@ def forum_causes(out):
     ax.set_xlabel("PX4 forum crash threads")
     ax.legend(frameon=False, fontsize=7.5, loc="lower right")
     fig.tight_layout()
-    fig.savefig(out, dpi=300)
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def study_flow(out):
+    """Sample flow from the archive to each analysis (counts from the result files)."""
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    def box(x, y, w, h, text, fc="#EEF3F8", fs=6.6, bold=False):
+        ax.add_patch(plt.Rectangle((x, y), w, h, fc=fc, ec=BLUE, lw=0.8))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, color=INK, fontweight="bold" if bold else "normal",
+                linespacing=1.25)
+
+    def arrow(x0, y0, x1, y1, col=GREY):
+        ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops=dict(arrowstyle="->", color=col, lw=0.7))
+
+    box(0.30, 0.84, 0.40, 0.13, "PX4 Flight Review public index\n479,547 logs (442,929 real hardware;\n38,320 vehicle identifiers)", fc="#DCE7F2", bold=True)
+    box(0.02, 0.58, 0.30, 0.13, "Uploader crash ratings\n590 logs: 402 aircraft, 188 pilot")
+    box(0.36, 0.58, 0.28, 0.13, "Ratings 'good' or 'great'\n(normal-flight comparison)")
+    box(0.68, 0.58, 0.30, 0.13, "PX4 forum threads linking a log\n443 found, 410 with a link")
+    for x in (0.17, 0.50, 0.83):
+        arrow(0.50, 0.84, x, 0.71)
+    w, gap = 0.152, 0.012
+    items = ["Q1 Settings\n100 crashes\n477 normal", "Q2 Rule\n93 + 112 held-out\n143 normal",
+             "Q2/Q3a Model\n148 crashes\n139 normal", "Q3b Within-drone\n101 crashes\n475 earlier flights",
+             "Q3c Between-drone\n66 matched sets\n124 control drones", "Q4 Experts\n148 real crashes\n35 logs available"]
+    xs = [0.01 + i * (w + gap) for i in range(6)]
+    for x, t in zip(xs, items):
+        box(x, 0.18, w, 0.22, t, fc="white", fs=5.9)
+    for x in xs[:5]:
+        arrow(0.17, 0.58, x + w * 0.35, 0.40, BLUE)
+    for x in xs[:3]:
+        arrow(0.50, 0.58, x + w * 0.65, 0.40)
+    arrow(0.83, 0.58, xs[5] + w / 2, 0.40)
+    ax.text(0.5, 0.06, "Each test, threshold and pass mark was committed to version control before its data were analysed.",
+            ha="center", fontsize=6.6, color=GREY, style="italic")
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def sign_rates(out):
+    rows = []
+    for line in open(os.path.join(RES, "holdout.md")):
+        m = re.match(r"\| (D_\w+) \| (\d+) of (\d+) .*?\| (\d+) of (\d+) .*?\| (\d+) of (\d+)", line)
+        if m:
+            g = m.groups()
+            rows.append((g[0], *(int(a) / max(1, int(b)) * 100 for a, b in ((g[1], g[2]), (g[3], g[4]), (g[5], g[6])))))
+    names = {"D_BATT": "Battery warning", "D_MOTOR": "Motor at ≥95%", "D_CLIP": "Accel. clipping", "D_GPS": "Poor GPS",
+             "D_FD": "Failure detector", "D_ERR": "Error message", "D_CPU": "CPU overload", "D_FAILSAFE": "Failsafe"}
+    rows = [r for r in rows if r[0] not in ("D_FD", "D_CPU")]
+    y = np.arange(len(rows))
+    fig, ax = plt.subplots(figsize=(4.6, 2.9))
+    for k, (lab, col) in enumerate((("Aircraft-caused crashes", BLUE), ("Pilot-caused crashes", RED), ("Normal flights", GREY))):
+        ax.barh(y + (k - 1) * 0.26, [r[k + 1] for r in rows], height=0.25, color=col, label=lab)
+    ax.set_yticks(y)
+    ax.set_yticklabels([names[r[0]] for r in rows], fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlabel("Share of logs in which the sign fired (%)")
+    ax.legend(frameon=False, fontsize=7.5, loc="upper center", bbox_to_anchor=(0.45, -0.22), ncol=3)
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def robustness(out):
+    rows = []
+    for line in open(os.path.join(RES, "sensitivity.md")):
+        m = re.match(r"\| (As declared.*?|S\d .*?) \| (\d+) \| ([\d.]+) \| ([\d.]+) \|", line)
+        if m:
+            rows.append((m.group(1), int(m.group(2)), float(m.group(3)), float(m.group(4))))
+        m2 = re.search(r"(\d+) matched sets, mean scaled rank ([\d.]+), one-sided p = (\d+\.\d+)", line)
+        if m2:
+            rows.append(("S8 vibration adjusted for flight duration", int(m2.group(1)), float(m2.group(2)), float(m2.group(3))))
+    y = np.arange(len(rows))
+    fig, ax = plt.subplots(figsize=(5.0, 2.6))
+    ax.scatter([r[2] for r in rows], y, color=[BLUE if r[3] < 0.025 else GREY for r in rows], zorder=3)
+    for i, r in enumerate(rows):
+        ptxt = "p<0.001" if r[3] < 0.001 else f"p={r[3]:.3f}"
+        ax.text(r[2] + 0.015, i, f"n={r[1]}, {ptxt}", va="center", fontsize=7)
+    ax.axvline(0.5, color=GREY, lw=0.8, ls="--")
+    ax.set_yticks(y)
+    ax.set_yticklabels([r[0].replace("As declared (all controls, all sources)", "Declared test") for r in rows], fontsize=7)
+    ax.invert_yaxis()
+    ax.set_xlim(0.4, 1.0)
+    ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=8)
+    fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -140,6 +227,9 @@ if __name__ == "__main__":
     leak_curve(os.path.join(out_dir, "fig_leak_curve.png"))
     within_between(os.path.join(out_dir, "fig_within_between.png"))
     forum_causes(os.path.join(out_dir, "fig_forum_causes.png"))
+    study_flow(os.path.join(out_dir, "fig_study_flow.png"))
+    sign_rates(os.path.join(out_dir, "fig_sign_rates.png"))
+    robustness(os.path.join(out_dir, "fig_robustness.png"))
     for f, fn in (("vib_p95", _within_ranks), ("tune_rms", _within_ranks)):
         print("within", f, np.round(_ci(fn(f)), 3), len(fn(f)))
     for f in ("vib_p95", "tune_rms"):

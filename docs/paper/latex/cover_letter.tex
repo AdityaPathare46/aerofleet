@@ -1,0 +1,34 @@
+\documentclass[11pt]{letter}
+\usepackage[margin=2.5cm]{geometry}
+\signature{[Corresponding author]\\ {}[Institution]}
+\address{[Department]\\ {}[Institution]\\ {}[City, Country]\\ {}[e-mail]}
+\begin{document}
+\begin{letter}{The Editor-in-Chief\\ Reliability Engineering \& System Safety}
+\opening{Dear Editor,}
+
+We submit the manuscript ``Flight logs identify crash-prone drones but not crash causes: pre-declared tests on
+479,547 public PX4 logs'' for consideration as a research article.
+
+Flight logs are increasingly used to decide why a small drone crashed and who was responsible. We tested that use on
+the largest public archive of real autopilot logs. Every confirmatory test was committed to version control, with its
+threshold, before the data were analysed, and decisive tests were repeated on held-out data. The results are of direct
+relevance to the journal's readership in safety and reliability:
+\begin{itemize}
+\item neither a declared rule nor a cross-validated model could separate pilot-caused from aircraft-caused crashes;
+\item checks that appear to diagnose a fault can owe their accuracy to the crash itself (a form of data leakage);
+\item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
+crashed vibrated more than matched drones on ordinary flights, a result that survived correction for multiple testing
+and several robustness checks;
+\item small language-model review panels performed worse than a fixed rule and could be steered by one compromised
+reviewer.
+\end{itemize}
+Together these findings separate what logs can support (ranking airframes for inspection) from what they cannot
+(attributing an individual crash), and they give practical guidance for evaluating log-based diagnostics. Code,
+declarations, derived features and labels are released.
+
+The manuscript is original, has not been published and is not under consideration elsewhere. All authors approve the
+submission. An AI assistant was used in preparing code and text, as declared in the manuscript.
+
+\closing{Yours sincerely,}
+\end{letter}
+\end{document}
