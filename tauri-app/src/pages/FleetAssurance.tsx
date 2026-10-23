@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+import type { RehearsalDto } from '../components/vr/Rehearsal'
 
 // AeroFleet 2.0 — configuration drift from uploaded parameter files (no drone connected).
 // An operator sets the fleet's approved baseline; anyone signed in uploads a drone's parameter
@@ -50,6 +51,7 @@ interface Deconflicted {
   changes: { id: string; delay_s: number; new_altitude_m: number | null; old_altitude_m: number | null }[]
   schedule: { id: string; launch_at_s: number; cruise_altitude_m: number }[]
   rule: { h_sep_m: number; v_sep_m: number | null }; files: Record<string, string>
+  rehearsal?: RehearsalDto
 }
 interface WindCase { energy_wh: number | null; flyable: boolean; margin_wh: number | null }
 interface WindReport {
@@ -94,7 +96,7 @@ const fmt = (x: number | null) => (x === null ? '—' : String(Number(x.toFixed(
 const when = (iso: string) => new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function FleetAssurancePage() {
-  const { apiUrl, setVrFlight, setActivePage } = useAppStore()
+  const { apiUrl, setVrFlight, setVrRehearsal, setActivePage } = useAppStore()
   const [fleet, setFleet] = useState('default')
   const [fleetDraft, setFleetDraft] = useState('default')   // applied on Enter or blur, not on every keystroke
   const epoch = useRef(0)                                    // discards replies that belong to a previous fleet
@@ -539,6 +541,9 @@ export default function FleetAssurancePage() {
               <Pill verdict={plansResult.resolved ? 'OK' : 'BLOCK'} label={plansResult.resolved ? 'No conflicts left' : `${plansResult.unresolved.length} mission(s) still conflict`} />
               <span>{plansResult.before.length} conflict(s) found, {plansResult.after.length} left after {plansResult.changes.length} change(s).</span>
               {!plansResult.resolved && <span style={{ color: 'var(--status-red)' }}>Could not clear: {plansResult.unresolved.join(', ')}</span>}
+              {plansResult.rehearsal && (
+                <button className="btn" id="btn-rehearse-vr" title="Fly the missions on one clock on the VR table, as planned and as rescheduled"
+                  onClick={() => { setVrRehearsal(plansResult.rehearsal ?? null); setActivePage('vr') }}>Rehearse in 3D</button>)}
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Mission</th><th>Launch at</th><th>Cruise height</th><th>Change</th><th /></tr></thead>

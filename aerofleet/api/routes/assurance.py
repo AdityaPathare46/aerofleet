@@ -419,7 +419,7 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
     import json
     import os
 
-    from aerofleet.assurance.deconflict import Mission, deconflict, retarget_altitude
+    from aerofleet.assurance.deconflict import REHEARSAL_MAX_MISSIONS, Mission, deconflict, rehearsal, retarget_altitude
     from aerofleet.assurance.reconcile import PlanError, parse_waypoints
 
     try:
@@ -447,13 +447,16 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
         except (PlanError, ValueError) as e:
             raise HTTPException(status_code=422, detail=f"{f.filename}: {e}")
     result = deconflict(missions, h_sep_m=h_sep, v_sep_m=v_sep, max_delay_s=max_delay)
-    result.pop("missions")
+    rescheduled = result.pop("missions")
     new_alt = {c["id"]: c["new_altitude_m"] for c in result["changes"] if c["new_altitude_m"] is not None}
     result["files"] = {mid: retarget_altitude(texts[mid], new_alt[mid]) if mid in new_alt else texts[mid] for mid in texts}
     result["input_files"] = fingerprints
     # the schedule, the exact files received and the exact files handed back are what gets signed
     result["ledger_seq"] = ledger.append(db, "deconflict", ",".join(sorted(texts))[:120], result, user.username).seq
     db.commit()
+    # for the 3D rehearsal on the VR table; derived from the signed schedule, so not signed itself
+    if len(missions) <= REHEARSAL_MAX_MISSIONS:
+        result["rehearsal"] = rehearsal(missions, rescheduled, h_sep, v_sep)
     return result
 
 

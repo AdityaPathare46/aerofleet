@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { RehearsalDto } from '../components/vr/Rehearsal'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -63,6 +64,9 @@ interface AppState {
   // The flight review the VR view replays (set from Fleet Assurance ▸ Show on the VR table)
   vrFlight: { fleet: string; id: number } | null
   setVrFlight: (f: { fleet: string; id: number } | null) => void
+  // Planned missions to rehearse on the VR table (set from Fleet Assurance ▸ Rehearse in 3D); not persisted
+  vrRehearsal: RehearsalDto | null
+  setVrRehearsal: (r: RehearsalDto | null) => void
 
   // API Connection
   apiUrl: string
@@ -133,6 +137,8 @@ export const useAppStore = create<AppState>()(
   setActivePage: (page) => set({ activePage: page }),
   vrFlight: null,
   setVrFlight: (f) => set({ vrFlight: f }),
+  vrRehearsal: null,
+  setVrRehearsal: (r) => set({ vrRehearsal: r }),
 
   // API
   apiUrl: 'http://localhost:8000',

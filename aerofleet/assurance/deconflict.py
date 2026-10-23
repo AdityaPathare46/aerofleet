@@ -149,6 +149,47 @@ def deconflict(missions: Sequence[Mission], h_sep_m: float = 15.0, v_sep_m: Opti
     }
 
 
+REHEARSAL_STEP_S = 2.0
+REHEARSAL_MAX_MISSIONS = 40
+
+
+def rehearsal(before: Sequence[Mission], after: Sequence[Mission], h_sep_m: float = 15.0,
+              v_sep_m: Optional[float] = None) -> Dict[str, Any]:
+    """The same trajectories the check used, as timed positions for the 3D rehearsal: every mission flown on the
+    common clock as planned and as rescheduled, with each conflict placed where and when it happens. It shows
+    the plan, not a prediction: straight legs at the stated speeds, no wind."""
+    origin = before[0].plan.home
+    cos = math.cos(math.radians(origin[0]))
+
+    def latlon(x: float, y: float) -> Tuple[float, float]:
+        return origin[0] + y / M_PER_DEG, origin[1] + x / (M_PER_DEG * cos)
+
+    def side(missions: Sequence[Mission]) -> Dict[str, Any]:
+        trajs = {m.id: _trajectory(m, origin) for m in missions}
+        tracks, end = [], 0.0
+        every = max(1, int(round(REHEARSAL_STEP_S / STEP_S)))
+        for m in missions:
+            k0, xyz = trajs[m.id]
+            pts = []
+            for i in range(0, len(xyz), every):
+                if not np.isnan(xyz[i, 2]):
+                    la, lo = latlon(xyz[i, 0], xyz[i, 1])
+                    pts.append([round((k0 + i) * STEP_S, 1), round(la, 7), round(lo, 7), round(float(xyz[i, 2]), 1)])
+            if pts:
+                end = max(end, pts[-1][0])
+            tracks.append({"id": m.id, "launch_s": m.start_s, "points": pts})
+        conflicts = []
+        for c in find_conflicts(missions, h_sep_m, v_sep_m):
+            k = int(round(c["t_s"] / STEP_S))
+            pa, pb = (trajs[c[w]][1][k - trajs[c[w]][0]] for w in ("a", "b"))
+            la, lo = latlon((pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2)
+            conflicts.append({**c, "lat": round(la, 7), "lon": round(lo, 7), "alt_m": round(float((pa[2] + pb[2]) / 2), 1)})
+        return {"tracks": tracks, "conflicts": conflicts, "end_s": end}
+
+    return {"home": [origin[0], origin[1]], "separation_m": h_sep_m, "before": side(before), "after": side(after),
+            "note": "Each drone flies its plan in straight legs at the planned speeds, with no wind. It shows the plan, not a prediction."}
+
+
 def retarget_altitude(waypoints_text: str, new_alt_m: float) -> str:
     """The same mission file with every airborne takeoff/waypoint height set to `new_alt_m`.
     Other commands, the home row and all other fields are left exactly as they were."""

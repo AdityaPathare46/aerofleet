@@ -13,6 +13,7 @@ import { ClaimPanel, FleetPanel, ViewControls } from '../components/vr/Panels'
 import { ReplayGeometry, replayFrame } from '../components/vr/Replay'
 import { LiveBoard, ReplayBoard } from '../components/vr/HtmlBoards'
 import { FlightBoard, FlightGeometry, flightFrame, type FlightReplayDto } from '../components/vr/Flight'
+import { RehearsalBoard, RehearsalGeometry, rehearsalFrame, type RehearsalDto } from '../components/vr/Rehearsal'
 import { UIMode } from '../components/vr/uiMode'
 import { C } from '../components/vr/theme'
 import type {
@@ -66,13 +67,15 @@ function Room() {
   )
 }
 
-type Mode = 'live' | 'replay' | 'flight'
+type Mode = 'live' | 'replay' | 'flight' | 'rehearsal'
 
 interface SceneProps {
   mode: Mode
   flight: FlightReplayDto | null
   flightCenter: [number, number]
   flightT: number
+  rehearsal: RehearsalDto | null
+  rehearsalSide: 'before' | 'after'
   live: LiveMarginsDto | null
   scene: VRSceneDto | null
   zones: ZoneDto[]
@@ -98,6 +101,7 @@ function SceneContent(p: SceneProps) {
   const legal = p.live?.constants.legal_ceiling_m ?? 120
   const ops = p.live?.constants.operational_ceiling_m ?? 100
   const controls = { ...p.controls, inXR }
+  const cityLayers = p.mode === 'live' || p.mode === 'replay'   // a flight or a rehearsal can be anywhere, not around the city centre
 
   return (
     <UIMode.Provider value={{ inXR }}>
@@ -112,13 +116,13 @@ function SceneContent(p: SceneProps) {
         <group rotation={[0, (p.rotationDeg * Math.PI) / 180, 0]}>
           <Table d={p.diorama} showPlinth={inXR && !isAR} />
           {/* City layers are drawn around the city centre; a reviewed flight can be anywhere, so they are left off. */}
-          {p.mode !== 'flight' && p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
-          {p.mode !== 'flight' && p.buildings && p.controls.showBuildings && (
+          {cityLayers && p.roads && <Streets roads={p.roads} d={p.diorama} cityCenter={p.cityCenter} />}
+          {cityLayers && p.buildings && p.controls.showBuildings && (
             <Buildings data={p.buildings} d={p.diorama} cityCenter={p.cityCenter} onStats={p.onBuildingStats} />
           )}
-          {p.mode !== 'flight' && <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />}
+          {cityLayers && <Zones zones={p.zones} d={p.diorama} cityCenter={p.cityCenter} />}
           <Ceilings d={p.diorama} opsCeilingM={ops} legalCeilingM={legal} />
-          {p.mode !== 'flight' && <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />}
+          {cityLayers && <Depots depots={p.depots} d={p.diorama} cityCenter={p.cityCenter} />}
           <AltitudeRuler d={p.diorama} />
           <ScaleAndNorth d={p.diorama} />
           {p.mode === 'live' && p.live && (
@@ -128,11 +132,12 @@ function SceneContent(p: SceneProps) {
           )}
           {p.mode === 'replay' && p.scene && <ReplayGeometry scene={p.scene} d={p.diorama} cityCenter={p.cityCenter} />}
           {p.mode === 'flight' && p.flight && <FlightGeometry f={p.flight} d={p.diorama} center={p.flightCenter} t={p.flightT} />}
+          {p.mode === 'rehearsal' && p.rehearsal && <RehearsalGeometry r={p.rehearsal} side={p.rehearsalSide} d={p.diorama} t={p.flightT} />}
         </group>
 
         {/* In a headset the boards are in-world (HTML can't render there); on desktop they're
             HTML overlays rendered by the page instead. */}
-        {inXR && p.mode !== 'flight' && (
+        {inXR && cityLayers && (
           <group position={[0, p.mode === 'live' ? 0.5 : 0.52, -TABLE_HALF - 0.18]} rotation={[-0.12, 0, 0]} scale={1.35}>
             {p.mode === 'live'
               ? <FleetPanel data={p.live} cityName={p.cityName} ageS={p.ageS} vExag={p.diorama.vExag} controls={controls} />
@@ -152,7 +157,8 @@ function SceneContent(p: SceneProps) {
 // ── page ─────────────────────────────────────────────────────────────
 
 export default function VRSafetyView() {
-  const { apiUrl, vrFlight } = useAppStore()
+  const { apiUrl, vrFlight, vrRehearsal } = useAppStore()
+  const [rehearsalSide, setRehearsalSide] = useState<'before' | 'after'>('before')
   const [city, setCity] = useState('pune')
   const [cities, setCities] = useState<CityDto[]>([])
   const [zones, setZones] = useState<ZoneDto[]>([])
@@ -169,7 +175,7 @@ export default function VRSafetyView() {
   const [needsAuth, setNeedsAuth] = useState(false)
   const [authNonce, setAuthNonce] = useState(0)
 
-  const [mode, setMode] = useState<Mode>(vrFlight ? 'flight' : 'live')
+  const [mode, setMode] = useState<Mode>(vrRehearsal ? 'rehearsal' : vrFlight ? 'flight' : 'live')
   const [flight, setFlight] = useState<FlightReplayDto | null>(null)
   const [flightT, setFlightT] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -257,11 +263,11 @@ export default function VRSafetyView() {
   }, [apiUrl, mode, vrFlight, authNonce, onAuthError])
 
   useEffect(() => {
-    if (!playing || !flight) return
-    const end = flight.replay.flown[flight.replay.flown.length - 1]?.[0] ?? 0
+    if (!playing) return
+    const end = mode === 'rehearsal' ? vrRehearsal?.[rehearsalSide].end_s ?? 0 : flight?.replay.flown[flight.replay.flown.length - 1]?.[0] ?? 0
     const id = setInterval(() => setFlightT((t) => { if (t + 2 >= end) { setPlaying(false); return end } return t + 2 }), 200)   // ×10
     return () => clearInterval(id)
-  }, [playing, flight])
+  }, [playing, flight, mode, vrRehearsal, rehearsalSide])
 
   const cityCfg = cities.find((c) => c.slug === city)
   const cityCenter = useMemo<[number, number]>(() => cityCfg?.center ?? [18.5204, 73.8567], [cityCfg])
@@ -284,12 +290,13 @@ export default function VRSafetyView() {
   const diorama = useMemo(() => {
     const legal = live?.constants.legal_ceiling_m ?? 120
     if (mode === 'flight' && flight) return flightFrame(flight).d
+    if (mode === 'rehearsal' && vrRehearsal) return rehearsalFrame(vrRehearsal)
     if (mode === 'replay' && scene) {
       const f = replayFrame(scene, cityCenter)
       if (f) return new Diorama(f.east, f.north, f.extentM, TABLE_HALF, 0.32, legal)
     }
     return new Diorama(focus[0], focus[1], rangeKm * 1000, TABLE_HALF, 0.32, legal)
-  }, [mode, scene, flight, cityCenter, focus, rangeKm, live?.constants.legal_ceiling_m])
+  }, [mode, scene, flight, vrRehearsal, cityCenter, focus, rangeKm, live?.constants.legal_ceiling_m])
   const flightCenter = useMemo<[number, number]>(() => flight?.replay.home ?? [0, 0], [flight])
 
   const controls: ViewControls = {
@@ -304,7 +311,8 @@ export default function VRSafetyView() {
   }
 
   const vrScenario = useMemo<VrScenario>(() => ({
-    city, mode, incident_id: mode === 'replay' ? selectedIncidentId || null : null, selected_drone: selected,
+    // the paired Quest app has no rehearsal mode yet; it stays on the live view while the browser rehearses
+    city, mode: mode === 'rehearsal' ? 'live' : mode, incident_id: mode === 'replay' ? selectedIncidentId || null : null, selected_drone: selected,
     range_km: rangeKm, detail_all: detailAll, show_buildings: showBuildings,
     ...(mode === 'flight' && vrFlight ? { flight_review_id: vrFlight.id } : {}),
   }), [city, mode, selectedIncidentId, selected, rangeKm, detailAll, showBuildings, vrFlight])
@@ -323,6 +331,8 @@ export default function VRSafetyView() {
               ? <>Walk-around tabletop of the live airspace — {droneCount} airborne · separation, altitude and battery for every drone, in stereo depth</>
               : mode === 'flight'
                 ? <>Flight replay — the approved plan against what was flown, with the log's events where they happened</>
+                : mode === 'rehearsal'
+                ? <>Mission rehearsal — the planned missions flown on one clock before anyone flies, with every loss of separation marked</>
                 : <>Incident Replay — every AI council claim checked against the real rejection geometry</>}
           </div>
         </div>
@@ -333,6 +343,9 @@ export default function VRSafetyView() {
             <button className={`btn ${mode === 'flight' ? 'btn--primary' : ''}`} id="btn-flight-replay" disabled={!vrFlight}
               title={vrFlight ? `Flight review #${vrFlight.id} (fleet ${vrFlight.fleet})` : 'Open a flight review in Fleet Assurance and choose "Show on the VR table"'}
               onClick={() => setMode('flight')}>Flight replay</button>
+            <button className={`btn ${mode === 'rehearsal' ? 'btn--primary' : ''}`} id="btn-rehearsal" disabled={!vrRehearsal}
+              title={vrRehearsal ? 'The missions last checked for conflicts' : 'Check missions for conflicts in Fleet Assurance and choose "Rehearse in 3D"'}
+              onClick={() => { setMode('rehearsal'); setFlightT(0); setPlaying(false) }}>Mission rehearsal</button>
           </div>
           {mode === 'replay' && (
             <select className="form-select" style={{ width: 'auto', maxWidth: 300 }} value={selectedIncidentId} onChange={(e) => setSelectedIncidentId(e.target.value)}>
@@ -342,7 +355,7 @@ export default function VRSafetyView() {
               ))}
             </select>
           )}
-          {mode !== 'flight' && <select className="form-select" style={{ width: 'auto' }} value={city} onChange={(e) => { setCity(e.target.value); setSelected(null); setFocus([0, 0]) }}>
+          {mode !== 'flight' && mode !== 'rehearsal' && <select className="form-select" style={{ width: 'auto' }} value={city} onChange={(e) => { setCity(e.target.value); setSelected(null); setFocus([0, 0]) }}>
             {cities.length === 0 && <option value="pune">pune</option>}
             {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name?.split(',')[0] ?? c.slug}</option>)}
           </select>}
@@ -403,7 +416,7 @@ export default function VRSafetyView() {
               <XR store={xrStore}>
                 <Suspense fallback={null}>
                   <SceneContent
-                    mode={mode} flight={flight} flightCenter={flightCenter} flightT={flightT} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
+                    mode={mode} flight={flight} flightCenter={flightCenter} flightT={flightT} rehearsal={vrRehearsal} rehearsalSide={rehearsalSide} live={live} scene={scene} zones={zones} depots={depots} roads={roads}
                     buildings={buildings} onBuildingStats={onBuildingStats}
                     cityCenter={cityCenter} cityName={cityName} diorama={diorama} selected={selected}
                     setSelected={selectDrone} controls={controls} rotationDeg={rotationDeg}
@@ -417,6 +430,7 @@ export default function VRSafetyView() {
             )}
             {mode === 'replay' && scene && scene.position.lat != null && <ReplayBoard scene={scene} />}
             {mode === 'flight' && flight && <FlightBoard f={flight} t={flightT} setT={setFlightT} playing={playing} setPlaying={setPlaying} />}
+            {mode === 'rehearsal' && vrRehearsal && <RehearsalBoard r={vrRehearsal} side={rehearsalSide} setSide={setRehearsalSide} t={flightT} setT={setFlightT} playing={playing} setPlaying={setPlaying} />}
             <div style={{
               position: 'absolute', right: 16, bottom: 14, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11,
               color: '#93A8C4', pointerEvents: 'none', lineHeight: 1.6,

@@ -1,7 +1,7 @@
 """Fleet plan deconfliction (aerofleet/assurance/deconflict.py)."""
 import pytest
 
-from aerofleet.assurance.deconflict import Mission, deconflict, find_conflicts
+from aerofleet.assurance.deconflict import Mission, deconflict, find_conflicts, rehearsal
 from aerofleet.assurance.reconcile import parse_waypoints
 from aerofleet.integrations.mission_planner import build_waypoint_file
 
@@ -78,3 +78,16 @@ def test_height_and_a_short_delay_together_beat_a_long_delay():
     both = deconflict(ms, v_sep_m=20.0)["changes"][0]
     assert both["new_altitude_m"] is not None and 0 < both["delay_s"] < delay_only["delay_s"]
     assert deconflict(ms, v_sep_m=20.0)["resolved"]
+
+
+def test_the_rehearsal_places_each_conflict_where_and_when_it_happens_and_shows_it_cleared():
+    ms = [Mission("A", plan(DEPOT, NORTH)), Mission("B", plan(DEPOT, NORTH))]
+    r = deconflict(ms)
+    rh = rehearsal(ms, r["missions"])
+    (c,) = rh["before"]["conflicts"]
+    assert rh["after"]["conflicts"] == [] and rh["before"]["end_s"] > 0
+    a = next(t for t in rh["before"]["tracks"] if t["id"] == "A")
+    near = min(a["points"], key=lambda p: abs(p[0] - c["t_s"]))
+    assert abs(near[1] - c["lat"]) < 2e-4 and abs(near[2] - c["lon"]) < 2e-4      # the marker sits on the track
+    delayed = next(t for t in rh["after"]["tracks"] if t["launch_s"] > 0)
+    assert delayed["points"][0][0] >= delayed["launch_s"] and all(p[3] > 0.5 for p in delayed["points"])

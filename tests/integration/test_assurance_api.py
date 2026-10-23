@@ -163,6 +163,8 @@ def test_same_depot_launches_get_a_staggered_schedule(api_client, auth_headers):
     launch = {s["id"]: s["launch_at_s"] for s in body["schedule"]}
     assert launch["alpha"] == 0.0 and launch["bravo"] > 0
     assert body["files"]["alpha"] == _mission(DEPOT, NORTH)                    # untouched
+    rh = body["rehearsal"]
+    assert len(rh["before"]["conflicts"]) == 1 and rh["after"]["conflicts"] == [] and {t["id"] for t in rh["after"]["tracks"]} == {"alpha", "bravo"}
 
 
 def test_priority_and_vertical_separation_options_and_the_rewritten_file(api_client, auth_headers):
