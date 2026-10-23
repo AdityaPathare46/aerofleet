@@ -530,25 +530,28 @@ Battery or power & 0/4 & 4/143 (3\%) & 0/2 & 1/130 (1\%) \\
 \end{figure}
 
 \subsection{Language-model review panels}
-The fixed rule was right in 45 of 60 generated cases and wrong in none. No model's panel matched it
-(Table~\ref{tab:llm}): right/wrong counts were 3/36, 20/19, 10/6 and 17/38. A single compromised reviewer changed the
+The fixed rule was right in 45 of 60 generated cases (75\%, 95\% Wilson interval 63--84\%) and wrong in none (0\%,
+95\% interval 0--6\%); it referred the other 15 to a person. ``Right'' includes leaving the 10 no-cause cases open, so
+the rule named the true cause in 35 of the 50 cases that had one. No model's panel matched it (Table~\ref{tab:llm}):
+wrong answers ranged from 6 to 38 of 60 (10--63\%). A single compromised reviewer changed the
 panel's answer in 45 to 56 of 60 cases. None of 40 planted hostile strings reached a model prompt, because the pipeline
 passed only numbers extracted by code.
 
 \begin{table}[t]
 \centering
-\caption{Language-model review panels on 60 generated cases (counts of cases).}
+\caption{Language-model review panels on 60 generated cases: counts, with 95\% Wilson intervals for the share of all
+60 cases. ``Right'' counts naming the true cause or correctly leaving a no-cause case open.}
 \label{tab:llm}
 \small
-\begin{tabularx}{\textwidth}{@{}lYYY@{}}
+\begin{tabularx}{\textwidth}{@{}lYYYY@{}}
 \toprule
-Method & Single agent right/wrong & Panel right/wrong & Panel answer changed by one adversary \\
+Method & Single agent: right / wrong & Panel: right & Panel: wrong & Panel answer changed by one adversary \\
 \midrule
-Fixed rule (no model) & 45 / 0 & -- & -- \\
-gemma3:4b & 10 / 0 & 3 / 36 & 49 of 60 \\
-phi4-mini & 10 / 0 & 20 / 19 & 56 of 60 \\
-qwen2.5:3b & 9 / 44 & 10 / 6 & 54 of 60 \\
-qwen3:4b & 0 / 41 & 17 / 38 & 45 of 60 \\
+Fixed rule (no model) & 45 (63--84\%) / 0 (0--6\%) & -- & -- & -- \\
+gemma3:4b & 10 / 0 & 3 (2--14\%) & 36 (47--71\%) & 49 of 60 \\
+phi4-mini & 10 / 0 & 20 (23--46\%) & 19 (21--44\%) & 56 of 60 \\
+qwen2.5:3b & 9 / 44 & 10 (9--28\%) & 6 (5--20\%) & 54 of 60 \\
+qwen3:4b & 0 / 41 & 17 (19--41\%) & 38 (51--74\%) & 45 of 60 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -623,7 +626,9 @@ type and, in a sensitivity analysis, airframe, but not propellers, payloads or m
 \paragraph{Power} Some comparisons are small (14 pilot-caused matched sets, 12 sets with the newer vibration metric,
 three vibration-diagnosed logs). Null results there are not evidence of no effect.
 
-\paragraph{Language models} The panel cases are generated, not real incidents, and only small models were tested.
+\paragraph{Language models} The panel cases are generated, not real incidents, and were written by the same authors as
+the fixed rule, so the rule's score is closer to a training score than a test score; a blind set of cases written by
+someone who has not seen the rule is in preparation. Only small models were tested.
 
 % ===================================================================
 \section{Conclusion}

@@ -65,3 +65,22 @@ were unverified, and it read partly as an advertisement for the authors' tool.
    sharing anything beyond log IDs and derived features.
 4. Read the journal's current guide for authors; the publisher page could not be fetched from here.
 5. Run the institution's iThenticate check, and have every author read and edit the full text.
+
+## Second review: Atharv's critic and gap analysis (23 October 2026)
+
+Atharv's critic reviewed `aerofleet/README.md` (his working README, not the repository README or this paper). His
+points were checked against the code; what was done:
+
+| Point | Verdict after checking the code | Action |
+|---|---|---|
+| Raw uploaded files not bound to the signed record | Correct | Every record now carries name, size and SHA-256 of the exact files received |
+| Operator can rebuild the whole chain | Correct (the code said so) | Heads file written after each commit; `GET /ledger/head`; verify checks recorded heads; threat model in README |
+| No standalone verifier | Partly (export existed; tamper tests existed) | `tools/verify_ledger.py` (Python + `cryptography` only), with tamper tests incl. a full re-signing with a new key |
+| Concurrent appends fork the chain | Wrong (sequence is the primary key), but a request could fail | Savepoint retry; 12-writer test |
+| Reports imply false precision | Correct | Evidence-quality block: sample rate, GPS, height reference, clock, tolerances |
+| Reconciliation has no ground truth | Correct, and it found a real flaw | Injection test on 40 real flights; nearest-leg matching replaced by whole-flight ordered alignment (90-95% detection of 35-50 m, 0/40 false alarms at 5 s waypoint spacing) |
+| LLM numbers need intervals and coverage; cases are self-built | Correct | Wilson intervals and the 35-of-50 coverage in the paper; circularity stated in threats; blind cases still needed from a second person |
+| Accident reporting is Rule 29 | Wrong: the Drone Rules 2021 text has Rule 30 | None |
+| Type certificate is Rule 6, not 14(3) | Both: Rule 6 is the general rule, Rule 14(3) repeats it for registered systems | Notes now cite both |
+| HTML report open to injected script | Wrong (all values escaped) | None |
+| Pairing code brute-forceable | Largely wrong (desktop approval required; 120 s expiry) | None now |

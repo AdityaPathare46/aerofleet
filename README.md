@@ -24,7 +24,7 @@ ordinary deterministic code.
 | **Will these missions conflict?** | Drones planned separately can cross at the same place and time | Checks mission files against each other and fixes conflicts with a launch delay or, if allowed, a different cruise height |
 | **Battery for the wind aloft** | Wind at 100 m is often much stronger than at ground level | Fetches the forecast wind at cruise height and recomputes the mission's energy leg by leg |
 | **Pre-flight check and mission file** | Paperwork and planning checks are scattered | DGCA zone, document and link checks for a planned route; a mission file is generated only if they pass. The UIN status comes from the drone registry; everything else the operator types is marked as operator-declared |
-| **Signed record** | Reports can be edited afterwards | Every result gets an Ed25519-signed entry linked to the one before; any later change is detectable with only the public key |
+| **Signed record** | Reports can be edited afterwards | Every result gets an Ed25519-signed entry linked to the one before, carrying the SHA-256 of the exact files it came from. Each new head is also written to a separate heads file to copy off the machine. An auditor checks an export with `tools/verify_ledger.py`, which needs only Python and the `cryptography` package |
 
 ## What has been measured
 
@@ -36,6 +36,12 @@ declared (rule, thresholds and pass mark committed) before they were run.
   crashes** (0.50 is guessing), and flagged 39% of normal flights. Two signals seen in the first run did not
   hold up on the held-out set. This is why the product shows evidence and names no cause.
   [`research/results/px4_log_study/`](research/results/px4_log_study/)
+- **Does the planned-versus-flown check catch what it should?** Known deviations were injected into 40 real PX4
+  flights. After switching to whole-flight ordered alignment (the first version matched each position to the
+  nearest leg anywhere and missed half of 35–50 m deviations on looping routes), it catches 90% of 35 m and 95% of
+  50 m sideways deviations and 92–98% of 20 m height deviations, with 0 false alarms in 40 untouched flights when the
+  plan has a waypoint every 5 s (22% with one every 10 s, from fast flights cutting long legs).
+  [`injection_reconcile.md`](research/results/px4_log_study/injection_reconcile.md)
 - **Which drones crash: the one useful signal.** Against matched drones with no recorded crash (same flight
   controller, firmware and vehicle type), drones that later crashed were already vibrating more on their ordinary
   flights (60 matched sets, mean rank 0.67, p = 0.002). But the flight that crashed was no rougher than the same
@@ -84,10 +90,23 @@ tell pilot from aircraft.
 - **It does not say why something went wrong.** It shows what the log recorded and when.
 - **It does not guarantee separation or endurance.** The conflict fix holds only if drones launch on schedule
   and fly their plans; the wind check assumes constant airspeed and ignores climb, hover and gusts.
-- **The signed record is tamper-evident, not tamper-proof.** It shows whether a record was changed later, not
-  whether the uploaded files were genuine.
+- **The signed record is tamper-evident, not tamper-proof.** See the threat model below.
+- **Positions are only as good as the GPS.** Each review states its sample rate, GPS quality, height reference
+  and clock; deviations under the fleet's tolerances (default 30 m sideways, 15 m height, operating choices rather
+  than regulatory limits) are not reported.
 - **The DGCA checklist citations are not verified** (each item says so), and a UIN in the registry is
   operator-entered: Digital Sky has no public lookup.
+
+## Threat model for the signed record
+
+| Who | Can they cheat? | What stops them |
+|---|---|---|
+| Someone editing a stored record later | No | Signatures and the hash chain; `tools/verify_ledger.py` names the entry |
+| Someone swapping an uploaded file after the fact | No | Each record carries the file's SHA-256; compare with the original |
+| A pilot editing a log **before** upload | **Yes** | Nothing in software can. Prefer logs taken straight from the aircraft; a log's own embedded settings are used where present |
+| The operator, who holds the key and the database | **Yes, they can rebuild the whole chain** | Only a copy of the heads file (or the head hash and key fingerprint from `GET /ledger/head`) kept by someone else: a rebuilt chain no longer contains the old heads |
+| Anyone, on timestamps | **Yes** | Times come from the server's clock; no trusted timestamping |
+| A regulator or insurer | Unknown | No authority has endorsed this format; it is evidence support, not certification |
 
 ## Run it
 
