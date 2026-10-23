@@ -6,7 +6,14 @@ PRE-DECLARED (committed before any of these logs were downloaded).
 Why: crash flights differ from good flights well before the crash (leak_curve.md: AUC ~0.86 at 30 s before),
 but the good flights are other drones. Comparing each drone with itself removes that difference.
 
-Selection (`select`): uploader-rated crashes (crash_sw_hw / crash_pilot) on real hardware, PX4 v1.12 or newer,
+AMENDMENT (before any download or analysis): the v1.12 filter left only 12 crashes, too few to test. The
+firmware filter is removed (101 crashes). Older logs lack vehicle_imu_status and vehicle_angular_velocity, so
+vibration falls back to estimator_status.vibe[1] (accelerometer high-frequency vibration) and the measured rate
+to vehicle_attitude rollspeed/pitchspeed. A rank compares a drone only with itself, so each feature must come
+from the same source on all of that drone's flights; flights whose source differs from the crash flight's are
+dropped for that feature. Everything else below is unchanged.
+
+Selection (`select`): uploader-rated crashes (crash_sw_hw / crash_pilot) on real hardware, any PX4 version,
 with a vehicle id. For each, the same drone's flights that are not rated as crashes, are at least 30 s long and
 are dated on or before the crash day; the 5 most recent are kept. A crash is used only if it has at least 3.
 The order of flights on the same day as the crash is unknown, so they are included in the main test and left
@@ -60,10 +67,10 @@ def select(src, out, keep=5, min_earlier=3):
         by_vehicle[x["vehicle_uuid"]].append(x)
     picked = []
     for c in real:
-        if c["rating"] not in CRASH or not version_ok(c) or (c.get("duration_s") or 0) < 5:
+        if c["rating"] not in CRASH or (c.get("duration_s") or 0) < 5:
             continue
         earlier = [y for y in by_vehicle[c["vehicle_uuid"]] if y["log_id"] != c["log_id"] and y["rating"] not in CRASH
-                   and (y.get("duration_s") or 0) >= 30 and y["log_date"] <= c["log_date"] and version_ok(y)]
+                   and (y.get("duration_s") or 0) >= 30 and y["log_date"] <= c["log_date"]]
         earlier.sort(key=lambda y: y["log_date"], reverse=True)
         earlier = earlier[:keep]
         if len(earlier) >= min_earlier:
@@ -86,7 +93,7 @@ def features(path, is_crash):
     from leak_curve import TOPICS, window_features
     from pilot_vs_drone import armed_period, between, crash_time, topic
 
-    u = ULog(path, message_name_filter_list=TOPICS)
+    u = ULog(path, message_name_filter_list=TOPICS + ["estimator_status"])
     st = topic(u, "vehicle_status")
     per = armed_period(st) if st is not None else None
     if per is None:
@@ -103,7 +110,22 @@ def features(path, is_crash):
     b = t_c - MARGIN_S * 1e6
     if b - t0 < 10e6:
         return None
-    return window_features(u, st, rotary, t0, b)
+    f = window_features(u, st, rotary, t0, b)
+    f["src_vib"] = "imu" if not np.isnan(f["vib_p95"]) else None
+    f["src_tune"] = "angular_velocity" if not np.isnan(f["tune_rms"]) else None
+    es = topic(u, "estimator_status")
+    if np.isnan(f["vib_p95"]) and es is not None and "vibe[1]" in es:
+        m = between(es, t0, b)
+        if m.any():
+            f["vib_p95"], f["src_vib"] = float(np.percentile(es["vibe[1]"][m], 95)), "estimator_vibe"
+    sp, att = topic(u, "vehicle_rates_setpoint"), topic(u, "vehicle_attitude")
+    if rotary and np.isnan(f["tune_rms"]) and sp is not None and att is not None and "roll" in sp and "rollspeed" in att:
+        m = between(att, t0, b)
+        if m.sum() > 20:
+            ts = att["timestamp"][m]
+            err = [np.interp(ts, sp["timestamp"], sp[k]) - att[a][m] for k, a in (("roll", "rollspeed"), ("pitch", "pitchspeed"))]
+            f["tune_rms"], f["src_tune"] = float(np.sqrt(np.mean(np.square(err)))), "attitude_rates"
+    return f
 
 
 def rank_test(groups, feature, rng, draws=100_000):
@@ -162,7 +184,9 @@ def analyze(sel_csv, root, out_dir):
                 continue
             ev = [feats[(r["crash_id"], r["log_id"])] for r in rows
                   if r["role"] == "earlier" and r["crash_id"] == c["crash_id"] and (same_day or r["same_day"] == "0")]
-            out.append((cf.get(feature), [e.get(feature) for e in ev if e is not None]))
+            src = {"vib_p95": "src_vib", "tune_rms": "src_tune"}.get(feature)
+            same = [e for e in ev if e is not None and (src is None or e.get(src) == cf.get(src))]
+            out.append((cf.get(feature), [e.get(feature) for e in same]))
         return out
 
     L = ["# Within-drone test: the crash flight against the same drone's earlier flights", "",
