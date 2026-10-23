@@ -38,6 +38,9 @@ interface Review {
 }
 interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; flag: boolean }
 interface Vibration { drones: VibrationRow[]; flagged: string[]; note: string }
+interface LikelyCause { cause: string; score: number; matched_words: string[]; share_of_expert_diagnosed_crashes: string; checks: string[]; fixes: string[]; aerofleet_check: string }
+interface SimilarCase { title: string; url: string; score: number; expert_conclusion: string; cause: string; who_diagnosed: string; poster_confirmed_fix: string; flight_review_logs: string[] }
+interface Troubleshoot { likely_causes: LikelyCause[]; similar_cases: SimilarCase[]; cases_searched: number; note: string; message?: string; this_drone_vibration?: Partial<VibrationRow> & { message?: string } }
 const VIB_SOURCE: Record<string, string> = { ardupilot_vibe: 'ArduPilot VIBE (m/s²)', px4_imu: 'PX4 accel vibration metric', px4_estimator: 'PX4 estimator vibration (older firmware)' }
 interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
 const LEVEL_COLOR: Record<TimelineEvent['level'], string> = { warning: 'var(--status-red)', notice: '#92400E', info: 'var(--text-secondary)' }
@@ -123,6 +126,8 @@ export default function FleetAssurancePage() {
   const [windLimit, setWindLimit] = useState('')
   const [windResult, setWindResult] = useState<WindReport | null>(null)
   const [ledger, setLedger] = useState<Ledger | null>(null)
+  const [symptom, setSymptom] = useState('')
+  const [help, setHelp] = useState<Troubleshoot | null>(null)
   const [ledgerCheck, setLedgerCheck] = useState<LedgerCheck | null>(null)
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
 
@@ -202,6 +207,15 @@ export default function FleetAssurancePage() {
     const body = new FormData(); body.append('plan', windPlan); body.append('payload_kg', payloadKg || '0'); body.append('usable_wh', usableWh)
     if (Number(windLimit) > 0) body.append('max_wind_mps', windLimit)
     setWindResult(await plain<WindReport>('/plans/wind-check', { method: 'POST', body }))
+  })
+  const askHelp = () => act(async () => {
+    if (symptom.trim().length < 3) throw new Error('Describe what the drone did first.')
+    const id = droneId.trim()
+    const r = await fetch(`${root}/troubleshoot`, { method: 'POST', headers: { ...token(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: symptom.trim(), ...(id ? { fleet: fleet.trim() || 'default', drone_id: id } : {}) }) })
+    if (r.status === 401) throw new Error('Sign in to use fleet assurance.')
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+    setHelp(await r.json())
   })
   const loadLedger = useCallback(async () => {
     const t = localStorage.getItem('aerofleet_token') || ''
@@ -461,6 +475,49 @@ export default function FleetAssurancePage() {
           </table>
         </div>
       )}
+
+      <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="troubleshoot-card">
+        <div>
+          <div style={{ fontWeight: 600 }}>Something wrong with a drone? Describe it</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Matched by words against 161 crashes that PX4 experts diagnosed on the PX4 forum. You get the checks to do first and the
+            closest past cases. It is not a diagnosis. Enter the drone id above to add its place in the fleet vibration ranking.
+          </div>
+        </div>
+        <textarea id="troubleshoot-text" rows={3} value={symptom} onChange={(e) => setSymptom(e.target.value)} maxLength={4000}
+          placeholder="e.g. circles in position mode and drifts away; wobbles in hover after new propellers; flipped on take-off"
+          style={{ width: '100%', fontFamily: 'inherit', fontSize: 13, padding: 8, borderRadius: 6, border: '1px solid var(--border, #E2E8F0)', background: 'transparent', color: 'inherit' }} />
+        <div><button className="btn btn--primary" id="btn-troubleshoot" disabled={busy || symptom.trim().length < 3} onClick={askHelp}>Find similar cases</button></div>
+        {help && (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {help.message && <div style={{ fontSize: 13 }}>{help.message}</div>}
+            {help.likely_causes.map((c, i) => (
+              <div key={c.cause} style={{ borderTop: i ? '1px solid var(--border, #E2E8F0)' : undefined, paddingTop: i ? 8 : 0, display: 'grid', gap: 4 }}>
+                <div style={{ fontWeight: 600 }}>{i === 0 ? 'Check first: ' : 'Also consider: '}{c.cause}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  Experts named this cause in {c.share_of_expert_diagnosed_crashes} aircraft-caused crashes. Matched on: {c.matched_words.join(', ') || 'similar past cases'}. In AeroFleet: {c.aerofleet_check}.
+                </div>
+                <div style={{ fontSize: 13 }}><b>Check</b><ul style={{ margin: '2px 0 0 18px' }}>{c.checks.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                <div style={{ fontSize: 13 }}><b>Usual fixes</b><ul style={{ margin: '2px 0 0 18px' }}>{c.fixes.map((x) => <li key={x}>{x}</li>)}</ul></div>
+              </div>))}
+            {help.this_drone_vibration && (
+              <div style={{ fontSize: 13 }}>
+                <b>This drone's vibration:</b>{' '}
+                {help.this_drone_vibration.message ?? `${fmt(help.this_drone_vibration.vibration_p95 ?? 0)}, rank ${help.this_drone_vibration.rank} of ${help.this_drone_vibration.group_size}${help.this_drone_vibration.flag ? ' (above the fleet upper quartile: inspect)' : ''}`}
+              </div>)}
+            {help.similar_cases.length > 0 && (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Similar past case</th><th>Expert's cause</th><th>Diagnosed by</th><th>Fix confirmed</th></tr></thead>
+                <tbody>{help.similar_cases.map((c) => (
+                  <tr key={c.url} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                    <td style={{ padding: '6px 0' }}><a href={c.url} target="_blank" rel="noreferrer">{c.title}</a></td>
+                    <td>{c.cause}</td><td>{c.who_diagnosed}</td><td>{c.poster_confirmed_fix}</td>
+                  </tr>))}</tbody>
+              </table>)}
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{help.note}</div>
+          </div>
+        )}
+      </div>
 
       <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="deconflict-card">
         <div>

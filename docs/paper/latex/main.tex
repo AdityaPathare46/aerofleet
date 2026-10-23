@@ -17,7 +17,7 @@
 
 \begin{frontmatter}
 
-\title{Flight logs identify crash-prone drones but not crash causes: pre-declared tests on 479,547 public PX4 logs}
+\title{Evidence, not verdicts: what 479,547 public PX4 flight logs can and cannot tell a drone fleet operator}
 
 % ---- Authors: complete before submission ----
 \author[a]{[First Author]\corref{cor1}}
@@ -45,7 +45,7 @@ logs support ranking airframes for inspection, not attributing an individual cra
 \end{abstract}
 
 \begin{keyword}
-Unmanned aircraft systems \sep Flight log analysis \sep Crash investigation \sep Fault diagnosis \sep Data leakage \sep Pre-registration
+Unmanned aircraft systems \sep Flight log analysis \sep Crash investigation \sep Fault diagnosis \sep Data leakage \sep Pre-registration \sep Fleet assurance
 \end{keyword}
 
 \end{frontmatter}
@@ -577,8 +577,23 @@ more than comparable drones on ordinary flights, and expert diagnoses most often
 propulsion problems, which raise vibration. This is consistent with a maintenance view of UAV reliability in which
 degraded condition precedes failure \cite{petritoli2018reliability}. It supports ranking a fleet's drones by vibration
 measured the same way and inspecting the roughest; it does not support a per-flight crash warning, and the screening
-gain is moderate. The authors have implemented such a ranking in an open-source fleet-assurance tool, flagging drones
-above their group's upper quartile; we do not evaluate that tool here.
+gain is moderate.
+
+\paragraph{From findings to a fleet-assurance tool} The authors build an open-source, ground-side assurance tool for
+PX4 and ArduPilot fleets (AeroFleet), and the results above set its design. Because logs did not attribute crashes,
+the tool issues no pilot-or-aircraft verdict and calls no language model; a flight review assembles a time-ordered
+record of events, states the quality of its evidence (sample rate, satellite count and dilution of precision, height
+reference) and leaves the conclusion to a person. Because roughness marked drones rather than flights, it ranks each
+fleet's drones by vibration measured the same way and flags those above the group's upper quartile for inspection.
+Because the useful evidence is longitudinal, every upload, approval and review is appended to a hash-chained, signed
+record that fingerprints the files received. Its planned-versus-flown check was validated by injecting known
+deviations into 40 real flights from this archive: 30\,s sideways shifts of 35\,m or more beyond a 30\,m corridor were
+found in 90--98\% of flights and shifts below it rarely, but 9 of 40 unmodified flights (22\%) still raised an alarm,
+so its output is a prompt to look, not a finding. Finally, the expert-diagnosed threads of Section~\ref{sec:experts}
+are offered to operators as precedents: a description of a problem is matched by word overlap (BM25) against the 161
+labelled threads and returns the checks usually tried first and the closest past cases with their expert's cause.
+Given the attribution results, this is presented as where to look, not as a diagnosis. None of these features is
+evaluated as a safety intervention here.
 
 \paragraph{Language models} On this task small local models added errors and an attack surface rather than accuracy.
 A debate-style panel, related to multi-agent debate \cite{du2024debate}, did not help at this model size, and the adversarial result echoes concerns about

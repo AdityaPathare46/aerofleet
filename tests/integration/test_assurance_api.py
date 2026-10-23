@@ -338,3 +338,14 @@ def test_a_review_states_the_quality_of_its_evidence(api_client, auth_headers, t
     assert dq["tolerances"] == {"corridor_m": 30.0, "altitude_m": 15.0} and "not reported" in dq["note"]
     html = api_client.get(f"{URL}/flights/{body['id']}/report", headers=auth_headers).text
     assert "Quality of the evidence" in html
+
+
+def test_troubleshoot_matches_a_description_and_adds_the_drones_vibration(api_client, auth_headers):
+    r = api_client.post("/api/v1/assurance/troubleshoot", headers=auth_headers,
+                        json={"description": "compass heading wrong, drone drifts in loiter", "fleet": "tf", "drone_id": "D1"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["likely_causes"][0]["cause"] == "GPS / compass / estimator"
+    assert body["this_drone_vibration"]["drone_id"] == "D1"
+    assert api_client.post("/api/v1/assurance/troubleshoot", json={"description": "x y z"}).status_code == 401
+    assert api_client.post("/api/v1/assurance/troubleshoot", headers=auth_headers, json={"description": "ok", "fleet": "../x", "drone_id": "D1"}).status_code in (400, 422)

@@ -338,6 +338,33 @@ async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_us
     return fleet_ranking({"drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report} for r in rows)
 
 
+class TroubleshootQuery(BaseModel):
+    description: str = Field(..., min_length=3, max_length=4000)
+    fleet: Optional[str] = None
+    drone_id: Optional[str] = None
+    limit: int = Field(5, ge=1, le=20)
+
+
+@router.post("/troubleshoot")
+async def troubleshoot(body: TroubleshootQuery, user: User = Depends(get_current_active_user),
+                       db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Match a described problem against past expert-diagnosed PX4 crashes (see aerofleet/assurance/troubleshoot.py).
+    With a fleet and drone, the drone's place in the fleet vibration ranking is added, since vibration was the one
+    signal in the log study that marked crash-prone drones."""
+    from aerofleet.assurance.troubleshoot import search
+    from aerofleet.assurance.vibration import fleet_ranking
+
+    vibration = None
+    if body.fleet and body.drone_id:
+        _check_id(body.fleet, "Fleet")
+        _check_id(body.drone_id, "Drone")
+        rows = db.query(FlightReview).filter(FlightReview.fleet == body.fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
+        ranking = fleet_ranking({"drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report} for r in rows)
+        mine = [d for d in ranking["drones"] if d["drone_id"] == body.drone_id]
+        vibration = mine[0] if mine else {"drone_id": body.drone_id, "message": "No reviewed flight with a vibration value yet."}
+    return search(body.description, body.limit, vibration)
+
+
 @router.get("/fleets/{fleet}/flights")
 async def list_flights(fleet: str, drone_id: Optional[str] = None, limit: int = Query(50, ge=1, le=200),
                        user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
