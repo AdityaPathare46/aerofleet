@@ -1,6 +1,10 @@
 """Score the forum expert-diagnosis recording: do the two recorders agree, and do experts agree with uploaders?
 
     python research/px4_log_study/score_forum.py REVIEWER_A.xlsx REVIEWER_B.xlsx FORUM_KEY_CSV [OUT_MD]
+
+REVIEWER_A may also be the first recording as a CSV (results/px4_log_study/forum_expert_labels.csv), which is
+how the 161 threads were first recorded; it is matched to the sheet rows through the key's topic_id. Agreement
+with an independent second recorder (sheet B, filled blind) is the reliability check of the expert labels.
 """
 import csv
 import sys
@@ -11,15 +15,20 @@ from openpyxl import load_workbook
 from score_review import kappa
 
 
-def read(path):
+def read(path, key=None):
+    if path.endswith(".csv"):
+        by_topic = {r["topic_id"]: r for r in csv.DictReader(open(path))}
+        return {i: {"crash": t["is_crash"], "verdict": t["expert_conclusion"], "cause": t["cause"], "who": t["who"],
+                    "confirmed": t["poster_confirmed"]}
+                for i, k in key.items() for t in [by_topic.get(k["topic_id"])] if t}
     ws = load_workbook(path, data_only=True)["Threads"]
     return {r[0]: {"crash": r[6], "verdict": r[7], "cause": r[8], "who": r[9], "confirmed": r[10]}
             for r in ws.iter_rows(min_row=2, values_only=True) if r[0]}
 
 
 def main(a_path, b_path, key_path, out=None):
-    A, B = read(a_path), read(b_path)
     key = {int(r["#"]): r for r in csv.DictReader(open(key_path))}
+    A, B = read(a_path, key), read(b_path)
     both = [i for i in key if A.get(i, {}).get("verdict") and B.get(i, {}).get("verdict")]
     L = ["# Forum expert diagnoses: recording agreement", "", f"Threads recorded by both: {len(both)}", ""]
     for field in ("crash", "verdict", "cause", "confirmed"):
