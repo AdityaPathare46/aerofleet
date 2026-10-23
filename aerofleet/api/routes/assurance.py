@@ -30,10 +30,11 @@ def _check_id(value: str, what: str) -> str:
     return value
 
 
-async def _read(file: UploadFile) -> ParamFile:
+async def _read(file: UploadFile):
+    """Parse an uploaded parameter file; also return the fingerprint of the exact bytes received."""
     data = await file.read(MAX_BYTES + 1)
     try:
-        return parse_param_bytes(data)
+        return parse_param_bytes(data), ledger.file_fingerprint(file.filename, data)
     except ParamFileError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -65,12 +66,13 @@ async def set_baseline(fleet: str, file: UploadFile = File(...), user: User = De
                        db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Set (or replace) the fleet's approved configuration from a parameter file. Replacing it clears approvals."""
     _check_id(fleet, "Fleet")
-    parsed = await _read(file)
+    parsed, fingerprint = await _read(file)
     row = db.get(FleetBaseline, fleet) or FleetBaseline(fleet=fleet)
     row.params, row.approved, row.source = parsed.params, {}, (file.filename or "")[:200]
     row.set_by, row.set_at = user.username, datetime.utcnow()
     db.add(row)
-    entry = ledger.append(db, "baseline", fleet, {"params": parsed.params, "source": row.source}, user.username)
+    entry = ledger.append(db, "baseline", fleet, {"params": parsed.params, "source": row.source, "input_file": fingerprint},
+                          user.username)
     db.commit()
     return {"fleet": fleet, "param_count": len(parsed.params), "format": parsed.format, "rejected": len(parsed.rejected),
             "set_by": row.set_by, "set_at": row.set_at.isoformat(), "ledger_seq": entry.seq}
@@ -111,11 +113,12 @@ async def upload_params(fleet: str, drone_id: str, file: UploadFile = File(...),
                         user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Upload a drone's parameter file; returns its drift against the baseline and its previous upload."""
     _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
-    parsed = await _read(file)
+    parsed, fingerprint = await _read(file)
     db.add(ParamSnapshot(drone_id=drone_id, fleet=fleet, params=parsed.params, file_format=parsed.format,
                          filename=(file.filename or "")[:200], uploaded_by=user.username))
     db.flush()
     report = _drift(db, fleet, drone_id)
+    report["input_file"] = fingerprint
     report["ledger_seq"] = ledger.append(db, "drift", f"{fleet}/{drone_id}", report, user.username).seq
     db.commit()
     report["file"] = {"format": parsed.format, "duplicates": parsed.duplicates,
@@ -196,7 +199,8 @@ REPLAY_POINTS = 1500
 
 
 def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: str, plan_name: str, log_bytes: bytes,
-                  log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0) -> Dict[str, Any]:
+                  log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0,
+                  plan_bytes: Optional[bytes] = None) -> Dict[str, Any]:
     """Compare one flight log with its approved mission, store the review, sign it, and return it.
 
     Shared by the assurance upload and POST /api/v1/missions/{id}/reconcile. Raises 422 on unusable files.
@@ -233,6 +237,8 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     finally:
         os.unlink(tmp)
     report["log"] = flight.summary()
+    report["input_files"] = {"plan": ledger.file_fingerprint(plan_name, plan_bytes if plan_bytes is not None else plan_text.encode()),
+                             "log": ledger.file_fingerprint(log_name, log_bytes)}
     report["zones_checked"] = city
     changed = in_flight_changes(flight.param_changes, flight.track[0][0])
     report["settings_changed_in_flight"] = {
@@ -281,8 +287,9 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
     """
     from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
 
-    return review_flight(db, user, fleet, drone_id, (await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"),
-                         plan.filename or "", await log.read(LOG_MAX + 1), log.filename or "", city, corridor_m, altitude_m)
+    plan_bytes = await plan.read(MAX_BYTES + 1)
+    return review_flight(db, user, fleet, drone_id, plan_bytes.decode("utf-8", errors="replace"), plan.filename or "",
+                         await log.read(LOG_MAX + 1), log.filename or "", city, corridor_m, altitude_m, plan_bytes=plan_bytes)
 
 
 @router.get("/fleets/{fleet}/vibration")
@@ -364,12 +371,14 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
         raise HTTPException(status_code=422, detail=f"Bad options: {e}")
     if not (2 <= len(plans) <= MAX_PLANS):
         raise HTTPException(status_code=422, detail=f"Upload between 2 and {MAX_PLANS} mission files")
-    missions, texts = [], {}
+    missions, texts, fingerprints = [], {}, []
     for f in plans:
         mid = os.path.splitext(os.path.basename(f.filename or ""))[0]
         if not _ID.match(mid) or mid in texts:
             raise HTTPException(status_code=422, detail=f"File name '{f.filename}' must give a unique id of letters, digits, '-' or '_'")
-        texts[mid] = (await f.read(MAX_BYTES + 1)).decode("utf-8", errors="replace")
+        raw = await f.read(MAX_BYTES + 1)
+        fingerprints.append(ledger.file_fingerprint(f.filename, raw))
+        texts[mid] = raw.decode("utf-8", errors="replace")
         try:
             missions.append(Mission(mid, parse_waypoints(texts[mid]), start_s=float(launch.get(mid, 0.0)), priority=int(priority.get(mid, 0))))
         except (PlanError, ValueError) as e:
@@ -378,7 +387,8 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
     result.pop("missions")
     new_alt = {c["id"]: c["new_altitude_m"] for c in result["changes"] if c["new_altitude_m"] is not None}
     result["files"] = {mid: retarget_altitude(texts[mid], new_alt[mid]) if mid in new_alt else texts[mid] for mid in texts}
-    # the schedule and the exact files handed back are what gets signed
+    result["input_files"] = fingerprints
+    # the schedule, the exact files received and the exact files handed back are what gets signed
     result["ledger_seq"] = ledger.append(db, "deconflict", ",".join(sorted(texts))[:120], result, user.username).seq
     db.commit()
     return result
@@ -404,7 +414,8 @@ async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form
     from aerofleet.assurance.wind import WindUnavailable, fetch_profiles, profile_for, wind_check
 
     try:
-        mission = parse_waypoints((await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"))
+        plan_bytes = await plan.read(MAX_BYTES + 1)
+        mission = parse_waypoints(plan_bytes.decode("utf-8", errors="replace"))
     except PlanError as e:
         raise HTTPException(status_code=422, detail=str(e))
     if profile:
@@ -422,7 +433,8 @@ async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form
             raise HTTPException(status_code=503, detail=f"{e}. Supply the wind by hand with the 'profile' field to check offline.")
         source = "Open-Meteo forecast"
     report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps)
-    report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes), "plan_name": (plan.filename or "")[:120]})
+    report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes), "plan_name": (plan.filename or "")[:120],
+                   "input_file": ledger.file_fingerprint(plan.filename, plan_bytes)})
     report["ledger_seq"] = ledger.append(db, "wind_check", (plan.filename or "mission")[:120], report, user.username).seq
     db.commit()
     return report
@@ -440,7 +452,31 @@ async def list_ledger(limit: int = Query(100, ge=1, le=1000), user: User = Depen
     return {"public_key_pem": ledger.public_key_pem(), "entries": [ledger.to_dict(r) for r in rows]}
 
 
+@router.get("/ledger/head")
+async def ledger_head(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The newest entry's hash, to copy somewhere the operator does not control (an auditor, an e-mail).
+    A later chain that no longer contains this exact head was rebuilt or truncated."""
+    from aerofleet.data.models.models import AssuranceLedgerEntry
+
+    last = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq.desc()).first()
+    pem = ledger.public_key_pem()
+    return {"seq": last.seq if last else 0, "entry_hash": last.entry_hash if last else ledger.GENESIS,
+            "created_at": last.created_at if last else None, "public_key_sha256": ledger.key_fingerprint(pem),
+            "heads_file": str(ledger.heads_file())}
+
+
 @router.get("/ledger/verify")
 async def verify_ledger(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Re-check every link and signature. `ok: false` names the first entry that fails and why."""
-    return ledger.verify_chain(db)
+    """Re-check every link and signature, and that every head recorded in the heads file is still in the chain.
+    `ok: false` names the first problem."""
+    result = ledger.verify_chain(db)
+    path = ledger.heads_file()
+    if path.exists():
+        from aerofleet.data.models.models import AssuranceLedgerEntry
+
+        rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq).all()
+        heads = ledger.check_heads([ledger.to_dict(r) for r in rows], ledger.read_heads(path.read_text(encoding="utf-8")))
+        result["heads"] = heads
+        if result["ok"] and not heads["ok"]:
+            result.update(ok=False, problem=heads["problem"])
+    return result

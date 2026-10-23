@@ -39,7 +39,9 @@ def test_every_recorded_result_gets_a_linked_signed_entry(api_client, auth_heade
     assert oldest["prev_hash"] == "0" * 64 and middle["prev_hash"] == oldest["entry_hash"] and newest["prev_hash"] == middle["entry_hash"]
     assert middle["subject"] == "led/D1" and "BEGIN PUBLIC KEY" in led["public_key_pem"]
     v = api_client.get(f"{URL}/ledger/verify", headers=auth_headers).json()
-    assert v == {"ok": True, "entries": 3, "head": newest["entry_hash"], "first_bad_seq": None, "problem": None}
+    assert {k: v[k] for k in ("ok", "entries", "head", "first_bad_seq", "problem")} == {
+        "ok": True, "entries": 3, "head": newest["entry_hash"], "first_bad_seq": None, "problem": None}
+    assert v["heads"] == {"ok": True, "heads_checked": 3, "problem": None}
 
 
 def test_the_public_key_alone_verifies_and_the_recorded_report_is_the_one_returned(api_client, auth_headers, operator_headers):

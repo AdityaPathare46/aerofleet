@@ -403,3 +403,10 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_ollama)
         if "requires_spice" in item.keywords and not spice_available:
             item.add_marker(skip_spice)
+
+
+@pytest.fixture(autouse=True)
+def _own_ledger_heads_file(tmp_path, monkeypatch):
+    """Each test gets its own ledger heads file, since tests wipe the ledger table between runs."""
+    monkeypatch.setenv("AEROFLEET_LEDGER_HEADS_FILE", str(tmp_path / "ledger_heads.log"))
+    yield
