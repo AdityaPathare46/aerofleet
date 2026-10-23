@@ -312,3 +312,19 @@ def test_a_px4_ulg_log_is_reviewed_like_an_ardupilot_one(api_client, auth_header
     body = r.json()
     assert body["verdict"] == "CONFORMED" and body["report"]["log"]["format"] == "ulg" and body["report"]["log"]["points"] == 110
     assert body["drift"]["param_count"] == 2                                            # PX4 settings feed the drift check too
+
+
+def test_fleet_vibration_ranks_drones_from_their_reviewed_flights(api_client, auth_headers, tmp_path):
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+    from tests.unit.test_assurance_flightlog import write_tlog
+
+    home, dest = (18.5200, 73.8500), (18.5290, 73.8500)
+    plan = build_waypoint_file({"origin_lat": home[0], "origin_lon": home[1], "dest_lat": dest[0], "dest_lon": dest[1], "altitude_m": 60.0})
+    track = [(float(i), home[0], home[1], 6.0 * i) for i in range(10)]
+    track += [(10.0 + i, home[0] + (dest[0] - home[0]) * i / 99, home[1], 60.0) for i in range(100)]
+    for k, level in enumerate((4.0, 6.0, 9.0, 30.0)):
+        log = write_tlog(str(tmp_path / f"v{k}.tlog"), track, vibration=lambda t, lv=level: (lv, lv / 2, lv / 3))
+        files = {"plan": ("m.waypoints", plan.encode(), "text/plain"), "log": ("f.tlog", open(log, "rb").read(), "application/octet-stream")}
+        assert api_client.post(f"{URL}/drones/V{k}/flights", headers=auth_headers, files=files).status_code == 200
+    out = api_client.get(f"{URL}/vibration", headers=auth_headers).json()
+    assert [d["drone_id"] for d in out["drones"]] == ["V3", "V2", "V1", "V0"] and out["flagged"] == ["V3"]

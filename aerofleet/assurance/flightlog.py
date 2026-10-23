@@ -35,6 +35,8 @@ class FlightLog:
     param_changes: List[Tuple[float, str, float, float]] = field(default_factory=list)  # (t_s, name, old, new) after first sight
     battery: List[Tuple[float, float, Optional[float]]] = field(default_factory=list)   # (t_s, volts, remaining % or None)
     gps: List[Tuple[float, int, Optional[float], int]] = field(default_factory=list)     # (t_s, satellites, HDOP or None, fix type)
+    vibration: List[Tuple[float, float]] = field(default_factory=list)   # (t_s, worst axis) — units depend on the source
+    vibration_source: Optional[str] = None                   # ardupilot_vibe | px4_imu | px4_estimator: compare only like with like
     notes: List[str] = field(default_factory=list)
 
     @property
@@ -46,7 +48,8 @@ class FlightLog:
                 "param_count": len(self.params), "modes": [{"t_s": round(t - self.track[0][0], 1) if self.track else 0.0, "mode": m}
                                                            for t, m in self.modes],
                 "position_source": self.position_source, "vehicle": self.vehicle, "battery_samples": len(self.battery), "gps_samples": len(self.gps),
-                "param_changes": len(self.param_changes),
+                "param_changes": len(self.param_changes), "vibration_samples": len(self.vibration),
+                "vibration_source": self.vibration_source,
                 "notes": self.notes}
 
 
@@ -69,7 +72,7 @@ PX4_NAV_STATES = {0: "MANUAL", 1: "ALTCTL", 2: "POSCTL", 3: "MISSION", 4: "HOLD"
                   15: "STABILIZE", 16: "RATTITUDE", 17: "TAKEOFF", 18: "LAND", 19: "FOLLOW", 20: "PRECLAND", 21: "ORBIT",
                   22: "VTOL_TAKEOFF"}
 ULOG_TOPICS = ["vehicle_global_position", "home_position", "vehicle_gps_position", "sensor_gps", "vehicle_status",
-               "battery_status"]
+               "battery_status", "vehicle_imu_status", "estimator_status"]
 
 
 def _read_ulog(path: str) -> FlightLog:
@@ -131,6 +134,13 @@ def _read_ulog(path: str) -> FlightLog:
             for t, v, r in list(zip(b["timestamp"], volts, b.get("remaining", [None] * len(volts))))[:MAX_POINTS]:
                 if v > 0:
                     log.battery.append((sec(t), float(v), float(r) * 100.0 if r is not None and r >= 0 else None))
+    imu, est = data.get("vehicle_imu_status"), data.get("estimator_status")
+    if imu is not None and "accel_vibration_metric" in imu:
+        log.vibration = [(sec(t), float(v)) for t, v in list(zip(imu["timestamp"], imu["accel_vibration_metric"]))[:MAX_POINTS]]
+        log.vibration_source = "px4_imu"
+    elif est is not None and "vibe[1]" in est:
+        log.vibration = [(sec(t), float(v)) for t, v in list(zip(est["timestamp"], est["vibe[1]"]))[:MAX_POINTS]]
+        log.vibration_source = "px4_estimator"
     st = data.get("vehicle_status")
     if st is not None:
         last = None
@@ -165,8 +175,8 @@ def read_flight_log(path: str) -> FlightLog:
 
     log = FlightLog(format=ext[1:])
     tracks: Dict[str, List[Tuple[float, float, float, float]]] = {}
-    wanted = (["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT"] if ext == ".tlog"
-              else ["POS", "GPS", "PARM", "MODE", "BAT"])
+    wanted = (["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT", "VIBRATION"] if ext == ".tlog"
+              else ["POS", "GPS", "PARM", "MODE", "BAT", "VIBE"])
     last_mode = None
     # Telemetry logs are stamped by the recording computer; a replayed or sped-up recording (and any
     # link delay) distorts that clock. The vehicle's own clock (time since boot) is used instead, made
@@ -203,6 +213,12 @@ def read_flight_log(path: str) -> FlightLog:
             if len(log.battery) < MAX_POINTS:
                 pct = getattr(m, "RemPct", None)
                 log.battery.append((t, float(m.Volt), float(pct) if pct is not None else None))
+            continue
+        if kind in ("VIBRATION", "VIBE"):                      # same ArduPilot measurement in telemetry and onboard logs
+            if len(log.vibration) < MAX_POINTS:
+                axes = (m.vibration_x, m.vibration_y, m.vibration_z) if kind == "VIBRATION" else (m.VibeX, m.VibeY, m.VibeZ)
+                log.vibration.append((t, float(max(axes))))
+                log.vibration_source = "ardupilot_vibe"
             continue
         if kind == "GPS_RAW_INT":
             if len(log.gps) < MAX_POINTS:

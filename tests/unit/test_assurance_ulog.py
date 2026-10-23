@@ -11,9 +11,11 @@ FORMATS = {
     "vehicle_status": "uint64_t timestamp;uint8_t nav_state;uint8_t arming_state;",
     "battery_status": "uint64_t timestamp;float voltage_v;float remaining;",
     "vehicle_gps_position": "uint64_t timestamp;int32_t lat;int32_t lon;int32_t alt;uint8_t satellites_used;float hdop;uint8_t fix_type;",
+    "vehicle_imu_status": "uint64_t timestamp;float accel_vibration_metric;",
 }
 PACK = {"vehicle_global_position": "<Qddf", "home_position": "<Qf", "vehicle_status": "<QBB",
-        "battery_status": "<Qff", "vehicle_gps_position": "<QiiiBfB"}
+        "battery_status": "<Qff", "vehicle_gps_position": "<QiiiBfB",
+        "vehicle_imu_status": "<Qf"}
 
 
 def _msg(kind, payload):
@@ -25,7 +27,7 @@ def _param(name, value):
     return _msg("P", bytes([len(key)]) + key + struct.pack("<f" if isinstance(value, float) else "<i", value))
 
 
-def write_ulog(path, track, params=(), nav_states=((0.0, 2),), battery=(), gps=True, home_alt=500.0, param_at=()):
+def write_ulog(path, track, params=(), nav_states=((0.0, 2),), battery=(), gps=True, home_alt=500.0, param_at=(), vibration=()):
     """track: (t_s, lat, lon, height above home m). nav_states: (t_s, PX4 nav_state). param_at: (t_s, name, value)."""
     t0 = 1_000_000
     us = lambda t: t0 + int(t * 1e6)  # noqa: E731
@@ -45,6 +47,7 @@ def write_ulog(path, track, params=(), nav_states=((0.0, 2),), battery=(), gps=T
                    for t, lat, lon, h in track]
     events += [(t, "vehicle_status", (n, 2)) for t, n in nav_states]
     events += [(t, "battery_status", (v, r)) for t, v, r in battery]
+    events += [(t, "vehicle_imu_status", (v,)) for t, v in vibration]
     events += [(t, "_param", (name, value)) for t, name, value in param_at]
     for t, name, fields in sorted(events, key=lambda e: e[0]):
         if name == "_param":

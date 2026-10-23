@@ -35,6 +35,9 @@ interface Review {
   }
   drift?: Drift | null
 }
+interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; flag: boolean }
+interface Vibration { drones: VibrationRow[]; flagged: string[]; note: string }
+const VIB_SOURCE: Record<string, string> = { ardupilot_vibe: 'ArduPilot VIBE (m/s²)', px4_imu: 'PX4 accel vibration metric', px4_estimator: 'PX4 estimator vibration (older firmware)' }
 interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
 const LEVEL_COLOR: Record<TimelineEvent['level'], string> = { warning: 'var(--status-red)', notice: '#92400E', info: 'var(--text-secondary)' }
 interface Conflict { a: string; b: string; t_s: number; horizontal_m: number; vertical_m: number; duration_s: number }
@@ -106,6 +109,7 @@ export default function FleetAssurancePage() {
   const [plan, setPlan] = useState<File | null>(null)
   const [flightLog, setFlightLog] = useState<File | null>(null)
   const [flights, setFlights] = useState<FlightRow[]>([])
+  const [vibration, setVibration] = useState<Vibration | null>(null)
   const [review, setReview] = useState<Review | null>(null)
   const missionFiles = useRef<HTMLInputElement>(null)
   const [missions, setMissions] = useState<File[]>([])
@@ -131,10 +135,10 @@ export default function FleetAssurancePage() {
 
   const refresh = useCallback(async () => {
     const mine = epoch.current
-    const [b, r, f] = await Promise.all([call<Baseline>('/baseline').catch(() => null), call<Fleet>('/drift').catch(() => null),
-                                         call<FlightRow[]>('/flights').catch(() => [] as FlightRow[])])
+    const [b, r, f, v] = await Promise.all([call<Baseline>('/baseline').catch(() => null), call<Fleet>('/drift').catch(() => null),
+                                         call<FlightRow[]>('/flights').catch(() => [] as FlightRow[]), call<Vibration>('/vibration').catch(() => null)])
     if (mine !== epoch.current) return
-    setBaseline(b); setRows(r); setFlights(f)
+    setBaseline(b); setRows(r); setFlights(f); setVibration(v)
   }, [call])
 
   const open = useCallback(async (id: string) => {
@@ -142,7 +146,7 @@ export default function FleetAssurancePage() {
     setChecks(await call<Checks>(`/drones/${encodeURIComponent(id)}/checks`).catch(() => null))
   }, [call])
 
-  useEffect(() => { epoch.current += 1; setBaseline(null); setRows(null); setFlights([]); setDrift(null); setChecks(null); setReview(null); refresh() }, [refresh])
+  useEffect(() => { epoch.current += 1; setBaseline(null); setRows(null); setFlights([]); setVibration(null); setDrift(null); setChecks(null); setReview(null); refresh() }, [refresh])
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true); setError(null)
@@ -424,6 +428,29 @@ export default function FleetAssurancePage() {
             Counted as a deviation beyond {review.report.tolerances.corridor_m} m sideways or {review.report.tolerances.altitude_m} m in height for {review.report.tolerances.min_duration_s} s or more; these are this fleet's tolerances, not regulatory limits.
             {' '}{review.report.log.points} positions read from the log.{[...review.report.notes, ...review.report.log.notes].map((n) => ` ${n}.`)}
           </div>
+        </div>
+      )}
+
+      {vibration && vibration.drones.length > 0 && (
+        <div className="card" style={{ padding: 16, display: 'grid', gap: 8 }} id="vibration-card">
+          <div style={{ fontWeight: 600 }}>Vibration across the fleet · {vibration.flagged.length} to inspect</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            Each drone's vibration over its last few reviewed flights. In public PX4 logs, drones that later crashed were already
+            vibrating more on ordinary flights than comparable drones that did not (60 matched pairs). A flag means check mounting,
+            propellers and motors; it is not a crash prediction.
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Vibration (95th pct.)</th><th>Rank</th><th>Measured as</th><th>Flights</th><th></th></tr></thead>
+            <tbody>{vibration.drones.map((d) => (
+              <tr key={`${d.source}-${d.drone_id}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                <td style={{ padding: '6px 0', fontWeight: 600 }}>{d.drone_id}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(d.vibration_p95)}</td>
+                <td>{d.rank} of {d.group_size}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{VIB_SOURCE[d.source] ?? d.source}</td>
+                <td>{d.flights}</td>
+                <td>{d.flag ? <Pill verdict="REVIEW" label="Inspect" /> : d.group_size < 4 ? <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>too few to rank</span> : null}</td>
+              </tr>))}</tbody>
+          </table>
         </div>
       )}
 

@@ -251,6 +251,9 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
         "home": [round(mission.home[0], 7), round(mission.home[1], 7)],
         "planned": [[round(la, 7), round(lo, 7), round(h, 1)] for la, lo, h in mission.path],
         "flown": [[round(t - t0, 1), round(la, 7), round(lo, 7), round(h, 1)] for t, la, lo, h in flight.track[::step]]}
+    from aerofleet.assurance.vibration import flight_vibration
+
+    report["vibration"] = flight_vibration(flight)
     events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes)
     report["evidence_timeline"] = events
     report["around_episodes"] = around_episodes(report, events)
@@ -280,6 +283,16 @@ async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...),
 
     return review_flight(db, user, fleet, drone_id, (await plan.read(MAX_BYTES + 1)).decode("utf-8", errors="replace"),
                          plan.filename or "", await log.read(LOG_MAX + 1), log.filename or "", city, corridor_m, altitude_m)
+
+
+@router.get("/fleets/{fleet}/vibration")
+async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Drones ranked by vibration over their recent reviewed flights (see aerofleet/assurance/vibration.py)."""
+    from aerofleet.assurance.vibration import fleet_ranking
+
+    _check_id(fleet, "Fleet")
+    rows = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
+    return fleet_ranking({"drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report} for r in rows)
 
 
 @router.get("/fleets/{fleet}/flights")

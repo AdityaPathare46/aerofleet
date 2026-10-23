@@ -8,7 +8,8 @@ from aerofleet.assurance.flightlog import FlightLogError, read_flight_log
 pytestmark = pytest.mark.unit
 
 
-def write_tlog(path, track, params=(), modes=(), gcs_heartbeats=True, battery=None, gps=None, statustext=None, wall_speedup=1.0, boot_ms=None):
+def write_tlog(path, track, params=(), modes=(), gcs_heartbeats=True, battery=None, gps=None, statustext=None, wall_speedup=1.0, boot_ms=None,
+               vibration=None):
     """A telemetry log is a sequence of [8-byte big-endian microsecond timestamp][MAVLink packet]."""
     from pymavlink.dialects.v20 import ardupilotmega as mav
 
@@ -50,6 +51,8 @@ def write_tlog(path, track, params=(), modes=(), gcs_heartbeats=True, battery=No
             if gps is not None:
                 sats, hdop, fix = gps(t)
                 put(t, mav.MAVLink_gps_raw_int_message(int(t * 1e6), fix, int(lat * 1e7), int(lon * 1e7), 560000, int(hdop * 100), 65535, 0, 0, sats))
+            if vibration is not None:
+                put(t, mav.MAVLink_vibration_message(int(t * 1e6), *vibration(t), 0, 0, 0))
             if statustext is not None:
                 put(t, mav.MAVLink_statustext_message(mav.MAV_SEVERITY_INFO, statustext.encode()[:50]))
     return path
