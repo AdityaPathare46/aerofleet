@@ -62,7 +62,7 @@ export function RehearsalGeometry({ r, side, d, t }: { r: RehearsalDto; side: 'b
         return (
           <group key={i} position={p}>
             <mesh><sphereGeometry args={[live ? 0.02 : 0.012, 18, 18]} /><meshStandardMaterial color={C.bad} transparent opacity={live ? 0.55 : 0.3} emissive={C.bad} emissiveIntensity={live ? 0.9 : 0.3} /></mesh>
-            <Label position={[0, 0.03, 0]} text={`${clock(c.t_s)} ${c.a}–${c.b} ${c.horizontal_m} m apart`} color={C.bad} size={0.0072} font={FONT.mono} />
+            <Label position={[0, 0.03 + (i % 4) * 0.02, 0]} text={`${clock(c.t_s)} ${c.a}–${c.b} ${c.horizontal_m} m apart`} color={C.bad} size={0.0072} font={FONT.mono} />
           </group>
         )
       })}

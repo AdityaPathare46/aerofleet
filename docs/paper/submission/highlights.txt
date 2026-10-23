@@ -1,6 +1,6 @@
 Highlights
-- Uploader-labelled crashes from 479,547 public PX4 logs form a real-flight benchmark
 - No rule or model separated pilot-caused from aircraft-caused crashes above chance
-- The flight that crashed was no rougher than the same drone's earlier flights
+- Checks that seemed to find crash causes mostly fired on the crash itself
 - Drones that later crashed vibrated more than matched drones on ordinary flights
-- Small language-model review panels lost to a fixed rule and were easy to steer
+- Language-model panels and a description search both fell below simple baselines
+- An open-source tool built on the results shows evidence and ranks drones, no verdicts

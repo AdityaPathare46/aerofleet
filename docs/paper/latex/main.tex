@@ -7,6 +7,7 @@
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 \usepackage{lineno}
+\usepackage{placeins}
 \linenumbers
 \graphicspath{{../figures/}{figures/}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
@@ -28,20 +29,19 @@
             city={[City]}, country={[Country]}}
 
 \begin{abstract}
-Operators, insurers and investigators increasingly expect flight logs to explain why a small drone crashed. We
-tested that expectation on the public PX4 Flight Review archive (479,547 logs; 590 crashes labelled by their
-uploaders as pilot- or aircraft-caused). Each test and its threshold was committed to version control before it was
-run, and decisive tests were repeated on held-out data. Safety settings did not separate crash logs from
-well-rated flights (a protection disabled in 51\% vs 46\%, $p=0.63$). A fixed attribution rule reached a balanced
-accuracy of 0.47 on 112 held-out crashes, and a cross-validated model stayed between 0.42 and 0.52 at every cut-off
-before the crash. Checks that appeared to find the cause named by forum experts mostly fired on the crash itself
-(13 of 15 tuning faults found with the crash included, 2 of 10 without its last 10\,s). Crash flights were
-distinguishable from other drones' flights (AUC about 0.86 even 30\,s before the crash) but not from the same drone's
-earlier flights (vibration rank 0.48, $p=0.67$). Against matched drones without a recorded crash, drones that later
-crashed vibrated more on ordinary flights (mean rank 0.67, 95\% CI 0.57--0.77, $p=0.002$; Holm-adjusted 0.016), a
-result that held with same-airframe controls, without crash-day flights and after adjusting for flight duration.
-Small language-model review panels lost to a fixed rule and could be steered by one compromised reviewer. Flight
-logs support ranking airframes for inspection, not attributing an individual crash.
+Flight logs are increasingly expected to explain why a small drone crashed. We tested that expectation on the public
+PX4 Flight Review archive (479,547 logs; 590 crashes labelled by their uploaders as pilot- or aircraft-caused),
+committing each test and its pass mark to version control before running it. Safety settings did not separate crash
+logs from well-rated flights ($p=0.63$). A fixed attribution rule reached a balanced accuracy of 0.47 on 112
+held-out crashes, and a cross-validated model stayed between 0.42 and 0.52. Checks that seemed to find the cause
+named by forum experts mostly fired on the crash itself (13 of 15 tuning faults found with the crash included, 2 of
+10 without its last 10\,s). The crash flight did not differ from the same drone's earlier flights, but drones that
+later crashed vibrated more on ordinary flights than matched drones (mean rank 0.67, 95\% CI 0.57--0.77,
+Holm-adjusted $p=0.016$). Small language-model panels lost to a fixed rule and were easily steered, and matching a
+written problem description against 90 expert-diagnosed crashes found the expert's cause less often than the base
+rate (20\% vs 32\%). We built these findings into an open-source fleet-assurance tool that presents evidence rather
+than verdicts: an event timeline, a vibration ranking of the fleet, a signed record, and three-dimensional replay
+and rehearsal of flights. Flight logs support ranking airframes for inspection, not attributing an individual crash.
 \end{abstract}
 
 \begin{keyword}
@@ -98,8 +98,9 @@ it used were analysed, and decisive tests were repeated on held-out data, follow
 \cite{nosek2018prereg}. (iii) We show that crash attribution from logs was not achievable with these labels and
 features, and that apparent diagnostic accuracy can come from the crash itself. (iv) We report one positive and
 practically useful result: drones that later crash are rougher on their ordinary flights than matched drones, which
-supports fleet-level inspection ranking but not per-flight prediction. Code, declarations, derived features and labels
-are released.
+supports fleet-level inspection ranking but not per-flight prediction. (v) We show how these results translate
+into the design of an open-source assurance tool, and report engineering checks of its parts, including one
+negative result (Section~\ref{sec:tool}). Code, declarations, derived features and labels are released.
 
 % ===================================================================
 \section{Related work}
@@ -154,6 +155,12 @@ known source of irreproducible machine-learning results \cite{kaufman2012leakage
 likewise biases evaluation \cite{frenay2014label}. Matching reduces confounding in observational comparisons
 \cite{stuart2010matching}, and pre-registration separates confirmatory from exploratory analysis
 \cite{nosek2018prereg}. We apply these ideas to drone logs.
+
+\paragraph{Tools for operators} Retrieving similar past cases and reusing their solutions is the basis of
+case-based reasoning \cite{aamodt1994cbr}; ranking text by word overlap with BM25 is a standard, deterministic
+retrieval method \cite{robertson2009bm25}. A hand-held miniature of the environment lets a person grasp and
+inspect a spatial scene at a glance \cite{stoakley1995wim}, the idea behind the tabletop view in
+Section~\ref{sec:tool}. We use these as engineering choices and test them only as far as stated.
 
 % ===================================================================
 \section{Data}
@@ -239,8 +246,8 @@ Forum threads & 148 real crashes & 35 logs still downloadable & Q4 \\
 
 \subsection{Expert diagnoses}
 We searched the PX4 discussion forum for threads that link a Flight Review log and mention a crash (443 threads, 410
-with a log link). For the 161 crash threads with a reply from PX4 staff, the development team or a member at the
-forum's highest trust levels, we recorded the expert's conclusion (aircraft, pilot, both, unclear, no diagnosis), the
+with a log link). For the 161 threads with a reply from PX4 staff, the development team or a member at the
+forum's highest trust levels (148 of them describing a real crash), we recorded the expert's conclusion (aircraft, pilot, both, unclear, no diagnosis), the
 cause named, who gave it, whether the original poster confirmed it, and the sentence stating the diagnosis. Recording
 was AI-assisted and reviewed by an author; 123 of 124 recorded sentences were found verbatim in their thread by script.
 The searches combined the Flight Review host names with the words crash, crashed, flyaway, fell, flipped and lost
@@ -349,9 +356,8 @@ reviewer's slice or to non-existent facts were discarded by code. In the second 
 counts of the first round, not the other reviewers' text, to limit persuasion. A cause was reported only if it had at
 least one supporting vote, a net score of at least one and a lead of at least one over the runner-up; otherwise the
 case was referred to a person. Sixty generated cases with a known cause (clear, subtle and no-cause cases, some with
-distractors) were presented to five reviewers. Each reviewer saw only numbered facts from one evidence area, its
-citations were checked by code, and a fixed rule aggregated two rounds of votes; a single agent shown all facts and the
-fixed rule served as comparators. Four local models of 3 to 4 billion parameters ran at temperature 0. Robustness was
+distractors) were presented to five reviewers; a single agent shown all facts and the fixed rule served as
+comparators. Four local models of 3 to 4 billion parameters ran at temperature 0. Robustness was
 measured by replacing one reviewer with an adversary arguing for a chosen wrong cause. Separately, eight hostile
 strings were planted in five uploader-controlled fields to test whether text could reach a prompt.
 
@@ -556,6 +562,118 @@ qwen3:4b & 0 / 41 & 17 (19--41\%) & 38 (51--74\%) & 45 of 60 \\
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+% ===================================================================
+\section{Design implications: an assurance tool built on the findings}
+\label{sec:tool}
+
+The authors develop AeroFleet, an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads
+the files an operator already has (parameter files, mission files and flight logs), contacts no aircraft and calls no
+language model. Table~\ref{tab:design} links each result above to a design decision and to the check that was made of
+it. The injection and leave-one-out checks were declared before they were run, like the tests above; the others are
+software tests. All are engineering validation; none evaluates the tool as a safety intervention.
+
+\begin{table}[!htbp]
+\centering
+\caption{From findings to design decisions in the assurance tool, and how each part was checked.}
+\label{tab:design}
+\small
+\begin{tabularx}{\textwidth}{@{}YYY@{}}
+\toprule
+Finding & Design decision & Check \\
+\midrule
+Logs did not attribute crashes (Q2); checks fired on the crash (Q4) & A flight review lists the log's events in time
+order and states the quality of its evidence; it names no cause & Unit and API tests \\
+Roughness marked drones, not flights (Q3b, Q3c) & Drones ranked by vibration within a fleet, measured the same way;
+the upper quartile flagged for inspection & Unit tests; no prospective evaluation yet \\
+Useful evidence is longitudinal & Every upload, approval and review appended to a hash-chained, Ed25519-signed record
+with SHA-256 fingerprints of the files received & Tamper tests: edited, deleted, reordered and re-signed records
+detected \\
+A plan proves nothing if something else was flown & Planned-versus-flown check: deviations beyond a fleet's corridor
+and height tolerance & Known deviations injected into 40 real flights (Section~\ref{sec:tool_reconcile}) \\
+Expert diagnoses as precedents (Q4) & Description search over 161 expert-labelled threads; checklist in order of
+expert frequency & Leave-one-out test on 90 cases (Section~\ref{sec:tool_search}) \\
+Separation and deviations are three-dimensional & Tabletop 3D replay of a reviewed flight and rehearsal of planned
+missions, on screen or in a headset & Functional checks only; no user study \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Evidence, not verdicts} A flight review reads an ArduPilot or PX4 log and the approved mission file and
+lists, in time order, mode changes (with a pilot taking over from an automatic mode flagged), settings changed in
+flight, battery and voltage warnings, poor GPS and deviations from the plan. It reports the quality of that evidence
+(sample rate, satellite count and dilution of precision, height reference, clock source) so that a reader can judge
+how far to trust it, and leaves the conclusion to a person. Given the attribution results, a tool that issued a
+pilot-or-aircraft verdict would claim more than the log supports.
+
+\paragraph{Ranking drones, not predicting flights} Each reviewed flight's vibration is stored with its measurement
+source; drones are ranked against others measured the same way, and those above their group's upper quartile are
+flagged for mechanical inspection. In the archive, this kind of ranking identified the drone that later crashed as
+the roughest of its matched set in 55\% of sets, against 41\% by chance, so the flag is a prompt to inspect, not a
+warning that a crash is coming.
+
+\paragraph{A record that can be checked} Because the useful evidence accumulates per aircraft, results are appended to
+a hash-chained record in which each entry is signed and carries the SHA-256 of the exact files it came from; each new
+head is also written to a separate file intended to be copied elsewhere. A standalone verifier checks an exported
+record; in tests it detected an edited field, a deleted entry, a reordering, and a chain rebuilt with a new key
+(the last only against a pinned key fingerprint or the separately kept heads, which is the stated limit of the design).
+
+\subsection{Planned versus flown}
+\label{sec:tool_reconcile}
+The check aligns the flown track with the plan's legs in flying order over the whole flight and reports stretches
+beyond the fleet's sideways and height tolerances (defaults 30\,m and 15\,m for at least 3\,s). To test it, plans were
+built from 40 real multirotor flights in the archive (a waypoint every 10\,s of track), so that the unmodified
+flight conformed by construction, and a known deviation was injected for 30\,s. Sideways shifts of 35\,m or more were
+found in 90--98\% of flights and upward shifts of 20\,m or more in 92--98\%, while shifts below the tolerances were
+mostly not reported, as specified. The first version of the check, which matched each position to the nearest leg
+anywhere, raised false alarms on 16 of 40 unmodified flights and detected only half of the 35\,m shifts;
+it was replaced. The current version raised false alarms on 9 of 40 (22\%, 95\% CI 12--38\%), all on fast flights
+cutting the corners of long legs built from the track; with a waypoint every 5\,s (a post-hoc check) there were none.
+A real mission has waypoints at its turns, but the false-alarm rate on real plans has not been measured, so a
+reported deviation is a reason to look at the replay rather than a finding.
+
+\subsection{Searching past diagnoses}
+\label{sec:tool_search}
+An operator can describe a problem in words. The description is matched (BM25, no model) against the expert-labelled
+forum threads, represented by their titles and up to 30 descriptive terms from the opening post, and against a short
+list of symptom words for each cause. After a first release we declared and ran a test, holding out each of the 90 threads in
+which the expert blamed the aircraft and named a cause and querying with the rest. The cause the words matched best
+was the expert's cause in 17 of 90 cases with the title alone (19\%) and 18 of 90 with the title and opening-post
+terms (20\%, 95\% CI 13--29\%), below the 29 of 90 (32\%) of always answering the most frequent cause; among the first
+three it was 53\% against 66\%. The declared criterion (10 points above the base rate) was not met. A written
+description, like the log, did not reveal the cause. The tool therefore orders its checklist by how often experts
+found each cause, marks the causes the description mentions, and offers the most similar threads only as reading,
+with the measured accuracy shown beside the answer.
+
+\subsection{Three-dimensional replay and rehearsal}
+\label{sec:tool_vr}
+Deviations, heights and separation between drones are spatial, and a two-dimensional plot hides height. The tool
+therefore draws flights on a virtual tabletop, a world in miniature \cite{stoakley1995wim}, that can be viewed in a
+browser, in immersive virtual reality or, on a passthrough headset, in mixed reality on a real desk (WebXR).
+A \emph{flight replay} shows a reviewed flight: the approved plan dashed, the flown track green within tolerance and
+red during a deviation, the log's events pinned where they happened, and a playhead that can be scrubbed or played at
+ten times real speed. A \emph{mission rehearsal} shows planned missions before anyone flies: the deconfliction check
+turns each mission file into a position-over-time trajectory on a common clock (straight legs at stated climb, cruise
+and descent speeds), finds every pair closer than the separation distance and resolves conflicts by a launch delay or,
+where allowed, a different cruise height. The rehearsal flies all missions on that clock, as uploaded and as
+rescheduled, with each loss of separation drawn where and when it occurs (Fig.~\ref{fig:rehearsal}). It is a kinematic rehearsal of the plan, not
+a simulation of the aircraft: there is no wind, no vehicle dynamics and no sensor error, so it shows what the plan
+implies if it is flown as written, which is the assumption the planned-versus-flown check then tests after the
+flight. The replay and rehearsal have been checked functionally on desktop; a paired standalone headset application
+compiles but has not been run on a headset, and no user study has been carried out, so we make no claim that the
+three-dimensional view improves decisions.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{fig_rehearsal.png}
+\caption{Mission rehearsal in the tool's tabletop view (desktop rendering; the same scene opens in a WebXR headset).
+Five planned missions over a 2\,km table, heights exaggerated four times, each mission in its own colour. (a) As
+uploaded, 12\,s after launch: three missions leaving one depot together occupy the same point (overlapping labels) and
+the red sphere marks their loss of separation. (b) The schedule produced by the deconfliction check, 45\,s after the
+first launch: two launches are delayed and no pair comes within 15\,m. Straight legs at planned speeds, no wind.}
+\label{fig:rehearsal}
+\end{figure}
+
 % ===================================================================
 \section{Discussion}
 \label{sec:discussion}
@@ -579,21 +697,8 @@ degraded condition precedes failure \cite{petritoli2018reliability}. It supports
 measured the same way and inspecting the roughest; it does not support a per-flight crash warning, and the screening
 gain is moderate.
 
-\paragraph{From findings to a fleet-assurance tool} The authors build an open-source, ground-side assurance tool for
-PX4 and ArduPilot fleets (AeroFleet), and the results above set its design. Because logs did not attribute crashes,
-the tool issues no pilot-or-aircraft verdict and calls no language model; a flight review assembles a time-ordered
-record of events, states the quality of its evidence (sample rate, satellite count and dilution of precision, height
-reference) and leaves the conclusion to a person. Because roughness marked drones rather than flights, it ranks each
-fleet's drones by vibration measured the same way and flags those above the group's upper quartile for inspection.
-Because the useful evidence is longitudinal, every upload, approval and review is appended to a hash-chained, signed
-record that fingerprints the files received. Its planned-versus-flown check was validated by injecting known
-deviations into 40 real flights from this archive: 30\,s sideways shifts of 35\,m or more beyond a 30\,m corridor were
-found in 90--98\% of flights and shifts below it rarely, but 9 of 40 unmodified flights (22\%) still raised an alarm,
-so its output is a prompt to look, not a finding. Finally, the expert-diagnosed threads of Section~\ref{sec:experts}
-are offered to operators as precedents: a description of a problem is matched by word overlap (BM25) against the 161
-labelled threads and returns the checks usually tried first and the closest past cases with their expert's cause.
-Given the attribution results, this is presented as where to look, not as a diagnosis. None of these features is
-evaluated as a safety intervention here.
+\paragraph{From findings to a tool} Section~\ref{sec:tool} turns these results into design decisions for an
+operator's tool. The common thread is that the tool shows evidence and ranks drones, and does not name a cause.
 
 \paragraph{Language models} On this task small local models added errors and an attack surface rather than accuracy.
 A debate-style panel, related to multi-agent debate \cite{du2024debate}, did not help at this model size, and the adversarial result echoes concerns about
@@ -645,6 +750,11 @@ three vibration-diagnosed logs). Null results there are not evidence of no effec
 the fixed rule, so the rule's score is closer to a training score than a test score; a blind set of cases written by
 someone who has not seen the rule is in preparation. Only small models were tested.
 
+\paragraph{The tool} The tool's checks are engineering validation on archive data, not field evaluation. Plans in the
+injection test were built from the flights themselves; the description search was tested on forum titles, which are
+shorter and more varied than an operator's report, and its symptom lists were written by the authors; the vibration
+ranking has not been tested prospectively; and the three-dimensional views have had no user study.
+
 % ===================================================================
 \section{Conclusion}
 \label{sec:conclusion}
@@ -652,7 +762,9 @@ On real, public crash logs, configuration settings did not distinguish crashes, 
 whether the pilot or the aircraft was responsible, and the flight that crashed looked like the same drone's earlier
 flights. What the logs did reveal was which drones were rougher than their peers. Log analysis for operators is better
 aimed at fleet-level inspection ranking and at presenting evidence to a human investigator, and claims of automatic
-crash attribution should be tested with the crash window removed and against each aircraft's own history.
+crash attribution should be tested with the crash window removed and against each aircraft's own history. A tool
+built on these results can be useful without naming causes: it can order the evidence, rank the drones that deserve
+inspection, keep a record that can be checked, and let a person see a flight or a plan in three dimensions.
 
 % ===================================================================
 \section*{CRediT authorship contribution statement}
@@ -660,7 +772,7 @@ crash attribution should be tested with the crash window removed and against eac
 \textbf{[Second Author]}: Investigation, Validation, Writing -- review \& editing. [Complete before submission.]
 
 \section*{Declaration of competing interest}
-The authors develop the open-source fleet-assurance tool mentioned in Section~\ref{sec:discussion}; it is not
+The authors develop the open-source fleet-assurance tool described in Section~\ref{sec:tool}; it is not
 commercial. [Confirm; declare any other interests.]
 
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
@@ -670,7 +782,7 @@ the content as needed and take full responsibility for the content of the publis
 
 \section*{Data availability}
 Selection scripts, analysis code, the declared hypotheses with their commit history, derived features and the expert
-labels (without forum text) are available at [repository URL; archived release DOI]. Raw logs are public on PX4 Flight
+labels (without forum text), and the source code of the tool are available at [repository URL; archived release DOI]. Raw logs are public on PX4 Flight
 Review and are referenced by identifier.
 
 \section*{Funding}

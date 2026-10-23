@@ -19,7 +19,11 @@ relevance to the journal's readership in safety and reliability:
 crashed vibrated more than matched drones on ordinary flights, a result that survived correction for multiple testing
 and several robustness checks;
 \item small language-model review panels performed worse than a fixed rule and could be steered by one compromised
-reviewer.
+reviewer, and matching a written problem description against expert-diagnosed crashes named the cause less often
+than the base rate;
+\item the findings are carried into the design of an open-source fleet-assurance tool (evidence timeline, vibration
+ranking, signed record, three-dimensional replay and rehearsal), whose parts were checked with injected faults and a
+leave-one-out test, and which presents evidence rather than verdicts.
 \end{itemize}
 Together these findings separate what logs can support (ranking airframes for inspection) from what they cannot
 (attributing an individual crash), and they give practical guidance for evaluating log-based diagnostics. Code,

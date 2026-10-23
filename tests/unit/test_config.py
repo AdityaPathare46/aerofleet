@@ -49,8 +49,9 @@ class TestDatabaseConfig:
 class TestConfig:
     """Tests for main configuration class."""
     
-    def test_load_default_config(self):
-        """Test loading default configuration."""
+    def test_load_default_config(self, monkeypatch):
+        """Test loading default configuration (with no ENVIRONMENT set; conftest sets it to "test")."""
+        monkeypatch.delenv("ENVIRONMENT", raising=False)
         config = Config()
         assert config.environment == "development"
         assert isinstance(config.llm, LLMConfig)

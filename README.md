@@ -112,11 +112,12 @@ tell pilot from aircraft.
 ## Run it
 
 ```bash
-python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn aerofleet.api.app:app --host 127.0.0.1 --port 8000     # API; first start takes a minute or two
-npm install --prefix tauri-app && npm run dev --prefix tauri-app          # app at http://localhost:1420
+./start.sh
 ```
+
+That is all: it creates `.venv` and installs the Python packages the first time (a few minutes), starts the API,
+installs and starts the app, and opens http://localhost:1420. Ctrl-C stops both; logs are in `logs/`.
+`./start.sh api` starts only the API. Needs Python 3.10+ and Node 18+.
 
 Open the app, sign in, and go to **Fleet Assurance**. Setting a baseline or approving a change needs an
 operator account. API reference: `http://localhost:8000/docs` (`/api/v1/assurance`, `/api/v1/compliance`,

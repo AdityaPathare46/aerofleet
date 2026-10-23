@@ -84,3 +84,33 @@ points were checked against the code; what was done:
 | Type certificate is Rule 6, not 14(3) | Both: Rule 6 is the general rule, Rule 14(3) repeats it for registered systems | Notes now cite both |
 | HTML report open to injected script | Wrong (all values escaped) | None |
 | Pairing code brute-forceable | Largely wrong (desktop approval required; 120 s expiry) | None now |
+
+## Third review: final pass after retitling and the tool section (23 October 2026)
+
+**Rating before this pass: 6.5/10.** Sound, honest empirical core, but the new title promised something for operators
+that the paper only covered in one Discussion paragraph; the abstract did not mention the tool; one data sentence
+mixed up 161 expert threads and 148 real crashes; the panel method repeated itself; the title page overflowed.
+
+What was done:
+
+| Problem | Fix |
+|---|---|
+| Title and paper did not match the project | New Section 6 "Design implications": a finding → decision → check table, evidence-not-verdicts, vibration ranking, signed record, planned-versus-flown (injection results incl. the rejected first version), description search, 3D replay and rehearsal |
+| VR part absent | Section 6.3 and Fig. 7 (mission rehearsal, real capture from the tool, before/after deconfliction), with its limits: kinematic rehearsal, no wind or dynamics, desktop-checked only, headset app not run, no user study |
+| New feature untested | Declared and ran a leave-one-out test of the description search: 20% vs a 32% base rate, criterion not met. Reported in the abstract and Section 6.2; the product changed to a checklist ordered by expert frequency |
+| Overclaims in the new text | "declared before they were run" limited to the two declared checks; the search is said to have been tested after a first release |
+| Abstract over-long, title page overflow | Abstract cut to ~230 words; page 1 fits |
+| 161 vs 148 threads | Data section now says 161 expert threads, 148 describing a real crash |
+| Related work had nothing on the tool's methods | Case-based reasoning, BM25, worlds-in-miniature (DOIs checked on Crossref) |
+| Competing-interest pointer and data statement | Point to Section 6; tool source code listed as released |
+| Highlights, cover letter | Updated; all highlights ≤ 85 characters |
+
+**Rating after this pass: 7.5/10.** What holds it below 8–9 cannot be fixed by editing:
+
+- Labels are the uploaders' own; normal flights are self-rated. A second, independent coding of the forum threads
+  (inter-rater agreement) is the cheapest real improvement: one person, about a day. **Ask Atharv.**
+- The positive result rests mainly on the older vibration estimate (48 sets); the newer metric has 12 sets.
+- No prospective test of the vibration ranking; no user study of the 3D views; the description search was tested on
+  forum titles, not operators' reports.
+- Language-model cases were written by the authors; the blind set is still to come.
+- Author names, affiliations, repository URL and archived DOI are placeholders.
