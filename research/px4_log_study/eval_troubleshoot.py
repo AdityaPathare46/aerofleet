@@ -61,7 +61,7 @@ def main(out_md):
             base1 += freq[0] == held["cause"]
             base3 += held["cause"] in freq
             for name, query in (("title", held["title"]), ("full", held["title"] + " " + " ".join(held["terms"]))):
-                ranked = [x["cause"] for x in ts.search(query, limit=5)["likely_causes"]]
+                ranked = [x["cause"] for x in ts.search(query, limit=5)["word_matches"]]
                 hits[name][0] += bool(ranked) and ranked[0] == held["cause"]
                 hits[name][1] += held["cause"] in ranked[:3]
     finally:

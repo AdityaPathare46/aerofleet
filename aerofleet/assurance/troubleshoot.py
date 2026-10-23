@@ -6,10 +6,12 @@ the log study. A description is matched by words (BM25), both against the cases 
 symptoms each cause usually shows; nothing is generated and no model is called, so the same words always give
 the same answer.
 
-What it is for: pointing an operator at the checks worth doing first and at past threads that look alike. What it
-is not: a diagnosis. The log study found that checks run on the crash log often match the expert's cause only
-because they fire on the crash itself, so the answer gives the checks and the precedents and leaves the verdict
-to the person who inspects the drone.
+What it is for: a checklist and past threads that look alike. What it is not: a diagnosis. In a leave-one-out test
+on the 90 threads where the expert blamed the aircraft and named a cause (research/px4_log_study/eval_troubleshoot.py,
+results/px4_log_study/troubleshoot_loo.md), the cause best matched by the words was the expert's cause in 20% of
+cases, below the 32% of always answering the most frequent cause. A description does not reveal the cause any more
+than the log does. So the checklist is ordered by how often experts found each cause, the causes the description
+mentions are marked, and the similar threads are offered to read, not as an answer.
 """
 from __future__ import annotations
 
@@ -130,9 +132,12 @@ PLAYBOOK: Dict[str, Dict[str, Any]] = {
     },
 }
 
-NOT_A_DIAGNOSIS = ("Matched by words against past crashes that PX4 experts diagnosed. It suggests where to look first; "
-                   "it does not diagnose this drone. In the log study, checks on the crash log often agreed with the "
-                   "expert only because they fired on the crash itself, so confirm on the aircraft.")
+CHECKLIST = 5
+NOT_A_DIAGNOSIS = ("A checklist and past cases, not a diagnosis of this drone. The checks are in the order PX4 experts most "
+                   "often found each cause; causes your description mentions are marked. Confirm on the aircraft.")
+TESTED = ("Tested on 90 expert-diagnosed crashes, each held out in turn: the cause best matched by the words was the "
+          "expert's cause in 20% of cases, against 32% for always answering the most frequent cause. Descriptions "
+          "do not reveal the cause, which is why the checklist follows how often each cause was found.")
 
 
 def _stem(w: str) -> str:
@@ -181,7 +186,8 @@ def _index():
 
 
 def search(description: str, limit: int = 5, vibration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Rank likely causes and similar past cases for a free-text description of a problem."""
+    """A checklist ordered by how often experts found each cause, the causes the description mentions, and the
+    most similar past threads."""
     cases, case_ix, causes, cause_ix, base, n_crash = _index()
     q = tokens((description or "")[:MAX_QUERY])
     known = set(cause_ix.idf) | set(case_ix.idf)
@@ -197,24 +203,27 @@ def search(description: str, limit: int = 5, vibration: Optional[Dict[str, Any]]
     for i in order[:15]:
         votes[cases[i]["cause"]] += case_s[i] / best
     ranked = sorted(causes, key=lambda c: -(cause_s[c] + votes.get(c, 0.0)))
-    likely = []
+    matches = []                                          # kept for the leave-one-out test; not used to order the checklist
     for c in ranked:
         score = cause_s[c] + votes.get(c, 0.0)
-        if score <= 0 or len(likely) == 3:
+        if score <= 0 or len(matches) == 3:
             break
-        p = PLAYBOOK[c]
-        likely.append({"cause": c, "score": round(score, 2),
-                       "matched_words": sorted(set(q) & set(tokens(p["symptoms"]))),
-                       "share_of_expert_diagnosed_crashes": f"{base.get(c, 0)} of {n_crash}",
-                       "checks": p["checks"], "fixes": p["fixes"], "aerofleet_check": p["aerofleet"]})
+        matches.append({"cause": c, "score": round(score, 2)})
+    said = {_stem(w): w for w in re.findall(r"[a-z][a-z0-9]+", (description or "")[:MAX_QUERY].lower())}
+    words = {c: sorted(said.get(t, t) for t in set(q) & set(tokens(PLAYBOOK[c]["symptoms"]))) for c in causes}
+    common = [c for c, k in base.most_common() if k >= 2 and c in PLAYBOOK][:CHECKLIST]
+    common += [c for c in causes if words[c] and c not in common]
+    checklist = [{"cause": c, "experts_found": f"{base.get(c, 0)} of {n_crash}", "mentioned": bool(words[c]),
+                  "matched_words": words[c], "checks": PLAYBOOK[c]["checks"], "fixes": PLAYBOOK[c]["fixes"],
+                  "aerofleet_check": PLAYBOOK[c]["aerofleet"]} for c in common]
 
     similar = [{"title": cases[i]["title"], "url": cases[i]["url"], "score": round(case_s[i], 2),
                 "expert_conclusion": cases[i]["expert_conclusion"], "cause": cases[i]["cause"],
                 "who_diagnosed": cases[i]["who"], "poster_confirmed_fix": cases[i]["poster_confirmed"],
                 "flight_review_logs": [f"https://review.px4.io/plot_app?log={x}" for x in cases[i]["log_ids"][:3]]}
                for i in top]
-    out = {"query_words_used": used, "likely_causes": likely, "similar_cases": similar,
-           "cases_searched": len(cases), "note": NOT_A_DIAGNOSIS}
+    out = {"query_words_used": used, "checklist": checklist, "word_matches": matches, "similar_cases": similar,
+           "cases_searched": len(cases), "note": NOT_A_DIAGNOSIS, "how_well_it_works": TESTED}
     if not used:
         out["message"] = "None of the words matched a known symptom. Describe what the drone did, e.g. 'wobbles in hover', 'flipped on take-off', 'circles in position mode'."
     if vibration:

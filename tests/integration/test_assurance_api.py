@@ -347,7 +347,7 @@ def test_troubleshoot_matches_a_description_and_adds_the_drones_vibration(api_cl
                         json={"description": "compass heading wrong, drone drifts in loiter", "fleet": "tf", "drone_id": "D1"})
     assert r.status_code == 200
     body = r.json()
-    assert body["likely_causes"][0]["cause"] == "GPS / compass / estimator"
+    assert any(c["cause"] == "GPS / compass / estimator" and c["mentioned"] for c in body["checklist"])
     assert body["this_drone_vibration"]["drone_id"] == "D1"
     assert api_client.post("/api/v1/assurance/troubleshoot", json={"description": "x y z"}).status_code == 401
     assert api_client.post("/api/v1/assurance/troubleshoot", headers=auth_headers, json={"description": "ok", "fleet": "../x", "drone_id": "D1"}).status_code in (400, 422)

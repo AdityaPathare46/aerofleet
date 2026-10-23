@@ -2,25 +2,38 @@
 from aerofleet.assurance.troubleshoot import PLAYBOOK, search, tokens
 
 
-def test_symptoms_point_to_the_cause_experts_usually_found():
-    assert search("drone circles in position mode like a toilet bowl, then flies away")["likely_causes"][0]["cause"] == "GPS / compass / estimator"
-    assert search("strong vibration, accelerometer clipping and altitude jumps")["likely_causes"][0]["cause"] == "vibration / mounting"
-    assert search("battery voltage sag then the flight controller rebooted")["likely_causes"][0]["cause"] == "battery / power"
+def _mentioned(description):
+    return {c["cause"] for c in search(description)["checklist"] if c["mentioned"]}
 
 
-def test_answers_carry_checks_precedents_and_the_caveat():
+def test_the_causes_a_description_mentions_are_marked():
+    assert "GPS / compass / estimator" in _mentioned("drone circles in position mode like a toilet bowl, then flies away")
+    assert "vibration / mounting" in _mentioned("strong vibration, accelerometer clipping and altitude jumps")
+    assert "battery / power" in _mentioned("battery voltage sag then the flight controller rebooted")
+
+
+def test_the_checklist_follows_how_often_experts_found_each_cause_not_the_words():
+    r = search("compass heading wrong, drone circles in loiter")
+    found = [int(c["experts_found"].split(" of ")[0]) for c in r["checklist"][:5]]
+    assert r["checklist"][0]["cause"] == "tuning / configuration" and found == sorted(found, reverse=True)
+    gps = next(c for c in r["checklist"] if c["cause"] == "GPS / compass / estimator")
+    assert gps["mentioned"] and "compass" in gps["matched_words"] and gps["checks"] and gps["fixes"]
+    rare = search("radio link lost, receiver failsafe")["checklist"]
+    assert any(c["cause"] == "radio or data link" and c["mentioned"] for c in rare)      # a rare cause still appears when named
+
+
+def test_answers_carry_precedents_the_caveat_and_the_measured_accuracy():
     r = search("quad oscillates and wobbles in hover", limit=3)
-    top = r["likely_causes"][0]
-    assert top["checks"] and top["fixes"] and " of " in top["share_of_expert_diagnosed_crashes"]
     assert 0 < len(r["similar_cases"]) <= 3 and all(c["url"].startswith("https://discuss.px4.io/t/") for c in r["similar_cases"])
-    assert "does not diagnose" in r["note"] and r["cases_searched"] == 161
+    assert "not a diagnosis" in r["note"] and "20%" in r["how_well_it_works"] and r["cases_searched"] == 161
 
 
 def test_same_words_same_answer_and_no_match_says_so():
     q = "motor stopped and the drone flipped"
     assert search(q) == search(q)
     empty = search("hello there")
-    assert empty["likely_causes"] == [] and empty["similar_cases"] == [] and "Describe what the drone did" in empty["message"]
+    assert not any(c["mentioned"] for c in empty["checklist"]) and empty["similar_cases"] == []
+    assert "Describe what the drone did" in empty["message"]
 
 
 def test_every_playbook_entry_is_complete_and_tokens_ignore_filler():

@@ -39,9 +39,9 @@ interface Review {
 }
 interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; flag: boolean }
 interface Vibration { drones: VibrationRow[]; flagged: string[]; note: string }
-interface LikelyCause { cause: string; score: number; matched_words: string[]; share_of_expert_diagnosed_crashes: string; checks: string[]; fixes: string[]; aerofleet_check: string }
+interface CheckItem { cause: string; experts_found: string; mentioned: boolean; matched_words: string[]; checks: string[]; fixes: string[]; aerofleet_check: string }
 interface SimilarCase { title: string; url: string; score: number; expert_conclusion: string; cause: string; who_diagnosed: string; poster_confirmed_fix: string; flight_review_logs: string[] }
-interface Troubleshoot { likely_causes: LikelyCause[]; similar_cases: SimilarCase[]; cases_searched: number; note: string; message?: string; this_drone_vibration?: Partial<VibrationRow> & { message?: string } }
+interface Troubleshoot { checklist: CheckItem[]; similar_cases: SimilarCase[]; cases_searched: number; note: string; how_well_it_works: string; message?: string; this_drone_vibration?: Partial<VibrationRow> & { message?: string } }
 const VIB_SOURCE: Record<string, string> = { ardupilot_vibe: 'ArduPilot VIBE (m/s²)', px4_imu: 'PX4 accel vibration metric', px4_estimator: 'PX4 estimator vibration (older firmware)' }
 interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
 const LEVEL_COLOR: Record<TimelineEvent['level'], string> = { warning: 'var(--status-red)', notice: '#92400E', info: 'var(--text-secondary)' }
@@ -482,8 +482,8 @@ export default function FleetAssurancePage() {
         <div>
           <div style={{ fontWeight: 600 }}>Something wrong with a drone? Describe it</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Matched by words against 161 crashes that PX4 experts diagnosed on the PX4 forum. You get the checks to do first and the
-            closest past cases. It is not a diagnosis. Enter the drone id above to add its place in the fleet vibration ranking.
+            You get a checklist in the order PX4 experts most often found each cause, with the causes your words mention marked, and
+            the most similar past crash threads to read. It is not a diagnosis. Enter the drone id above to add its vibration rank.
           </div>
         </div>
         <textarea id="troubleshoot-text" rows={3} value={symptom} onChange={(e) => setSymptom(e.target.value)} maxLength={4000}
@@ -493,15 +493,19 @@ export default function FleetAssurancePage() {
         {help && (
           <div style={{ display: 'grid', gap: 10 }}>
             {help.message && <div style={{ fontSize: 13 }}>{help.message}</div>}
-            {help.likely_causes.map((c, i) => (
-              <div key={c.cause} style={{ borderTop: i ? '1px solid var(--border, #E2E8F0)' : undefined, paddingTop: i ? 8 : 0, display: 'grid', gap: 4 }}>
-                <div style={{ fontWeight: 600 }}>{i === 0 ? 'Check first: ' : 'Also consider: '}{c.cause}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  Experts named this cause in {c.share_of_expert_diagnosed_crashes} aircraft-caused crashes. Matched on: {c.matched_words.join(', ') || 'similar past cases'}. In AeroFleet: {c.aerofleet_check}.
+            {help.checklist.map((c, i) => (
+              <details key={c.cause} open={c.mentioned} style={{ borderTop: i ? '1px solid var(--border, #E2E8F0)' : undefined, paddingTop: i ? 8 : 0 }}>
+                <summary style={{ cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 600 }}>{i + 1}. {c.cause}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>experts found it in {c.experts_found} crashes</span>
+                  {c.mentioned && <Pill verdict="REVIEW" label={`you mentioned: ${c.matched_words.join(', ')}`} />}
+                </summary>
+                <div style={{ display: 'grid', gap: 4, marginTop: 4 }}>
+                  <div style={{ fontSize: 13 }}><b>Check</b><ul style={{ margin: '2px 0 0 18px' }}>{c.checks.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                  <div style={{ fontSize: 13 }}><b>Usual fixes</b><ul style={{ margin: '2px 0 0 18px' }}>{c.fixes.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>In AeroFleet: {c.aerofleet_check}.</div>
                 </div>
-                <div style={{ fontSize: 13 }}><b>Check</b><ul style={{ margin: '2px 0 0 18px' }}>{c.checks.map((x) => <li key={x}>{x}</li>)}</ul></div>
-                <div style={{ fontSize: 13 }}><b>Usual fixes</b><ul style={{ margin: '2px 0 0 18px' }}>{c.fixes.map((x) => <li key={x}>{x}</li>)}</ul></div>
-              </div>))}
+              </details>))}
             {help.this_drone_vibration && (
               <div style={{ fontSize: 13 }}>
                 <b>This drone's vibration:</b>{' '}
@@ -516,7 +520,7 @@ export default function FleetAssurancePage() {
                     <td>{c.cause}</td><td>{c.who_diagnosed}</td><td>{c.poster_confirmed_fix}</td>
                   </tr>))}</tbody>
               </table>)}
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{help.note}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{help.note} {help.how_well_it_works}</div>
           </div>
         )}
       </div>
