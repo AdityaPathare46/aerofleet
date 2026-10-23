@@ -77,8 +77,20 @@ def _xy(lat: float, lon: float, origin: Tuple[float, float]) -> Tuple[float, flo
     return ((lon - origin[1]) * M_PER_DEG * math.cos(math.radians(origin[0])), (lat - origin[0]) * M_PER_DEG)
 
 
+def _to_segment(p: Tuple[float, float], alt: float, seg: Tuple) -> Tuple[float, float]:
+    (ax, ay, aalt), (bx, by, balt) = seg
+    dx, dy = bx - ax, by - ay
+    length2 = dx * dx + dy * dy
+    if length2 < 1.0:                                       # a climb or descent on the spot
+        h = math.hypot(p[0] - ax, p[1] - ay)
+        lo, hi = min(aalt, balt), max(aalt, balt)
+        return h, (0.0 if lo <= alt <= hi else min(abs(alt - lo), abs(alt - hi)))
+    u = max(0.0, min(1.0, ((p[0] - ax) * dx + (p[1] - ay) * dy) / length2))
+    return math.hypot(p[0] - (ax + u * dx), p[1] - (ay + u * dy)), abs(alt - (aalt + u * (balt - aalt)))
+
+
 def _deviation(p: Tuple[float, float], alt: float, segs: Sequence[Tuple]) -> Tuple[float, float]:
-    """(horizontal m, vertical m) to the nearest planned segment."""
+    """(horizontal m, vertical m) to the nearest planned segment, anywhere on the route."""
     best = (float("inf"), 0.0)
     for (ax, ay, aalt), (bx, by, balt) in segs:
         dx, dy = bx - ax, by - ay
@@ -112,18 +124,72 @@ def _episodes(track, flags: List[bool], values: List[float], min_s: float, kind:
     return out
 
 
+ALIGN_POINTS = 4000       # the alignment runs on at most this many positions; the rest take their neighbour's leg
+
+
+def _ordered_deviations(track, segs, home: Tuple[float, float]) -> Tuple[List[float], List[float]]:
+    """Match the whole flight to the plan in flying order.
+
+    Each position is assigned a plan leg so that legs never go backwards in time and the total distance over the
+    flight is as small as possible (dynamic programming, like aligning two time series). Without this, a looping
+    route or a climb on the spot can be matched to a leg flown at another time, hiding sideways deviations and
+    inventing height ones; a greedy step-by-step version jumped ahead on loops. Both were measured on real PX4
+    flights: research/results/px4_log_study/injection_reconcile_*.md.
+    """
+    import numpy as np
+
+    n, m = len(track), len(segs)
+    xy = [_xy(lat, lon, home) for _, lat, lon, _ in track]
+    stride = max(1, -(-n // ALIGN_POINTS))
+    sample = list(range(0, n, stride))
+    cost = np.empty((len(sample), m))
+    for r, i in enumerate(sample):
+        for j in range(m):
+            h, v = _to_segment(xy[i], track[i][3], segs[j])
+            cost[r, j] = h + v
+    total = cost[0].copy()
+    back = np.zeros((len(sample), m), dtype=np.int32)
+    back[0] = np.arange(m)
+    for r in range(1, len(sample)):
+        best_idx = np.zeros(m, dtype=np.int32)
+        run_min, run_arg = float("inf"), 0
+        for j in range(m):                                  # cheapest earlier-or-same leg for each leg
+            if total[j] < run_min:
+                run_min, run_arg = total[j], j
+            best_idx[j] = run_arg
+        total = cost[r] + total[best_idx]
+        back[r] = best_idx
+    j = int(np.argmin(total))
+    leg = [0] * len(sample)
+    for r in range(len(sample) - 1, -1, -1):
+        leg[r] = j
+        j = int(back[r, j])
+    horiz, vert = [], []
+    for i in range(n):
+        r = min(i // stride, len(sample) - 1)
+        h, v = _to_segment(xy[i], track[i][3], segs[leg[r]])
+        horiz.append(h)
+        vert.append(v)
+    return horiz, vert
+
+
 def reconcile(plan: Plan, track: Sequence[Tuple[float, float, float, float]], modes: Sequence[Tuple[float, str]] = (),
               corridor_m: float = 30.0, altitude_tol_m: float = 15.0, min_duration_s: float = 3.0,
-              zone_at: Optional[Callable[[float, float], str]] = None) -> Dict[str, Any]:
+              zone_at: Optional[Callable[[float, float], str]] = None, ordered: bool = True) -> Dict[str, Any]:
+    """Compare a flown track with the plan. `ordered` (default) matches positions to the plan in flying order;
+    `ordered=False` uses the nearest leg anywhere on the route (the earlier behaviour, kept for comparison)."""
     if len(track) < 2:
         raise PlanError("The flight log has too few positions to compare")
     pts = [(*_xy(la, lo, plan.home), alt) for la, lo, alt in plan.path]
     segs = list(zip(pts, pts[1:]))
-    horiz, vert = [], []
-    for _, lat, lon, alt in track:
-        h, v = _deviation(_xy(lat, lon, plan.home), alt, segs)
-        horiz.append(h)
-        vert.append(v)
+    if ordered:
+        horiz, vert = _ordered_deviations(track, segs, plan.home)
+    else:
+        horiz, vert = [], []
+        for _, lat, lon, alt in track:
+            h, v = _deviation(_xy(lat, lon, plan.home), alt, segs)
+            horiz.append(h)
+            vert.append(v)
     episodes = (_episodes(track, [h > corridor_m for h in horiz], horiz, min_duration_s, "off_route")
                 + _episodes(track, [v > altitude_tol_m for v in vert], vert, min_duration_s, "off_altitude"))
     if zone_at is not None:
@@ -145,7 +211,8 @@ def reconcile(plan: Plan, track: Sequence[Tuple[float, float, float, float]], mo
     outside = sum(e["duration_s"] for e in episodes if e["kind"] == "off_route")
     return {
         "verdict": "DEVIATED" if episodes or manual else "CONFORMED",
-        "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_tol_m, "min_duration_s": min_duration_s},
+        "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_tol_m, "min_duration_s": min_duration_s,
+                       "matching": "in flying order" if ordered else "nearest leg anywhere"},
         "horizontal_m": {"max": round(ordered[-1], 1), "p95": round(ordered[int(0.95 * (len(ordered) - 1))], 1),
                          "median": round(ordered[len(ordered) // 2], 1)},
         "vertical_m": {"max": round(max(vert), 1)},

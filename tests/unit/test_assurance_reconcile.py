@@ -72,3 +72,26 @@ def test_bad_mission_files_are_refused_with_a_reason():
     for text, msg in (("hello", "Not a mission file"), ("QGC WPL 110\n0\t1\t0\t16\n", "fields"), ("QGC WPL 110\n", "no flight commands")):
         with pytest.raises(PlanError, match=msg):
             parse_waypoints(text)
+
+
+def test_ordered_alignment_catches_a_deviation_that_lands_on_another_part_of_a_looping_route():
+    from aerofleet.assurance.reconcile import parse_waypoints, reconcile
+
+    # Out 400 m east, then back west 50 m further north: a there-and-back route with two parallel legs.
+    home = (18.5200, 73.8500)
+    dlat, dlon = 50 / 111_320.0, 400 / (111_320.0 * 0.9483)
+    plan = parse_waypoints("\n".join([
+        "QGC WPL 110",
+        f"0\t1\t0\t16\t0\t0\t0\t0\t{home[0]}\t{home[1]}\t0\t1",
+        f"1\t0\t3\t22\t0\t0\t0\t0\t{home[0]}\t{home[1]}\t30\t1",
+        f"2\t0\t3\t16\t0\t0\t0\t0\t{home[0]}\t{home[1] + dlon}\t30\t1",
+        f"3\t0\t3\t16\t0\t0\t0\t0\t{home[0] + dlat}\t{home[1] + dlon}\t30\t1",
+        f"4\t0\t3\t16\t0\t0\t0\t0\t{home[0] + dlat}\t{home[1]}\t30\t1"]) + "\n")
+    out = [(float(i), home[0], home[1] + dlon * i / 40, 30.0) for i in range(41)]
+    back = [(41.0 + i, home[0] + dlat, home[1] + dlon * (1 - i / 40), 30.0) for i in range(41)]
+    # On the way out the drone drifts 50 m north for 15 s: right onto the return leg.
+    flown = [(t, la + (dlat if 10 <= t < 25 else 0.0), lo, h) for t, la, lo, h in out] + back
+    assert reconcile(plan, flown, ordered=False)["episodes"] == []                      # the old check sees nothing
+    (ep,) = reconcile(plan, flown)["episodes"]                                          # the ordered check does
+    assert ep["kind"] == "off_route" and ep["max_m"] > 45
+    assert reconcile(plan, out + back)["episodes"] == []                                # and the clean flight conforms

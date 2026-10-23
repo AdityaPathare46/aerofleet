@@ -15,7 +15,11 @@ Detected = an episode of the injected kind that overlaps the window.
 Report: detection rate per size with 95% Wilson intervals, and the false-alarm rate on unmodified flights.
 Expected if the check works as specified: near 0 below the tolerance, near 1 clearly above it.
 
-    python research/px4_log_study/injection_reconcile.py LOG_DIR OUT_MD
+    python research/px4_log_study/injection_reconcile.py LOG_DIR OUT_MD [ORDERED=1|0]
+
+First run (matching to the nearest leg anywhere, the check as it then was) found 40% false alarms and missed
+half of 35-50 m sideways shifts on looping routes; the check was changed to match in flying order and the same
+test was run again on both versions (results files *_nearest.md and *_ordered.md).
 """
 import math
 import os
@@ -31,7 +35,8 @@ from aerofleet.assurance.reconcile import parse_waypoints, reconcile  # noqa: E4
 M_PER_DEG = 111_320.0
 SIDEWAYS = [5, 10, 20, 25, 35, 50, 75, 100]
 UPWARD = [5, 10, 14, 20, 30, 50]
-WINDOW_S, RAMP_S, WP_EVERY_S = 30.0, 3.0, 10.0
+WINDOW_S, RAMP_S = 30.0, 3.0
+WP_EVERY_S = float(os.environ.get("WP_EVERY_S", "10"))   # sensitivity check: 5 s (post hoc)
 
 
 def wilson(k, n, z=1.96):
@@ -88,7 +93,8 @@ def detected(report, kind, a, b, t0):
     return any(e["kind"] == kind and e["start_s"] + t0 <= b and e["start_s"] + e["duration_s"] + t0 >= a for e in report["episodes"])
 
 
-def main(log_dir, out_md):
+def main(log_dir, out_md, ordered="1"):
+    ordered = ordered not in ("0", "false", "False")
     flights = []
     for path in sorted(glob(os.path.join(log_dir, "*.ulg"))):
         try:
@@ -109,17 +115,17 @@ def main(log_dir, out_md):
         t0 = air[0][0]
         mid = (air[0][0] + air[-1][0]) / 2
         a, b = mid - WINDOW_S / 2, mid + WINDOW_S / 2
-        base = reconcile(plan, air, ())
+        base = reconcile(plan, air, (), ordered=ordered)
         base_alarms += bool(base["episodes"])
         for d in SIDEWAYS:
-            r = reconcile(plan, inject(air, a, b, sideways=d), ())
+            r = reconcile(plan, inject(air, a, b, sideways=d), (), ordered=ordered)
             rows.setdefault(("sideways", d), []).append(detected(r, "off_route", a, b, t0))
         for h in UPWARD:
-            r = reconcile(plan, inject(air, a, b, up=h), ())
+            r = reconcile(plan, inject(air, a, b, up=h), (), ordered=ordered)
             rows.setdefault(("height", h), []).append(detected(r, "off_altitude", a, b, t0))
     n = len(flights)
     p, lo, hi = wilson(base_alarms, n)
-    L = ["# Injected deviations in real PX4 flights (planned-versus-flown check)", "",
+    L = [f"# Injected deviations in real PX4 flights (planned-versus-flown check, matching {'in flying order' if ordered else 'nearest leg anywhere'})", "",
          f"Flights: {n} real PX4 multirotor logs (rated good or great), each at least 120 s airborne. Plan built from the "
          f"flight itself (a waypoint every {WP_EVERY_S:g} s). Deviation injected for {WINDOW_S:g} s with {RAMP_S:g} s ramps. "
          "Check run with its defaults: 30 m sideways, 15 m height, at least 3 s. Declared in `injection_reconcile.py`.", "",
@@ -136,4 +142,4 @@ def main(log_dir, out_md):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])
