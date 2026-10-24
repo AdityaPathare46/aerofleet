@@ -166,3 +166,17 @@ uses the labels was re-run on the settled labels, and the published first-record
 Every conclusion is unchanged. The full-window fault check was re-run with the script version that produced the
 published table (commit 4475c8c), which reproduced 13/15 exactly on the first recording; the later version adds a
 10 s minimum window. Paper rating stays at 8/10.
+
+## Eighth pass: external review (25 October 2026)
+
+An external reviewer rated the manuscript **7.8/10**. Each review point was addressed:
+
+| Review point | Action taken | Status |
+|---|---|---|
+| **Placeholders in end matter** | Filled competing interest (Section 6 open-source tool, non-commercial), funding (no specific grant), and data availability (GitHub repository URL https://github.com/AdityaPathare46/aerofleet; DOI-archived release on acceptance). Verified no `[...]` placeholders remain in `main.tex` or `cover_letter.tex`. | Done |
+| **Explain sample drops** | Added exact attrition counts in Section 3.2 near Table 3 directly from `within_drone.md`, `rough_drone.md`, and script declarations: within-drone (101 crashes selected, 55 unreadable or < 10 s, shared measurement source, rotary-wing rate setpoints -> 61 and 46 analysed); between-drone (66 sets, 71 unreadable/< 10 s, >= 2 readable flights per drone, shared source -> 60 and 47 analysed). | Done |
+| **Section 6 focus** | Added clarification to Section 6 opening paragraph that it reports design consequences and engineering checks while empirical evidence is in Sections 3--5. Shortened Section 6.3 to one paragraph (~6 lines) covering replay/rehearsal, kinematic assumptions, and no user study/headset run. Moved Figure 7 and extended description to new Appendix A before references; updated all cross-references. | Done |
+| **Limitations in Threats to validity** | Added Attrition paragraph (37/73 logs downloadable for Table 7, small cell sizes n = 2 to 9, indicative only); added Features paragraph on whole-window summaries vs sequence/frequency-domain features (and added clause to Future work); strengthened Language models paragraph noting author-written cases (rule 0 wrong answers is close to training score) and small 3--4B models. | Done |
+| **Language-model panel on real cases (optional)** | Checked prerequisites: Ollama server not responding and required models (`gemma3:4b`, `phi4-mini`, `qwen2.5:3b`, `qwen3:4b`) not installed. Skipped per instructions; no results simulated. | Skipped (prerequisites missing) |
+| **Document regeneration and validation** | Recompiled with `tectonic` (33 pages, 9 tables, 7 figures); verified abstract at 227 words and rendered page 1 without footer overflow; verified zero `??` and zero `[...]` in PDF text; updated `make_docx.py` label parser to handle nested braces and generated `manuscript.docx`; rebuilt `latex_source_for_overleaf.zip`; ran test suite (657 passed). | Done |
+

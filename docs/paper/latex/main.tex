@@ -219,6 +219,12 @@ any crash-rated log that shared the flight-controller hardware, the PX4 major.mi
 without replacement, so no control served two cases. The three exposure flights of a crashed drone were its most recent
 non-crash flights dated on or before the crash; flights on the crash day were included in the declared test because the
 archive does not give their order within a day, and removed in a sensitivity analysis.
+Not all selected flights enter every test. In the within-drone sample (101 crashes selected), 55 logs could not be
+read or had under 10\,s before the cut-off; a drone enters a feature's test only if the crash flight and earlier
+flights have that feature from the same measurement source, and rate-tracking error is rotary-wing only and requires
+rate setpoints, leaving 61 analysed drones for vibration and 46 for tracking. In the between-drone sample (66 matched
+sets), 71 flights were unreadable or too short; a drone's value requires at least two readable flights, and case and
+controls must share the measurement source, leaving 60 analysed sets for vibration and 47 for tracking.
 
 \begin{figure}[t]
 \centering
@@ -583,7 +589,8 @@ qwen3:4b & 0 / 41 & 17 (19--41\%) & 38 (51--74\%) & 45 of 60 \\
 
 The authors develop AeroFleet, an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads
 the files an operator already has (parameter files, mission files and flight logs), contacts no aircraft and calls no
-language model. Table~\ref{tab:design} links each result above to a design decision and to the check that was made of
+language model. This section reports design consequences and engineering checks; the paper's empirical evidence is
+presented in Sections~\ref{sec:data}--\ref{sec:results}. Table~\ref{tab:design} links each result above to a design decision and to the check that was made of
 it. The injection and leave-one-out checks were declared before they were run, like the tests above; the others are
 software tests. All are engineering validation; none evaluates the tool as a safety intervention.
 
@@ -665,32 +672,13 @@ with the measured accuracy shown beside the answer.
 
 \subsection{Three-dimensional replay and rehearsal}
 \label{sec:tool_vr}
-Deviations, heights and separation between drones are spatial, and a two-dimensional plot hides height. The tool
-therefore draws flights on a virtual tabletop, a world in miniature \cite{stoakley1995wim}, that can be viewed in a
-browser, in immersive virtual reality or, on a passthrough headset, in mixed reality on a real desk (WebXR).
-A \emph{flight replay} shows a reviewed flight: the approved plan dashed, the flown track green within tolerance and
-red during a deviation, the log's events pinned where they happened, and a playhead that can be scrubbed or played at
-ten times real speed. A \emph{mission rehearsal} shows planned missions before anyone flies: the deconfliction check
-turns each mission file into a position-over-time trajectory on a common clock (straight legs at stated climb, cruise
-and descent speeds), finds every pair closer than the separation distance and resolves conflicts by a launch delay or,
-where allowed, a different cruise height. The rehearsal flies all missions on that clock, as uploaded and as
-rescheduled, with each loss of separation drawn where and when it occurs (Fig.~\ref{fig:rehearsal}). It is a kinematic rehearsal of the plan, not
-a simulation of the aircraft: there is no wind, no vehicle dynamics and no sensor error, so it shows what the plan
-implies if it is flown as written, which is the assumption the planned-versus-flown check then tests after the
-flight. The replay and rehearsal have been checked functionally on desktop; a paired standalone headset application
-compiles but has not been run on a headset, and no user study has been carried out, so we make no claim that the
-three-dimensional view improves decisions.
-
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=\textwidth]{fig_rehearsal.png}
-\caption{Mission rehearsal in the tool's tabletop view (desktop rendering; the same scene opens in a WebXR headset).
-Five planned missions over a 2\,km table, heights exaggerated four times, each mission in its own colour. (a) As
-uploaded, 12\,s after launch: three missions leaving one depot together occupy the same point (overlapping labels) and
-the red sphere marks their loss of separation. (b) The schedule produced by the deconfliction check, 45\,s after the
-first launch: two launches are delayed and no pair comes within 15\,m. Straight legs at planned speeds, no wind.}
-\label{fig:rehearsal}
-\end{figure}
+To make spatial deviations and separation visible, the tool draws flights on a virtual tabletop in WebXR
+\cite{stoakley1995wim}. A \emph{flight replay} shows a reviewed flight with its planned corridor, flown track,
+deviations and log events pinned in three dimensions; a \emph{mission rehearsal} animates planned missions on a common
+clock to inspect losses of separation before and after deconfliction. The rehearsal is kinematic (straight legs at
+planned speeds, with no wind, vehicle dynamics or sensor noise). Both features were checked functionally on desktop,
+but the paired standalone headset application has not been run on a headset and no user study has been conducted
+(the full view and Figure~\ref{fig:rehearsal} are in \ref{sec:appendix_replay}).
 
 % ===================================================================
 \section{Discussion}
@@ -745,8 +733,9 @@ prospective test in partner fleets, in which the monthly vibration
 ranking is written to the signed record before outcomes occur and crashes, unplanned repairs and defects found at
 inspection are compared between flagged and unflagged drones over six months; and a within-subjects user study
 comparing the three-dimensional views with a two-dimensional map on tasks with known answers. Repeating the
-between-drone analysis on ArduPilot fleets, and a larger set of crashes with causes verified by independent
-investigators, would further strengthen the evidence.
+between-drone analysis on ArduPilot fleets, testing sequence models or frequency-domain IMU features for transient
+precursors that whole-window summaries miss, and evaluating a larger set of crashes with causes verified by independent
+investigators would further strengthen the evidence.
 
 % ===================================================================
 \section{Threats to validity}
@@ -767,12 +756,19 @@ between-drone effect was shown mainly with the older vibration estimate and was 
 in a declared replication with 19 usable sets, and matching used hardware, firmware, vehicle
 type and, in a sensitivity analysis, airframe, but not propellers, payloads or missions.
 
+\paragraph{Features} Summary features over the whole window (percentiles, shares of time, RMS) were used;
+sequence models or frequency-domain IMU features might capture short precursors that summaries miss. This was not
+tested.
+
+\paragraph{Attrition} Only 37 of the 73 logs behind expert aircraft diagnoses with a checkable cause could still be
+downloaded, so Table~\ref{tab:checks} has very small cells ($n = 2$ to $9$); its results are indicative only.
+
 \paragraph{Power} Some comparisons are small (14 pilot-caused matched sets, 12 sets with the newer vibration metric,
 three vibration-diagnosed logs). Null results there are not evidence of no effect.
 
-\paragraph{Language models} The panel cases are generated, not real incidents, and were written by the same authors as
-the fixed rule, so the rule's score is closer to a training score than a test score; a blind set of cases written by
-someone who has not seen the rule is in preparation. Only small models were tested.
+\paragraph{Language models} The 60 panel cases were written by the authors who wrote the fixed rule, so the rule's
+0 wrong answers is close to a training score; a blind set of cases written by someone who has not seen the rule is in
+preparation. Only 3--4B local models were tested.
 
 \paragraph{The tool} The tool's checks are engineering validation on archive data, not field evaluation. Plans in the
 injection test were built from the flights themselves; the description search was tested on forum titles, which are
@@ -793,8 +789,7 @@ inspection, keep a record that can be checked, and let a person see a flight or 
 
 % ===================================================================
 \section*{Declaration of competing interest}
-The authors develop the open-source fleet-assurance tool described in Section~\ref{sec:tool}; it is not
-commercial. [Confirm; declare any other interests.]
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. The authors develop the open-source tool described in Section~\ref{sec:tool}; it is not commercial.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
 During the preparation of this work the authors used an AI assistant (Claude, Anthropic) to write analysis code, draft
@@ -802,13 +797,52 @@ and revise text, and assist the recording of forum diagnoses. After using this t
 the content as needed and take full responsibility for the content of the published article.
 
 \section*{Data availability}
-Selection scripts, analysis code, the declared hypotheses with their commit history, derived features and the expert
-labels (without forum text), and the source code of the tool are available at [repository URL; archived release DOI]. Raw logs are public on PX4 Flight
-Review and are referenced by identifier.
+{\sloppy
+Selection scripts, analysis code, the declared hypotheses with their commit history, derived features, expert labels
+(without forum text), and the source code of the tool are available at
+\url{https://github.com/AdityaPathare46/aerofleet}; a DOI-archived release will be provided on acceptance. Raw logs
+are public on PX4 Flight Review and are referenced by identifier.\par}
 
 \section*{Funding}
 This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit
-sectors. [Confirm.]
+sectors.
+
+% ===================================================================
+\appendix
+\section{Three-dimensional replay and mission rehearsal}
+\label{sec:appendix_replay}
+
+Deviations, heights and separation between drones are spatial, and a two-dimensional plot hides height. The tool
+therefore draws flights on a virtual tabletop, a world in miniature \cite{stoakley1995wim}, that can be viewed in a
+browser, in immersive virtual reality or, on a passthrough headset, in mixed reality on a real desk (WebXR).
+
+A \emph{flight replay} shows a reviewed flight: the approved plan dashed, the flown track green within tolerance and
+red during a deviation, the log's events pinned where they happened, and a playhead that can be scrubbed or played at
+ten times real speed.
+
+A \emph{mission rehearsal} shows planned missions before anyone flies: the deconfliction check
+turns each mission file into a position-over-time trajectory on a common clock (straight legs at stated climb, cruise
+and descent speeds), finds every pair closer than the separation distance and resolves conflicts by a launch delay or,
+where allowed, a different cruise height. The rehearsal flies all missions on that clock, as uploaded and as
+rescheduled, with each loss of separation drawn where and when it occurs (Figure~\ref{fig:rehearsal}). It is a kinematic rehearsal of the plan, not
+a simulation of the aircraft: there is no wind, no vehicle dynamics and no sensor error, so it shows what the plan
+implies if it is flown as written, which is the assumption the planned-versus-flown check then tests after the
+flight.
+
+The replay and rehearsal have been checked functionally on desktop; a paired standalone headset application
+compiles but has not been run on a headset, and no user study has been carried out, so we make no claim that the
+three-dimensional view improves decisions.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{fig_rehearsal.png}
+\caption{Mission rehearsal in the tool's tabletop view (desktop rendering; the same scene opens in a WebXR headset).
+Five planned missions over a 2\,km table, heights exaggerated four times, each mission in its own colour. (a) As
+uploaded, 12\,s after launch: three missions leaving one depot together occupy the same point (overlapping labels) and
+the red sphere marks their loss of separation. (b) The schedule produced by the deconfliction check, 45\,s after the
+first launch: two launches are delayed and no pair comes within 15\,m. Straight legs at planned speeds, no wind.}
+\label{fig:rehearsal}
+\end{figure}
 
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}

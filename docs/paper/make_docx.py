@@ -20,8 +20,23 @@ TMP = os.path.join(HERE, "latex", "_docx_input.tex")
 
 def labels():
     out = {}
-    for m in re.finditer(r"\\newlabel\{([^}]+)\}\{\{([^}]*)\}", open(AUX).read()):
-        out[m.group(1)] = m.group(2)
+    content = open(AUX).read()
+    for m in re.finditer(r"\\newlabel\{([^}]+)\}\{", content):
+        k = m.group(1)
+        i = m.end()
+        if i < len(content) and content[i] == "{":
+            depth = 1
+            j = i + 1
+            while j < len(content) and depth > 0:
+                if content[j] == "{":
+                    depth += 1
+                elif content[j] == "}":
+                    depth -= 1
+                j += 1
+            val = content[i + 1:j - 1]
+            val = re.sub(r"\\nobreakspace\s*(\{\})?", " ", val)
+            val = re.sub(r"\s+", " ", val).strip()
+            out[k] = val
     return out
 
 
