@@ -111,13 +111,13 @@ The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must co
 | Planned-vs-flown, injected deviations (declared) | Sideways >= 35 m found 90-98%, upward >= 20 m 92-98%; false alarms 9/40 (22%) on track-built plans, 0/40 with 5 s waypoints | `injection_reconcile*.md` |
 | Planned-vs-flown, real missions (declared) | Only 6 distinct missions in archive; no deviation in mission mode; 2 reported = drone had left mission mode (RTL / pilot takeover). Too few for a rate | `real_mission_reconcile.md` |
 | Description search, leave-one-out (declared) | Top-1 20% vs 32% base rate: criterion not met; product now orders checklist by expert frequency | `troubleshoot_loo.md` |
-| Second coding of forum threads | First returned sheet unusable (50 rows, 6 pasted quotes); redo pending | `forum_agreement_interim.md` |
+| Second coding of forum threads (declared) | Blind redo: kappa **0.81** conclusion (0.71-0.88), **0.73** cause (0.65-0.81), 0.79 confirmed; pass mark 0.60 met; 45 threads differ (17 on conclusion). First attempt rejected (pasted quotes) | `forum_agreement.md`, `forum_disagreements.csv` |
 
 ---
 
 ## 6. Current status (25 Oct 2026)
 
-**Paper** (31 pages, 7 figures, 9 tables, 36 references, abstract 228 words, all DOIs checked on Crossref):
+**Paper** (second coding done: kappa 0.81 / 0.73; 31 pages, 7 figures, 9 tables, 36 references, abstract 228 words, all DOIs checked on Crossref):
 complete except the items in section 7. Internal rating 7.5/10. Authors, affiliation and corresponding e-mail are in.
 The CRediT section was removed at the owner's request (Elsevier may ask for roles in the submission system).
 
@@ -129,12 +129,11 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
 
 ## 7. Open work, in priority order
 
-1. **Second coding (blocks the label-reliability claim).** Atharv codes all 161 threads on the blank sheet
-   `research/px4_log_study/forum_review/forum_diagnosis_Atharv_REDO.xlsx` (git-ignored, on the drive), following
-   `research/px4_log_study/SECOND_CODER.md`. Then run the scoring command in that file (it verifies every quote against
-   its thread). Declared pass mark: kappa >= 0.60 for conclusion and cause. Put the kappa in the paper: Section 3.3
-   ("Expert diagnoses"), Threats to validity ("Labels"), Future work (remove the second-coding item). If below 0.60,
-   say so and settle disagreements, then re-run `build_fault_kb.py`, `eval_troubleshoot.py` and the Q4 numbers.
+1. **Settle the 45 forum disagreements.** Aditya and Atharv go through
+   `research/results/px4_log_study/forum_disagreements.csv` together (open each thread link), fill `settled_conclusion`
+   and `settled_cause`, then apply them to `forum_expert_labels.csv`, re-run `build_fault_kb.py` (needs the forum cache),
+   `eval_troubleshoot.py` and the Q4 counts (`forum_expert_labels.md`, Fig. 6 via `paper_figures.py`), and update the
+   paper's Section 5.6 numbers and the sentence in Section 3.3 that says counts are from the first recording.
 2. **Before submission:** repository URL and archived DOI (make the GitHub repo public, create a Zenodo release) in
    the paper's Data availability section; confirm the journal quartile; fill CRediT roles if the submission form asks.
 3. **Prospective test and user study:** declared in `research/protocols/prospective_and_user_study.md`. Needs a

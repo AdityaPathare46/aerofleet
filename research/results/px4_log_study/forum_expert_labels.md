@@ -1,6 +1,6 @@
 # Expert diagnoses from PX4 forum crash threads
 
-**How the labels were made.** `forum_threads.py` collected 443 discuss.px4.io threads that mention a crash and a Flight Review log; 161 describe a crash and have a reply from PX4 staff, the dev team or an experienced member. One recorder filled the conclusion, cause, who and confirmation for each thread. The recording was AI-assisted (the file was written by a program) and then reviewed by the project owner; there is no second independent recorder yet. 123 of 124 supporting quotes were found word for word in their thread (checked by script). The error rate of the recording has not been measured.
+**How the labels were made.** `forum_threads.py` collected 443 discuss.px4.io threads that mention a crash and a Flight Review log; 161 describe a crash and have a reply from PX4 staff, the dev team or an experienced member. One recorder filled the conclusion, cause, who and confirmation for each thread. The recording was AI-assisted (the file was written by a program) and then reviewed by the project owner; 123 of 124 supporting quotes were found word for word in their thread (checked by script). **Second, blind coding (25 Oct 2026):** a co-author coded all threads without seeing this recording; agreement on 147 threads was kappa 0.81 (95% CI 0.71-0.88) for the conclusion and 0.73 (0.65-0.81) for the cause, above the declared 0.60 ([`forum_agreement.md`](forum_agreement.md)). The 45 threads that differ are in [`forum_disagreements.csv`](forum_disagreements.csv), to be settled.
 
 Real crash threads: 148
 

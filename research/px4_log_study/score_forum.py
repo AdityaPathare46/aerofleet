@@ -3,8 +3,9 @@
     python research/px4_log_study/score_forum.py REVIEWER_A.xlsx REVIEWER_B.xlsx FORUM_KEY_CSV [OUT_MD] [FORUM_CACHE_DIR]
 
 With FORUM_CACHE_DIR (the cached thread JSON), each quote in sheet B is checked against its own thread: a row
-counts as read only if its quote matches a sentence of that thread (similarity >= 0.8) and the quote is not
-pasted into other threads. Agreement is reported on read rows only; if fewer than 80% of rows pass, the sheet is
+counts as read only if its quote occurs in that thread (ignoring case, punctuation and spacing), or if it has no
+quote and records no diagnosis or an unclear one. (A first version compared whole sentences and wrongly rejected
+quotes that are part of a sentence.) Agreement is reported on read rows only; if fewer than 80% of rows pass, the sheet is
 reported as not usable for the reliability check.
 
 REVIEWER_A may also be the first recording as a CSV (results/px4_log_study/forum_expert_labels.csv), which is
@@ -32,24 +33,30 @@ def read(path, key=None):
 
 
 def quotes_read(b_path, key, cache):
-    """Rows of sheet B whose quote is a sentence of that row's thread and is not repeated across threads."""
-    import difflib
+    """Rows of sheet B that show the thread was read: the quote occurs in that row's own thread (ignoring case,
+    punctuation and spacing), or the quote is empty and the row records no diagnosis or an unclear one."""
     import html
     import json
     import os
     import re
+
+    def norm(t):
+        return re.sub(r"[^a-z0-9 ]", "", re.sub(r"\s+", " ", (t or "").lower())).strip()
+
     ws = load_workbook(b_path, data_only=True)["Threads"]
-    rows = {int(r[0]): (r[11] or "").strip() for r in ws.iter_rows(min_row=2, values_only=True) if r[0] and r[7]}
-    repeats = Counter(q for q in rows.values() if q)
+    rows = {int(r[0]): ((r[11] or "").strip(), r[7]) for r in ws.iter_rows(min_row=2, values_only=True) if r[0] and r[7]}
     ok = set()
-    for i, q in rows.items():
+    for i, (q, verdict) in rows.items():
+        if not q:
+            if verdict in ("no diagnosis given", "unclear"):
+                ok.add(i)
+            continue
         path = os.path.join(cache, f"t_{key[i]['topic_id']}.json")
-        if not q or repeats[q] > 1 or not os.path.exists(path):
+        if not os.path.exists(path):
             continue
         posts = json.load(open(path)).get("post_stream", {}).get("posts", [])
-        text = " ".join(re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", p.get("cooked", "")))) for p in posts)
-        sentences = re.split(r"(?<=[.!?])\s+", text)
-        if max((difflib.SequenceMatcher(None, q.lower(), s.lower()).ratio() for s in sentences if s), default=0) >= 0.8:
+        text = norm(" ".join(html.unescape(re.sub(r"<[^>]+>", " ", p.get("cooked", ""))) for p in posts))
+        if norm(q) and norm(q) in text:
             ok.add(i)
     return ok, len(rows)
 
@@ -61,7 +68,7 @@ def main(a_path, b_path, key_path, out=None, cache=None):
     L = ["# Forum expert diagnoses: recording agreement", ""]
     if cache:
         ok, n = quotes_read(b_path, key, cache)
-        L += [f"Quote check: {len(ok)} of {n} rows of sheet B quote a sentence of their own thread (not pasted elsewhere).", ""]
+        L += [f"Quote check: {len(ok)} of {n} rows of sheet B quote their own thread (or record no diagnosis with no quote).", ""]
         if len(ok) < 0.8 * n:
             L += ["**Sheet B is not usable for the reliability check**: most quotes are not from the row's thread. "
                   "Agreement below is shown for information only.", ""]

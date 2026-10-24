@@ -138,3 +138,14 @@ coding.
 | No real operator, no fleet, no headset run, no user study | Protocols declared; handoff written (`docs/HANDOFF.md`) so work can continue with any assistant | Needs people and hardware |
 
 Ratings unchanged: paper 7.5/10, product 7/10. The next gains need people, not code.
+
+## Sixth pass: second coding returned (25 October 2026)
+
+Atharv's blind redo passed the quote check (150 of 151 rows quote their own thread or record no diagnosis; the
+first attempt, 2 of 50). The check itself was corrected first: it had compared whole sentences and wrongly failed
+quotes that are part of a sentence; the corrected check still rejects the first attempt. Agreement on 147 threads:
+kappa 0.81 (0.71-0.88) for the expert's conclusion, 0.73 (0.65-0.81) for the cause, 0.79 for confirmation; the
+declared pass mark of 0.60 is met. Reported in Section 3.3 and Threats. 45 threads differ and are to be settled.
+
+**Paper rating: 8/10.** The labels behind Q4, Fig. 6 and the knowledge base are now shown to be reliable. What
+remains below 9: the positive result rests on the older vibration metric, and there is no prospective or user data.

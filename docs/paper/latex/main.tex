@@ -253,6 +253,12 @@ with a log link). For the 161 threads with a reply from PX4 staff, the developme
 forum's highest trust levels (148 of them describing a real crash), we recorded the expert's conclusion (aircraft, pilot, both, unclear, no diagnosis), the
 cause named, who gave it, whether the original poster confirmed it, and the sentence stating the diagnosis. Recording
 was AI-assisted and reviewed by an author; 123 of 124 recorded sentences were found verbatim in their thread by script.
+A second author then coded all threads blind to the first recording, with the same categories; a script confirmed
+that 150 of 151 coded rows quoted their own thread or recorded no diagnosis. On the 147 threads both coded,
+agreement (Cohen's kappa, 95\% bootstrap interval) was 0.81 (0.71--0.88) for the expert's conclusion, 0.73
+(0.65--0.81) for the cause and 0.79 (0.69--0.88) for whether the poster confirmed it, above the declared pass mark
+of 0.60. Counts below are from the first recording; the 45 threads that differ on conclusion or cause are listed
+in the repository.
 The searches combined the Flight Review host names with the words crash, crashed, flyaway, fell, flipped and lost
 control, and every returned thread was retrieved through the forum's public interface. A reply counted as expert when
 its author was marked as staff, belonged to the development team group or held one of the forum's two highest trust
@@ -732,9 +738,8 @@ verdicts from logs with caution; (ii) use logs to assemble a time-ordered record
 (iii) track vibration per drone across flights and inspect drones that are rough relative to comparable airframes;
 (iv) when evaluating any log-based diagnostic, remove the crash window and compare against the same drone's history.
 
-\paragraph{Future work} Three studies have been declared in the repository before any data were collected: a
-blind second coding of the 161 forum threads by a co-author who has not seen the first recording, with agreement
-reported as Cohen's kappa (pass mark 0.60); a prospective test in partner fleets, in which the monthly vibration
+\paragraph{Future work} Two studies have been declared in the repository before any data were collected: a
+prospective test in partner fleets, in which the monthly vibration
 ranking is written to the signed record before outcomes occur and crashes, unplanned repairs and defects found at
 inspection are compared between flagged and unflagged drones over six months; and a within-subjects user study
 comparing the three-dimensional views with a two-dimensional map on tasks with known answers. Repeating the
@@ -747,8 +752,9 @@ investigators, would further strengthen the evidence.
 
 \paragraph{Labels} Ratings are the uploaders' own and normal flights are self-rated. Controls without a crash-rated log
 may have crashed without a rating; this misclassification biases the between-drone test towards no difference, so the
-observed effect is, if anything, conservative. Forum diagnoses were recorded with AI assistance by one recorder,
-verified by quotation, and half of the expert-diagnosed logs are no longer public.
+observed effect is, if anything, conservative. Forum diagnoses were first recorded with AI assistance and verified
+by quotation; a blind second coding agreed well (kappa 0.81 for the conclusion, 0.73 for the cause) but not
+perfectly, and half of the expert-diagnosed logs are no longer public.
 
 \paragraph{Selection} The archive is self-selected, PX4-only and rich in development and test flights, and crash-rated
 logs differ from well-rated ones in duration and firmware era (Table~\ref{tab:composition}). Results may not transfer to
