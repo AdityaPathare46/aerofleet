@@ -1,15 +1,15 @@
 # Paper: where to submit, and what is left before submitting
 
 **Final manuscript (Elsevier `elsarticle` LaTeX, numbered references):** `latex/main.tex` + `latex/refs.bib`.
-It builds to `submission/manuscript.pdf`: 24 pages, about 4,700 words of text, 8 tables, 6 figures, 33 verified
-references, and a 242-word abstract.
+It builds to `submission/manuscript.pdf`: 31 pages (line-numbered preprint layout), 9 tables, 7 figures, 36 verified
+references, and a 228-word abstract.
 
 | File | What it is |
 |---|---|
 | `submission/manuscript.pdf` | The manuscript as it will be reviewed (line-numbered) |
 | `submission/latex_source_for_overleaf.zip` | Everything needed to build it; upload to Overleaf or attach as source files |
 | `submission/highlights.txt` | Five highlights, each 85 characters or fewer (Elsevier asks for a separate file) |
-| `submission/cover_letter.pdf` | Cover letter to the editor (placeholders for names) |
+| `submission/cover_letter.pdf` | Cover letter to the editor, signed by the corresponding author |
 | `critical_review.md` | The internal reviewer's report and what was changed in response |
 | `originality_check.md` | Partial similarity check against the cited arXiv abstracts |
 

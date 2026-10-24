@@ -636,8 +636,11 @@ mostly not reported, as specified. The first version of the check, which matched
 anywhere, raised false alarms on 16 of 40 unmodified flights and detected only half of the 35\,m shifts;
 it was replaced. The current version raised false alarms on 9 of 40 (22\%, 95\% CI 12--38\%), all on fast flights
 cutting the corners of long legs built from the track; with a waypoint every 5\,s (a post-hoc check) there were none.
-A real mission has waypoints at its turns, but the false-alarm rate on real plans has not been measured, so a
-reported deviation is a reason to look at the replay rather than a finding.
+A declared check on the archive logs that record the mission they flew found
+only six distinct missions; the check reported no deviation while any of them flew in mission mode, and the two
+deviations it did report were stretches in which the vehicle had left mission mode (return-to-launch, or the pilot
+taking over). Six missions are too few for a rate (95\% upper bound 39\%), so the false-alarm rate on real plans
+remains unmeasured and a reported deviation is a reason to look at the replay rather than a finding.
 
 \subsection{Searching past diagnoses}
 \label{sec:tool_search}

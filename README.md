@@ -134,7 +134,7 @@ python -m pytest tests/unit/test_assurance_*.py tests/integration/test_assurance
 The app's **VR Safety View** runs on the desktop and in a Quest 3 browser (WebXR). From a flight review,
 **Show on the VR table** opens the flight replay there, and **Rehearse in 3D** (after a conflict check) flies the planned missions on one clock before anyone takes off; a paired Quest app (`unity/AeroFleetVR`, project at
 `/Volumes/UnityWork/UnityProjects/Aerofleet`) follows and shows the same replay. The flight replay in the
-Quest app compiles but has not yet been run on a headset. The live-swarm and incident views are from the
+Quest app compiles but has not yet been run on a headset. The live-swarm view is from the
 earlier product. Guide: [`docs/VR_QUEST3_GUIDE.md`](docs/VR_QUEST3_GUIDE.md).
 
 ## Repository

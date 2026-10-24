@@ -126,3 +126,15 @@ What was done:
 Rating stays at **7.5/10**. The replication honestly weakens the positive result (the archive has no more
 newer-firmware cases), and the transparency strengthens the paper. The next real gain is the kappa from the second
 coding.
+
+## Fifth pass: the remaining list (25 October 2026)
+
+| Weakness | What was done | Status |
+|---|---|---|
+| False alarms unknown on real mission plans | Declared check on archive logs that record their mission (`real_mission_reconcile.py`): only 6 distinct missions; no deviation in mission mode; the 2 reported were real departures (RTL, pilot takeover). Added to Section 6.1 | Inconclusive (too few); needs a partner fleet's files |
+| Leftovers from the earlier product | Four old start scripts deleted; Incident replay (AI council) removed from the VR view | Done; Live swarm (simulated) remains |
+| Second coding | First returned sheet rejected by the new quote check; blank redo sheet issued | Waiting for Atharv |
+| Newer metric | Archive exhausted (19 usable sets, not confirmed) | Cannot improve from this archive |
+| No real operator, no fleet, no headset run, no user study | Protocols declared; handoff written (`docs/HANDOFF.md`) so work can continue with any assistant | Needs people and hardware |
+
+Ratings unchanged: paper 7.5/10, product 7/10. The next gains need people, not code.

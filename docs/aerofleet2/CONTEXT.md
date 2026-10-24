@@ -1,5 +1,7 @@
 # AeroFleet 2.0 — Context for whoever continues this (human or AI model)
 
+> **Superseded as the starting point by `docs/HANDOFF.md` (25 Oct 2026).** Read that first; this file is background.
+
 Read this first, then `docs/aerofleet2/MASTER_PLAN.md` (the checklist: do the first unchecked item).
 
 ## 0. Latest direction (20 Oct 2026) — read before section 1
