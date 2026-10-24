@@ -7,6 +7,7 @@ references, and a 228-word abstract.
 | File | What it is |
 |---|---|
 | `submission/manuscript.pdf` | The manuscript as it will be reviewed (line-numbered) |
+| `submission/manuscript.docx` | Word version generated from the LaTeX by `make_docx.py` (same numbering and references) |
 | `submission/latex_source_for_overleaf.zip` | Everything needed to build it; upload to Overleaf or attach as source files |
 | `submission/highlights.txt` | Five highlights, each 85 characters or fewer (Elsevier asks for a separate file) |
 | `submission/cover_letter.pdf` | Cover letter to the editor, signed by the corresponding author |

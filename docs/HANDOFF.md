@@ -69,6 +69,11 @@ cd docs/paper/latex && tectonic -X compile main.tex && tectonic -X compile cover
 cp main.pdf ../submission/manuscript.pdf; cp cover_letter.pdf ../submission/
 ```
 
+Word version (needs `pandoc` from Homebrew and `python-docx` in `.venv`): build the PDF with
+`tectonic -X compile --keep-intermediates main.tex` (the converter reads table/figure/section numbers from
+`main.aux`), then `.venv/bin/python docs/paper/make_docx.py` writes `docs/paper/submission/manuscript.docx`.
+The LaTeX is the master copy; regenerate the Word file after every edit.
+
 The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must contain `main.tex`, `refs.bib`,
 `cover_letter.tex`, `highlights.txt` and `figures/` with every figure `main.tex` includes. Rebuild it after edits.
 
