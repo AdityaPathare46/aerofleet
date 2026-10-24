@@ -1,0 +1,46 @@
+row,topic_id,url,first_conclusion,second_conclusion,first_cause,second_cause,settled_conclusion,settled_cause
+1,7006,https://discuss.px4.io/t/7006,unclear,drone,GPS / compass / estimator,GPS / compass / estimator,drone,GPS / compass / estimator
+2,8051,https://discuss.px4.io/t/8051,drone,drone,tuning / configuration,GPS / compass / estimator,drone,tuning / configuration
+3,29360,https://discuss.px4.io/t/29360,unclear,drone,vibration / mounting,vibration / mounting,drone,vibration / mounting
+6,4924,https://discuss.px4.io/t/4924,unclear,no diagnosis given,GPS / compass / estimator,not stated,unclear,GPS / compass / estimator
+9,3922,https://discuss.px4.io/t/3922,drone,drone,software / firmware bug,tuning / configuration,drone,software / firmware bug
+19,10521,https://discuss.px4.io/t/10521,unclear,drone,software / firmware bug,software / firmware bug,drone,software / firmware bug
+24,25145,https://discuss.px4.io/t/25145,both,both,airframe / mechanical,pilot input / handling,both,airframe / mechanical
+27,47376,https://discuss.px4.io/t/47376,drone,drone,tuning / configuration,motor / ESC / propeller,drone,motor / ESC / propeller
+29,10246,https://discuss.px4.io/t/10246,unclear,no diagnosis given,not stated,not stated,unclear,not stated
+33,48512,https://discuss.px4.io/t/48512,unclear,unclear,vibration / mounting,not stated,unclear,vibration / mounting
+36,37125,https://discuss.px4.io/t/37125,unclear,unclear,GPS / compass / estimator,software / firmware bug,unclear,software / firmware bug
+38,13975,https://discuss.px4.io/t/13975,drone,drone,tuning / configuration,motor / ESC / propeller,drone,tuning / configuration
+43,45884,https://discuss.px4.io/t/45884,drone,drone,motor / ESC / propeller,software / firmware bug,drone,software / firmware bug
+51,11268,https://discuss.px4.io/t/11268,unclear,no diagnosis given,not stated,not stated,unclear,not stated
+53,9956,https://discuss.px4.io/t/9956,unclear,unclear,GPS / compass / estimator,not stated,unclear,GPS / compass / estimator
+65,47847,https://discuss.px4.io/t/47847,drone,drone,airframe / mechanical,motor / ESC / propeller,drone,airframe / mechanical
+67,31220,https://discuss.px4.io/t/31220,drone,drone,tuning / configuration,motor / ESC / propeller,drone,tuning / configuration
+68,47114,https://discuss.px4.io/t/47114,drone,unclear,motor / ESC / propeller,motor / ESC / propeller,drone,motor / ESC / propeller
+69,10847,https://discuss.px4.io/t/10847,drone,drone,tuning / configuration,software / firmware bug,drone,software / firmware bug
+72,45927,https://discuss.px4.io/t/45927,drone,both,battery / power,battery / power,drone,battery / power
+73,41947,https://discuss.px4.io/t/41947,drone,unclear,GPS / compass / estimator,GPS / compass / estimator,drone,GPS / compass / estimator
+74,13741,https://discuss.px4.io/t/13741,drone,drone,tuning / configuration,GPS / compass / estimator,drone,tuning / configuration
+80,47261,https://discuss.px4.io/t/47261,drone,drone,tuning / configuration,software / firmware bug,drone,tuning / configuration
+81,42808,https://discuss.px4.io/t/42808,drone,drone,GPS / compass / estimator,wind / environment,drone,GPS / compass / estimator
+90,25417,https://discuss.px4.io/t/25417,drone,drone,software / firmware bug,tuning / configuration,drone,software / firmware bug
+91,44912,https://discuss.px4.io/t/44912,no diagnosis given,unclear,not stated,not stated,unclear,not stated
+92,48795,https://discuss.px4.io/t/48795,unclear,unclear,tuning / configuration,not stated,unclear,tuning / configuration
+96,31720,https://discuss.px4.io/t/31720,unclear,unclear,software / firmware bug,not stated,unclear,software / firmware bug
+107,48487,https://discuss.px4.io/t/48487,drone,unclear,tuning / configuration,vibration / mounting,drone,vibration / mounting
+111,39915,https://discuss.px4.io/t/39915,drone,drone,tuning / configuration,motor / ESC / propeller,drone,motor / ESC / propeller
+112,47094,https://discuss.px4.io/t/47094,drone,drone,software / firmware bug,tuning / configuration,drone,software / firmware bug
+115,48435,https://discuss.px4.io/t/48435,drone,drone,battery / power,GPS / compass / estimator,drone,battery / power
+119,48683,https://discuss.px4.io/t/48683,unclear,unclear,tuning / configuration,not stated,unclear,tuning / configuration
+121,17540,https://discuss.px4.io/t/17540,unclear,drone,GPS / compass / estimator,GPS / compass / estimator,drone,GPS / compass / estimator
+130,35270,https://discuss.px4.io/t/35270,drone,drone,motor / ESC / propeller,battery / power,drone,motor / ESC / propeller
+131,12776,https://discuss.px4.io/t/12776,drone,pilot,GPS / compass / estimator,pilot input / handling,drone,GPS / compass / estimator
+139,49159,https://discuss.px4.io/t/49159,unclear,drone,motor / ESC / propeller,motor / ESC / propeller,drone,motor / ESC / propeller
+142,48180,https://discuss.px4.io/t/48180,no diagnosis given,drone,not stated,tuning / configuration,drone,tuning / configuration
+145,16440,https://discuss.px4.io/t/16440,drone,drone,software / firmware bug,motor / ESC / propeller,drone,software / firmware bug
+147,17336,https://discuss.px4.io/t/17336,unclear,unclear,GPS / compass / estimator,not stated,unclear,GPS / compass / estimator
+152,35685,https://discuss.px4.io/t/35685,drone,unclear,tuning / configuration,not stated,drone,tuning / configuration
+153,47071,https://discuss.px4.io/t/47071,unclear,unclear,airframe / mechanical,not stated,unclear,airframe / mechanical
+155,5416,https://discuss.px4.io/t/5416,drone,drone,tuning / configuration,wrong mode or mode switch,drone,tuning / configuration
+157,12856,https://discuss.px4.io/t/12856,drone,pilot,tuning / configuration,pilot input / handling,drone,tuning / configuration
+159,46023,https://discuss.px4.io/t/46023,unclear,unclear,tuning / configuration,not stated,unclear,tuning / configuration

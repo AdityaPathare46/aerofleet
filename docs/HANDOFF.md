@@ -101,17 +101,17 @@ The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must co
 |---|---|---|
 | Q1 settings differ crash vs normal? | No: protection disabled 51% vs 46%, p = 0.63 | `summary.md` |
 | Q2 pilot vs aircraft from logs? | No: rule BA 0.57 dev, **0.47 held-out**; model 0.42-0.52 at all cut-offs | `holdout.md`, `pilot_vs_drone.md`, `leak_curve.md` |
-| Q3a crash window leakage | Model AUC 0.88 to 0.86 (no model-level leak); single tuning check 13/15 to 2/10 without last 10 s | `leak_curve.md`, `test_flight_check*.md` |
+| Q3a crash window leakage | Model AUC 0.88 to 0.86 (no model-level leak); single tuning check 10/12 to 1/9 without last 10 s (settled labels; first recording 13/15 to 2/10) | `leak_curve.md`, `test_flight_check*_settled.md` |
 | Q3b within same drone | No warning: vibration rank 0.48, p = 0.67 (61 drones) | `within_drone.md` |
 | Q3c between drones (the positive result) | Crashed drones rougher: **0.67, 95% CI 0.57-0.77, p = 0.0023, Holm 0.016** (60 sets) | `rough_drone.md` |
 | Robustness (post hoc) | Held with same airframe, without crash-day flights, duration-adjusted; mainly older estimator metric (48 sets) | `sensitivity*.md` |
 | Newer metric replication (declared) | **Not confirmed: 0.58, CI 0.39-0.76, p = 0.25, 19 sets**; archive has no more cases | `rough_drone_newer.md` |
-| Q4 expert diagnoses | 148 real crash threads: drone 88, pilot 9, both 2, unclear/no diagnosis 49; tuning/config most named (29/88) | `forum_expert_labels.md` |
+| Q4 expert diagnoses | 148 real crash threads (settled labels): drone 94, pilot 9, both 2, unclear/no diagnosis 43; tuning/config most named (26/94) | `forum_expert_labels.md` |
 | LLM panels | Fixed rule 45/60 right, 0 wrong; panels 6-38 wrong; one adversary flipped 45-56 of 60 | `research/panel_eval/` |
 | Planned-vs-flown, injected deviations (declared) | Sideways >= 35 m found 90-98%, upward >= 20 m 92-98%; false alarms 9/40 (22%) on track-built plans, 0/40 with 5 s waypoints | `injection_reconcile*.md` |
 | Planned-vs-flown, real missions (declared) | Only 6 distinct missions in archive; no deviation in mission mode; 2 reported = drone had left mission mode (RTL / pilot takeover). Too few for a rate | `real_mission_reconcile.md` |
-| Description search, leave-one-out (declared) | Top-1 20% vs 32% base rate: criterion not met; product now orders checklist by expert frequency | `troubleshoot_loo.md` |
-| Second coding of forum threads (declared) | Blind redo: kappa **0.81** conclusion (0.71-0.88), **0.73** cause (0.65-0.81), 0.79 confirmed; pass mark 0.60 met; 45 threads differ (17 on conclusion). First attempt rejected (pasted quotes) | `forum_agreement.md`, `forum_disagreements.csv` |
+| Description search, leave-one-out (declared) | Top-1 22% vs 27% base rate on 96 cases (settled; first recording 20% vs 32% on 90): criterion not met; product orders checklist by expert frequency | `troubleshoot_loo_settled.md` |
+| Second coding of forum threads (declared) | Blind redo: kappa **0.81** conclusion (0.71-0.88), **0.73** cause (0.65-0.81), 0.79 confirmed; pass mark 0.60 met; 45 disagreements settled (13 labels changed); `forum_expert_labels.csv` now holds settled labels, first recording kept in `forum_expert_labels_first_recording.csv`. First attempt rejected (pasted quotes) | `forum_agreement.md`, `forum_disagreements_settled.csv` |
 
 ---
 
@@ -129,11 +129,7 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
 
 ## 7. Open work, in priority order
 
-1. **Settle the 45 forum disagreements.** Aditya and Atharv go through
-   `research/results/px4_log_study/forum_disagreements.csv` together (open each thread link), fill `settled_conclusion`
-   and `settled_cause`, then apply them to `forum_expert_labels.csv`, re-run `build_fault_kb.py` (needs the forum cache),
-   `eval_troubleshoot.py` and the Q4 counts (`forum_expert_labels.md`, Fig. 6 via `paper_figures.py`), and update the
-   paper's Section 5.6 numbers and the sentence in Section 3.3 that says counts are from the first recording.
+1. *(Done 25 Oct: second coding, kappa 0.81/0.73; 45 disagreements settled, 13 labels changed; Q4, fault checks, knowledge base and leave-one-out re-run on settled labels.)*
 2. **Before submission:** repository URL and archived DOI (make the GitHub repo public, create a Zenodo release) in
    the paper's Data availability section; confirm the journal quartile; fill CRediT roles if the submission form asks.
 3. **Prospective test and user study:** declared in `research/protocols/prospective_and_user_study.md`. Needs a

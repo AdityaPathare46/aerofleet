@@ -1,7 +1,7 @@
 topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,poster_confirmed,quote_given,quote_found_in_thread
-7006,https://discuss.px4.io/t/7006,5e47ff32-ecfc-4354-a741-8a343bfc0dbb 157daacc-788d-42ef-ba96-82061de21ac8 a7f92b49-556d-4ce8-b9db-7da8a246cdde,5e47ff32-ecfc-4354-a741-8a343bfc0dbb:crash_sw_hw,yes,unclear,GPS / compass / estimator,experienced user,not stated,True,True
+7006,https://discuss.px4.io/t/7006,5e47ff32-ecfc-4354-a741-8a343bfc0dbb 157daacc-788d-42ef-ba96-82061de21ac8 a7f92b49-556d-4ce8-b9db-7da8a246cdde,5e47ff32-ecfc-4354-a741-8a343bfc0dbb:crash_sw_hw,yes,drone,GPS / compass / estimator,experienced user,not stated,True,True
 8051,https://discuss.px4.io/t/8051,584e399c-d61e-49ca-a9c5-841038c96332,584e399c-d61e-49ca-a9c5-841038c96332:crash_sw_hw,yes,drone,tuning / configuration,experienced user,not stated,True,True
-29360,https://discuss.px4.io/t/29360,12d93bbf-abab-49d2-9c04-f5af3f8d90b7 e0a4a2ab-fee4-471a-9bf3-03db90378e44,12d93bbf-abab-49d2-9c04-f5af3f8d90b7:unsatisfactory e0a4a2ab-fee4-471a-9bf3-03db90378e44:crash_sw_hw,yes,unclear,vibration / mounting,PX4 staff / dev team,not stated,True,True
+29360,https://discuss.px4.io/t/29360,12d93bbf-abab-49d2-9c04-f5af3f8d90b7 e0a4a2ab-fee4-471a-9bf3-03db90378e44,12d93bbf-abab-49d2-9c04-f5af3f8d90b7:unsatisfactory e0a4a2ab-fee4-471a-9bf3-03db90378e44:crash_sw_hw,yes,drone,vibration / mounting,PX4 staff / dev team,not stated,True,True
 28496,https://discuss.px4.io/t/28496,c1e9cf08-8ef6-4406-8aa7-e459df1a3156 260b735b-65ed-4096-b961-33d43c1f6ee0,c1e9cf08-8ef6-4406-8aa7-e459df1a3156:crash_sw_hw 260b735b-65ed-4096-b961-33d43c1f6ee0:good,yes,drone,tuning / configuration,PX4 staff / dev team,yes,True,True
 31144,https://discuss.px4.io/t/31144,f758b2cc-964f-43de-8edd-c123d9a967f7 2aa10a88-ec58-4c3e-94fd-ba7dd304fbed a85700f0-7f09-4eed-8737-b004b443d9d6,f758b2cc-964f-43de-8edd-c123d9a967f7:crash_sw_hw 2aa10a88-ec58-4c3e-94fd-ba7dd304fbed:good a85700f0-7f09-4eed-8737-b004b443d9d6:good,yes,drone,tuning / configuration,PX4 staff / dev team,yes,True,True
 4924,https://discuss.px4.io/t/4924,608bce0e-663c-4a06-acea-52ba830795b6,608bce0e-663c-4a06-acea-52ba830795b6:crash_sw_hw,yes,unclear,GPS / compass / estimator,PX4 staff / dev team,not stated,False,
@@ -17,7 +17,7 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 48725,https://discuss.px4.io/t/48725,b29b77c1-05b3-4fd0-94c5-a4dee1352c0c,,yes,no diagnosis given,not stated,,,False,
 10163,https://discuss.px4.io/t/10163,d887bbe7-02d9-4f9e-8c19-d6b04fe7bc76,,yes,drone,radio or data link,PX4 staff / dev team,not stated,True,True
 17401,https://discuss.px4.io/t/17401,28f4a806-97dc-4830-a6eb-5a73a7d3df2a 8e29a508-60a3-4dc3-94b5-dfc1f0c47f1c bc08b14b-87cd-47c4-8b45-8ceef1cdf3d1 87b9a9da-d0e5-4ed8-b5b2-71f79f180d44 b47b7423-7618-4966-a9d7-d6f5e520a0c0,,yes,drone,motor / ESC / propeller,original poster,yes,True,True
-10521,https://discuss.px4.io/t/10521,cacc99f6-5d04-4742-a5f6-f18c79e7c2d0 0861c9ed-2f5a-476f-97b8-7f97653b2dc2,,yes,unclear,software / firmware bug,PX4 staff / dev team,not stated,True,True
+10521,https://discuss.px4.io/t/10521,cacc99f6-5d04-4742-a5f6-f18c79e7c2d0 0861c9ed-2f5a-476f-97b8-7f97653b2dc2,,yes,drone,software / firmware bug,PX4 staff / dev team,not stated,True,True
 47291,https://discuss.px4.io/t/47291,e9034973-7c53-49da-88f6-a8d42edea60d 5c12a804-c721-4863-8e6f-b099bbc5540f,e9034973-7c53-49da-88f6-a8d42edea60d:unrated 5c12a804-c721-4863-8e6f-b099bbc5540f:unrated,yes,drone,tuning / configuration,PX4 staff / dev team,not stated,True,True
 49206,https://discuss.px4.io/t/49206,7c8805dc-64ff-4e44-ac8b-cccb45b33484,,yes,no diagnosis given,not stated,,,False,
 45161,https://discuss.px4.io/t/45161,c91976bd-fb4e-4c21-a37f-79230a7f00fa,,yes,drone,tuning / configuration,other user,not stated,True,True
@@ -25,7 +25,7 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 25145,https://discuss.px4.io/t/25145,6ff52d41-7cfb-404d-b330-01f9c3ca02d7,,yes,both,airframe / mechanical,PX4 staff / dev team,yes,True,True
 40124,https://discuss.px4.io/t/40124,076fbf64-c1e0-46db-a746-ee0ef385ab01 dfcf7072-5a96-4c13-9fc2-f4fd22efb1ff 4afed8e7-f766-48c9-afe4-5cf8266ea246 307c3123-c907-49cd-93b9-9a23d0565223,,no,unclear,,,,False,
 13579,https://discuss.px4.io/t/13579,b478bcc7-b3ef-4551-b3c3-e00351f7d97e 9d389191-a34b-4884-b3f4-d189acca7ed6 67986b1c-d485-485f-8fec-1af59e9bda2b,,yes,drone,motor / ESC / propeller,PX4 staff / dev team,yes,True,True
-47376,https://discuss.px4.io/t/47376,9c4be8bf-b40e-4e6a-8db6-7bbff51463b0 e3c3bd69-9610-4576-a138-3af52d70f55d 56cf2d48-9382-4f90-86d2-168a77dc0e59 83b71486-33d2-472f-a9a9-f78a0647172e,9c4be8bf-b40e-4e6a-8db6-7bbff51463b0:unrated e3c3bd69-9610-4576-a138-3af52d70f55d:unrated,yes,drone,tuning / configuration,PX4 staff / dev team,no / disputed,True,True
+47376,https://discuss.px4.io/t/47376,9c4be8bf-b40e-4e6a-8db6-7bbff51463b0 e3c3bd69-9610-4576-a138-3af52d70f55d 56cf2d48-9382-4f90-86d2-168a77dc0e59 83b71486-33d2-472f-a9a9-f78a0647172e,9c4be8bf-b40e-4e6a-8db6-7bbff51463b0:unrated e3c3bd69-9610-4576-a138-3af52d70f55d:unrated,yes,drone,motor / ESC / propeller,PX4 staff / dev team,no / disputed,True,True
 12637,https://discuss.px4.io/t/12637,85562b85-4847-4a29-8791-6a2ed820fa11,,yes,drone,motor / ESC / propeller,PX4 staff / dev team,yes,True,True
 10246,https://discuss.px4.io/t/10246,7f7367a1-5833-420e-b3b4-0c8d4f8684ac,,yes,unclear,not stated,PX4 staff / dev team,not stated,False,
 49182,https://discuss.px4.io/t/49182,228e1b42-78ae-4540-9fe8-eb550f28be1c,228e1b42-78ae-4540-9fe8-eb550f28be1c:unrated,yes,pilot,pilot input / handling,experienced user,not stated,True,True
@@ -34,14 +34,14 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 48512,https://discuss.px4.io/t/48512,c06fa3e0-d2d6-4660-b94f-f202202016f6,,yes,unclear,vibration / mounting,experienced user,not stated,True,True
 21248,https://discuss.px4.io/t/21248,3c4338d6-2c49-4789-99ce-a72e22ece957,,no,,,,,False,
 35237,https://discuss.px4.io/t/35237,8f0fcc62-296b-468d-8520-53f2ed5a22d6,,yes,unclear,battery / power,PX4 staff / dev team,not stated,True,True
-37125,https://discuss.px4.io/t/37125,e79075a4-d192-4128-a392-cc492cb06ef4,e79075a4-d192-4128-a392-cc492cb06ef4:unrated,yes,unclear,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
+37125,https://discuss.px4.io/t/37125,e79075a4-d192-4128-a392-cc492cb06ef4,e79075a4-d192-4128-a392-cc492cb06ef4:unrated,yes,unclear,software / firmware bug,PX4 staff / dev team,not stated,True,True
 42616,https://discuss.px4.io/t/42616,3b4651d1-c7db-47bb-9b8f-a2fb8ec4bbfc ff123541-5465-4f9d-9d3d-d98cd528621a,,yes,drone,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
 13975,https://discuss.px4.io/t/13975,46ebc350-9cb9-4eee-9892-a2f54c2aa4ed,,yes,drone,tuning / configuration,experienced user,not stated,True,True
 48867,https://discuss.px4.io/t/48867,4aff24fd-3b95-4d12-ab29-a6da5cefdd68,4aff24fd-3b95-4d12-ab29-a6da5cefdd68:unrated,yes,drone,vibration / mounting,experienced user,not stated,True,True
 46006,https://discuss.px4.io/t/46006,050f4f58-087c-4003-a3c6-b107d26ba135,,no,,,,,False,
 7408,https://discuss.px4.io/t/7408,32186c73-5aae-4c62-a328-a6dbaeb69f56,,yes,pilot,pilot input / handling,original poster,yes,True,True
 15789,https://discuss.px4.io/t/15789,1502f7ae-705e-485c-908c-c574fec3646d,,yes,drone,motor / ESC / propeller,PX4 staff / dev team,not stated,True,True
-45884,https://discuss.px4.io/t/45884,8b3d37e2-6787-4c8f-b750-9c426dee4441,,yes,drone,motor / ESC / propeller,PX4 staff / dev team,not stated,True,True
+45884,https://discuss.px4.io/t/45884,8b3d37e2-6787-4c8f-b750-9c426dee4441,,yes,drone,software / firmware bug,PX4 staff / dev team,not stated,True,True
 32550,https://discuss.px4.io/t/32550,38e8cd39-ac61-40cb-a56b-685d2a45c920,,yes,unclear,motor / ESC / propeller,PX4 staff / dev team,not stated,True,True
 27010,https://discuss.px4.io/t/27010,cdcd46dd-2910-47a9-a646-cc0864cde85a d60c21bc-0d2f-4490-8f00-6d8e8b34e26a f3e1e06c-ae22-4cfc-9c43-e640ebb714cf fc7fdb39-6dca-4aa5-aba0-0831edb6572f,,yes,both,pilot input / handling,PX4 staff / dev team,not stated,True,True
 48057,https://discuss.px4.io/t/48057,899f4793-03fb-4f08-9f80-52696e9e520c a2371a36-80a5-4d1f-a4a7-442c9315dcd5,,yes,unclear,tuning / configuration,PX4 staff / dev team,not stated,True,True
@@ -67,7 +67,7 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 8126,https://discuss.px4.io/t/8126,2c1b4721-503e-49a0-adcd-6a683289622f,,yes,drone,GPS / compass / estimator,experienced user,not stated,True,True
 31220,https://discuss.px4.io/t/31220,10ca19c9-0b5b-41a3-9810-7b74f46e4fa0 06c5362c-0c69-415e-8a3c-4b3daaf4388c ae3262af-6e99-4d08-9631-42f6ce6736ed 9889f558-6c5a-4312-bcf3-b497ccfc25e1 b17a3320-a3cd-420c-b9d9-782e62fa8ced,,yes,drone,tuning / configuration,PX4 staff / dev team,yes,True,True
 47114,https://discuss.px4.io/t/47114,cfac783e-f7d7-47f4-85cd-e28a49c3b12f,,yes,drone,motor / ESC / propeller,PX4 staff / dev team,no / disputed,True,True
-10847,https://discuss.px4.io/t/10847,451a989b-fe1b-481a-a137-3a40666ac277 58c4945f-0f23-437d-80ac-7b35774d5d4a 509a999a-963e-46fe-882e-64abcfc3fac1,,yes,drone,tuning / configuration,original poster,yes,True,True
+10847,https://discuss.px4.io/t/10847,451a989b-fe1b-481a-a137-3a40666ac277 58c4945f-0f23-437d-80ac-7b35774d5d4a 509a999a-963e-46fe-882e-64abcfc3fac1,,yes,drone,software / firmware bug,original poster,yes,True,True
 48136,https://discuss.px4.io/t/48136,087e11a9-99cb-41b3-a465-3a15392d4039,087e11a9-99cb-41b3-a465-3a15392d4039:unrated,yes,no diagnosis given,not stated,,,False,
 35013,https://discuss.px4.io/t/35013,3a1b9c62-149a-46cf-8b3c-13aaaba2bd60 88e1694d-1f62-47ef-8167-b6577e3dd1f5 19769389-049f-4584-bccc-9156bfe1775a,,yes,unclear,airframe / mechanical,original poster,not stated,True,True
 45927,https://discuss.px4.io/t/45927,29efbb3b-78de-4d0f-bd83-0783e4f22b6d,,yes,drone,battery / power,other user,yes,True,True
@@ -89,7 +89,7 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 35557,https://discuss.px4.io/t/35557,1285de26-a303-44f3-8383-5a62bb183f73 12500fff-abb3-44d7-b3b3-675e8e3b32b1 3ebcbb57-84bb-44b7-834c-b3da429f2cc2,,yes,drone,software / firmware bug,PX4 staff / dev team,yes,True,True
 44997,https://discuss.px4.io/t/44997,71e5ca2c-53f7-44b5-853d-33fd2e31db17 5ffed526-1fa5-4ead-b439-0ed2d767cb96,,yes,drone,motor / ESC / propeller,other user,yes,True,True
 25417,https://discuss.px4.io/t/25417,6985b3fa-1073-4f05-9aa9-cceec1c503ab 13f36905-54b6-486f-a950-510127ce0dca,,yes,drone,software / firmware bug,PX4 staff / dev team,yes,True,True
-44912,https://discuss.px4.io/t/44912,fe3edde9-67bd-4046-9166-2235ad30a9bd d60efbbc-9622-45cb-a4bd-b9cb385e3e3e 1d15a3de-56f9-4e68-b404-0db57d1d235f 608d5e07-e8f0-4b76-b18b-138c9affc85b 1b5ff368-d284-47f9-9ca9-5507b06520f0 4fd23208-4486-4b90-95d2-6b0d8c86726c e3caca12-1976-494c-ba58-e3fe4860005f 69d243ac-31a7-47ea-a174-bfbce65fb8bb,,yes,no diagnosis given,not stated,,,False,
+44912,https://discuss.px4.io/t/44912,fe3edde9-67bd-4046-9166-2235ad30a9bd d60efbbc-9622-45cb-a4bd-b9cb385e3e3e 1d15a3de-56f9-4e68-b404-0db57d1d235f 608d5e07-e8f0-4b76-b18b-138c9affc85b 1b5ff368-d284-47f9-9ca9-5507b06520f0 4fd23208-4486-4b90-95d2-6b0d8c86726c e3caca12-1976-494c-ba58-e3fe4860005f 69d243ac-31a7-47ea-a174-bfbce65fb8bb,,yes,unclear,not stated,,,False,
 48795,https://discuss.px4.io/t/48795,acee7ab5-5f65-452d-890f-a57b12b6d4db 98fd70c5-db9d-43a1-a424-689c1d6575ab,,yes,unclear,tuning / configuration,experienced user,not stated,True,True
 48472,https://discuss.px4.io/t/48472,9d81754f-ab37-4d50-92a5-bae0059f70d8,,yes,no diagnosis given,not stated,,,False,
 9483,https://discuss.px4.io/t/9483,07bffdc9-13ed-4316-8993-29a81f7ef416,,no,,,,,False,
@@ -105,11 +105,11 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 46510,https://discuss.px4.io/t/46510,5b8b38d4-aeb2-4b95-8512-ce11f8191c27,5b8b38d4-aeb2-4b95-8512-ce11f8191c27:unrated,yes,drone,software / firmware bug,PX4 staff / dev team,not stated,True,True
 21096,https://discuss.px4.io/t/21096,3655cb87-da79-4083-8235-d7dc37e3e548 4c3bbd4b-1df7-4a38-a8f4-3239e01e9134,4c3bbd4b-1df7-4a38-a8f4-3239e01e9134:unrated,yes,pilot,pilot input / handling,PX4 staff / dev team,not stated,True,True
 44887,https://discuss.px4.io/t/44887,900c3175-1790-4a06-b300-e62483ff2e1d,,yes,no diagnosis given,not stated,,,False,
-48487,https://discuss.px4.io/t/48487,e5068c3f-13e2-4d96-8e0c-dfe6b5894730 3e212bab-6544-40b5-a884-f608ce5b8442 d8a92768-b62a-4193-9d6a-5431149266b1,e5068c3f-13e2-4d96-8e0c-dfe6b5894730:unrated 3e212bab-6544-40b5-a884-f608ce5b8442:unrated d8a92768-b62a-4193-9d6a-5431149266b1:unrated,yes,drone,tuning / configuration,other user,no / disputed,True,True
+48487,https://discuss.px4.io/t/48487,e5068c3f-13e2-4d96-8e0c-dfe6b5894730 3e212bab-6544-40b5-a884-f608ce5b8442 d8a92768-b62a-4193-9d6a-5431149266b1,e5068c3f-13e2-4d96-8e0c-dfe6b5894730:unrated 3e212bab-6544-40b5-a884-f608ce5b8442:unrated d8a92768-b62a-4193-9d6a-5431149266b1:unrated,yes,drone,vibration / mounting,other user,no / disputed,True,True
 38038,https://discuss.px4.io/t/38038,2e02fb70-74eb-4ab3-9a73-e52b47f08b1f,,yes,drone,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
 48216,https://discuss.px4.io/t/48216,d2213e38-4a0e-4965-a2b7-717539872f08,d2213e38-4a0e-4965-a2b7-717539872f08:unrated,yes,unclear,tuning / configuration,PX4 staff / dev team,not stated,True,True
 37972,https://discuss.px4.io/t/37972,dede9d0e-0b17-49fe-ac98-d13d5f8b6bd0,dede9d0e-0b17-49fe-ac98-d13d5f8b6bd0:unrated,yes,drone,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
-39915,https://discuss.px4.io/t/39915,36590d92-75a1-411a-8b1f-1dcb55f82d4f,36590d92-75a1-411a-8b1f-1dcb55f82d4f:unrated,yes,drone,tuning / configuration,other user,not stated,True,True
+39915,https://discuss.px4.io/t/39915,36590d92-75a1-411a-8b1f-1dcb55f82d4f,36590d92-75a1-411a-8b1f-1dcb55f82d4f:unrated,yes,drone,motor / ESC / propeller,other user,not stated,True,True
 47094,https://discuss.px4.io/t/47094,fc1718e9-fbe0-44eb-b3b2-9a77c8b21ce7,fc1718e9-fbe0-44eb-b3b2-9a77c8b21ce7:unrated,yes,drone,software / firmware bug,other user,not stated,True,True
 21000,https://discuss.px4.io/t/21000,bd61e22e-3ec1-477c-ba27-4bebd95d7156,bd61e22e-3ec1-477c-ba27-4bebd95d7156:unrated,yes,pilot,pilot input / handling,PX4 staff / dev team,not stated,True,True
 9596,https://discuss.px4.io/t/9596,4f1efcc6-acd5-4581-9624-1c9e893e7696,,no,,,,,False,
@@ -119,7 +119,7 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 26101,https://discuss.px4.io/t/26101,f8b1659e-3987-436e-aa25-cbbaafd2ca22 1a486ae1-bc59-44bd-9a21-ac72bdd5ddfa 61889352-74cb-458c-b1dd-3c9c9a449c19,,no,,,,,False,
 48683,https://discuss.px4.io/t/48683,3ba02486-f3c9-401b-a551-a3506d3f645b,3ba02486-f3c9-401b-a551-a3506d3f645b:unrated,yes,unclear,tuning / configuration,other user,not stated,True,True
 5351,https://discuss.px4.io/t/5351,8b26c834-94b6-4281-a5b7-a8b3e33334a3,,yes,drone,GPS / compass / estimator,experienced user,yes,True,True
-17540,https://discuss.px4.io/t/17540,68b4c82f-be67-40ea-ab34-64f409cb5762 d751eae7-7008-4029-b6d8-03aedc09b722,,yes,unclear,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
+17540,https://discuss.px4.io/t/17540,68b4c82f-be67-40ea-ab34-64f409cb5762 d751eae7-7008-4029-b6d8-03aedc09b722,,yes,drone,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
 24729,https://discuss.px4.io/t/24729,fc012fae-07a5-4484-bb62-65d7cd73c9f3,,yes,pilot,pilot input / handling,PX4 staff / dev team,yes,True,True
 47814,https://discuss.px4.io/t/47814,d5510fdc-8ec3-4cc8-af26-f9642151e9f5,d5510fdc-8ec3-4cc8-af26-f9642151e9f5:unrated,yes,no diagnosis given,not stated,,,False,
 44503,https://discuss.px4.io/t/44503,919f177a-5f27-49f9-88e1-cf0deff149a3,919f177a-5f27-49f9-88e1-cf0deff149a3:unrated,yes,no diagnosis given,not stated,,,False,
@@ -137,10 +137,10 @@ topic_id,url,log_ids,flight_review_ratings,is_crash,expert_conclusion,cause,who,
 12006,https://discuss.px4.io/t/12006,752459b8-adc8-41cd-b81e-9ad967fb156f,,yes,drone,GPS / compass / estimator,PX4 staff / dev team,not stated,True,True
 13141,https://discuss.px4.io/t/13141,ea8e9679-cef8-45e1-8484-6400f9407e05,,yes,unclear,motor / ESC / propeller,PX4 staff / dev team,no / disputed,True,True
 48628,https://discuss.px4.io/t/48628,a625a276-f5b9-44de-9eb2-a2fe0cae9aea b7cb923a-7fbc-4a2e-b3a8-6525a0a79d4c 1b8df850-434a-4ee0-95b5-fd95394f6822 44b5ce2b-d198-4384-b00b-f39bb66608f7 32a182a8-8059-4160-aacc-d0eef37378f4 67be8fe5-021e-4565-afaa-2b398493dddc c44e0757-dc94-4ebd-b3b1-865030800586 75da012e-55de-4373-a08d-28d324b1c52a 4c017836-fac0-449a-86a2-ae241faa3a02,a625a276-f5b9-44de-9eb2-a2fe0cae9aea:unrated b7cb923a-7fbc-4a2e-b3a8-6525a0a79d4c:unrated 1b8df850-434a-4ee0-95b5-fd95394f6822:unrated 44b5ce2b-d198-4384-b00b-f39bb66608f7:unrated 32a182a8-8059-4160-aacc-d0eef37378f4:unrated 67be8fe5-021e-4565-afaa-2b398493dddc:unrated c44e0757-dc94-4ebd-b3b1-865030800586:unrated 75da012e-55de-4373-a08d-28d324b1c52a:unrated 4c017836-fac0-449a-86a2-ae241faa3a02:unrated,yes,drone,vibration / mounting,PX4 staff / dev team,yes,True,True
-49159,https://discuss.px4.io/t/49159,45894483-f25a-4734-a317-72c436b4015d 5fb16de3-07aa-4b53-84c8-39e240d7ace3,45894483-f25a-4734-a317-72c436b4015d:unrated 5fb16de3-07aa-4b53-84c8-39e240d7ace3:unrated,yes,unclear,motor / ESC / propeller,other user,no / disputed,True,True
+49159,https://discuss.px4.io/t/49159,45894483-f25a-4734-a317-72c436b4015d 5fb16de3-07aa-4b53-84c8-39e240d7ace3,45894483-f25a-4734-a317-72c436b4015d:unrated 5fb16de3-07aa-4b53-84c8-39e240d7ace3:unrated,yes,drone,motor / ESC / propeller,other user,no / disputed,True,True
 48239,https://discuss.px4.io/t/48239,742b97f8-91ef-49ae-a092-5e84a3e4ed54,742b97f8-91ef-49ae-a092-5e84a3e4ed54:unrated,yes,drone,GPS / compass / estimator,original poster,yes,True,True
 47382,https://discuss.px4.io/t/47382,5a3a0e46-fed0-4439-babc-98bfb2cec44f,,yes,drone,software / firmware bug,PX4 staff / dev team,yes,True,True
-48180,https://discuss.px4.io/t/48180,0b3a9596-8e7b-40ac-b5eb-978261cfd616,0b3a9596-8e7b-40ac-b5eb-978261cfd616:unrated,yes,no diagnosis given,not stated,,,False,
+48180,https://discuss.px4.io/t/48180,0b3a9596-8e7b-40ac-b5eb-978261cfd616,0b3a9596-8e7b-40ac-b5eb-978261cfd616:unrated,yes,drone,tuning / configuration,,,False,
 3752,https://discuss.px4.io/t/3752,90f7f217-124f-4e75-ad28-beb40b2f8f4c 3f8bbef5-b791-4f88-8019-27a81cf9b20b 5a983629-e335-44df-bf4c-eba988655847 74c8b434-eccf-4af9-bef9-74b6a8647be7,5a983629-e335-44df-bf4c-eba988655847:unsatisfactory 74c8b434-eccf-4af9-bef9-74b6a8647be7:unsatisfactory,yes,drone,software / firmware bug,PX4 staff / dev team,yes,True,True
 16696,https://discuss.px4.io/t/16696,3bcf09d3-c294-40ef-ba1d-6dfa8a725b53 d9f13186-b03b-4c94-b359-e583b39d6766 a70245d7-3749-43fb-897d-86cbde2e935d 8f31ae60-25b0-4f42-a5ba-896fdb0b8284,,yes,no diagnosis given,not stated,,,False,
 16440,https://discuss.px4.io/t/16440,a4abf46a-0217-4ba2-8cd3-1cc83d5988d7 44fcd17a-694d-431e-a02f-74c51f8d3cda,,yes,drone,software / firmware bug,PX4 staff / dev team,yes,True,True

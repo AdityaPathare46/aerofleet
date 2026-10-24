@@ -25,7 +25,7 @@ def test_the_checklist_follows_how_often_experts_found_each_cause_not_the_words(
 def test_answers_carry_precedents_the_caveat_and_the_measured_accuracy():
     r = search("quad oscillates and wobbles in hover", limit=3)
     assert 0 < len(r["similar_cases"]) <= 3 and all(c["url"].startswith("https://discuss.px4.io/t/") for c in r["similar_cases"])
-    assert "not a diagnosis" in r["note"] and "20%" in r["how_well_it_works"] and r["cases_searched"] == 161
+    assert "not a diagnosis" in r["note"] and "22%" in r["how_well_it_works"] and r["cases_searched"] == 161
 
 
 def test_same_words_same_answer_and_no_match_says_so():

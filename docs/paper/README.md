@@ -52,7 +52,7 @@ Sources: [RESS metrics (SciJournal)](https://www.scijournal.org/reliab-eng-syst-
 3. **A clear practical message.** Logs show which drones are at risk (between drones, rank 0.67, p = 0.002), not
    why one flight crashed (within the same drone, 0.48; pilot vs drone attribution at chance).
 4. **A methods warning.** A check can appear to find the cause only because the crash is in the window
-   (13/15 vs 2/10 for the tuning check).
+   (10/12 vs 1/9 for the tuning check, settled labels).
 5. **A timely negative result on small language models** used as safety reviewers.
 
 ## Before submitting (in order)

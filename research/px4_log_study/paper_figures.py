@@ -158,7 +158,7 @@ def study_flow(out):
     w, gap = 0.152, 0.012
     items = ["Q1 Settings\n100 crashes\n477 normal", "Q2 Rule\n93 + 112 held-out\n143 normal",
              "Q2/Q3a Model\n148 crashes\n139 normal", "Q3b Within-drone\n101 crashes\n475 earlier flights",
-             "Q3c Between-drone\n66 matched sets\n124 control drones", "Q4 Experts\n148 real crashes\n35 logs available"]
+             "Q3c Between-drone\n66 matched sets\n124 control drones", "Q4 Experts\n148 real crashes\n37 logs available"]
     xs = [0.01 + i * (w + gap) for i in range(6)]
     for x, t in zip(xs, items):
         box(x, 0.18, w, 0.22, t, fc="white", fs=5.9)

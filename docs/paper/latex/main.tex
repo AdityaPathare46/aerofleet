@@ -37,13 +37,13 @@ Flight logs are increasingly expected to explain why a small drone crashed. We t
 PX4 Flight Review archive (479,547 logs; 590 crashes labelled by their uploaders as pilot- or aircraft-caused),
 committing each test and its pass mark to version control before running it. A fixed attribution rule reached a balanced accuracy of 0.47 on 112
 held-out crashes, and a cross-validated model stayed between 0.42 and 0.52. Checks that seemed to find the cause
-named by forum experts mostly fired on the crash itself (tuning faults: 13 of 15 found, 2 of 10 without the last
+named by forum experts mostly fired on the crash itself (tuning faults: 10 of 12 found, 1 of 9 without the last
 10\,s). The crash flight did not differ from the same drone's earlier flights, but drones that
 later crashed vibrated more on ordinary flights than matched drones (mean rank 0.67, 95\% CI 0.57--0.77,
 Holm-adjusted $p=0.016$), though a replication on the newer accelerometer metric alone did not confirm it
 (0.58, $p=0.25$, 19 sets). Small language-model panels lost to a fixed rule and were easily steered, and matching a
-written problem description against 90 expert-diagnosed crashes found the expert's cause less often than the base
-rate (20\% vs 32\%). An open-source fleet-assurance tool built on these findings presents evidence, not verdicts:
+written problem description against 96 expert-diagnosed crashes found the expert's cause less often than the base
+rate (22\% vs 27\%). An open-source fleet-assurance tool built on these findings presents evidence, not verdicts:
 an event timeline, a fleet vibration ranking, a signed record, and 3D replay and rehearsal of flights. Flight logs support ranking airframes for inspection, not attributing an individual crash.
 \end{abstract}
 
@@ -242,7 +242,7 @@ Held-out crashes & 112 analysed & 143 normal (full logs) & Q2 replication \\
 Leak-curve set & 148 at $m=0$ & 139 normal & Q2 model, Q3a \\
 Within-drone & 101 selected (61 and 46 analysed) & 475 earlier flights of the same drones & Q3b \\
 Between-drone & 66 matched sets (60 and 47 analysed) & 124 matched drones, 372 flights & Q3c \\
-Forum threads & 148 real crashes & 35 logs still downloadable & Q4 \\
+Forum threads & 148 real crashes & 37 logs still downloadable & Q4 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -257,8 +257,9 @@ A second author then coded all threads blind to the first recording, with the sa
 that 150 of 151 coded rows quoted their own thread or recorded no diagnosis. On the 147 threads both coded,
 agreement (Cohen's kappa, 95\% bootstrap interval) was 0.81 (0.71--0.88) for the expert's conclusion, 0.73
 (0.65--0.81) for the cause and 0.79 (0.69--0.88) for whether the poster confirmed it, above the declared pass mark
-of 0.60. Counts below are from the first recording; the 45 threads that differ on conclusion or cause are listed
-in the repository.
+of 0.60. The two coders settled the 45 threads that differed on conclusion or cause by discussion, which changed 13
+labels; counts and tests below use the settled labels, and the first recording led to the same conclusions (both
+are in the repository).
 The searches combined the Flight Review host names with the words crash, crashed, flyaway, fell, flipped and lost
 control, and every returned thread was retrieved through the forum's public interface. A reply counted as expert when
 its author was marked as staff, belonged to the development team group or held one of the forum's two highest trust
@@ -419,7 +420,7 @@ Within-drone vibration ($p<0.025$) & $\bar r=0.48$, $p=0.67$ & 1.00 & Not suppor
 Within-drone tracking ($p<0.025$) & $\bar r=0.50$, $p=0.47$ & 1.00 & Not supported \\
 Between-drone vibration ($p<0.025$) & $\bar r=0.67$, $p=0.0023$ & 0.016 & Supported \\
 Between-drone tracking ($p<0.025$) & $\bar r=0.57$, $p=0.15$ & 0.73 & Not supported \\
-Expert-fault checks, $m=10$\,s ($\geq 50\%$, $\leq 10\%$) & best: vibration 3/3 vs 11\% & -- & None met \\
+Expert-fault checks, $m=10$\,s ($\geq 50\%$, $\leq 10\%$) & best: vibration 3/5 vs 11\% & -- & None met \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -429,8 +430,8 @@ Expert-fault checks, $m=10$\,s ($\geq 50\%$, $\leq 10\%$) & best: vibration 3/3 
 Crash flights were separated from normal flights with an AUC of 0.88 (SD 0.01) using the whole flight and 0.86 with the
 last 30\,s removed (Fig.~\ref{fig:leak}); the declared drop of 0.10 by 10\,s was not observed (0.01). Leakage was
 nevertheless present for individual checks. The rate-tracking feature alone fell from an AUC of 0.81 to 0.69 as the
-crash was excluded, while vibration stayed between 0.74 and 0.77. A fixed tuning check that found 13 of 15
-expert-diagnosed tuning faults with the crash included found 2 of 10 once the last 10\,s were removed
+crash was excluded, while vibration stayed between 0.74 and 0.77. A fixed tuning check that found 10 of 12
+expert-diagnosed tuning faults with the crash included found 1 of 9 once the last 10\,s were removed
 (Section~\ref{sec:experts}). Model-level separation therefore does not depend on the crash window; it reflects
 differences that are present throughout the flight. Table~\ref{tab:features_auc} gives the single-feature AUCs. Values
 below 0.5 indicate features that are lower in crash flights: crash flights reached lower tilt and smaller stick
@@ -512,14 +513,14 @@ crashed drone was the roughest of its matched set in 55\% of sets, against 41\% 
 
 \subsection{Expert diagnoses (Q4)}
 \label{sec:experts}
-Of 148 forum threads describing a real crash, the expert attributed it to the aircraft in 88 (59\%), to the pilot in 9
-(6\%), to both in 2, and was unclear or gave no diagnosis in 49 (33\%). Tuning or configuration was the cause named
-most often (29 of 88; 15 of the 47 confirmed by the poster), followed by GPS, compass or estimator problems (16) and
-motors, ESCs or propellers (14) (Fig.~\ref{fig:causes}). Of 14 threads whose log carried an aircraft crash rating, the
-expert agreed in 9 and was unclear in 5; none attributed the crash to the pilot. Only 35 of the 70 logs behind aircraft
-diagnoses could still be downloaded. Table~\ref{tab:checks} shows the fault checks with and without the crash window. With the window ending 10\,s before
+Of 148 forum threads describing a real crash, the expert attributed it to the aircraft in 94 (64\%), to the pilot in 9
+(6\%), to both in 2, and was unclear or gave no diagnosis in 43 (29\%). Tuning or configuration was the cause named
+most often (26 of 94; 14 of the 47 confirmed by the poster), followed by GPS, compass or estimator problems (18) and
+motors, ESCs or propellers (16) (Fig.~\ref{fig:causes}). Of 14 threads whose log carried an aircraft crash rating, the
+expert agreed in 11 and was unclear in 3; none attributed the crash to the pilot. Only 37 of the 73 logs behind aircraft
+diagnoses with a checkable cause could still be downloaded. Table~\ref{tab:checks} shows the fault checks with and without the crash window. With the window ending 10\,s before
 the crash, no check met the declared criterion. The tuning check illustrates the leakage described in Section~\ref{sec:window}: its apparent
-sensitivity fell from 87\% to 20\% when the last 10\,s were removed, while its rate on normal flights fell only from
+sensitivity fell from 83\% to 11\% when the last 10\,s were removed, while its rate on normal flights fell only from
 13\% to 5\%.
 
 \begin{table}[t]
@@ -532,10 +533,10 @@ before the crash removed. Declared criterion: at least 50\% of diagnosed logs an
 \toprule
 Expert-named fault & Full window: diagnosed & Full window: normal & $m=10$\,s: diagnosed & $m=10$\,s: normal \\
 \midrule
-Tuning or configuration & 13/15 (87\%) & 18/142 (13\%) & 2/10 (20\%) & 7/130 (5\%) \\
-Vibration or mounting & 3/3 & 7/48 (15\%) & 3/3 & 4/38 (11\%) \\
-GPS, compass or estimator & 0/4 & 10/143 (7\%) & 0/3 & 5/130 (4\%) \\
-Motor, ESC or propeller & 2/7 (29\%) & 8/143 (6\%) & 1/4 (25\%) & 5/130 (4\%) \\
+Tuning or configuration & 10/12 (83\%) & 18/142 (13\%) & 1/9 (11\%) & 7/130 (5\%) \\
+Vibration or mounting & 3/5 (60\%) & 7/48 (15\%) & 3/5 (60\%) & 4/38 (11\%) \\
+GPS, compass or estimator & 1/5 (20\%) & 10/143 (7\%) & 1/4 (25\%) & 5/130 (4\%) \\
+Motor, ESC or propeller & 1/9 (11\%) & 8/143 (6\%) & 0/4 & 5/130 (4\%) \\
 Battery or power & 0/4 & 4/143 (3\%) & 0/2 & 1/130 (1\%) \\
 \bottomrule
 \end{tabularx}
@@ -605,7 +606,7 @@ detected \\
 A plan proves nothing if something else was flown & Planned-versus-flown check: deviations beyond a fleet's corridor
 and height tolerance & Known deviations injected into 40 real flights (Section~\ref{sec:tool_reconcile}) \\
 Expert diagnoses as precedents (Q4) & Description search over 161 expert-labelled threads; checklist in order of
-expert frequency & Leave-one-out test on 90 cases (Section~\ref{sec:tool_search}) \\
+expert frequency & Leave-one-out test on 96 cases (Section~\ref{sec:tool_search}) \\
 Separation and deviations are three-dimensional & Tabletop 3D replay of a reviewed flight and rehearsal of planned
 missions, on screen or in a headset & Functional checks only; no user study \\
 \bottomrule
@@ -652,11 +653,12 @@ remains unmeasured and a reported deviation is a reason to look at the replay ra
 \label{sec:tool_search}
 An operator can describe a problem in words. The description is matched (BM25, no model) against the expert-labelled
 forum threads, represented by their titles and up to 30 descriptive terms from the opening post, and against a short
-list of symptom words for each cause. After a first release we declared and ran a test, holding out each of the 90 threads in
+list of symptom words for each cause. After a first release we declared and ran a test, holding out each of the 96 threads in
 which the expert blamed the aircraft and named a cause and querying with the rest. The cause the words matched best
-was the expert's cause in 17 of 90 cases with the title alone (19\%) and 18 of 90 with the title and opening-post
-terms (20\%, 95\% CI 13--29\%), below the 29 of 90 (32\%) of always answering the most frequent cause; among the first
-three it was 53\% against 66\%. The declared criterion (10 points above the base rate) was not met. A written
+was the expert's cause in 19 of 96 cases with the title alone (20\%) and 21 of 96 with the title and opening-post
+terms (22\%, 95\% CI 15--31\%), below the 26 of 96 (27\%) of always answering the most frequent cause; among the first
+three it was 54\% against 62\%. The declared criterion (10 points above the base rate) was not met, as it was not with
+the first recording (20\% against 32\%). A written
 description, like the log, did not reveal the cause. The tool therefore orders its checklist by how often experts
 found each cause, marks the causes the description mentions, and offers the most similar threads only as reading,
 with the measured accuracy shown beside the answer.

@@ -149,3 +149,20 @@ declared pass mark of 0.60 is met. Reported in Section 3.3 and Threats. 45 threa
 
 **Paper rating: 8/10.** The labels behind Q4, Fig. 6 and the knowledge base are now shown to be reliable. What
 remains below 9: the positive result rests on the older vibration metric, and there is no prospective or user data.
+
+## Seventh pass: disagreements settled (25 October 2026)
+
+The two coders settled the 45 disagreements; 13 labels changed (6 threads became aircraft-caused). Everything that
+uses the labels was re-run on the settled labels, and the published first-recording results were kept beside them:
+
+| Result | First recording | Settled labels |
+|---|---|---|
+| Expert blamed the aircraft | 88 of 148 (59%) | 94 of 148 (64%) |
+| Tuning check, crash included / last 10 s removed | 13/15 / 2/10 | 10/12 / 1/9 |
+| Any expert-fault check meeting the pass mark | none | none |
+| Description search vs base rate (leave-one-out) | 20% vs 32% (90 cases) | 22% vs 27% (96 cases) |
+| Aircraft-rated threads where the expert agreed | 9 of 14 | 11 of 14 |
+
+Every conclusion is unchanged. The full-window fault check was re-run with the script version that produced the
+published table (commit 4475c8c), which reproduced 13/15 exactly on the first recording; the later version adds a
+10 s minimum window. Paper rating stays at 8/10.

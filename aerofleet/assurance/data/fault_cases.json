@@ -38,7 +38,7 @@
     "simple"
    ],
    "is_crash": true,
-   "expert_conclusion": "unclear",
+   "expert_conclusion": "drone",
    "cause": "GPS / compass / estimator",
    "who": "experienced user",
    "poster_confirmed": "not stated",
@@ -106,7 +106,7 @@
     "x5"
    ],
    "is_crash": true,
-   "expert_conclusion": "unclear",
+   "expert_conclusion": "drone",
    "cause": "vibration / mounting",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "not stated",
@@ -799,7 +799,7 @@
     "wasn"
    ],
    "is_crash": true,
-   "expert_conclusion": "unclear",
+   "expert_conclusion": "drone",
    "cause": "software / firmware bug",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "not stated",
@@ -1158,7 +1158,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "drone",
-   "cause": "tuning / configuration",
+   "cause": "motor / ESC / propeller",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "no / disputed",
    "log_ids": [
@@ -1541,7 +1541,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "unclear",
-   "cause": "GPS / compass / estimator",
+   "cause": "software / firmware bug",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "not stated",
    "log_ids": [
@@ -1811,7 +1811,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "drone",
-   "cause": "motor / ESC / propeller",
+   "cause": "software / firmware bug",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "not stated",
    "log_ids": [
@@ -2900,7 +2900,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "drone",
-   "cause": "tuning / configuration",
+   "cause": "software / firmware bug",
    "who": "original poster",
    "poster_confirmed": "yes",
    "log_ids": [
@@ -3835,7 +3835,7 @@
     "waypoint"
    ],
    "is_crash": true,
-   "expert_conclusion": "no diagnosis given",
+   "expert_conclusion": "unclear",
    "cause": "not stated",
    "who": "",
    "poster_confirmed": "not stated",
@@ -4499,7 +4499,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "drone",
-   "cause": "tuning / configuration",
+   "cause": "vibration / mounting",
    "who": "other user",
    "poster_confirmed": "no / disputed",
    "log_ids": [
@@ -4639,7 +4639,7 @@
    ],
    "is_crash": true,
    "expert_conclusion": "drone",
-   "cause": "tuning / configuration",
+   "cause": "motor / ESC / propeller",
    "who": "other user",
    "poster_confirmed": "not stated",
    "log_ids": [
@@ -5091,7 +5091,7 @@
     "warning"
    ],
    "is_crash": true,
-   "expert_conclusion": "unclear",
+   "expert_conclusion": "drone",
    "cause": "GPS / compass / estimator",
    "who": "PX4 staff / dev team",
    "poster_confirmed": "not stated",
@@ -5819,7 +5819,7 @@
     "vibr"
    ],
    "is_crash": true,
-   "expert_conclusion": "unclear",
+   "expert_conclusion": "drone",
    "cause": "motor / ESC / propeller",
    "who": "other user",
    "poster_confirmed": "no / disputed",
@@ -5939,8 +5939,8 @@
     "wing"
    ],
    "is_crash": true,
-   "expert_conclusion": "no diagnosis given",
-   "cause": "not stated",
+   "expert_conclusion": "drone",
+   "cause": "tuning / configuration",
    "who": "",
    "poster_confirmed": "not stated",
    "log_ids": [

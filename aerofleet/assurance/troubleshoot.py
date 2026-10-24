@@ -7,9 +7,10 @@ symptoms each cause usually shows; nothing is generated and no model is called, 
 the same answer.
 
 What it is for: a checklist and past threads that look alike. What it is not: a diagnosis. In a leave-one-out test
-on the 90 threads where the expert blamed the aircraft and named a cause (research/px4_log_study/eval_troubleshoot.py,
-results/px4_log_study/troubleshoot_loo.md), the cause best matched by the words was the expert's cause in 20% of
-cases, below the 32% of always answering the most frequent cause. A description does not reveal the cause any more
+on the 96 threads where the expert blamed the aircraft and named a cause (labels settled after a blind second coding;
+research/px4_log_study/eval_troubleshoot.py, results/px4_log_study/troubleshoot_loo_settled.md), the cause best
+matched by the words was the expert's cause in 22% of cases, below the 27% of always answering the most frequent
+cause (first recording: 20% vs 32%, troubleshoot_loo.md). A description does not reveal the cause any more
 than the log does. So the checklist is ordered by how often experts found each cause, the causes the description
 mentions are marked, and the similar threads are offered to read, not as an answer.
 """
@@ -135,8 +136,8 @@ PLAYBOOK: Dict[str, Dict[str, Any]] = {
 CHECKLIST = 5
 NOT_A_DIAGNOSIS = ("A checklist and past cases, not a diagnosis of this drone. The checks are in the order PX4 experts most "
                    "often found each cause; causes your description mentions are marked. Confirm on the aircraft.")
-TESTED = ("Tested on 90 expert-diagnosed crashes, each held out in turn: the cause best matched by the words was the "
-          "expert's cause in 20% of cases, against 32% for always answering the most frequent cause. Descriptions "
+TESTED = ("Tested on 96 expert-diagnosed crashes, each held out in turn: the cause best matched by the words was the "
+          "expert's cause in 22% of cases, against 27% for always answering the most frequent cause. Descriptions "
           "do not reveal the cause, which is why the checklist follows how often each cause was found.")
 
 
