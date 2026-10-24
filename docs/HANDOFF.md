@@ -81,24 +81,39 @@ The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must co
 
 ## 4. Where things are
 
+The repository was cleaned on 25 Oct 2026 (git tag `pre-cleanup-2026-10-25` holds everything that was removed;
+large untracked leftovers were moved to `/Volumes/One Touch/AeroFleet_archive_2026-10-25/`, nothing deleted).
+
+**Core (work here):**
+
 | Path | What |
 |---|---|
 | `aerofleet/assurance/` | The product's logic: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot + PX4 readers), `reconcile` (planned vs flown), `evidence` (timeline), `vibration` (fleet ranking), `deconflict` (+ `rehearsal()` for 3D), `wind`, `ledger` (signed record), `report_html`, `troubleshoot` (description search), `data/fault_cases.json` |
-| `aerofleet/api/routes/assurance.py` | All assurance HTTP endpoints |
+| `aerofleet/api/routes/assurance.py` | All assurance HTTP endpoints; `auth.py` sign-in; `vr.py` headset pairing |
 | `tauri-app/src/pages/FleetAssurance.tsx` | Main screen: baseline/drift, flight review, troubleshooting card, deconflict + "Rehearse in 3D", wind check, signed record |
-| `tauri-app/src/pages/VRSafetyView.tsx`, `src/components/vr/` | 3D tabletop: Live swarm (earlier product), Flight replay (`Flight.tsx`), Mission rehearsal (`Rehearsal.tsx`). WebXR for Quest browser |
-| `unity/AeroFleetVR/` | Mirror of the Quest app scripts (Unity project lives on another drive; compiles, never run on a headset) |
+| `tauri-app/src/pages/VRSafetyView.tsx`, `src/components/vr/` | 3D tabletop: Flight replay (`Flight.tsx`), Mission rehearsal (`Rehearsal.tsx`), Live swarm (legacy, simulated). WebXR for the Quest browser |
+| `unity/AeroFleetVR/` | Mirror of the Quest app scripts (compiles, never run on a headset) |
 | `tools/verify_ledger.py` | Standalone verifier for the signed record |
-| `research/px4_log_study/` | Every study script; each docstring is its declaration |
-| `research/results/px4_log_study/` | Every result (markdown + jsonl) |
-| `research/protocols/prospective_and_user_study.md` | Declared future studies |
-| `docs/paper/latex/` | `main.tex`, `refs.bib`, `cover_letter.tex`, `highlights.txt` |
-| `docs/paper/submission/` | Built PDF, cover letter, highlights, Overleaf zip |
-| `docs/paper/critical_review.md` | All internal review rounds and ratings |
-| `/Volumes/One Touch/AeroFleet_px4_data/` | Raw data, not in git: `dbinfo.json` (archive index), log folders `h/`, `within/`, `rough/`, `crash/`, `newer/`, CSV selections, `forum_cache/` (thread JSON) |
-| `/Volumes/One Touch/AeroFleet_reference_papers/` | Reference PDFs with a README index (not in git) |
+| `research/px4_log_study/`, `research/results/` | Every study script (docstring = declaration) and every result; see `research/README.md` |
+| `research/protocols/` | Declared future studies |
+| `docs/paper/` | `latex/` (master: `main.tex`, `refs.bib`, cover letter, highlights), `figures/`, `submission/` (PDF, Word, Overleaf zip), `make_docx.py`, `critical_review.md` |
+| `docs/background/` | Operator, regulation and accident research behind the use case |
+| `tests/test_*assurance*`, `tests/integration/test_missions_compliance_api.py`, `test_vr_pairing_api.py` | Tests of the product |
+| `config/`, `data/components.json`, `alembic/` | Runtime config defaults (the config loader reads `config/default.yaml`), component data, DB migrations |
 
----
+**Legacy (the earlier AI dispatch product; kept only because the app/API still import it; do not extend):**
+`aerofleet/` outside `assurance/`, `api/`, `data/`, `utils/` (agents, council, dispatch, safety, swarm, hardware, city,
+fleet, ...), `scenario_engine/`, `agent_memory/`, app pages other than Fleet Assurance and VR (hidden behind Settings ▸
+Show legacy screens), and the tests that cover them. Removing it fully is a separate refactor; ask the owner first.
+
+**Outside the repo:**
+
+| Path | What |
+|---|---|
+| `/Volumes/One Touch/AeroFleet_px4_data/` | Raw data, not in git: `dbinfo.json` (archive index), logs in `h/`, `within/`, `rough/`, `crash/`, `newer/`, `forum_logs/`, CSV selections, `forum_cache/` (thread JSON) |
+| `/Volumes/One Touch/AeroFleet_reference_papers/` | Reference PDFs with a README index (copyrighted; never commit or upload) |
+| `/Volumes/One Touch/AeroFleet_paper_package_2026-10-25.zip` | Everything for the paper in one zip (manuscript PDF/Word, LaTeX, references, supplementary) |
+| `/Volumes/One Touch/AeroFleet_archive_2026-10-25/` | Untracked leftovers moved out during cleanup (old datasets 24 GB, old venv, caches) |
 
 ## 5. What the study found (numbers to keep consistent everywhere)
 

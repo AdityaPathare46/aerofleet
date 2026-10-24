@@ -1,3 +1,5 @@
+> Start from `docs/HANDOFF.md`; this plan is background and its checklist is no longer maintained.
+
 # AeroFleet 2.0 — Master Plan
 
 Status board for the rebuild. Update the checkboxes and the "Progress log" at the bottom after
@@ -76,14 +78,14 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - [x] 6.1 `AEROFLEET_LIVE_CONTROL` (default off; `aerofleet/assurance/live_control.py`): arm, post-dispatch take-off/go-to and the bench motor test are refused; dispatch plans with simulated drones only; disarm, emergency stop and RTL/hold fallbacks stay available; `GET /api/v1/assurance/policy`
 - [x] 6.2 App opens on Fleet Assurance; Council Room and the telemetry/agent-roster side panel are hidden unless Settings ▸ Show legacy screens is on (`tauri-app/src/lib/policy.ts`); Arm button only when live control is on; header subtitle updated
 - [ ] 6.2b Still showing legacy framing: Ops Center, Dispatch Console, Incident Forensics, Fleet Policy, Scenario Lab pages — decide per page: keep, rename or move behind the legacy toggle
-- [x] 6.3 README rewritten for 2.0 (what it does, what was measured with links, where AI is not used, what it does not do); the old one moved to `docs/LEGACY_AI_DISPATCH_README.md`
+- [x] 6.3 README rewritten for 2.0 (what it does, what was measured with links, where AI is not used, what it does not do); the old one moved to `docs/LEGACY_AI_DISPATCH_README.md` (removed in the 25 Oct cleanup; in git tag `pre-cleanup-2026-10-25`)
 
 ### Demand and publication (not code)
 - [ ] D1 Check whether Indian agri/service fleets run ArduPilot/PX4 and whether AirData serves them
 - [ ] D2 Public "upload a log, get a report" release to ArduPilot/PX4 forums; count uploads for 6 weeks
 - [ ] D3 Free audit offer to 20 Indian makers/service firms; go only if ≥3 send logs or ≥100 public uploads
 - [ ] D4 Literature check for the primary paper (misconfiguration prevalence in field logs)
-- [ ] D5 VR-vs-desktop study (12–16 people); protocol draft exists in `research/user_study_protocol.md`
+- [ ] D5 VR-vs-desktop study (12–16 people); protocol declared in `research/protocols/prospective_and_user_study.md`
 
 ## Progress log
 
@@ -116,7 +118,7 @@ panel debating the likely cause of an already-flagged finding; plain-language in
 - 2026-10-13: Mac app rebuilt and installed (in-flight setting changes, printable report, signed record for all five features, 2.0 navigation). Not launched or checked inside the bundle.
 - 2026-10-15: Panel evaluation re-aimed at models that run on an ordinary laptop (3-4B, 2-3.5 GB; names and sizes checked in the Ollama registry). Runner turns thinking off for thinking models. 1-case smoke test with llama3.2 passed.
 - 2026-10-20: Panel results back (Atharv, 60 cases, 4 small models): no model beat the no-AI rule (45 right / 0 wrong). Panel stays out of the app; flight reviews now give a likely cause from the rule (`review_panel.likely_causes`, signed with the review). Atharv's fake `/missions/{id}/reconcile` replaced by the real review; his hard-coded HMAC attestation and the abolished UAOP checklist item removed. Still open from his code: missions in the DB, ledger entries for /compliance/pre-flight and /missions/generate, UIN from the registry, tests, likely cause on screen.
-- 2026-10-20: Competitor check (`COMPETITOR_CHECK.md`) and needs research (`reports/Drone fleet needs evidence.md`): no dataset counts misconfiguration as a crash cause; strongest real need is EU/UK technical-log record-keeping; India evidence weak.
+- 2026-10-20: Competitor check (`COMPETITOR_CHECK.md`) and needs research (`docs/background/Drone fleet needs evidence.md`): no dataset counts misconfiguration as a crash cause; strongest real need is EU/UK technical-log record-keeping; India evidence weak.
 - 2026-10-20: PX4 public-log study (`research/px4_log_study`, index of 479,547 logs, 590 uploader-rated crashes). (a) Settings: protections switched off in 51% of crash vs 46% of good logs (p 0.63); 0 of 100 crashes changed a safety setting in flight. (b) Pre-declared pilot-vs-drone rule FAILED (balanced accuracy 0.57; held-out 0.47; flags 39% of good flights). Two post-hoc signals did not replicate on 123 held-out crashes. Motor saturation and battery warnings separate crash from normal flights (25%/16% vs 1%/3%) but not pilot from drone.
 - 2026-10-20: Label check. Non-expert reviewers cannot judge crashes (two rounds were AI-filled or had invented quotes). Switched to expert diagnoses on PX4 forum threads: 148 crash threads with a staff/dev/experienced reply; drone 59%, pilot 6%, unclear/none 34%; top named cause tuning/configuration (29 of 88). Recording was AI-assisted and owner-reviewed, 123/124 quotes verified by script; no measured error rate yet. Results: `research/results/px4_log_study/forum_expert_labels.md`.
 - 2026-10-22: Project completion pass ("finish and align"). Done: Atharv's missions/pre-flight wired in (missions stored in `mission_records`, signed ledger entries, UIN from the registry, operator-declared inputs listed; 2 real bugs fixed: crash on missing drone weight, generate request missing document fields; 5 tests). PX4 `.ulg` logs in flight reviews (64/80 real logs read; 5 tests). Evidence timeline replaces the "likely cause" (no cause is named; on screen and in the printable report; 3 tests). Dispatch-era screens moved behind Show legacy screens (6.2b decided). VR flight replay: backend (`/vr/device/flight-review`, gateway allowlist, scenario mode `flight`; 1 test), web VR view (checked in the browser on a real PX4 flight), Quest app (compiled in Unity batch mode, 0 errors; NOT run on a headset or in the editor). README and panel runbook updated. Mac app rebuilt and installed to /Applications (not launched inside the bundle). Still open: Quest app run; licence; Atharv's second forum recording; paper draft.

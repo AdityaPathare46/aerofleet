@@ -78,7 +78,7 @@ declared (rule, thresholds and pass mark committed) before they were run.
   PX4 (3,111) references. [`research/results/drift_catalogue_check.md`](research/results/drift_catalogue_check.md)
 - **Need and competitors.** No accident dataset counts misconfiguration as a cause; the clearest written need
   is UK/EU record-keeping (a technical log per aircraft, kept 3 years, protected from alteration).
-  [`reports/Drone fleet needs evidence.md`](reports/Drone%20fleet%20needs%20evidence.md),
+  [`docs/background/Drone fleet needs evidence.md`](docs/background/Drone%20fleet%20needs%20evidence.md),
   [`docs/aerofleet2/COMPETITOR_CHECK.md`](docs/aerofleet2/COMPETITOR_CHECK.md)
 
 ## Where AI is and is not used
@@ -141,23 +141,26 @@ earlier product. Guide: [`docs/VR_QUEST3_GUIDE.md`](docs/VR_QUEST3_GUIDE.md).
 
 ## Repository
 
+Start with [`docs/HANDOFF.md`](docs/HANDOFF.md) (any assistant: `AGENTS.md` points there).
+
 | Path | What is there |
 |---|---|
-| `aerofleet/assurance/` | The 2.0 code: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot and PX4), `reconcile`, `evidence`, `vibration`, `deconflict`, `wind`, `ledger`, `report_html`, `live_control`; `review_panel` is research only |
-| `aerofleet/api/routes/` | `assurance.py`, `compliance.py`, `missions.py`, `vr.py` |
-| `tauri-app/src/pages/FleetAssurance.tsx`, `VRSafetyView.tsx` | The app screens |
+| `aerofleet/assurance/` | **The product's logic**: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot and PX4), `reconcile`, `evidence`, `vibration`, `deconflict` (+ 3D rehearsal), `wind`, `ledger`, `report_html`, `troubleshoot` + `data/fault_cases.json`; `review_panel` is research only |
+| `aerofleet/api/routes/assurance.py` | Its HTTP endpoints (plus `compliance.py`, `fc_compliance.py`, `missions.py`, `vr.py`, `auth.py`) |
+| `tauri-app/src/pages/FleetAssurance.tsx`, `VRSafetyView.tsx`, `src/components/vr/` | The app screens and the 3D tabletop |
 | `unity/AeroFleetVR/` | Mirror of the Quest app's scripts |
-| `research/` | Studies and their results; `px4_log_study/` is the crash-log benchmark, `panel_eval/` the AI-panel test |
-| `docs/aerofleet2/` | Master plan, context for whoever continues, product definition, panel runbook, competitor check, pitch |
-| `docs/paper/` | The research paper draft (manuscript, figures, build script) and where to submit it |
-| `tests/` | `test_assurance_*`, `test_missions_compliance_api.py`, `test_vr_pairing_api.py` for 2.0; the rest covers the earlier product |
+| `research/px4_log_study/`, `research/results/px4_log_study/` | The study behind the paper: every declared test and its result |
+| `research/panel_eval/`, `research/protocols/` | The language-model panel test; declared future studies |
+| `docs/paper/` | The paper (LaTeX master, PDF, Word, submission files, review log) |
+| `docs/aerofleet2/`, `docs/background/` | Product plan and context; the operator and regulation research behind the use case |
+| `tests/` | `test_assurance_*`, `test_missions_compliance_api.py`, `test_vr_pairing_api.py` cover the product; the rest covers legacy code |
+| `start.sh` | One command to run everything |
 
-## The earlier product
-
-AeroFleet began as an AI multi-agent drone *dispatch* system. That code — the 16-agent council, live
-MAVLink control, the dispatch console and its other screens — is still here, hidden in the app behind
-**Settings ▸ Show legacy screens** and off by default in the backend. Its README is kept at
-[`docs/LEGACY_AI_DISPATCH_README.md`](docs/LEGACY_AI_DISPATCH_README.md).
+**Legacy code (the earlier AI dispatch product), kept because the app still imports parts of it:** everything in
+`aerofleet/` outside `assurance/`, `api/`, `data/` and `utils/` (agents, council, dispatch, safety, swarm, hardware, city,
+fleet, ...), `scenario_engine/`, `agent_memory/`, and the app pages other than Fleet Assurance and VR. It is hidden in
+the app behind **Settings ▸ Show legacy screens**. Do not build on it; the earlier product's README is in git history
+(tag `pre-cleanup-2026-10-25`, `docs/LEGACY_AI_DISPATCH_README.md`).
 
 ## Licence
 
