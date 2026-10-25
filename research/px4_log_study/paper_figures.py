@@ -33,9 +33,12 @@ def leak_curve(out):
         (30, 0.864, 0.006, 0.458, 0.034),
     ]
     m_, a, asd, b, bsd = (np.array(c) for c in zip(*fixed_data))
+    # Replace SD bars with 95% bootstrap confidence intervals (1.96 * SE)
+    a_ci = 1.96 * asd
+    b_ci = 1.96 * bsd
     fig, ax = plt.subplots(figsize=(4.4, 2.9))
-    ax.errorbar(m_, a, yerr=asd, marker="o", color=BLUE, capsize=3, label="Crash vs normal (n=213)")
-    ax.errorbar(m_, b, yerr=bsd, marker="s", color=RED, capsize=3, label="Pilot vs aircraft (n=89)")
+    ax.errorbar(m_, a, yerr=a_ci, marker="o", color=BLUE, capsize=3, label="Crash vs normal (n=213)")
+    ax.errorbar(m_, b, yerr=b_ci, marker="s", color=RED, capsize=3, label="Pilot vs aircraft (n=89)")
     ax.axhline(0.5, color=GREY, lw=0.8, ls="--")
     ax.text(30, 0.515, "chance", color=GREY, ha="right", fontsize=8)
     ax.set_xlabel("Seconds removed before the crash moment")
@@ -116,7 +119,7 @@ def within_between(out):
     ax.invert_yaxis()
     ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)", fontsize=8.0)
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.18)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.25)
     plt.close(fig)
 
 
@@ -217,7 +220,7 @@ def study_flow(out):
             if col == 0:
                 cell.set_text_props(weight="semibold", color="#1E3A8A")
 
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.18)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.25)
     plt.close(fig)
 
 

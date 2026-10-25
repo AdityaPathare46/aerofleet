@@ -34,7 +34,7 @@
             city={Pune}, country={India}}
 
 \begin{abstract}
-Flight logs are widely expected to determine whether a drone crash was caused by the pilot or the aircraft. Across 590 public PX4 crash logs from 479,547 flights, we evaluate that expectation using declared protocols committed prior to analysis. First, automatic crash attribution between pilot and aircraft is not supported by these telemetry rules, models and labels: a fixed rule reached a balanced accuracy of 0.47 on held-out crashes, cross-validated classification yielded AUCs of 0.41--0.50 (95\% bootstrap upper bounds $\le 0.62$, below the 0.66 permutation null detection threshold), and evaluating the rule against 43 downloadable expert forum logs showed poor agreement with community diagnoses (balanced accuracy 0.381, 95\% CI 0.20--0.59). Second, diagnostic checks suffer from crash data leakage: tuning fault sensitivity fell from 77.8\% to 11.1\% ($p=0.031$) without the final 10\,s, and cross-sectional separation was substantially attenuated within the same drone (AUC 0.58). Third, drones that later crashed showed higher baseline vibration than matched peers on older estimator metrics (mean rank 0.67, Holm $p=0.016$), though replication on newer accelerometer metrics was inconclusive ($p=0.25$). Stratum-matched fleet screening yields positive predictive values of 2.26--2.47\% (lift $3.3\times$, 40--44 inspections per crash) at a 10\% flag rate. AeroFleet~2.0, an open-source assurance tool, presents longitudinal evidence without issuing automatic verdicts.
+Flight logs are widely expected to show whether a drone crash was caused by the pilot or the aircraft. Across 590 uploader-rated PX4 crash logs from an index of 479,547 flights (590 rated $\to$ 520 on real hardware $\to$ 205 rule-evaluated $\to$ 148 modelled), we ask what evidentiary value logs carry for a fleet operator once evaluation guards against crash-window leakage and between-aircraft confounding. Confirmatory tests were declared in version control before analysis; analyses added during review are marked $^\dagger$. A fixed attribution rule reached a balanced accuracy of 0.47 on 112 held-out crashes (declared pass mark 0.70). $^\dagger$Cross-validated models gave AUCs of 0.41--0.50 (upper 95\% bootstrap bounds $\le 0.62$); with 36 pilot-labelled crashes in the modelling sample, only AUCs above about 0.65 are statistically detectable at 80\% power, and an operational verdict would need about 0.8. $^\dagger$On 43 expert-diagnosed logs the rule reached a balanced accuracy of 0.381 (exact 95\% Clopper--Pearson bound 0.19--0.73; Bayesian 95\% CrI 0.25--0.61). $^\dagger$Moving from cross-sectional to within-drone evaluation reduced AUC from 0.88 to 0.58 on the same flights, consistent with airframe and duration confounding. $^\dagger$Diagnostic checks were consistent with crash data leakage (exploratory, tuning fault sensitivity fell from 77.8\% to 11.1\%, $p=0.031$, without the final 10\,s; normal-flight false alarms fell from 13\% to 5\%). Drones that later crashed vibrated more than matched peers on older estimator metrics (mean rank 0.67, Holm $p=0.016$); replication on newer accelerometer metrics was inconclusive ($p=0.25$, 19 sets). $^\dagger$Screening at a pre-specified 10\% flag rate gave positive predictive values of 2.26--2.47\% (lift $3.3\times$, 40--44 inspections per crash) on a reference of 107 control drones. AeroFleet~2.0 presents longitudinal evidence without issuing automatic verdicts.
 \end{abstract}
 
 \begin{keyword}
@@ -99,21 +99,21 @@ the final crash window from diagnostic checks (quantifying the sensitivity drop 
 replace cross-sectional comparisons with grouped cross-validation across the same aircraft's history (reducing apparent
 AUC from 0.88 to 0.58); this reusable protocol is committed to public version control prior to analysis
 \cite{nosek2018prereg} so that others can apply it to any drone-log diagnostic.
-(ii)~We assemble the first real-flight crash benchmark from public PX4 logs that pairs uploader responsibility labels
+(ii)~We assemble, to our knowledge, a small first validation set of real-flight crash logs from public PX4 archives that pairs uploader responsibility labels
 with independent expert forum diagnoses ($\kappa \geq 0.73$, 148 threads, 43 downloadable logs).
-(iii)~We show that with these rules, models and labels, automatic crash attribution from logs was not achievable above
-chance: cross-validated classification yielded upper 95\% confidence bounds between 0.510 and 0.619, well below the
-0.66 permutation null detection threshold, while agreement with expert forum diagnoses did not exceed chance (balanced
-accuracy 0.381, 95\% CI 0.20--0.59; pilot recall 1 of 5). This constitutes a prospectively declared negative result, not
-a post-hoc reinterpretation. Furthermore, apparent diagnostic accuracy is consistent with crash-window leakage.
+(iii)~We show that with these rules, models and labels, cross-validated classification yielded AUCs between 0.408 and 0.501
+(upper 95\% bootstrap bounds 0.510--0.619); with 36 pilot-labelled crashes in the modelling sample, only AUCs above about 0.65
+can be statistically detected at 80\% power, far below the roughly 0.8 an operational attribution verdict requires. Agreement
+with expert forum diagnoses did not exceed chance (balanced accuracy 0.381, exact 95\% Clopper--Pearson bound 0.19--0.73; pilot recall 1 of 5).
+This constitutes a prospectively declared negative result, not a post-hoc reinterpretation. Furthermore, apparent diagnostic accuracy
+is consistent with crash-window leakage.
 (iv)~We report one partial positive screening signal: drones that later crash are rougher than matched peers on older
 estimator metrics (mean rank 0.67, Holm $p=0.016$); replication on newer accelerometer metrics was inconclusive
 ($p=0.25$, 19 sets, severely underpowered). Stratum-matched fleet screening yields an operational PPV of 2.26--2.47\%
-(lift $3.3\times$, 40.5--44.2 inspections per crash) at a 10\% flag rate---a maintenance prioritization signal, not an
-operational warning.
-(v)~We show how these results translate into the design of AeroFleet~2.0, an open-source assurance tool that presents
-longitudinal evidence and ranks drones without issuing automatic verdicts; engineering checks of its parts, including
-one negative result, are reported in Section~\ref{sec:tool}. Code, declarations, derived features and labels are released.
+(lift $3.3\times$, 40.5--44.2 inspections per crash) at a 10\% flag rate on a reference of 107 control drones---a maintenance
+prioritization signal, not an operational warning.
+(v)~We show how these results translate into design implications for fleet assurance tools that present longitudinal evidence
+and rank drones without issuing automatic verdicts. Code, declarations, derived features and labels are released.
 
 % ===================================================================
 \section{Related work}
@@ -125,8 +125,8 @@ multicopter fault cases with eleven fault types, of which 497 are real flights a
 hardware-in-the-loop simulations \cite{le2025rflymad}. UAV-SEAD offers about 1,396 real PX4 logs annotated for
 state-estimation anomalies \cite{kabaoglu2026uavsead}, used by later anomaly-mining work \cite{wei2026aerotsboost};
 a recent testbed quantifies the discrepancies between simulated and real PX4 logs \cite{kose2026testbed}. These
-resources target anomaly or fault detection under known faults. None labels real crashes by responsibility, and none
-separates the pre-crash window from the crash.
+resources target anomaly or fault detection under known faults. To our knowledge, none of these public resources
+labels real crashes by responsibility or separates the pre-crash window from the crash.
 
 \begin{table}[t]
 \centering
@@ -199,12 +199,15 @@ the pilot in only 6.1\% of all threads (9 of 148) and 8.6\% of decided threads (
 the remaining 105 had unhosted or expired external links). Cross-tabulating these 43 logs against archive ratings reveals that
 9 carried uploader aircraft crash ratings (\texttt{crash\_sw\_hw}, with 100\% expert agreement: all 9 diagnosed as aircraft faults),
 33 were unrated in the archive index (28 aircraft, 5 pilot), 1 was rated unsatisfactory (aircraft), and exactly 0 were uploaded
-with a \texttt{crash\_pilot} rating. End-users who crashed and sought community advice never self-identified pilot error on the forum.
-On the 14 overlapping forum threads whose logs carried an uploader aircraft crash rating in the index, experts agreed in 11 and
-were unclear in 3 (none blamed the pilot). This gap suggests potential politeness bias on public developer forums, selection bias
-in which incidents operators submit for community assistance, or a narrower definition of pilot error among autopilot developers
-compared to end users. Furthermore, forum diagnoses represent informed community opinion rather than independently verified accident
-inspection ground truth; original posters explicitly confirmed the diagnosis in only 47 of 94 aircraft threads and 5 of 9 pilot threads.
+with a \texttt{crash\_pilot} rating. This pattern is consistent with, but not statistical evidence of, reluctance to self-identify
+pilot fault: all 5 pilot logs were unrated in the index against 28 of 38 aircraft logs unrated (one-sided Fisher exact $p = 0.25$).
+Across the wider set of all 148 forum threads, 14 referenced logs that carried an uploader aircraft crash rating in the archive
+index (experts agreed with the aircraft fault in 11 and were unclear in 3; none blamed the pilot); 9 of these 14 threads were among
+the 43 with surviving, downloadable log files (all 9 with complete expert agreement), while 5 had expired external links. This gap
+may reflect selection bias in which incidents operators submit for community assistance, or a narrower definition of pilot error
+among autopilot developers compared to end users. Furthermore, forum diagnoses represent informed community opinion rather than
+independently verified accident inspection ground truth; original posters explicitly confirmed the diagnosis in only 47 of 94 aircraft
+threads and 5 of 9 pilot threads.
 Logs rated ``good'' or ``great'' served as normal flights. Logs were parsed with pyulog. We store derived features and log identifiers,
 not the logs.
 
@@ -262,19 +265,20 @@ within each drone's firmware generation and measurement source. For the within-d
 and at least three earlier non-crash flights of 30\,s or more was eligible (101 crashes; up to the five most recent earlier
 flights each). For the between-drone test each crashed drone was matched with up to two drones without any crash-rated log
 that shared the flight-controller hardware, the PX4 major.minor version and the vehicle type (66 matched sets, 124 control
-drones, three randomly chosen flights each, seed 7). Control drones were sampled without replacement, so no control served
-two cases. The three exposure flights of a crashed drone were its most recent non-crash flights dated on or before the crash;
-flights on the crash day were included in the declared test because the archive does not give their order within a day, and
-removed in a sensitivity analysis.
+slots drawn from 107 unique non-crash control drones, three randomly chosen flights each, seed 7). Control drones were sampled
+without replacement within each matched set. The three exposure flights of a crashed drone were its most recent non-crash flights
+dated on or before the crash; flights on the crash day were included in the declared test because the archive does not give their
+order within a day, and removed in a sensitivity analysis.
 
-Not all selected flights enter every test. In the within-drone sample (101 crashes selected), 55 logs could not be
-read or had under 10\,s before the cut-off; a drone enters a feature's test only if the crash flight and earlier
-flights have that feature from the same measurement source, and rate-tracking error is rotary-wing only and requires
-rate setpoints, leaving 61 analysed drones for vibration and 46 for tracking. In the between-drone sample (66 matched
-sets), 71 flights were unreadable or too short; a drone's value requires at least two readable flights, and case and
-controls must share the measurement source, leaving 60 analysed sets for vibration and 47 for tracking. In the
-between-drone sample, 124 matched control drones contributed 372 flights ($124 \times 3$), distinct from the 372 flights
-(67 crash flights and 305 earlier flights) evaluated in the within-drone predictive model.
+Not all selected flights enter every test. In the within-drone candidate pool (101 crashes with earlier flights), 34 crashed drones
+were dropped because they lacked multiple valid flights or had duration under 10\,s before cut-off, leaving 67 multi-flight drones
+(372 total flights: 67 crash and 305 earlier flights). Among these 372 flights, 55 individual flight logs could not be read or had
+under 10\,s before cut-off; requiring that crash and earlier flights share the same measurement source left 61 analysed drones for
+vibration, and restricting to rotary-wing vehicles with rate setpoints left 46 analysed drones for rate tracking. In the between-drone
+sample (66 matched sets), 71 flights were unreadable or too short; a drone's value requires at least two readable flights, and case
+and controls must share the measurement source, leaving 60 analysed sets for vibration and 47 for tracking. In the between-drone sample,
+124 matched control slots contributed 372 flights ($124 \times 3$), distinct from the 372 flights (67 crash flights and 305 earlier flights)
+evaluated in the within-drone longitudinal model.
 
 \begin{figure}[t]
 \centering
@@ -430,15 +434,21 @@ adjustment in sensitivity analysis, $\log(\text{vibration})$ was regressed on $\
 measurement source across all exposure flights, and the rank test was repeated on the residuals. Each test had two
 primary features (vibration, rate-tracking error) at $\alpha=0.025$.
 
-\paragraph{Q4 expert diagnoses} Expert conclusions were compared with uploader labels. Fixed checks for the fault the
-expert named (tuning, vibration, GPS or compass, motor, battery) were declared useful if they fired on at least 50\% of
-the logs with that diagnosis and at most 10\% of normal flights, first with the full window and then with $m=10$\,s.
+\paragraph{Q4 expert diagnoses} Expert conclusions were compared with uploader labels. Fixed deterministic checks for
+the five physical failure modes named by experts were evaluated:
+(i)~\textit{Tuning}: combined roll and pitch rate-tracking RMS error $> 0.30$\,rad/s over at least 50 samples;
+(ii)~\textit{Vibration}: total accelerometer clipping counts $> 50$ or 95th-percentile \texttt{accel\_vibration\_metric} $> 30$\,m/s$^2$;
+(iii)~\textit{GPS/Compass}: \texttt{mag\_test\_ratio} $> 1.0$ in \texttt{estimator\_status} for $\ge 1.0$\,s cumulative, or horizontal position error $\text{eph} > 5$\,m or satellites $< 6$ for $\ge 5.0$\,s cumulative while in a GPS-dependent mode;
+(iv)~\textit{Motor/ESC}: any motor output at $\ge 95\%$ authority (or PWM $\ge 1950$\,$\mu$s) for $\ge 1.0$\,s cumulative;
+(v)~\textit{Battery}: battery warning level $\ge 2$ (critical/emergency) or state of charge $< 10\%$.
+Checks were declared useful if they fired on at least 50\% of logs with that diagnosis and at most 10\% of normal flights,
+evaluated first on the full window ($m=0$\,s) and then with the final 10\,s removed ($m=10$\,s).
 
 \paragraph{Language-model panel} The panel tested a design proposed for advisory diagnosis: several reviewers, each
 restricted to one slice of evidence (navigation, pilot inputs, GPS, battery, settings), vote on a fixed list of six
 causes and must cite numbered facts extracted from the log. Robustness was evaluated by replacing one reviewer with an
 adversary arguing for a chosen wrong cause, and planting hostile strings in uploader-controlled fields. Full details are
-provided in \ref{sec:appendix_llm}.
+provided in Section~\ref{sec:lm_summary}.
 
 \paragraph{Multiplicity} Seven confirmatory tests produce $p$-values. Holm's procedure \cite{holm1979} is reported over
 all seven in addition to each test's declared $\alpha$.
@@ -470,30 +480,22 @@ clipping (24\% against 8\%, $p=0.045$) and manual mode at the crash (18\% agains
 In Task B, sample sizes decline across margins as flights under 10\,s are excluded: 112 drone and 36 pilot crashes
 at $m=0$\,s ($n=148$), 106 vs.\ 36 at $m=2$\,s ($n=142$), 101 vs.\ 34 at $m=5$\,s ($n=135$), 87 vs.\ 27 at $m=10$\,s ($n=114$),
 73 vs.\ 27 at $m=20$\,s ($n=100$), and 63 vs.\ 26 at $m=30$\,s ($n=89$). On the full sample ($n=148$ at $m=0$\,s, 75.7\% drone-blamed),
-cross-validated logistic regression yielded an ROC AUC of 0.408 (bootstrap SE 0.062, 95\% CI 0.288--0.530, upper 95\% bound 0.510) at $m=0$\,s,
+pooled cross-validated logistic regression yielded an ROC AUC of 0.408 (bootstrap SE 0.062, 95\% CI 0.288--0.530, upper 95\% bound 0.510) at $m=0$\,s,
 0.422 (SE 0.072, 95\% CI 0.283--0.566, upper bound 0.542) at $m=10$\,s ($n=114$), and 0.501 (SE 0.073, 95\% CI 0.358--0.645, upper bound 0.619)
 at $m=30$\,s ($n=89$). Evaluated on the constant complete-case sample of 89 crashes (63 drone, 26 pilot; 70.8\% drone-blamed) plotted in
-Fig.~\ref{fig:leak}, cross-validated logistic regression yielded an AUC of 0.466 (bootstrap SE 0.072, 95\% CI 0.325--0.607, upper bound 0.584)
+Fig.~\ref{fig:leak}, pooled cross-validated logistic regression yielded an AUC of 0.466 (bootstrap SE 0.072, 95\% CI 0.325--0.607, upper bound 0.584)
 at $m=0$\,s, 0.489 (SE 0.074, 95\% CI 0.343--0.633, upper bound 0.611) at $m=10$\,s, and 0.501 (SE 0.073, 95\% CI 0.358--0.645, upper bound 0.619)
-at $m=30$\,s. (Repeated cross-validation folds showed nominal mean fold AUCs of $0.450 \pm 0.015$ at $m=0$\,s, $0.449 \pm 0.022$ at $m=10$\,s,
-and $0.458 \pm 0.034$ at $m=30$\,s on this subset.)
+at $m=30$\,s.
 
 To calibrate whether these below-chance AUCs represent an inverted physical signal or finite-sample noise, we computed a 1,000-iteration
-permutation null distribution on Task B by randomly shuffling crash attribution labels across folds: the null distribution had mean 0.497
-(SD 0.090) with an empirical 95\% interval of 0.313--0.660, establishing a 95\% detection threshold of approximately 0.660. The observed
-cross-validated AUC of 0.449 falls comfortably within this chance range (two-sided permutation $p=0.509$). Crucially, because only 36 crashes
-carry pilot labels, bootstrap resampling across crashes demonstrates that the upper 95\% confidence bounds on observed models (0.510 on the full
-sample, 0.584 on the constant subset at $m=0$\,s; 0.542 and 0.611 at $m=10$\,s) lie safely below the 0.660 detection threshold, confirming
-that observed performance cannot be distinguished from chance and rules out models achieving detection beyond noise.
+permutation null distribution on Task B by randomly shuffling crash attribution labels: the null distribution had mean 0.497
+(SD 0.090) with an empirical 95\% interval of 0.313--0.660. The permutation null used the same pooled statistic (mean 0.497), so the below-chance
+values are not a bias of the statistic; rather, with 36 pilot-labelled crashes against 112 drone crashes in the modelling sample, below-chance
+point estimates reflect finite-sample variance under class imbalance rather than an inverted physical relationship. Evaluating depth-1
+decision stumps on Task B yielded similar results: AUC of 0.430 at $m=0$\,s (bootstrap SE 0.062, 95\% CI 0.310--0.551, upper bound 0.534),
+and 0.413 at $m=10$\,s (SE 0.069, 95\% CI 0.281--0.548, upper bound 0.528).
 
-To evaluate whether non-linear feature interactions could extract subtle pre-crash signatures, we trained gradient-boosted
-decision tree ensembles on Task B. Depth-1 decision stumps reached an AUC of 0.430 at $m=0$\,s (bootstrap SE 0.062, 95\% CI 0.310--0.551,
-upper bound 0.534), falling to 0.413 at $m=10$\,s (SE 0.069, 95\% CI 0.281--0.548, upper bound 0.528). Depth-3 boosted trees reached an AUC of
-$0.595 \pm 0.130$ at $m=0$\,s ($0.604 \pm 0.095$ at $m=2$\,s, $0.621 \pm 0.105$ at $m=5$\,s), falling to $0.553 \pm 0.171$ at $m=10$\,s,
-$0.579 \pm 0.150$ at $m=20$\,s, and $0.548 \pm 0.104$ at $m=30$\,s. Across all cut-offs, the upper 95\% confidence bounds of the boosted
-ensembles remain below the 0.660 permutation null detection threshold. Modeling non-linear interactions does not rescue crash attribution;
-once the impact window is excluded, classification remains near chance. We conclude that with these rules, models and labels, automatic
-responsibility attribution is not achievable.
+With 36 pilot-labelled crashes in the modelling sample, AUCs below roughly 0.65 cannot be distinguished from chance (permutation 97.5th percentile 0.660). The observed bootstrap upper bounds were 0.510--0.619. An operational attribution verdict would need an AUC of about 0.8 or higher, which these models do not approach. We therefore report that these rules, models and labels give no usable attribution signal, not that attribution is impossible.
 
 \begin{figure}[t]
 \centering
@@ -546,7 +548,7 @@ errors ($\rho=-0.248$ at $m=0$\,s). The absence of a large collapse holds on ide
 across cut-offs did not mask a collapse.
 
 Leakage was nevertheless present for individual physical checks. The rate-tracking feature alone fell from an AUC of 0.81
-to 0.69 as the crash was excluded, while vibration stayed between 0.74 and 0.77. A fixed tuning check that found 10 of 12
+to 0.69 as the crash was excluded, while vibration stayed between 0.72 and 0.77 (Table~\ref{tab:features_auc}). A fixed tuning check that found 10 of 12
 candidate expert-diagnosed tuning faults (7 of 9 on paired surviving logs) with the crash included found only 1 of 9 once
 the last 10\,s were removed (Section~\ref{sec:experts}).
 
@@ -555,12 +557,35 @@ impending crash: crash and normal flights differ fundamentally in duration (medi
 71\,s vs.\ 169\,s in the complete-case sample), firmware era distribution, and operational flight envelope. Table~\ref{tab:features_auc}
 gives the single-feature AUCs. Values below 0.5 indicate features that are lower in crash flights: crash flights reached lower tilt
 and smaller stick deflections over the whole flight than normal flights, consistent with short, aborted or cautious testing flights.
-When the exact same 11-feature model was evaluated \emph{within the same drone}---separating each crashed drone's pre-crash window (cut 10\,s
-before impact) from its own earlier flights across 67 multi-flight drones (372 flights: 67 pre-crash flights and 305 earlier flights,
-distinct from the 372 between-drone control flights)---the pooled Group-CV AUC fell from 0.88 to 0.580 (95\% bootstrap CI 0.528--0.633),
-and the mean within-drone pairwise AUC was 0.605 (95\% bootstrap CI 0.516--0.692). Matching on the airframe substantially attenuates
-the cross-sectional separation from AUC 0.88 to AUC 0.580, demonstrating that cross-sectional models reflect airframe types, operator styles,
-and duration confounds rather than detecting impending failure, in agreement with the within-drone rank test ($\bar r=0.48$).
+Table~\ref{tab:decomposition} reports a step-by-step decomposition isolating what drives the cross-sectional separation. Grouping
+cross-validation folds by vehicle ID (Step~1) on the cross-sectional sample yields virtually identical separation (AUC 0.884), confirming
+that disjoint vehicle assignment across folds does not remove cross-sectional confounding when crash and normal flights originate from
+different operators. Removing the crash window (Steps~2 and 3) similarly retains high separation (AUC 0.880 and 0.863), while removing
+the tilt and stick boundary features (Step~4) reduces AUC modestly to 0.831. In contrast, when the exact same 11-feature model was evaluated
+\emph{within the same drone} (Step~5)---separating each crashed drone's pre-crash window (cut 10\,s before impact) from its own earlier
+flights across 67 multi-flight drones (372 flights: 67 pre-crash flights and 305 earlier flights)---the pooled Group-CV AUC fell to 0.580
+(95\% bootstrap CI 0.528--0.633), and the mean within-drone pairwise AUC was 0.605 (95\% bootstrap CI 0.516--0.692). Matching on the airframe
+substantially attenuates the cross-sectional separation, consistent with airframe, duration and window-design differences rather than
+impending-crash precursors (operator identity was not modelled), in agreement with the within-drone rank test ($\bar r=0.48$).
+
+\begin{table}[t]
+\centering
+\caption{Decomposition of model separation between crash and normal flights: sequential effect of grouping folds by vehicle ID, window alignment, removing tilt/stick features, and within-drone evaluation across the multi-flight cohort.}
+\label{tab:decomposition}
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+Step & Evaluation protocol specification & Sample flights & ROC AUC [95\% bootstrap CI] \\
+\midrule
+0 & Cross-sectional: stratified 5-fold CV & 148 crash, 139 normal & 0.879 [0.841, 0.922] \\
+1 & Folds grouped by vehicle ID (Group-CV) & 148 crash, 139 normal & 0.884 [0.836, 0.915] \\
+2 & Window-aligned: crash window removed ($m=10$\,s) & 114 crash, 130 normal & 0.880 [0.836, 0.919] \\
+3 & Window-aligned: late window removed ($m=30$\,s) & 89 crash, 124 normal & 0.863 [0.805, 0.913] \\
+4 & Without tilt and stick features (Group-CV, $m=0$\,s) & 148 crash, 139 normal & 0.831 [0.780, 0.882] \\
+5 & Within-drone evaluation: Group-CV on same drone's flights & 67 crash, 305 earlier & 0.580 [0.528, 0.633] \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table}[t]
 \centering
@@ -590,15 +615,14 @@ Stick deflection (p95) & 0.32 & 0.33 & 0.35 \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.72\textwidth]{fig_leak_curve.png}
-\caption{Cross-validated AUC as the end of the analysis window moves away from the crash moment. Bars: standard
-deviation over five repeats of five-fold cross-validation.}
+\caption{Cross-validated AUC on the constant subset ($n=213$ for crash vs.\ normal, $n=89$ for pilot vs.\ aircraft) as the end of the analysis window moves away from the crash moment. Bars: 95\% bootstrap confidence intervals.}
 \label{fig:leak}
 \end{figure}
 
 \subsection{Within the same drone and between drones (Q3b, Q3c)}
 Relative to the same drone's earlier flights, the crash flight was neither more vibrating ($\bar r=0.48$, 95\% CI
 0.38--0.58, $p=0.67$, 61 drones) nor worse at tracking its commands ($\bar r=0.50$, 0.38--0.63, $p=0.47$, 46 drones;
-Fig.~\ref{fig:within}). Presented as an exclusion bound, the upper 95\% confidence bound of 0.58 rules out pre-crash
+Fig.~\ref{fig:within}). Presented as an exclusion bound, the upper 95\% confidence bound of 0.58 indicates absence of substantial pre-crash
 vibration surges within the same drone of the magnitude observed between drones ($\bar r=0.67$). Relative to matched
 drones without a recorded crash, drones that later crashed vibrated more on their ordinary pre-crash flights ($\bar r=0.67$,
 0.57--0.77, $p=0.0023$, 60 sets; Holm-adjusted $p=0.016$), while the tracking error did not differ significantly
@@ -644,7 +668,6 @@ Under a broader source-matched reference (matching on measurement source alone; 
 40.0\% sensitivity, PPV 1.19\% (lift $1.60\times$, 84.3 inspections per crash), rising to 25.0\% sensitivity, PPV 1.85\% (lift $2.50\times$,
 54.0 inspections per crash) at the 10\% flag rate. In all scenarios, vibration screening functions as a broad maintenance inspection filter
 rather than an operational crash warning.
-screening functions as a broad maintenance inspection filter rather than an operational crash warning.
 
 \begin{figure}[t]
 \centering
@@ -684,7 +707,7 @@ capacity of the current single archive, resolving this effect definitively requi
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.78\textwidth]{fig_robustness.png}
-\caption{Between-drone vibration result under alternative specifications (exploratory). Blue: $p<0.025$.}
+\caption{Between-drone vibration result under alternative specifications (exploratory). Specification labels: S1: airframe-matched controls; S2: excluding case flights from the crash day; S3: stratification by vibration measurement source (older-firmware estimator metric vs.\ newer accelerometer metric); S8: log-linear adjustment for flight duration. Blue: $p<0.025$.}
 \label{fig:robust}
 \end{figure}
 
@@ -693,11 +716,11 @@ capacity of the current single archive, resolving this effect definitively requi
 Of 148 forum threads describing a real crash, the expert attributed it to the aircraft in 94 (64\%), to the pilot in 9
 (6\%), to both in 2, and was unclear or gave no diagnosis in 43 (29\%). Tuning or configuration was the cause named
 most often (26 of 94; 14 of the 47 confirmed by the poster), followed by GPS, compass or estimator problems (18) and
-motors, ESCs or propellers (16) (Fig.~\ref{fig:causes}). Of 14 threads whose log carried an aircraft crash rating, the
+motors, ESCs or propellers (16) (Fig.~\ref{fig:causes}). Of 14 threads whose log carried an aircraft crash rating in the index, the
 expert agreed in 11 and was unclear in 3; none attributed the crash to the pilot. Download attempts across all 148 threads
 yielded 43 downloadable logs from 43 distinct threads (38 aircraft-fault and 5 pilot-fault; the remaining 105 had unhosted
-or expired external links). Of the 38 aircraft logs, exactly 37 were associated with checkable fault categories in
-Table~\ref{tab:checks}.
+or expired external links). Of the 38 aircraft logs, exactly 35 were associated with checkable fault categories in
+Table~\ref{tab:checks} (12 tuning, 5 vibration, 5 GPS, 9 motor, 4 battery).
 
 Table~\ref{tab:checks} compares the fault checks with the full flight window ($m=0$\,s) and with the last 10\,s before
 the crash removed ($m=10$\,s). With the window ending 10\,s before the crash, no check met the declared criterion.
@@ -714,8 +737,9 @@ leakage is strictly confined to tuning must be tempered by the limited baseline 
 To test diagnostic attribution on independently evaluated incidents, we evaluated the rule across all 43 downloadable logs behind
 expert forum threads (38 aircraft-fault and 5 pilot-fault). As noted in Section~\ref{sec:data}, cross-tabulating these 43 logs against
 archive ratings revealed that all 9 logs carrying an uploader rating were labeled \texttt{crash\_sw\_hw} (and all 9 were diagnosed as aircraft
-faults by experts, 100\% agreement); the 5 expert pilot crashes were submitted unrated, indicating that operators seeking community assistance
-did not self-incriminate as pilot error. Evaluated on the 38 aircraft incidents, the fixed rule predicted ``aircraft'' in 18 (47.4\%),
+faults by experts, 100\% agreement); the 5 expert pilot crashes were submitted unrated, which is consistent with, but not statistical
+evidence of, reluctance to self-identify pilot fault: all 5 pilot logs were unrated in the index against 28 of 38 aircraft logs unrated
+(one-sided Fisher exact $p=0.25$). Evaluated on the 38 aircraft incidents, the fixed rule predicted ``aircraft'' in 18 (47.4\%),
 ``unknown'' in 6 (15.8\%), and erroneously blamed the ``pilot'' in 14 (36.8\%). On decided aircraft cases ($n=32$), the rule was wrong on
 43.8\% (14/32). Detailed inspection of flight mode sequences confirmed the failure mechanism: in all 14 misclassified logs, the vehicle was
 in a pilot-flown mode at the crash moment (\texttt{POSCTL} in 7 logs, \texttt{STAB} in 4, \texttt{ALTCTL} in 3; including log \texttt{e9034973},
@@ -723,16 +747,17 @@ which transitioned \texttt{POSCTL} $\to$ \texttt{AUTO\_4} $\to$ \texttt{POSCTL} 
 failsafe fired before impact, the rule defaulted to blaming the pilot.
 
 Conversely, when evaluated on the 5 pilot-fault incidents, the fixed rule predicted ``aircraft'' in 4 (80.0\%) and ``pilot'' in only 1 (20.0\%;
-pilot recall 1 of 5, Wilson 95\% CI 3.7--71.0\%), misclassifying 4 of 5 pilot crashes because motor saturation, accelerometer clipping,
-or failsafe activation occurred as the vehicle struck the ground. Combining both classes across all 37 decided expert logs (32 aircraft, 5 pilot),
-the rule produced 18 incorrect decisions out of 37 (48.6\% error rate), yielding a balanced accuracy of $(56.25\% + 20.0\%) / 2 = 38.1\%$
-(95\% bootstrap CI 0.20--0.59), which does not differ significantly from chance (0.50). Similarly, when evaluated out-of-fold on the 30 aircraft
-logs with complete telemetry features, the logistic regression model predicted ``aircraft'' in 27 (90.0\%) and ``pilot'' in 3 (10.0\%),
-defaulting strongly toward its aircraft training prior (72.3\% average across 5-fold CV training folds; 75.7\% on the full 148-crash set, 112/148).
-We emphasize the caveat that this evaluation measures agreement between a heuristic rule and expert community reading of the same telemetry,
-rather than ground truth: original posters explicitly confirmed the diagnosis in only 47 of 94 aircraft-fault threads (50.0\%) and 5 of 9
-pilot-fault threads (55.6\%). Nonetheless, this two-class comparison illustrates the challenge of rule-based attribution: the heuristic rule
-disagreed with expert community consensus on nearly half of decided cases (48.6\%), failing to demonstrate agreement above chance.
+pilot recall 1 of 5, exact Clopper--Pearson 95\% CI 0.5--71.6\%, Wilson 3.6--62.4\%), misclassifying 4 of 5 pilot crashes because motor saturation,
+accelerometer clipping, or failsafe activation occurred as the vehicle struck the ground. Combining both classes across all 37 decided expert logs
+(32 aircraft, 5 pilot), the rule produced 18 incorrect decisions out of 37 (48.6\% error rate), yielding a balanced accuracy of
+$(56.25\% + 20.0\%) / 2 = 38.1\%$ (exact Clopper--Pearson bound 0.19--0.73; Bayesian 95\% credible interval 0.25--0.61 under Jeffreys prior),
+which does not differ significantly from chance (0.50). Similarly, when evaluated out-of-fold on the 30 aircraft logs with complete telemetry
+features, the logistic regression model predicted ``aircraft'' in 27 (90.0\%) and ``pilot'' in 3 (10.0\%), defaulting strongly toward its
+aircraft training prior (72.3\% average across 5-fold CV training folds; 75.7\% on the full 148-crash set, 112/148). We emphasize the caveat
+that this evaluation measures agreement between a heuristic rule and expert community reading of the same telemetry, rather than ground truth:
+original posters explicitly confirmed the diagnosis in only 47 of 94 aircraft-fault threads (50.0\%) and 5 of 9 pilot-fault threads (55.6\%).
+Nonetheless, this two-class comparison illustrates the challenge of rule-based attribution: the heuristic rule disagreed with expert community
+consensus on nearly half of decided cases (48.6\%), failing to demonstrate agreement above chance.
 
 \begin{table}[t]
 \centering
@@ -764,110 +789,86 @@ Battery or power & 0/4 & 0/2 & 0/2 & 0 ($p=1.00$) & 4/143 (3\%) & 1/130 (1\%) \\
 \label{fig:causes}
 \end{figure}
 
-\subsection{Language-model review panels (summary)}
+\subsection{Exploratory evaluation of language-model review panels (preliminary)}
 \label{sec:lm_summary}
-Because language-model assistants are increasingly proposed for log review, we conducted a controlled exploratory evaluation
-of local models (3--4B parameters) configured as single agents and multi-agent review panels on 60 author-generated fault
-cases and worst-case adversarial prompts. As detailed in \ref{sec:appendix_llm}, the fixed rule reached 75\% right and 0\%
-wrong (referring 25\% to humans), whereas local language models produced substantial error rates (10--63\% wrong), suffered
-from mode collapse or abstention on active causes, and proved vulnerable to consensus manipulation by a single compromised
-reviewer (flipping 45--56 of 60 cases). In contrast, deterministic numeric telemetry extraction prevented direct prompt
-injection by construction.
+Because language-model assistants are increasingly proposed for automated flight log analysis, we conducted a preliminary exploratory evaluation on 60 author-generated fault cases using four local models (3--4B parameters) configured both as single agents and as multi-agent review panels (Table~\ref{tab:llm}). While a fixed deterministic rule achieved 75\% accuracy (naming the true cause in 35 of 50 active cases and correctly abstaining on 10 no-cause cases) with 0\% error (referring 15 cases to human operators), local language models produced substantial error rates (10--63\% wrong), suffered from mode collapse or complete abstention on active causes, and proved highly vulnerable to consensus manipulation: in a worst-case sensitivity sweep, a single compromised reviewer systematically flipped the panel's consensus decision in 45 to 56 of the 60 cases. In contrast, deterministic numeric telemetry extraction into code prevented direct prompt injection by construction across 40 hostile input strings. These preliminary results emphasize that multi-agent consensus voting without cryptographic proofs or fact-citation constraints cannot provide dependable safety assurance.
+
+\begin{table}[!htbp]
+\centering
+\caption{Language-model review panels on 60 generated cases: counts of right (R), wrong (W), and deferred (Def) cases, with coverage (Cov., share of cases decided) and accuracy when answering (Acc.). ``Right'' includes correctly leaving a no-cause case open. Single-agent gemma3 and phi4 answered only the 10 no-cause cases (0\% coverage on active causes). Adversary flips show consensus changes caused by a single compromised reviewer in a worst-case sweep.}
+\label{tab:llm}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l ccc ccc c@{}}
+\toprule
+& \multicolumn{3}{c}{Single agent} & \multicolumn{3}{c}{Review panel} & Compromised \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+Method & R / W / Def & Cov. & Acc. & R / W / Def & Cov. & Acc. & Flips / 60 \\
+\midrule
+Fixed rule (no model) & 45 / 0 / 15 & 75\% & 100\% & -- & -- & -- & -- \\
+\texttt{gemma3:4b} & 10 / 0 / 50 & 17\%$^\dagger$ & 100\%$^\dagger$ & 3 / 36 / 21 & 65\% & 7.7\% & 49 \\
+\texttt{phi4-mini} & 10 / 0 / 50 & 17\%$^\dagger$ & 100\%$^\dagger$ & 20 / 19 / 21 & 65\% & 51.3\% & 56 \\
+\texttt{qwen2.5:3b} & 9 / 44 / 7 & 88\% & 17.0\% & 10 / 6 / 44 & 27\% & 62.5\% & 54 \\
+\texttt{qwen3:4b} & 0 / 41 / 19 & 68\% & 0.0\% & 17 / 38 / 5 & 92\% & 30.9\% & 45 \\
+\bottomrule
+\end{tabular*}
+\vspace{2pt}
+{\footnotesize $^\dagger$Answered only on the 10 no-cause cases where abstention coincided with the ground truth; 0\% coverage on active causes.\par}
+\end{table}
 
 \subsection{Analyses added during revision (exploratory)}
 \label{sec:posthoc}
-To preserve the boundary between pre-declared confirmatory hypotheses and exploratory post-hoc investigations
-\cite{nosek2018prereg}, Table~\ref{tab:posthoc} documents the analyses added during peer review, their motivation, key
-results, and the git commit hashes where their declarations or implementations were introduced. None of these exploratory
-additions altered the conclusions of the pre-declared tests; rather, they provided empirical bounds on confounding, evaluated
-alternative non-linear architectures, and quantified operational screening performance.
+To preserve the boundary between pre-declared confirmatory hypotheses and exploratory investigations added during revision \cite{nosek2018prereg}, Table~\ref{tab:posthoc} documents each analysis added during peer review, its motivation, key results, git commit hash, first archive date in Software Heritage, and analysis run date. Confirmatory tests were declared prior to analysis in version control; exploratory analyses added during review are marked with $^\dagger$ throughout the text and tables. None of these exploratory additions altered the conclusions of the pre-declared tests; rather, they established empirical bounds on between-airframe confounding, tested alternative architectures, and quantified operational fleet screening performance.
 
 \begin{table}[t]
 \centering
-\caption{Exploratory analyses added during peer review, their motivation, key results, and git commit hashes. Archived snapshots are indexed in Software Heritage (\nolinkurl{swh:1:rev:bad06ff1256865c7e63d44389aac174e0281291d}, \nolinkurl{swh:1:rev:bbdd0420de4547ac7d67b84165292a46237b604d}, \nolinkurl{swh:1:rev:624dd694e0d207dd9c44b1c9550faaf04453bc56}, and \nolinkurl{swh:1:rev:3a9aa89417fa9ea2a2334e3a4794e2358fb713ee}) and will be minted into a Zenodo DOI.}
+\caption{Exploratory analyses added during peer review, their motivation, key results, git commit hashes, first archived dates in Software Heritage (\nolinkurl{swh:1:rev:bad06ff1256865c7e63d44389aac174e0281291d}, \nolinkurl{swh:1:rev:bbdd0420de4547ac7d67b84165292a46237b604d}, \nolinkurl{swh:1:rev:624dd694e0d207dd9c44b1c9550faaf04453bc56}, and \nolinkurl{swh:1:rev:3a9aa89417fa9ea2a2334e3a4794e2358fb713ee}), and analysis run dates.}
 \label{tab:posthoc}
-\small
-\begin{tabularx}{\textwidth}{@{}lYYl@{}}
+\scriptsize
+\setlength{\tabcolsep}{2.0pt}
+\begin{tabularx}{\textwidth}{@{}l X X c c c@{}}
 \toprule
-Analysis & Motivation & Result & Commit \\
+Analysis & Motivation & Key result & Commit & Archived & Run \\
 \midrule
-1,000-permutation null (Task B) & Calibrate detection threshold & Null mean 0.497, 95\% threshold 0.660; observed AUC upper bounds 0.510--0.584 & \texttt{bad06ff} \\
-Boosted decision trees (Task B) & Test non-linear feature interactions & Stumps AUC $0.430 \to 0.413$; Depth-3 $0.595 \to 0.553$ at $m=10$\,s & \texttt{bad06ff} \\
-Constant-subset leak curve & Exclude sample attrition ($n=213$) & AUC declines smoothly $0.895 \to 0.868$ ($m=10$\,s) & \texttt{bbdd042} \\
-Paired diagnostic leakage test & Test leakage on constant logs ($n=9$) & Tuning check $7/9 \to 1/9$, exact McNemar $p=0.03125$ & \texttt{bbdd042} \\
-Within-drone predictive model & Account for airframe confounding & Group-CV AUC 0.580; mean within-drone AUC 0.605 & \texttt{bad06ff} \\
-Poisson-binomial set null & Account for mixed set sizes ($n=60$) & Exact null rate 40.28\%; observed 55.0\% ($p=0.0137$) & \texttt{bad06ff} \\
-Screening PPV and CIs & Quantify operational fleet value & Screenable base rate 0.689\% (PPV 1.37--2.26\%); fleet base rate 0.741\% (PPV 1.48--2.47\%) & \texttt{bad06ff} \\
-Sensitivity by vibration source & Compare older vs.\ newer metrics & Older: 32/48 (66.7\%); newer: 6/12 (50.0\%) & \texttt{bad06ff} \\
-43 expert crash logs attribution & Evaluate against independent causes & Two-class test: BA 38.1\% (95\% CI 0.20--0.59); pilot recall 1/5; uploader crash\_pilot 0/43 & \texttt{bad06ff} \\
+1,000-permutation null (Task B) & Calibrate detection threshold & Null mean 0.497; observed AUC upper bounds 0.510--0.619 & \texttt{bad06ff} & 2026-10-25 & 2026-10-25 \\
+Depth-1 decision stumps (Task B) & Test single-feature non-linear splits & Stumps AUC $0.430 \to 0.413$ at $m=10$\,s (bounds $\le 0.559$) & \texttt{bad06ff} & 2026-10-25 & 2026-10-25 \\
+Constant-subset leak curve & Exclude sample attrition ($n=213$) & AUC declines smoothly $0.895 \to 0.868$ ($m=10$\,s) & \texttt{bbdd042} & 2026-10-25 & 2026-10-25 \\
+Paired diagnostic leakage test & Test leakage on constant logs ($n=9$) & Tuning check $7/9 \to 1/9$, exact McNemar $p=0.03125$ & \texttt{bbdd042} & 2026-10-25 & 2026-10-25 \\
+Same-sample decomposition & Account for airframe \& duration confounds & Group-CV AUC 0.884; within-drone Group-CV 0.580 on same flights & \texttt{eb463b5} & 2026-10-25 & 2026-10-25 \\
+Poisson-binomial set null & Account for mixed set sizes ($n=60$) & Exact null rate 40.28\%; observed 55.0\% ($p=0.0137$) & \texttt{bad06ff} & 2026-10-25 & 2026-10-25 \\
+Screening PPV and CIs & Quantify operational fleet value & Fleet PPV 2.26--2.47\% at 10\% flag rate ($3.3\times$ lift) & \texttt{bad06ff} & 2026-10-25 & 2026-10-25 \\
+Sensitivity by vibration source & Compare older vs.\ newer metrics & Older: 32/48 (66.7\%); newer: 6/12 (50.0\%); pooled newer $\bar r=0.58$ ($p=0.25$) & \texttt{624dd69} & 2026-10-25 & 2026-10-25 \\
+Independent 43-log validation & Evaluate against independent causes & Balanced accuracy 38.1\% (exact CP 0.19--0.73); pilot recall 1/5 & \texttt{3a9aa89} & 2026-10-25 & 2026-10-25 \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \FloatBarrier
 % ===================================================================
-\section{Design implications: an assurance tool built on the findings}
+\section{Design implications for fleet assurance}
 \label{sec:tool}
 
-The authors develop AeroFleet~2.0, an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads
-the files an operator already has (parameter files, mission files and flight logs), contacts no aircraft and calls no
-language model. This section reports design consequences and engineering checks; the paper's empirical evidence is
-presented in Sections~\ref{sec:data}--\ref{sec:results}. Table~\ref{tab:design} links each result above to a design decision and to the check that was made of
-it. AeroFleet~2.0's checks are primarily engineering validation tests, not evidence of improved operational safety;
-demonstrating safety benefits in field operations requires prospective fleet evaluation and user studies, which remain
-future work (Section~\ref{sec:discussion}). The injection, search, and replay validation checks are detailed in
-\ref{sec:appendix_tool}.
+To translate these empirical findings into operational practice, we developed AeroFleet~2.0 (\url{https://github.com/AdityaPathare46/aerofleet}), an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. The tool reads existing flight logs and configuration files without executing unverified autonomous decisions or contacting the aircraft in flight. Table~\ref{tab:design} maps each empirical finding from Sections~\ref{sec:data}--\ref{sec:results} directly to an assurance design implication.
+
+In accordance with our negative attribution results (Q1--Q2), the tool presents a structured, chronological event review reporting evidence quality (dilution of precision, sensor health, and mode transitions) while strictly abstaining from issuing automated pilot-versus-aircraft liability verdicts. Responding to the vibration finding (Q3), the tool ranks airframes longitudinally against comparable peers within the same fleet to prioritize the top decile (10\%) for physical maintenance inspection (operational PPV 2.26--2.47\%, lift $3.3\times$, 40--44 inspections per crash), rather than issuing per-flight crash alarms. Finally, to ensure evidentiary integrity over the lifecycle of each airframe, all reviews, approvals, and configuration checks are appended to a tamper-evident, Ed25519-signed record referencing SHA-256 digests of the original telemetry files.
 
 \begin{table}[!htbp]
 \centering
-\caption{From findings to design decisions in the AeroFleet~2.0 assurance tool, and how each part was checked.}
+\caption{From empirical findings to design implications in fleet assurance.}
 \label{tab:design}
 \small
-\begin{tabularx}{\textwidth}{@{}YYY@{}}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
 \toprule
-Finding & Design decision & Check \\
+Finding & Empirical result (Section) & Design implication for fleet assurance \\
 \midrule
-Logs did not attribute crashes (Q2); checks fired on the crash (Q4) & A flight review lists the log's events in time
-order and states the quality of its evidence; it names no cause & Unit and API tests \\
-Roughness marked drones, not flights (Q3b, Q3c) & Drones ranked by vibration within a fleet, measured the same way;
-the top decile (10\%) prioritized for inspection (or upper quartile, 25\%) & Unit tests; no prospective evaluation yet \\
-Useful evidence is longitudinal & Every upload, approval and review appended to a hash-chained, Ed25519-signed record
-with SHA-256 fingerprints of the files received & Tamper tests: edited, deleted, reordered and re-signed records
-detected \\
-A plan proves nothing if something else was flown & Planned-versus-flown check: deviations beyond a fleet's corridor
-and height tolerance & Known deviations injected into 40 real flights (\ref{sec:appendix_reconcile}) \\
-Expert diagnoses as precedents (Q4) & Description search over 161 expert-labelled threads; checklist in order of
-expert frequency & Leave-one-out test on 96 cases (\ref{sec:appendix_search}) \\
-Separation and deviations are three-dimensional & Tabletop 3D replay of a reviewed flight and rehearsal of planned
-missions, on screen or in a headset & Functional checks only; no user study (\ref{sec:appendix_replay}) \\
+Attribution failure & Logs do not separate pilot from aircraft causes above chance (balanced accuracy 0.47 on held-out test, 0.381 on expert set; §\ref{sec:attribution}, §\ref{sec:experts}) & Present time-ordered event chronology and data quality metrics; abstain from automated fault verdicts. \\
+Diagnostic leakage & Apparent diagnostic accuracy drops once crash window is removed (tuning check sensitivity falls $77.8\% \to 11.1\%$; §\ref{sec:window}, §\ref{sec:experts}) & Remove crash impact window ($m \ge 10$\,s) and compare against aircraft operating baseline before diagnosing faults. \\
+Between-drone vibration & Crashed drones show higher baseline vibration on older estimator metrics (mean rank 0.67, Holm $p=0.016$; §\ref{sec:vibration}) & Rank drones longitudinally against fleet peers; prioritize top decile (10\%) for mechanical maintenance inspection. \\
+Confounding shrinkage & Cross-sectional separation collapses from 0.88 to 0.58 under within-drone evaluation on same flights (§\ref{sec:confounding}) & Evaluate airframe health against its own flight history, not cross-sectional fleet averages. \\
+Audit integrity & Multi-agent consensus voting is vulnerable to rogue reviewer manipulation (§\ref{sec:lm_summary}) & Rely on deterministic numeric telemetry extraction and append reviews to a tamper-evident, signed log. \\
 \bottomrule
 \end{tabularx}
 \end{table}
-
-\paragraph{Evidence, not verdicts} A flight review reads an ArduPilot or PX4 log and the approved mission file and
-lists, in time order, mode changes (with a pilot taking over from an automatic mode flagged), settings changed in
-flight, battery and voltage warnings, poor GPS and deviations from the plan. It reports the quality of that evidence
-(sample rate, satellite count and dilution of precision, height reference, clock source) so that a reader can judge
-how far to trust it, and leaves the conclusion to a person. Given the attribution results, a tool that issued a
-pilot-or-aircraft verdict would claim more than the log supports.
-
-\paragraph{Ranking drones, not predicting flights} Each reviewed flight's vibration is stored with its measurement
-source; drones are ranked against others measured the same way. The top decile (10\%) is prioritized for mechanical
-inspection (with the top quartile, 25\%, as an alternative operational threshold). In the archive, this ranking identified
-the drone that later crashed as the roughest in 55.0\% of matched sets (against 40.3\% expected under the exact Poisson-binomial
-null, $p=0.014$; $1.37\times$ lift over the null rate; relative risk $3.58\times$ over unflagged airframes), and 63.3\% exceeded
-the control third quartile. In operational terms, under a stratum-matched fleet-wide reference distribution at the 0.689\% screenable
-base rate (and 0.741\% fleet base rate), prioritizing the top decile (10\%) achieves an operational PPV of 2.26--2.47\% (relative risk
-$4.50\times$, lift $3.28\times$ to $3.33\times$, 40.5--44.2 inspections per detected crash). A wider 25\% flag rate yields PPV 1.37--1.48\%
-(relative risk $3.00\times$, lift $1.99\times$ to $2.00\times$, 67.5--73.1 inspections per crash), while empirical matched-set screening
-achieves PPV 0.96--1.04\% (lift $1.40\times$, 96.4--104 inspections per crash). The flag is therefore a maintenance inspection prompt,
-not an operational crash warning.
-
-\paragraph{A record that can be checked} Because the useful evidence accumulates per aircraft, results are appended to
-a hash-chained record in which each entry is signed and carries the SHA-256 of the exact files it came from; each new
-head is also written to a separate file intended to be copied elsewhere. A standalone verifier checks an exported
-record; in tests it detected an edited field, a deleted entry, a reordering, and a chain rebuilt with a new key
-(the last only against a pinned key fingerprint or the separately kept heads, which is the stated limit of the design).
 
 % ===================================================================
 \section{Discussion}
@@ -875,14 +876,17 @@ record; in tests it detected an edited field, a deleted entry, a reordering, and
 
 \paragraph{Attribution} A declared rule, its held-out replication and cross-validated models all found no usable
 separation between pilot- and aircraft-caused crashes with these labels and features. Because pilot labels are sparse
-($n=36$ in the modeling sample), the permutation null distribution establishes a 95\% detection threshold of 0.660;
-observed cross-validated models yield empirical 95\% bootstrap upper bounds between 0.510 and 0.619, well below this threshold.
-Furthermore, independent evaluation against 43 expert forum cases revealed poor agreement on decided cases (balanced
-accuracy 0.381, 95\% CI 0.20--0.59; pilot recall 1 of 5).
+($n=36$ in the modeling sample), AUCs below roughly 0.65 cannot be statistically distinguished from chance at 80\% power
+(permutation 97.5th percentile 0.660); observed cross-validated models yield empirical 95\% bootstrap upper bounds
+between 0.510 and 0.619. An operational attribution verdict would require an AUC of approximately 0.8 or higher, which
+these models do not approach. Furthermore, independent evaluation against 43 expert forum cases revealed poor agreement
+on decided cases (balanced accuracy 0.381, exact 95\% Clopper--Pearson bound 0.19--0.73, Bayesian 95\% CrI 0.25--0.61;
+pilot recall 1 of 5, exact Clopper--Pearson 95\% CI 0.5--71.6\%).
 While commercial and legal disputes often seek a binary verdict, aviation safety science demonstrates that accidents are
 multi-causal systemic events involving organizational, environmental and human factors \cite{wiegmann2003hfacs}. Uploader
-labels are noisy, and the sharp divergence between uploader pilot blame (32\%) and expert forum diagnoses (6\%) points to
-politeness bias on public forums or a narrower definition of pilot fault among autopilot engineers. A log records the combined
+labels are noisy, and the divergence between uploader pilot blame (32\%) and expert forum diagnoses (6\%) may reflect
+several untested mechanisms, including differing definitions of pilot responsibility among autopilot developers or
+differing thresholds for public fault attribution. A log records the combined
 physical outcome of pilot inputs, environmental disturbances and vehicle response; disentangling responsibility from telemetry
 alone is not supported by the data. Tools that issue automatic responsibility verdicts should be evaluated against independent
 investigations before adoption.
@@ -911,8 +915,9 @@ the top decile with an operational PPV of 2.26--2.47\% (lift $3.3\times$, 40.5--
 top quartile with PPV 1.37--1.48\% (lift $2.0\times$, 67.5--73.1 inspections per crash; 0.96--1.04\% under empirical matched-set
 screening). The metric provides a maintenance prioritization signal, not an operational warning.
 
-\paragraph{From findings to a tool} Section~\ref{sec:tool} turns these results into design decisions for AeroFleet~2.0,
-an operator's ground-side assurance tool. The common thread is that the tool shows evidence and ranks drones, and does not name a cause.
+\paragraph{From findings to assurance design} Section~\ref{sec:tool} translates these empirical findings into design
+implications for fleet assurance: structured evidence review without automated verdicts, longitudinal airframe ranking,
+and tamper-evident telemetry records.
 
 \paragraph{Language models} On this task small local models added errors and voting vulnerabilities rather than accuracy.
 While deterministic numeric parsing prevented direct prompt injection by construction, multi-agent voting consensus was
@@ -953,19 +958,19 @@ verified by independent investigators would further strengthen the evidence.
 \paragraph{Labels} The uploader-assigned responsibility labels are not independently verified ground truth; they reflect
 the uploaders' own assessments, and normal flights are self-rated. Across 148 expert forum crash threads, download
 attempts yielded 43 downloadable logs (38 aircraft-fault, 5 pilot-fault), enabling a two-class empirical validation
-that revealed an overall error rate of 48.6\% on decided cases (balanced accuracy 0.381, 95\% bootstrap CI 0.20--0.59;
-pilot recall 1 of 5, Wilson 95\% CI 3.7--71.0\%; uploader \texttt{crash\_pilot} rating 0 of 43). However, forum diagnoses represent
+that revealed an overall error rate of 48.6\% on decided cases (balanced accuracy 0.381, exact 95\% Clopper--Pearson bound 0.19--0.73, Bayesian 95\% CrI 0.25--0.61;
+pilot recall 1 of 5, exact Clopper--Pearson 95\% CI 0.5--71.6\%; uploader \texttt{crash\_pilot} rating 0 of 43). However, forum diagnoses represent
 informed community opinion rather than official accident investigation reports; original posters confirmed the diagnosis
 in only 47 of 94 aircraft threads (50.0\%) and 5 of 9 pilot threads (55.6\%). Controls without a crash rating may have crashed
 unnoticed, biasing the between-drone test conservatively. Forum diagnoses achieved good inter-rater agreement
-($\kappa \geq 0.73$), but were restricted to public discussions.
+($kappa \geq 0.73$), but were restricted to public discussions.
 
 \paragraph{Confounding and design} Matching on vehicle type, controller hardware and PX4 version leaves open differences
 in propellers, payload, flight style or operator identity, leaving potential unmodeled clustering. Results may not
 transfer to commercial ArduPilot fleets or to proprietary autopilots, even though the tool is designed to support both
 ArduPilot and PX4 logs.
 
-\paragraph{Measurement} The crash moment is estimated; the within-drone result did not depend on the threshold. The
+\paragraph{Measurement} The crash moment is estimated; the within-drone result did not depend on the tilt threshold (mean scaled rank for S7 rate-tracking error was 0.46 at 45$^\circ$, 0.48 at 60$^\circ$, and 0.50 at 75$^\circ$, all $p \ge 0.53$). The
 between-drone effect was shown mainly with the older vibration estimate and was not confirmed on the newer metric
 in a declared replication with 19 usable sets; this main positive result needs stronger replication on newer firmware.
 
@@ -981,8 +986,8 @@ under the initial $\ge 1.10$ filter).
 sequence models or frequency-domain IMU features might capture short precursors that summaries miss. This was not
 tested.
 
-\paragraph{Attrition} Across 148 real crash threads, download attempts yielded 43 downloadable logs; exactly 37 of the
-73 logs behind expert aircraft diagnoses with a checkable cause could still be downloaded, so several diagnostic comparisons
+\paragraph{Attrition} Across 148 real crash threads, download attempts yielded 43 downloadable logs; exactly 35 of the
+71 candidate logs behind expert aircraft diagnoses with a checkable cause could still be downloaded, so several diagnostic comparisons
 in Table~\ref{tab:checks} have very small sample sizes ($n = 2$ to $9$); its results are indicative rather than definitive.
 
 \paragraph{Power and sizing} Some comparisons are small (14 pilot-caused matched sets, 12 sets with the newer vibration metric,
@@ -1008,8 +1013,9 @@ three-dimensional views remain future work (Sections~\ref{sec:tool} and \ref{sec
 \section{Conclusion}
 \label{sec:conclusion}
 Across 590 crash-rated logs from an archive index of 479,547 flights, flight logs did not distinguish pilot-caused from
-aircraft-caused crashes above chance: cross-validated AUC upper bounds (0.510--0.619) remain below the 0.660 permutation
-null detection threshold, and two-class expert validation yielded poor agreement (balanced accuracy 0.381, 95\% CI 0.20--0.59;
+aircraft-caused crashes above chance: cross-validated AUCs (0.41--0.50, upper bounds $\le 0.619$) fall far short of the
+$\approx 0.80$ needed for operational verdicts, with only AUCs above $\approx 0.65$ detectable at 80\% power under 36 pilot
+crashes. Two-class expert validation yielded poor agreement (balanced accuracy 0.381, exact 95\% Clopper--Pearson bound 0.19--0.73;
 pilot recall 1 of 5). Configuration protections were disabled at similar rates, and the flight that crashed showed no detectable
 difference in vibration or rate-tracking error relative to the same drone's prior flights (95\% CI upper bounds 0.58 and 0.63).
 Diagnostic checks also suffered from crash-impact data leakage: tuning fault detection fell from 77.8\% to 11.1\% sensitivity
@@ -1041,136 +1047,6 @@ are public on PX4 Flight Review and are referenced by identifier.\par}
 \section*{Funding}
 This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit
 sectors.
-
-% ===================================================================
-\appendix
-\section{Assurance tool implementation and\\ validation checks}
-\label{sec:appendix_tool}
-
-\subsection{Planned versus flown trajectory checks}
-\label{sec:appendix_reconcile}
-The check aligns the flown track with the plan's legs in flying order over the whole flight and reports stretches
-beyond the fleet's sideways and height tolerances (defaults 30\,m and 15\,m for at least 3\,s). To test it, plans were
-built from 40 real multirotor flights in the archive (a waypoint every 10\,s of track), so that the unmodified
-flight conformed by construction, and a known deviation was injected for 30\,s. Sideways shifts of 35\,m or more were
-found in 90--98\% of flights and upward shifts of 20\,m or more in 92--98\%, while shifts below the tolerances were
-mostly not reported, as specified. The first version of the check, which matched each position to the nearest leg
-anywhere, raised false alarms on 16 of 40 unmodified flights and detected only half of the 35\,m shifts;
-it was replaced. The current version raised false alarms on 9 of 40 (22\%, 95\% CI 12--38\%), all on fast flights
-cutting the corners of long legs built from the track; with a waypoint every 5\,s (a post-hoc check) there were none.
-A declared check on the archive logs that record the mission they flew found only six distinct missions; the check
-reported no deviation while any of them flew in mission mode, and the two deviations it did report were stretches in
-which the vehicle had left mission mode (return-to-launch, or the pilot taking over). Six missions are too few for a
-rate (95\% upper bound 39\%), so the false-alarm rate on real plans remains unmeasured and a reported deviation is a
-reason to look at the replay rather than a finding.
-
-\subsection{Searching past community diagnoses}
-\label{sec:appendix_search}
-An operator can describe a problem in words. The description is matched (BM25, no model) against the expert-labelled
-forum threads, represented by their titles and up to 30 descriptive terms from the opening post, and against a short
-list of symptom words for each cause. After a first release we declared and ran a test, holding out each of the 96 threads in
-which the expert blamed the aircraft and named a cause and querying with the rest. The cause the words matched best
-was the expert's cause in 19 of 96 cases with the title alone (20\%) and 21 of 96 with the title and opening-post
-terms (22\%, 95\% CI 15--31\%), below the 26 of 96 (27\%) of always answering the most frequent cause; among the first
-three it was 54\% against 62\%. The declared criterion (10 points above the base rate) was not met, as it was not with
-the first recording (20\% against 32\%). A written description, like the log, did not reveal the cause. The tool
-therefore orders its checklist by how often experts found each cause, marks the causes the description mentions, and
-offers the most similar threads only as reading, with the measured accuracy shown beside the answer.
-
-\subsection{Three-dimensional replay and mission rehearsal}
-\label{sec:appendix_replay}
-Deviations, heights and separation between drones are spatial, and a two-dimensional plot hides height. The tool
-therefore draws flights on a virtual tabletop, a world in miniature \cite{stoakley1995wim}, that can be viewed in a
-browser, in immersive virtual reality or, on a passthrough headset, in mixed reality on a real desk (WebXR).
-
-A \emph{flight replay} shows a reviewed flight: the approved plan dashed, the flown track green within tolerance and
-red during a deviation, the log's events pinned where they happened, and a playhead that can be scrubbed or played at
-ten times real speed.
-
-A \emph{mission rehearsal} shows planned missions before anyone flies: the deconfliction check turns each mission file
-into a position-over-time trajectory on a common clock (straight legs at stated climb, cruise and descent speeds),
-finds every pair closer than the separation distance and resolves conflicts by a launch delay or, where allowed, a
-different cruise height. The rehearsal flies all missions on that clock, as uploaded and as rescheduled, with each loss
-of separation drawn where and when it occurs (Figure~\ref{fig:rehearsal}). It is a kinematic rehearsal of the plan, not
-a simulation of the aircraft: there is no wind, no vehicle dynamics and no sensor error, so it shows what the plan
-implies if it is flown as written, which is the assumption the planned-versus-flown check then tests after the
-flight.
-
-The replay and rehearsal have been checked functionally on desktop; a paired standalone headset application
-compiles but has not been run on a headset, and no user study has been carried out, so we make no claim that the
-three-dimensional view improves decisions.
-
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=\textwidth]{fig_rehearsal.png}
-\caption{Mission rehearsal in the tool's tabletop view (desktop rendering; the same scene opens in a WebXR headset).
-Five planned missions over a 2\,km table, heights exaggerated four times, each mission in its own colour. (a) As
-uploaded, 12\,s after launch: three missions leaving one depot together occupy the same point (overlapping labels) and
-the red sphere marks their loss of separation. (b) The schedule produced by the deconfliction check, 45\,s after the
-first launch: two launches are delayed and no pair comes within 15\,m. Straight legs at planned speeds, no wind.}
-\label{fig:rehearsal}
-\end{figure}
-
-\section{Exploratory evaluation of language-model\\ review panels}
-\label{sec:appendix_llm}
-
-Because language-model assistants are increasingly proposed for log review, we conducted a preliminary comparison on
-60 author-generated fault cases using four relatively small local models (3--4B parameters). The fixed rule was right
-in 45 of 60 generated cases (75\%, 95\% Wilson interval 63--84\%) and wrong in none (0\%, 95\% interval 0--6\%); it
-referred the other 15 to a human operator. ``Right'' includes leaving the 10 no-cause cases open, so the rule named the true
-cause in 35 of the 50 cases that had one. As discussed in Section~\ref{sec:threats}, the rule's performance may be
-optimistic because the cases were created by the authors who designed the rule; nonetheless, no model's panel matched
-it (Table~\ref{tab:llm}): wrong answers ranged from 6 to 38 of 60 (10--63\%).
-
-Reporting coverage (share of cases decided) and accuracy-when-answering separately clarifies the failure mechanisms of
-individual models. The single-agent configurations of \texttt{gemma3:4b} and \texttt{phi4-mini} abstained on all 50 cases
-with an active cause (0\% active coverage); their 10 ``right'' scores stemmed entirely from correctly leaving the 10
-no-cause cases open. \texttt{qwen2.5:3b} answered 53 of 60 cases (88\% coverage) but achieved only 17.0\% accuracy when
-answering (9 right, 44 wrong), which is indistinguishable from random guessing across the six cause classes (16.7\%).
-\texttt{qwen3:4b} suffered complete mode collapse on decided cases: across the 41 cases it answered (the remaining 19
-failed JSON schema parsing), it attributed all 41 to \texttt{PLAN\_OR\_ROUTE\_ISSUE}, yielding 0 right, 41 wrong (0\%
-accuracy when answering).
-
-Multi-agent panel deliberation increased coverage for \texttt{gemma3:4b} and \texttt{phi4-mini} to 65\%, but accuracy when
-answering remained low for \texttt{gemma3} (7.7\%, 3 of 39) and modest for \texttt{phi4} (51.3\%, 20 of 39).
-\texttt{qwen2.5:3b} achieved 62.5\% accuracy when answering in the panel (10 right, 6 wrong), but deferred on 73\% of cases
-(16 answered). \texttt{qwen3:4b} reached 30.9\% accuracy when answering (17 of 55).
-
-In the adversarial robustness test, we conducted a worst-case sensitivity sweep where a single compromised reviewer systematically
-advocated for a designated incorrect cause across both voting rounds. This adversary successfully flipped the panel's consensus in 45
-to 56 of 60 cases (Table~\ref{tab:llm}). This highlights that multi-agent consensus voting without cryptographic proofs or
-fact-citation enforcement remains vulnerable to rogue reviewers. In contrast, 40 hostile prompt-injection strings planted in
-uploader-controlled fields never reached any model prompt because the pipeline deterministically extracts numeric telemetry into
-code, preventing direct prompt injection by construction.
-
-\begin{table}[!htbp]
-\centering
-\caption{Language-model review panels on 60 generated cases: counts of right (R), wrong (W), and deferred (Def) cases,
-with coverage (Cov., share of cases decided) and accuracy when answering (Acc.). ``Right'' includes correctly leaving a
-no-cause case open. Single-agent gemma3 and phi4 answered only the 10 no-cause cases (0\% coverage on active causes).
-Adversary flips show consensus changes caused by a single compromised reviewer in a worst-case sweep.}
-\label{tab:llm}
-\footnotesize
-\setlength{\tabcolsep}{1.8pt}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l ccc ccc c@{}}
-\toprule
-& \multicolumn{3}{c}{Single agent} & \multicolumn{3}{c}{Review panel} & Compromised \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7}
-Method & R / W / Def & Cov. & Acc. & R / W / Def & Cov. & Acc. & Flips / 60 \\
-\midrule
-Fixed rule (no model) & 45 / 0 / 15 & 75\% & 100\% & -- & -- & -- & -- \\
-\texttt{gemma3:4b} & 10 / 0 / 50 & 17\%$^\dagger$ & 100\%$^\dagger$ & 3 / 36 / 21 & 65\% & 7.7\% & 49 \\
-\texttt{phi4-mini} & 10 / 0 / 50 & 17\%$^\dagger$ & 100\%$^\dagger$ & 20 / 19 / 21 & 65\% & 51.3\% & 56 \\
-\texttt{qwen2.5:3b} & 9 / 44 / 7 & 88\% & 17.0\% & 10 / 6 / 44 & 27\% & 62.5\% & 54 \\
-\texttt{qwen3:4b} & 0 / 41 / 19 & 68\% & 0.0\% & 17 / 38 / 5 & 92\% & 30.9\% & 45 \\
-\bottomrule
-\end{tabular*}
-\vspace{2pt}
-{\footnotesize $^\dagger$Answered only on the 10 no-cause cases where abstention coincided with the ground truth; 0\% coverage on active causes.\par}
-\end{table}
-
-\FloatBarrier
-\clearpage
 
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}
