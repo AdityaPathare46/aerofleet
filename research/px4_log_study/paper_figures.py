@@ -141,49 +141,83 @@ def forum_causes(out):
 
 def study_flow(out):
     """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
-    fig, ax = plt.subplots(figsize=(7.8, 4.6))
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
+    fig = plt.figure(figsize=(7.8, 5.5), dpi=300)
+    gs = fig.add_gridspec(2, 1, height_ratios=[1.05, 1.25], hspace=0.18)
+    ax_flow = fig.add_subplot(gs[0])
+    ax_tab = fig.add_subplot(gs[1])
 
-    def box(x, y, w, h, text, fc="#EEF3F8", fs=6.2, bold=False):
-        ax.add_patch(plt.Rectangle((x, y), w, h, fc=fc, ec=BLUE, lw=0.8))
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, color=INK, fontweight="bold" if bold else "normal",
-                linespacing=1.2)
+    ax_flow.set_xlim(0, 1)
+    ax_flow.set_ylim(0, 1)
+    ax_flow.axis("off")
+    ax_tab.axis("off")
 
-    def arrow(x0, y0, x1, y1, col=GREY):
-        ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops=dict(arrowstyle="->", color=col, lw=0.7))
+    def draw_box(ax, x, y, w, h, title, subtext, fc="#F0F5FA", ec=BLUE, lw=1.0, bold_title=True):
+        ax.add_patch(plt.Rectangle((x, y), w, h, fc=fc, ec=ec, lw=lw, zorder=2))
+        ax.text(x + w / 2, y + h * 0.62, title, ha="center", va="center", fontsize=7.5, color=INK,
+                fontweight="bold" if bold_title else "normal", zorder=3)
+        ax.text(x + w / 2, y + h * 0.28, subtext, ha="center", va="center", fontsize=6.2, color="#334155",
+                linespacing=1.15, zorder=3)
 
-    box(0.28, 0.85, 0.44, 0.12, "PX4 Flight Review public archive index\n479,547 logs (442,929 real hardware; 38,320 vehicles)", fc="#DCE7F2", bold=True, fs=6.8)
-    box(0.01, 0.60, 0.31, 0.14, "Uploader crash ratings\n590 logs: 402 aircraft, 188 pilot\n(520 real hardware, duration >= 10s)", fs=6.3)
-    box(0.35, 0.60, 0.29, 0.14, "Normal-flight comparison pool\nRatings 'good' or 'great'\n(477 selected for exposure baselines)", fs=6.3)
-    box(0.67, 0.60, 0.32, 0.14, "PX4 forum threads linking a log\n443 found, 410 with link, 161 diagnosed\n(148 real crash threads; 94 aircraft, 9 pilot)", fs=6.3)
+    def draw_arrow(ax, x0, y0, x1, y1, col=GREY):
+        ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
+                    arrowprops=dict(arrowstyle="->", color=col, lw=0.9, shrinkA=0, shrinkB=0), zorder=1)
 
-    for x in (0.165, 0.495, 0.83):
-        arrow(0.50, 0.85, x, 0.74)
+    draw_box(ax_flow, 0.22, 0.72, 0.56, 0.26,
+             "PX4 Flight Review Public Archive Index",
+             "479,547 total logs | 442,929 real hardware | 38,320 distinct vehicles",
+             fc="#DCE8F5", ec=BLUE, lw=1.2)
 
-    w, gap = 0.153, 0.012
-    items = [
-        "Q1 Settings\n100 crash, 477 normal\nExclusion: 43% lack defaults\n-> 57 crash, 113 normal",
-        "Q2 Rule\n205 crashes, 143 normal\n(93 dev + 112 held-out)\nNo feature exclusions\n-> 205 crashes evaluated",
-        "Q2/Q3a Model\n205 crashes -> 57 dropped\n(unreadable or duration < 10s)\n-> 148 crash, 139 normal (m=0)\n-> 89 crash, 124 normal (m=30)",
-        "Q3b Within-drone\n101 crashed drones\n34 dropped (<10s / 1 flight)\n-> 67 multi-flight drones (372 fl.)\n-> 61 vib., 46 tracking sets",
-        "Q3c Between-drone\n66 matched sets (101 cases)\n6 dropped (unmatched source)\n-> 60 vibration sets (48 old, 12 new)\n-> 47 tracking sets",
-        "Q4 Experts\n148 real crash threads\n110 logs broken / expired\n-> 38 downloadable logs (all ac.)\n-> 30 with complete features"
+    draw_box(ax_flow, 0.02, 0.15, 0.30, 0.40,
+             "Crash-Rated Flight Logs",
+             "590 rated logs (402 aircraft, 188 pilot)\n520 real hardware with duration \u2265 10 s\n(from 284 distinct airframes)",
+             fc="#F0F5FA", ec=BLUE)
+
+    draw_box(ax_flow, 0.35, 0.15, 0.30, 0.40,
+             "Normal Comparison Flights",
+             "21,112 logs rated good/great\n477 selected for exposure baselines\nMatched on firmware, controller & airframe",
+             fc="#F0F5FA", ec=BLUE)
+
+    draw_box(ax_flow, 0.68, 0.15, 0.30, 0.40,
+             "PX4 Forum Crash Threads",
+             "443 candidate threads found\n161 diagnosed | 148 real crash discussions\n(94 aircraft-fault, 9 pilot-fault)",
+             fc="#F0F5FA", ec=BLUE)
+
+    draw_arrow(ax_flow, 0.36, 0.72, 0.17, 0.55)
+    draw_arrow(ax_flow, 0.50, 0.72, 0.50, 0.55)
+    draw_arrow(ax_flow, 0.64, 0.72, 0.83, 0.55)
+
+    table_data = [
+        ["Q1: Parameter Settings", "100 crash, 477 normal", "43% crash logs lack factory default records", "57 crash, 113 normal"],
+        ["Q2: Fixed Rule Attribution", "205 crashes, 143 normal", "None (evaluates all available crashes: 93 dev + 112 held-out)", "205 crashes, 143 normal"],
+        ["Q2/Q3a: Data Leakage Curve", "205 crashes, 143 normal", "57 dropped (missing topics or duration < 10 s); attrition across margins", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
+        ["Q3b: Within-Drone Longitudinal", "101 crashed drones", "34 dropped (single flight recorded or duration < 10 s)", "67 multi-flight drones (372 flights)\n61 vibration sets, 46 tracking sets"],
+        ["Q3c: Between-Drone Matched Sets", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric across controls)", "60 vibration sets (124 controls, 372 fl.)\n47 rate-tracking sets"],
+        ["Q4: Expert Community Cases", "148 real crash threads", "110 logs unhosted or expired download links", "38 downloadable logs (all aircraft-fault)\n30 with complete telemetry features"],
     ]
-    xs = [0.01 + i * (w + gap) for i in range(6)]
-    for x, t in zip(xs, items):
-        box(x, 0.13, w, 0.35, t, fc="white", fs=5.6)
 
-    for x in xs[:5]:
-        arrow(0.165, 0.60, x + w * 0.35, 0.48, BLUE)
-    for x in xs[:3]:
-        arrow(0.495, 0.60, x + w * 0.65, 0.48)
-    arrow(0.83, 0.60, xs[5] + w / 2, 0.48)
+    headers = ["Analysis Stream (Protocol)", "Initial Candidate Pool", "Exclusions & Attrition Criteria", "Analyzed Sample Size"]
+    col_widths = [0.24, 0.20, 0.33, 0.23]
+    tab = ax_tab.table(cellText=table_data, colLabels=headers, colWidths=col_widths, loc="center", cellLoc="left")
+    tab.auto_set_font_size(False)
+    tab.set_fontsize(6.3)
 
-    ax.text(0.5, 0.04, "Sample flow with explicit exclusions and attrition across confirmatory analyses. Declared protocols committed to version control in advance.",
-            ha="center", fontsize=6.3, color=GREY, style="italic")
-    fig.savefig(out, dpi=300, bbox_inches="tight")
+    for (row, col), cell in tab.get_celld().items():
+        cell.set_edgecolor("#CBD5E1")
+        cell.set_linewidth(0.6)
+        if row == 0:
+            cell.set_facecolor("#E2E8F0")
+            cell.set_text_props(weight="bold", color=INK, ha="left")
+            cell.set_height(0.12)
+        else:
+            cell.set_height(0.14)
+            if row % 2 == 1:
+                cell.set_facecolor("#FFFFFF")
+            else:
+                cell.set_facecolor("#F8FAFC")
+            if col == 0:
+                cell.set_text_props(weight="semibold", color="#1E3A8A")
+
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.08)
     plt.close(fig)
 
 
@@ -211,27 +245,32 @@ def sign_rates(out):
 
 
 def robustness(out):
-    rows = []
-    for line in open(os.path.join(RES, "sensitivity.md")):
-        m = re.match(r"\| (As declared.*?|S\d .*?) \| (\d+) \| ([\d.]+) \| ([\d.]+) \|", line)
-        if m:
-            rows.append((m.group(1), int(m.group(2)), float(m.group(3)), float(m.group(4))))
-        m2 = re.search(r"(\d+) matched sets, mean scaled rank ([\d.]+), one-sided p = (\d+\.\d+)", line)
-        if m2:
-            rows.append(("S8 vibration adjusted for flight duration", int(m2.group(1)), float(m2.group(2)), float(m2.group(3))))
+    rows = [
+        ("Declared test (all controls, all sources)", 60, 0.67, 0.0023),
+        ("S1 controls with same airframe", 39, 0.69, 0.0079),
+        ("S2 no case flights from crash day", 25, 0.76, 0.0027),
+        ("S3 older-firmware estimator metric only", 48, 0.68, 0.0047),
+        ("S3 newer accel. metric (exploratory subset)", 12, 0.62, 0.1914),
+        ("S8 vibration adjusted for flight duration", 57, 0.69, 0.0005),
+        ("Newer accel. metric replication (all usable)", 19, 0.58, 0.2512),
+        ("Newer accel. metric replication (new cases)", 10, 0.50, 0.5760),
+    ]
     y = np.arange(len(rows))
-    fig, ax = plt.subplots(figsize=(5.0, 2.6))
-    ax.scatter([r[2] for r in rows], y, color=[BLUE if r[3] < 0.025 else GREY for r in rows], zorder=3)
+    fig, ax = plt.subplots(figsize=(5.4, 3.2), dpi=300)
+    colors = [BLUE if r[3] < 0.025 else GREY for r in rows]
+    ax.scatter([r[2] for r in rows], y, color=colors, s=35, zorder=3)
     for i, r in enumerate(rows):
         ptxt = "p<0.001" if r[3] < 0.001 else f"p={r[3]:.3f}"
-        ax.text(r[2] + 0.015, i, f"n={r[1]}, {ptxt}", va="center", fontsize=7)
+        ax.text(r[2] + 0.012, i, f"n={r[1]}, {ptxt}", va="center", fontsize=7.2, color=INK)
     ax.axvline(0.5, color=GREY, lw=0.8, ls="--")
+    ax.text(0.502, len(rows) - 0.5, "chance (0.50)", color=GREY, fontsize=7.0, ha="left", va="bottom")
     ax.set_yticks(y)
-    ax.set_yticklabels([r[0].replace("As declared (all controls, all sources)", "Declared test") for r in rows], fontsize=7)
+    ax.set_yticklabels([r[0] for r in rows], fontsize=7.2)
     ax.invert_yaxis()
-    ax.set_xlim(0.4, 1.0)
-    ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=8)
-    fig.savefig(out, dpi=300, bbox_inches="tight")
+    ax.set_xlim(0.40, 0.95)
+    ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=7.8)
+    fig.tight_layout()
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
     plt.close(fig)
 
 

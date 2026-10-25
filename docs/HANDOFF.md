@@ -120,13 +120,13 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 | Question | Result | File |
 |---|---|---|
 | Q1 settings differ crash vs normal? | No: protection disabled 51% vs 46%, p = 0.63 | `summary.md` |
-| Q2 pilot vs aircraft from logs? | No: rule BA 0.57 dev, **0.47 held-out**; logistic model 0.449-0.458 at all cut-offs (1,000-permutation null mean 0.497, 95% interval 0.313-0.660, p = 0.509); depth-3 trees 0.595 -> 0.553 (10s), 0.548 (30s); rule wrong on 43.8% of 38 expert crash logs | `holdout.md`, `pilot_vs_drone.md`, `leak_curve.md` |
-| Q3a crash window leakage | Model AUC 0.88 to 0.86 (constant-subset n=213: 0.895 to 0.868); single tuning check 10/12 to 1/9 without last 10 s; within-drone model collapses to Group-CV AUC 0.580, mean pairwise AUC 0.605 (67 drones, 372 flights) | `leak_curve.md`, `test_flight_check*_settled.md`, `within_drone.md` |
+| Q2 pilot vs aircraft from logs? | No: rule BA 0.57 dev, **0.47 held-out**; logistic model 0.449-0.458 at all cut-offs (1,000-permutation null mean 0.497, 95% interval 0.313-0.660, p = 0.509); boosted stumps 0.560 -> 0.413, depth-3 trees 0.595 -> 0.553 (10s), 0.548 (30s); rule wrong on 43.8% of 38 expert crash logs (all 14 misclassified logs in pilot-flown modes) | `holdout.md`, `pilot_vs_drone.md`, `leak_curve.md` |
+| Q3a crash window leakage | Model AUC 0.88 to 0.86 (constant-subset n=213: 0.895 to 0.868); paired tuning check firing fell 7/9 to 1/9 (exact McNemar p = 0.03125); within-drone model substantially attenuates separation to Group-CV AUC 0.580, mean pairwise AUC 0.605 (67 drones, 372 flights) | `leak_curve.md`, `test_flight_check*_settled.md`, `within_drone.md` |
 | Q3b within same drone | No warning: vibration rank 0.48, p = 0.67 (61 drones) | `within_drone.md` |
-| Q3c between drones (the positive result) | Crashed drones rougher: **0.67, 95% CI 0.57-0.77, p = 0.0023, Holm 0.016** (60 sets); top-rank 33/60 (55.0%) vs Poisson-binomial null 40.3% (p = 0.0137); Q3 flag 38/60 (63.3%, older 66.7%, newer 50.0%); fleet PPV 3.81% (95% CI 3.18-4.62%), lift 5.02x, 26.2 insp./crash | `rough_drone.md` |
+| Q3c between drones (the positive result) | Crashed drones rougher: **0.67, 95% CI 0.57-0.77, p = 0.0023, Holm 0.016** (60 sets); top-rank 33/60 (55.0%) vs Poisson-binomial null 40.3% (p = 0.0137); Q3 flag 38/60 (63.3%, older 66.7%, newer 50.0%); matched-set PPV 1.04% [0.83, 1.25%] (lift 1.40x, 96.4 insp./crash) at 0.741% vehicle rate; fleet-ref PPV 3.81% [3.18, 4.62%] (lift 2.47x, 26.2 insp./crash) at 1.54% log rate | `rough_drone.md` |
 | Robustness (post hoc) | Held with same airframe, without crash-day flights, duration-adjusted; mainly older estimator metric (48 sets) | `sensitivity*.md` |
-| Newer metric replication (declared) | **Not confirmed: 0.58, CI 0.39-0.76, p = 0.25, 19 sets**; archive has no more cases | `rough_drone_newer.md` |
-| Q4 expert diagnoses | 148 real crash threads (settled labels): drone 94, pilot 9, both 2, unclear/no diagnosis 43; tuning/config most named (26/94); 38 downloadable logs (rule wrong on 43.8% of decided cases) | `forum_expert_labels.md` |
+| Newer metric replication (declared) | **Not confirmed: 0.58, CI 0.39-0.76, p = 0.25, 19 sets** (10 new cases 0.50, p = 0.58; power for 80% requires 55 sets for 0.67, 247 for 0.58) | `rough_drone_newer.md` |
+| Q4 expert diagnoses | 148 real crash threads (settled labels): drone 94, pilot 9, both 2, unclear/no diagnosis 43; tuning/config most named (26/94); 38 downloadable logs (all aircraft-fault; rule wrong on 43.8% of decided cases; model 90% drone) | `forum_expert_labels.md` |
 | LLM panels | Fixed rule 45/60 right, 0 wrong; panels 6-38 wrong; one adversary flipped 45-56 of 60 | `research/panel_eval/` |
 | Planned-vs-flown, injected deviations (declared) | Sideways >= 35 m found 90-98%, upward >= 20 m 92-98%; false alarms 9/40 (22%) on track-built plans, 0/40 with 5 s waypoints | `injection_reconcile*.md` |
 | Planned-vs-flown, real missions (declared) | Only 6 distinct missions in archive; no deviation in mission mode; 2 reported = drone had left mission mode (RTL / pilot takeover). Too few for a rate | `real_mission_reconcile.md` |
@@ -137,8 +137,8 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ## 6. Current status (25 Oct 2026)
 
-**Paper** (Round 3 peer review complete: Stage 1 Clean and Consistent achieved, rating 8.5/10; 39 pages, 7 figures, 10 tables, 36 references, abstract 212 words, zero placeholders, DOIs verified):
-LM panel and tool validation checks moved to Appendices A and B; all exploratory analyses declared with commit hashes in Table 8; within-drone and screening statistics precisely calibrated with bootstrap CIs; rule and model evaluated on 38 real expert crash logs.
+**Paper** (Round 4 peer review complete: Stage 1 Clean and Consistent completed, rating 8.5/10; 42 pages, 7 figures, 10 tables, 36 references, abstract 195 words, zero placeholders, DOIs verified):
+Dual PPV operating points reported transparently (1.04% matched-set at 0.741% vehicle rate vs 3.81% fleet-wide reference); diagnostic leakage narrowed to tuning check (paired McNemar p = 0.03125); within-drone model framed as substantial attenuation (Group-CV AUC 0.580, mean pairwise AUC 0.605); sample sizes declared across all cut-off margins; 38 expert logs evaluated as one-class sensitivity check with mode sequences verified; newer metric replication breakdown and power analysis completed; Figure 1 redrawn with integrated table of counts.
 
 **Product**: all features work locally and are tested; 657 tests pass; app typechecks. Internal rating 7/10.
 Removed on 25 Oct: four old start scripts, and "Incident replay" (the earlier product's AI-council view) from the VR
