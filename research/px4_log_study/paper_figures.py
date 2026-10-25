@@ -144,7 +144,7 @@ def forum_causes(out):
 
 def study_flow(out):
     """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
-    fig = plt.figure(figsize=(8.6, 5.8), dpi=300)
+    fig = plt.figure(figsize=(9.4, 6.4), dpi=300)
     gs = fig.add_gridspec(2, 1, height_ratios=[1.05, 1.25], hspace=0.18)
     ax_flow = fig.add_subplot(gs[0])
     ax_tab = fig.add_subplot(gs[1])
@@ -195,12 +195,12 @@ def study_flow(out):
         ["Q2/Q3a: Data Leakage Curve", "205 crashes, 143 normal", "57 dropped (missing topics or duration < 10 s); attrition across margins", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
         ["Q3b: Within-Drone Longitudinal", "101 crashed drones", "34 dropped (single flight recorded or duration < 10 s)", "67 multi-flight drones (372 flights)\n61 vibration sets, 46 tracking sets"],
         ["Q3c: Between-Drone Matched Sets", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric across controls)", "60 vibration sets (124 controls, 372 fl.)\n47 rate-tracking sets"],
-        ["Q4: Expert Community Cases", "148 real crash threads", "105 logs unhosted or expired download links", "43 downloadable logs (38 aircraft, 5 pilot)\n37 aircraft logs with fault categories"],
+        ["Q4: Expert Community Cases", "148 real crash threads", "105 logs unhosted or expired download links", "43 downloadable logs (38 aircraft, 5 pilot)\n35 aircraft logs with fault categories"],
     ]
 
     headers = ["Analysis Stream (Protocol)", "Initial Candidate Pool", "Exclusions & Attrition Criteria", "Analyzed Sample Size"]
-    col_widths = [0.24, 0.20, 0.33, 0.23]
-    tab = ax_tab.table(cellText=table_data, colLabels=headers, colWidths=col_widths, loc="center", cellLoc="left")
+    col_widths = [0.22, 0.17, 0.38, 0.23]
+    tab = ax_tab.table(cellText=table_data, colLabels=headers, colWidths=col_widths, bbox=[0.01, 0.02, 0.98, 0.96], cellLoc="left")
     tab.auto_set_font_size(False)
     tab.set_fontsize(6.3)
 

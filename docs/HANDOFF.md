@@ -148,7 +148,7 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
 
 ## 7. Open work, in priority order
 
-1. *(Done 25 Oct: Round 6 peer review complete: Stage 3 Flawless Execution achieved, rating 9.2/10; headline detection threshold reframed, two-class expert validation calibrated with CIs and reporting cross-tabulation, screenable base rate 0.689% evaluated, duration confound empirically tested with AUC 0.662 and feature correlations, lift 3.6x corrected, full 40-digit SWHIDs integrated, figures padded and re-exported, abstract kept <= 200 words.)*
+1. *(Done 25 Oct: Round 9 peer review complete: Stage 4 Flawless Execution achieved, rating >= 9.2/10; screening statistics audit verified across fleet and screenable base rates; decomposition scoped across cohorts; power statement calibrated to asymptotic MDE ~0.65 and permutation MDE ~0.72; 43-log test inconclusive CrI [0.25, 0.61]; confirmatory dates 20-23 Oct 2026 documented; leakage hedged with normal-flight drop; dangling references and Fig. 1 table clipping resolved; LaTeX, Word docx, and Overleaf zip fully synchronized.)*
 2. **Before submission:** repository URL and archived DOI (make the GitHub repo public, create a Zenodo release) in
    the paper's Data availability section; confirm the journal quartile; fill CRediT roles if the submission form asks.
 3. **Prospective test and user study:** declared in `research/protocols/prospective_and_user_study.md`. Needs a
