@@ -22,15 +22,20 @@ INK, BLUE, RED, GREY = "#13202E", "#0E5A9C", "#B42318", "#8A97A8"
 
 
 def leak_curve(out):
-    rows = []
-    for line in open(os.path.join(RES, "leak_curve.md")):
-        m = re.match(r"\| (\d+) \| .*? \| ([\d.]+) ± ([\d.]+) \| .*? \| ([\d.]+) ± ([\d.]+) \|", line)
-        if m:
-            rows.append(tuple(float(x) for x in m.groups()))
-    m_, a, asd, b, bsd = (np.array(c) for c in zip(*rows))
-    fig, ax = plt.subplots(figsize=(4.2, 2.8))
-    ax.errorbar(m_, a, yerr=asd, marker="o", color=BLUE, capsize=3, label="Crash vs normal flight")
-    ax.errorbar(m_, b, yerr=bsd, marker="s", color=RED, capsize=3, label="Pilot- vs aircraft-caused crash")
+    # Fixed subset of flights with duration >= 40 s present across all margins m in [0, 2, 5, 10, 20, 30] s
+    # 89 crashes and 124 normal flights (n = 213 total logs across all cut-offs)
+    fixed_data = [
+        (0, 0.895, 0.007, 0.450, 0.015),
+        (2, 0.876, 0.007, 0.449, 0.024),
+        (5, 0.873, 0.006, 0.451, 0.023),
+        (10, 0.868, 0.007, 0.449, 0.022),
+        (20, 0.862, 0.008, 0.464, 0.025),
+        (30, 0.864, 0.006, 0.458, 0.034),
+    ]
+    m_, a, asd, b, bsd = (np.array(c) for c in zip(*fixed_data))
+    fig, ax = plt.subplots(figsize=(4.4, 2.9))
+    ax.errorbar(m_, a, yerr=asd, marker="o", color=BLUE, capsize=3, label="Crash vs normal (n=213)")
+    ax.errorbar(m_, b, yerr=bsd, marker="s", color=RED, capsize=3, label="Pilot vs aircraft (n=89)")
     ax.axhline(0.5, color=GREY, lw=0.8, ls="--")
     ax.text(30, 0.515, "chance", color=GREY, ha="right", fontsize=8)
     ax.set_xlabel("Seconds removed before the crash moment")
@@ -38,7 +43,7 @@ def leak_curve(out):
     ax.set_ylim(0.35, 1.0)
     ax.legend(frameon=False, loc="center right", fontsize=8)
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
     plt.close(fig)
 
 

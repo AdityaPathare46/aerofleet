@@ -81,9 +81,20 @@ def prepare():
     body = body.replace("Fig.~", "Fig. ").replace("Table~", "Table ").replace("Section~", "Section ").replace("Sections~", "Sections ")
 
     # constructs pandoc does not read well
-    body = re.sub(r"\\begin\{tabularx\}\{\\textwidth\}\{((?:[^{}]|\{\})*)\}",       # the spec contains @{}
-                  lambda m: "\\begin{tabular}{" + m.group(1).replace("@{}", "").replace("Y", "l") + "}", body)
+    def fix_tab_spec(spec):
+        s = re.sub(r"@\{\\extracolsep\{[^}]*\}\}", "", spec)
+        s = re.sub(r"@\{[^}]*\}", "", s)
+        s = re.sub(r"p\{[^}]*\}", "l", s)
+        s = s.replace("Y", "l").strip()
+        return s
+
+    for env in ("tabularx", "tabular\\*"):
+        pattern = r"\\begin\{" + env + r"\}\{\\textwidth\}\{(.*?)\}\s*$"
+        body = re.sub(pattern, lambda m: "\\begin{tabular}{" + fix_tab_spec(m.group(1)) + "}", body, flags=re.MULTILINE)
     body = body.replace("\\end{tabularx}", "\\end{tabular}")
+    body = body.replace("\\end{tabular*}", "\\end{tabular}")
+    body = re.sub(r"\\cmidrule(\([^)]*\))?\{[^}]*\}", "", body)
+    body = re.sub(r"\\setlength\{\\tabcolsep\}\{[^}]*\}", "", body)
     body = re.sub(r"\\paragraph\{([^}]*)\}\s*", lambda m: "\\textbf{" + m.group(1).rstrip(".") + ".} ", body)
     body = re.sub(r"\\begin\{enumerate\}(.*?)\\end\{enumerate\}",        # labelled list (Q1-Q4) as plain paragraphs
                   lambda m: re.sub(r"\\item\[([^\]]+)\]\s*", r"\n\n\\textbf{\1} ", m.group(1)), body, flags=re.S)

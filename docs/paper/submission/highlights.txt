@@ -1,6 +1,6 @@
 Highlights
-- No rule or model separated pilot-caused from aircraft-caused crashes above chance
+- No rule or model separated pilot-caused from aircraft-caused crashes
 - Checks that seemed to find crash causes mostly fired on the crash itself
-- Drones that later crashed vibrated more than matched drones (older vibration metric)
-- Language-model panels and a description search both fell below simple baselines
-- An open-source tool built on the results shows evidence and ranks drones, no verdicts
+- Drones that later crashed were rougher than matched peers (older metric)
+- Language-model panels and description search fell below simple baselines
+- An open-source tool shows evidence and ranks airframes without verdicts
