@@ -140,40 +140,49 @@ def forum_causes(out):
 
 
 def study_flow(out):
-    """Sample flow from the archive to each analysis (counts from the result files)."""
-    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
+    fig, ax = plt.subplots(figsize=(7.8, 4.6))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
 
-    def box(x, y, w, h, text, fc="#EEF3F8", fs=6.6, bold=False):
+    def box(x, y, w, h, text, fc="#EEF3F8", fs=6.2, bold=False):
         ax.add_patch(plt.Rectangle((x, y), w, h, fc=fc, ec=BLUE, lw=0.8))
         ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, color=INK, fontweight="bold" if bold else "normal",
-                linespacing=1.25)
+                linespacing=1.2)
 
     def arrow(x0, y0, x1, y1, col=GREY):
         ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops=dict(arrowstyle="->", color=col, lw=0.7))
 
-    box(0.30, 0.84, 0.40, 0.13, "PX4 Flight Review public index\n479,547 logs (442,929 real hardware;\n38,320 vehicle identifiers)", fc="#DCE7F2", bold=True)
-    box(0.02, 0.58, 0.30, 0.13, "Uploader crash ratings\n590 logs: 402 aircraft, 188 pilot")
-    box(0.36, 0.58, 0.28, 0.13, "Ratings 'good' or 'great'\n(normal-flight comparison)")
-    box(0.68, 0.58, 0.30, 0.13, "PX4 forum threads linking a log\n443 found, 410 with a link")
-    for x in (0.17, 0.50, 0.83):
-        arrow(0.50, 0.84, x, 0.71)
-    w, gap = 0.152, 0.012
-    items = ["Q1 Settings\n100 crashes\n477 normal", "Q2 Rule\n93 + 112 held-out\n143 normal",
-             "Q2/Q3a Model\n148 crashes\n139 normal", "Q3b Within-drone\n101 crashes\n475 earlier flights",
-             "Q3c Between-drone\n66 matched sets\n124 control drones", "Q4 Experts\n148 real crashes\n37 logs available"]
+    box(0.28, 0.85, 0.44, 0.12, "PX4 Flight Review public archive index\n479,547 logs (442,929 real hardware; 38,320 vehicles)", fc="#DCE7F2", bold=True, fs=6.8)
+    box(0.01, 0.60, 0.31, 0.14, "Uploader crash ratings\n590 logs: 402 aircraft, 188 pilot\n(520 real hardware, duration >= 10s)", fs=6.3)
+    box(0.35, 0.60, 0.29, 0.14, "Normal-flight comparison pool\nRatings 'good' or 'great'\n(477 selected for exposure baselines)", fs=6.3)
+    box(0.67, 0.60, 0.32, 0.14, "PX4 forum threads linking a log\n443 found, 410 with link, 161 diagnosed\n(148 real crash threads; 94 aircraft, 9 pilot)", fs=6.3)
+
+    for x in (0.165, 0.495, 0.83):
+        arrow(0.50, 0.85, x, 0.74)
+
+    w, gap = 0.153, 0.012
+    items = [
+        "Q1 Settings\n100 crash, 477 normal\nExclusion: 43% lack defaults\n-> 57 crash, 113 normal",
+        "Q2 Rule\n205 crashes, 143 normal\n(93 dev + 112 held-out)\nNo feature exclusions\n-> 205 crashes evaluated",
+        "Q2/Q3a Model\n205 crashes -> 57 dropped\n(unreadable or duration < 10s)\n-> 148 crash, 139 normal (m=0)\n-> 89 crash, 124 normal (m=30)",
+        "Q3b Within-drone\n101 crashed drones\n34 dropped (<10s / 1 flight)\n-> 67 multi-flight drones (372 fl.)\n-> 61 vib., 46 tracking sets",
+        "Q3c Between-drone\n66 matched sets (101 cases)\n6 dropped (unmatched source)\n-> 60 vibration sets (48 old, 12 new)\n-> 47 tracking sets",
+        "Q4 Experts\n148 real crash threads\n110 logs broken / expired\n-> 38 downloadable logs (all ac.)\n-> 30 with complete features"
+    ]
     xs = [0.01 + i * (w + gap) for i in range(6)]
     for x, t in zip(xs, items):
-        box(x, 0.18, w, 0.22, t, fc="white", fs=5.9)
+        box(x, 0.13, w, 0.35, t, fc="white", fs=5.6)
+
     for x in xs[:5]:
-        arrow(0.17, 0.58, x + w * 0.35, 0.40, BLUE)
+        arrow(0.165, 0.60, x + w * 0.35, 0.48, BLUE)
     for x in xs[:3]:
-        arrow(0.50, 0.58, x + w * 0.65, 0.40)
-    arrow(0.83, 0.58, xs[5] + w / 2, 0.40)
-    ax.text(0.5, 0.06, "Each test, threshold and pass mark was committed to version control before its data were analysed.",
-            ha="center", fontsize=6.6, color=GREY, style="italic")
+        arrow(0.495, 0.60, x + w * 0.65, 0.48)
+    arrow(0.83, 0.60, xs[5] + w / 2, 0.48)
+
+    ax.text(0.5, 0.04, "Sample flow with explicit exclusions and attrition across confirmatory analyses. Declared protocols committed to version control in advance.",
+            ha="center", fontsize=6.3, color=GREY, style="italic")
     fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
