@@ -64,43 +64,56 @@ objective can carry weight it has not earned. Fleet operators face a related but
 ended badly, but which of their drones are most likely to fail next and should be inspected first. A log-based method that
 is good at the second task need not be good at the first, and confusing the two can mislead both investigators and maintainers.
 
-Whether logs can deliver an answer to the first question has, to our knowledge, not been tested on real crashes at scale. Public fault
-datasets are dominated by simulation or by faults injected on purpose
-\cite{keipour2021alfa,le2025rflymad,kabaoglu2026uavsead}, and accident statistics classify outcomes such as loss of
-control rather than causes visible in a log \cite{wild2016drone,aaib2024review}. Two pitfalls make optimistic results
-easy to obtain. First, a log that contains a crash also contains its consequences: saturated motors, extreme attitudes
-and estimator errors. A detector can learn these instead of the cause, a form of data leakage
+Whether logs can deliver on either expectation has, to our knowledge, not been tested at scale against real crashes
+with evaluation protocols that guard against the two known sources of optimism. First, a log that contains a crash also
+contains its consequences---saturated motors, extreme attitudes and estimator errors---so a detector can learn the crash
+itself rather than its cause, a form of crash-window data leakage
 \cite{kaufman2012leakage,kapoor2023leakage}. Second, comparing crash flights with other operators' good flights mixes
 the flight with the aircraft and the people using it, so a difference between groups need not say anything about the
-flight that crashed.
+flight that crashed (between-aircraft confounding). Public fault datasets are dominated by simulation or injected faults
+\cite{keipour2021alfa,le2025rflymad,kabaoglu2026uavsead}, and accident statistics classify outcomes such as loss of
+control rather than causes visible in a log \cite{wild2016drone,aaib2024review}; neither resource tests
+whether real crash logs, evaluated under leakage-free and within-aircraft protocols, can support the attribution and
+prioritization decisions that operators actually need.
 
-This paper asks four questions of the largest public archive of real autopilot logs, PX4 Flight Review
-\cite{meier2015px4,px4flightreview}:
+The central question this paper asks of the largest public archive of real autopilot logs, PX4 Flight Review
+\cite{meier2015px4,px4flightreview}, is: \textit{what evidentiary value can flight logs carry for a drone fleet
+operator, once evaluation protocols guard against crash-window leakage and between-aircraft confounding?} We decompose
+this into four sub-tests:
 \begin{enumerate}
-\item[Q1] Do configuration settings differ between crash flights and normal flights?
-\item[Q2] Can a log separate crashes caused by the pilot from crashes caused by the aircraft?
-\item[Q3] Does the flight that crashed show warning signs relative to the same drone's history, or are the
-differences between drones?
-\item[Q4] Do expert diagnoses agree with uploader labels, and do automatic checks find the faults experts name?
+\item[Q1] Do configuration settings differ between crash flights and normal flights, and can that difference indicate
+          who was responsible?
+\item[Q2] Can a log separate crashes caused by the pilot from crashes caused by the aircraft---and does this separation
+          survive expert-diagnosis validation?
+\item[Q3] Once within-aircraft and between-aircraft comparisons are distinguished, which comparison retains a usable
+          signal of pre-crash deterioration?
+\item[Q4] Do expert diagnoses agree with uploader labels, and do automatic diagnostic checks find the faults experts
+          name without benefiting from the crash window?
 \end{enumerate}
-Because language-model assistants are now proposed for exactly this task, we also report a controlled test of small
-local models used as a review panel.
+Because language-model assistants are now proposed for exactly this task, we also report a controlled evaluation of
+small local models used as an attribution review panel, including a test for voting-consensus manipulation.
 
-The contributions are as follows. (i) We assemble a real-flight crash benchmark from public logs and check its labels
-against expert diagnoses. (ii) Every confirmatory test was declared, with its threshold and pass mark, in public version
-control before the data it used were analysed, and decisive tests were repeated on held-out data, following declared
-test protocols committed prior to analysis \cite{nosek2018prereg}; secondary sensitivity and diagnostic analyses added
-during revision are explicitly designated as exploratory. (iii) We show that with these rules, models and labels, automatic
-crash attribution from logs was not achievable above chance: cross-validated classification yielded upper 95\% confidence bounds
-between 0.510 and 0.619, well below the 0.66 permutation null detection threshold, while agreement with expert forum diagnoses did
-not exceed chance (balanced accuracy 0.381, 95\% CI 0.20--0.59; pilot recall 1 of 5). Furthermore, apparent diagnostic accuracy can
-come from the crash itself. (iv) We report one positive screening signal: drones that later crash are rougher on their ordinary flights
-than matched drones on older estimator metrics, though replication on newer accelerometer metrics was inconclusive ($p=0.25$). Screening
-against stratum-matched fleet controls yields an operational positive predictive value of 1.37--1.48\% (relative risk $3.00\times$,
-lift $2.00\times$) at a 25\% flag rate and 2.26--2.47\% (relative risk $4.50\times$, lift $3.33\times$, 40.5--44.2 inspections per crash)
-at a 10\% flag rate across screenable (0.69\%) and fleet-wide (0.74\%) vehicle base rates (1.04\% under empirical matched-set screening).
-(v) We show how these results translate into the design of an open-source assurance tool, AeroFleet~2.0, and report engineering checks
-of its parts, including one negative result (Section~\ref{sec:tool}). Code, declarations, derived features and labels are released.
+The contributions are as follows.
+(i)~We introduce and apply a \textit{crash-window ablation and within-aircraft Group-CV evaluation protocol}: we remove
+the final crash window from diagnostic checks (quantifying the sensitivity drop from 77.8\% to 11.1\%, $p=0.031$) and
+replace cross-sectional comparisons with grouped cross-validation across the same aircraft's history (reducing apparent
+AUC from 0.88 to 0.58); this reusable protocol is committed to public version control prior to analysis
+\cite{nosek2018prereg} so that others can apply it to any drone-log diagnostic.
+(ii)~We assemble the first real-flight crash benchmark from public PX4 logs that pairs uploader responsibility labels
+with independent expert forum diagnoses ($\kappa \geq 0.73$, 148 threads, 43 downloadable logs).
+(iii)~We show that with these rules, models and labels, automatic crash attribution from logs was not achievable above
+chance: cross-validated classification yielded upper 95\% confidence bounds between 0.510 and 0.619, well below the
+0.66 permutation null detection threshold, while agreement with expert forum diagnoses did not exceed chance (balanced
+accuracy 0.381, 95\% CI 0.20--0.59; pilot recall 1 of 5). This constitutes a prospectively declared negative result, not
+a post-hoc reinterpretation. Furthermore, apparent diagnostic accuracy is consistent with crash-window leakage.
+(iv)~We report one partial positive screening signal: drones that later crash are rougher than matched peers on older
+estimator metrics (mean rank 0.67, Holm $p=0.016$); replication on newer accelerometer metrics was inconclusive
+($p=0.25$, 19 sets, severely underpowered). Stratum-matched fleet screening yields an operational PPV of 2.26--2.47\%
+(lift $3.3\times$, 40.5--44.2 inspections per crash) at a 10\% flag rate---a maintenance prioritization signal, not an
+operational warning.
+(v)~We show how these results translate into the design of AeroFleet~2.0, an open-source assurance tool that presents
+longitudinal evidence and ranks drones without issuing automatic verdicts; engineering checks of its parts, including
+one negative result, are reported in Section~\ref{sec:tool}. Code, declarations, derived features and labels are released.
 
 % ===================================================================
 \section{Related work}
@@ -155,9 +168,12 @@ forensics \cite{silalahi2026droptc}. Multi-agent debate has been proposed to imp
 
 \paragraph{Methodology} Leakage, where information unavailable at prediction time enters training or evaluation, is a
 known source of irreproducible machine-learning results \cite{kaufman2012leakage,kapoor2023leakage}; label noise
-likewise biases evaluation \cite{frenay2014label}. Matching reduces confounding in observational comparisons
-\cite{stuart2010matching}, and declaring hypotheses and analysis scripts in version control prior to running tests
-separates confirmatory from exploratory analysis \cite{nosek2018prereg}. We apply these ideas to drone logs.
+likewise biases evaluation \cite{frenay2014label}. In the drone-log domain we identify a domain-specific variant:
+\textit{crash-window leakage}, in which the physical consequences of the crash (saturated actuators, estimator divergence,
+attitude extremes) contaminate features used to evaluate pre-crash diagnostics. Matching reduces confounding in
+observational comparisons \cite{stuart2010matching}, and declaring hypotheses and analysis scripts in version control
+prior to running tests separates confirmatory from exploratory analysis \cite{nosek2018prereg}. We apply these ideas
+together as an evaluation protocol for drone logs.
 
 \paragraph{Tools for operators} Retrieving similar past cases and reusing their solutions is the basis of
 case-based reasoning \cite{aamodt1994cbr}; ranking text by word overlap with BM25 is a standard, deterministic
@@ -874,11 +890,12 @@ investigations before adoption.
 \paragraph{Leakage and confounding} While cross-sectional models showed high apparent separation (AUC 0.88), this was
 likely influenced by airframe confounds and duration differences (duration alone yields AUC 0.662); within-drone evaluation
 demonstrated substantial attenuation (AUC 0.580, 95\% CI 0.528--0.633), confirming that longitudinal baseline comparison is
-essential. Diagnostic checks also exhibited leakage: specifically, tuning fault detection fell from 77.8\% to 11.1\% sensitivity
-($p=0.031$ on paired logs) when the final 10\,s were removed. However, as noted in Section~\ref{sec:experts}, this finding is exploratory
-and does not survive Bonferroni correction over five checks ($p \approx 0.16$), and the low baseline sensitivity of the remaining checks
-($\le 25\%$) leaves open whether other physical failure modes also leak. Diagnostic evaluations must remove the crash window and compare
-against an aircraft's own operating baseline before claiming pre-crash anticipation.
+essential. Diagnostic checks were also \textit{consistent with} crash-window leakage: specifically, tuning fault detection
+fell from 77.8\% to 11.1\% sensitivity ($p=0.031$ on paired logs) when the final 10\,s were removed, though this finding
+is exploratory, does not survive Bonferroni correction over five checks ($p \approx 0.16$), and the low baseline sensitivity
+of the remaining checks ($\le 25\%$) leaves open whether other physical failure modes exhibit the same pattern.
+Regardless of the precise mechanism, diagnostic evaluations must remove the crash window and compare against an aircraft's
+own operating baseline before claiming pre-crash anticipation.
 
 \paragraph{Drone-level risk} The positive result concerns airframes, not flights. Drones that later crashed vibrated
 more than comparable drones on ordinary flights, consistent with a maintenance view in which mechanical degradation

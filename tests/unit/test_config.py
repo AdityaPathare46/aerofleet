@@ -16,8 +16,11 @@ from aerofleet.utils.config import (
 class TestLLMConfig:
     """Tests for LLM configuration."""
     
-    def test_default_values(self):
+    def test_default_values(self, monkeypatch):
         """Test that default values are set correctly."""
+        monkeypatch.delenv("OLLAMA_HOST", raising=False)
+        monkeypatch.delenv("OLLAMA_MODEL", raising=False)
+        monkeypatch.delenv("OLLAMA_TIMEOUT", raising=False)
         config = LLMConfig()
         assert config.ollama_host == "http://localhost:11434"
         assert config.ollama_model == "llama3.2"
