@@ -780,16 +780,15 @@ its results are indicative rather than definitive.
 three vibration-diagnosed logs). Null results there are not evidence of no effect.
 
 \paragraph{Language models} The AI comparison is preliminary: the experiments use 60 author-generated cases and
-relatively small local models (3--4B parameters). The manuscript itself acknowledges that the fixed rule's performance
-may be optimistic on cases created by the same authors who designed the rule (0 wrong answers is close to a training score);
-a blind set of cases written by someone who has not seen the rule is in preparation. Larger models or alternative prompt
-architectures were not tested.
+relatively small local models (3--4B parameters). The fixed rule's performance may be optimistic on cases created by
+the same authors who designed the rule (0 wrong answers is close to a training score); a blind set of cases written by
+someone who has not seen the rule is in preparation. Larger models or alternative prompt architectures were not tested.
 
 \paragraph{The tool} AeroFleet~2.0's checks are primarily engineering tests on archive data and synthetic fault injections,
 not evidence of improved operational safety. Plans in the injection test were built from the flights themselves; the
 description search was tested on forum titles, which are shorter and more varied than an operator's report, and its symptom
 lists were written by the authors; prospective fleet evaluation of the vibration ranking and user studies of the
-three-dimensional views remain future work (pages 20--25).
+three-dimensional views remain future work (Sections~\ref{sec:tool} and \ref{sec:discussion}).
 
 % ===================================================================
 \section{Conclusion}
@@ -859,6 +858,9 @@ the red sphere marks their loss of separation. (b) The schedule produced by the 
 first launch: two launches are delayed and no pair comes within 15\,m. Straight legs at planned speeds, no wind.}
 \label{fig:rehearsal}
 \end{figure}
+
+\FloatBarrier
+\clearpage
 
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}

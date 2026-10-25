@@ -93,7 +93,7 @@ def _ci(x, rng=np.random.default_rng(0), n=10000):
 
 
 def within_between(out):
-    fig, ax = plt.subplots(figsize=(4.4, 2.8))
+    fig, ax = plt.subplots(figsize=(5.0, 2.8))
     labels, ys = [], []
     for i, (design, fn) in enumerate((("Same drone, earlier flights", _within_ranks), ("Matched drones that did not crash", _between_ranks))):
         for j, (feat, name) in enumerate((("vib_p95", "Vibration"), ("tune_rms", "Rate-tracking error"))):
@@ -111,7 +111,7 @@ def within_between(out):
     ax.invert_yaxis()
     ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)")
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
     plt.close(fig)
 
 
