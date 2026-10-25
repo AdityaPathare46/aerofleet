@@ -98,7 +98,7 @@ def _ci(x, rng=np.random.default_rng(0), n=10000):
 
 
 def within_between(out):
-    fig, ax = plt.subplots(figsize=(5.0, 2.8))
+    fig, ax = plt.subplots(figsize=(5.2, 2.9))
     labels, ys = [], []
     for i, (design, fn) in enumerate((("Same drone, earlier flights", _within_ranks), ("Matched drones that did not crash", _between_ranks))):
         for j, (feat, name) in enumerate((("vib_p95", "Vibration"), ("tune_rms", "Rate-tracking error"))):
@@ -116,7 +116,7 @@ def within_between(out):
     ax.invert_yaxis()
     ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)")
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.12)
     plt.close(fig)
 
 
@@ -141,7 +141,7 @@ def forum_causes(out):
 
 def study_flow(out):
     """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
-    fig = plt.figure(figsize=(7.8, 5.5), dpi=300)
+    fig = plt.figure(figsize=(8.2, 5.6), dpi=300)
     gs = fig.add_gridspec(2, 1, height_ratios=[1.05, 1.25], hspace=0.18)
     ax_flow = fig.add_subplot(gs[0])
     ax_tab = fig.add_subplot(gs[1])
@@ -192,7 +192,7 @@ def study_flow(out):
         ["Q2/Q3a: Data Leakage Curve", "205 crashes, 143 normal", "57 dropped (missing topics or duration < 10 s); attrition across margins", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
         ["Q3b: Within-Drone Longitudinal", "101 crashed drones", "34 dropped (single flight recorded or duration < 10 s)", "67 multi-flight drones (372 flights)\n61 vibration sets, 46 tracking sets"],
         ["Q3c: Between-Drone Matched Sets", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric across controls)", "60 vibration sets (124 controls, 372 fl.)\n47 rate-tracking sets"],
-        ["Q4: Expert Community Cases", "148 real crash threads", "110 logs unhosted or expired download links", "38 downloadable logs (all aircraft-fault)\n30 with complete telemetry features"],
+        ["Q4: Expert Community Cases", "148 real crash threads", "105 logs unhosted or expired download links", "43 downloadable logs (38 aircraft, 5 pilot)\n37 aircraft logs with fault categories"],
     ]
 
     headers = ["Analysis Stream (Protocol)", "Initial Candidate Pool", "Exclusions & Attrition Criteria", "Analyzed Sample Size"]
@@ -217,7 +217,7 @@ def study_flow(out):
             if col == 0:
                 cell.set_text_props(weight="semibold", color="#1E3A8A")
 
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.08)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
     plt.close(fig)
 
 
@@ -256,21 +256,22 @@ def robustness(out):
         ("Newer accel. metric replication (new cases)", 10, 0.50, 0.5760),
     ]
     y = np.arange(len(rows))
-    fig, ax = plt.subplots(figsize=(5.4, 3.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(5.6, 3.4), dpi=300)
     colors = [BLUE if r[3] < 0.025 else GREY for r in rows]
     ax.scatter([r[2] for r in rows], y, color=colors, s=35, zorder=3)
     for i, r in enumerate(rows):
         ptxt = "p<0.001" if r[3] < 0.001 else f"p={r[3]:.3f}"
         ax.text(r[2] + 0.012, i, f"n={r[1]}, {ptxt}", va="center", fontsize=7.2, color=INK)
     ax.axvline(0.5, color=GREY, lw=0.8, ls="--")
-    ax.text(0.502, len(rows) - 0.5, "chance (0.50)", color=GREY, fontsize=7.0, ha="left", va="bottom")
+    ax.text(0.503, -0.4, "chance (0.50)", color=GREY, fontsize=7.2, ha="left", va="bottom")
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows], fontsize=7.2)
     ax.invert_yaxis()
+    ax.set_ylim(len(rows) - 0.4, -0.8)
     ax.set_xlim(0.40, 0.95)
     ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=7.8)
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
 
 
