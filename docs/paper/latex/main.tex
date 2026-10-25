@@ -43,7 +43,7 @@ later crashed vibrated more on ordinary flights than matched drones (mean rank 0
 Holm-adjusted $p=0.016$), though a replication on the newer accelerometer metric alone did not confirm it
 (0.58, $p=0.25$, 19 sets). Small language-model panels lost to a fixed rule and were easily steered, and matching a
 written problem description against 96 expert-diagnosed crashes found the expert's cause less often than the base
-rate (22\% vs 27\%). An open-source fleet-assurance tool built on these findings presents evidence, not verdicts:
+rate (22\% vs 27\%). An open-source fleet-assurance tool, AeroFleet~2.0, built on these findings presents evidence, not verdicts:
 an event timeline, a fleet vibration ranking, a signed record, and 3D replay and rehearsal of flights. Flight logs support ranking airframes for inspection, not attributing an individual crash.
 \end{abstract}
 
@@ -102,7 +102,7 @@ it used were analysed, and decisive tests were repeated on held-out data, follow
 features, and that apparent diagnostic accuracy can come from the crash itself. (iv) We report one positive and
 practically useful result: drones that later crash are rougher on their ordinary flights than matched drones, which
 supports fleet-level inspection ranking but not per-flight prediction. (v) We show how these results translate
-into the design of an open-source assurance tool, and report engineering checks of its parts, including one
+into the design of an open-source assurance tool, AeroFleet~2.0, and report engineering checks of its parts, including one
 negative result (Section~\ref{sec:tool}). Code, declarations, derived features and labels are released.
 
 % ===================================================================
@@ -174,9 +174,10 @@ PX4 Flight Review is a public service to which PX4 users upload onboard logs (UL
 \cite{px4flightreview}. We downloaded its public index on 20 October 2026: 479,547 logs (32,793,172 bytes,
 SHA-256 \texttt{1bbb01c3\ldots a92d6}), of which 442,929 came from real hardware rather than simulation, from 38,320
 distinct vehicle identifiers. Uploaders may rate a log. A total of 590 logs carry a crash rating, 402 attributing the
-crash to software or hardware (``aircraft-caused'') and 188 to the pilot (``pilot-caused''). Logs rated ``good'' or
-``great'' served as normal flights. Logs were parsed with pyulog. We store derived features and log identifiers, not
-the logs.
+crash to software or hardware (``aircraft-caused'') and 188 to the pilot (``pilot-caused''). These uploader-assigned
+responsibility labels are not independently verified ground truth; they reflect the uploaders' own assessments.
+Logs rated ``good'' or ``great'' served as normal flights. Logs were parsed with pyulog. We store derived features and log
+identifiers, not the logs.
 
 A ULog file contains the parameters in force when logging started, any parameter changes during logging, timestamped
 messages published by the autopilot's modules, and logged text messages with a severity level. The analyses below use
@@ -506,7 +507,8 @@ was too small to decide ($\bar r=0.62$, $p=0.19$, 12 sets). A declared replicati
 admitting every newer-firmware crashed drone with at least one earlier flight (26 sets selected, 19 usable), did not
 confirm the effect: $\bar r=0.58$ (95\% CI 0.39--0.76, $p=0.25$); on the ten cases not in the original test it was
 0.50. The interval is compatible both with no effect and with the effect seen on the older estimate, so whether the
-newer metric shows the same difference remains open. The within-drone null did not depend on the crash-moment
+newer metric shows the same difference remains open; because the archive has no further newer-firmware cases meeting
+the matching criteria, this main positive result needs stronger replication in prospective studies. The within-drone null did not depend on the crash-moment
 threshold ($\bar r=0.46$ at $45^\circ$, $0.50$ at $75^\circ$). As a screening signal the effect is moderate: the
 crashed drone was the roughest of its matched set in 55\% of sets, against 41\% expected without a difference.
 
@@ -556,10 +558,13 @@ Battery or power & 0/4 & 4/143 (3\%) & 0/2 & 1/130 (1\%) \\
 \end{figure}
 
 \subsection{Language-model review panels}
-The fixed rule was right in 45 of 60 generated cases (75\%, 95\% Wilson interval 63--84\%) and wrong in none (0\%,
-95\% interval 0--6\%); it referred the other 15 to a person. ``Right'' includes leaving the 10 no-cause cases open, so
-the rule named the true cause in 35 of the 50 cases that had one. No model's panel matched it (Table~\ref{tab:llm}):
-wrong answers ranged from 6 to 38 of 60 (10--63\%). A single compromised reviewer changed the
+Because language-model assistants are increasingly proposed for log review, we conducted a preliminary comparison on
+60 author-generated fault cases using four relatively small local models (3--4B parameters). The fixed rule was right
+in 45 of 60 generated cases (75\%, 95\% Wilson interval 63--84\%) and wrong in none (0\%, 95\% interval 0--6\%); it
+referred the other 15 to a person. ``Right'' includes leaving the 10 no-cause cases open, so the rule named the true
+cause in 35 of the 50 cases that had one. As discussed in Section~\ref{sec:threats}, the rule's performance may be
+optimistic because the cases were created by the authors who designed the rule; nonetheless, no model's panel matched
+it (Table~\ref{tab:llm}): wrong answers ranged from 6 to 38 of 60 (10--63\%). A single compromised reviewer changed the
 panel's answer in 45 to 56 of 60 cases. None of 40 planted hostile strings reached a model prompt, because the pipeline
 passed only numbers extracted by code.
 
@@ -587,16 +592,19 @@ qwen3:4b & 0 / 41 & 17 (19--41\%) & 38 (51--74\%) & 45 of 60 \\
 \section{Design implications: an assurance tool built on the findings}
 \label{sec:tool}
 
-The authors develop AeroFleet, an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads
+The authors develop AeroFleet~2.0, an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads
 the files an operator already has (parameter files, mission files and flight logs), contacts no aircraft and calls no
 language model. This section reports design consequences and engineering checks; the paper's empirical evidence is
 presented in Sections~\ref{sec:data}--\ref{sec:results}. Table~\ref{tab:design} links each result above to a design decision and to the check that was made of
-it. The injection and leave-one-out checks were declared before they were run, like the tests above; the others are
-software tests. All are engineering validation; none evaluates the tool as a safety intervention.
+it. AeroFleet~2.0's checks are primarily engineering validation tests, not evidence of improved operational safety;
+demonstrating safety benefits in field operations requires prospective fleet evaluation and user studies, which remain
+future work (Section~\ref{sec:discussion}). The injection and leave-one-out checks were declared before they were run,
+like the tests above; the others are software tests. All are engineering validation; none evaluates the tool as a
+safety intervention.
 
 \begin{table}[!htbp]
 \centering
-\caption{From findings to design decisions in the assurance tool, and how each part was checked.}
+\caption{From findings to design decisions in the AeroFleet~2.0 assurance tool, and how each part was checked.}
 \label{tab:design}
 \small
 \begin{tabularx}{\textwidth}{@{}YYY@{}}
@@ -677,8 +685,9 @@ To make spatial deviations and separation visible, the tool draws flights on a v
 deviations and log events pinned in three dimensions; a \emph{mission rehearsal} animates planned missions on a common
 clock to inspect losses of separation before and after deconfliction. The rehearsal is kinematic (straight legs at
 planned speeds, with no wind, vehicle dynamics or sensor noise). Both features were checked functionally on desktop,
-but the paired standalone headset application has not been run on a headset and no user study has been conducted
-(the full view and Figure~\ref{fig:rehearsal} are in \ref{sec:appendix_replay}).
+but the paired standalone headset application has not been run on a headset and no user study has been conducted;
+these checks confirm software function rather than evidence of improved operational safety (the full view and
+Figure~\ref{fig:rehearsal} are in \ref{sec:appendix_replay}).
 
 % ===================================================================
 \section{Discussion}
@@ -702,10 +711,10 @@ propulsion problems, which raise vibration. This is consistent with a maintenanc
 degraded condition precedes failure \cite{petritoli2018reliability}. It supports ranking a fleet's drones by vibration
 measured the same way and inspecting the roughest; it does not support a per-flight crash warning, the screening
 gain is moderate, and the effect rests on the older vibration estimate: a replication on the newer metric was
-inconclusive.
+inconclusive ($n=19$, $p=0.25$), so this main positive result needs stronger replication in modern fleets.
 
-\paragraph{From findings to a tool} Section~\ref{sec:tool} turns these results into design decisions for an
-operator's tool. The common thread is that the tool shows evidence and ranks drones, and does not name a cause.
+\paragraph{From findings to a tool} Section~\ref{sec:tool} turns these results into design decisions for AeroFleet~2.0,
+an operator's ground-side assurance tool. The common thread is that the tool shows evidence and ranks drones, and does not name a cause.
 
 \paragraph{Language models} On this task small local models added errors and an attack surface rather than accuracy.
 A debate-style panel, related to multi-agent debate \cite{du2024debate}, did not help at this model size, and the adversarial result echoes concerns about
@@ -730,22 +739,24 @@ verdicts from logs with caution; (ii) use logs to assemble a time-ordered record
 
 \paragraph{Future work} Two studies have been declared in the repository before any data were collected: a
 prospective test in partner fleets, in which the monthly vibration
-ranking is written to the signed record before outcomes occur and crashes, unplanned repairs and defects found at
-inspection are compared between flagged and unflagged drones over six months; and a within-subjects user study
-comparing the three-dimensional views with a two-dimensional map on tasks with known answers. Repeating the
-between-drone analysis on ArduPilot fleets, testing sequence models or frequency-domain IMU features for transient
-precursors that whole-window summaries miss, and evaluating a larger set of crashes with causes verified by independent
-investigators would further strengthen the evidence.
+ranking of AeroFleet~2.0 is written to the signed record before outcomes occur and crashes, unplanned repairs and defects
+found at inspection are compared between flagged and unflagged drones over six months; and a within-subjects user study
+comparing the three-dimensional views with a two-dimensional map on tasks with known answers. Stronger replication of the
+between-drone vibration effect on modern autopilots, evaluating operational safety impact across active fleets, testing
+sequence models or frequency-domain IMU features for transient precursors that whole-window summaries miss, and
+evaluating a larger set of crashes with causes verified by independent investigators would further strengthen the
+evidence.
 
 % ===================================================================
 \section{Threats to validity}
 \label{sec:threats}
 
-\paragraph{Labels} Ratings are the uploaders' own and normal flights are self-rated. Controls without a crash-rated log
-may have crashed without a rating; this misclassification biases the between-drone test towards no difference, so the
-observed effect is, if anything, conservative. Forum diagnoses were first recorded with AI assistance and verified
-by quotation; a blind second coding agreed well (kappa 0.81 for the conclusion, 0.73 for the cause) but not
-perfectly, and half of the expert-diagnosed logs are no longer public.
+\paragraph{Labels} The uploader-assigned responsibility labels are not independently verified ground truth; they reflect
+the uploaders' own assessments, and normal flights are self-rated. The expert-diagnosed sample is useful, but many logs
+are no longer available (only 37 of 73 could still be downloaded). Controls without a crash-rated log may have crashed
+without a rating; this misclassification biases the between-drone test towards no difference, so the observed effect is,
+if anything, conservative. Forum diagnoses were first recorded with AI assistance and verified by quotation; a blind
+second coding agreed well (kappa 0.81 for the conclusion, 0.73 for the cause) but not perfectly.
 
 \paragraph{Selection} The archive is self-selected, PX4-only and rich in development and test flights, and crash-rated
 logs differ from well-rated ones in duration and firmware era (Table~\ref{tab:composition}). Results may not transfer to
@@ -753,27 +764,32 @@ commercial ArduPilot fleets or to proprietary autopilots.
 
 \paragraph{Measurement} The crash moment is estimated; the within-drone result did not depend on the threshold. The
 between-drone effect was shown mainly with the older vibration estimate and was not confirmed on the newer metric
-in a declared replication with 19 usable sets, and matching used hardware, firmware, vehicle
-type and, in a sensitivity analysis, airframe, but not propellers, payloads or missions.
+in a declared replication with 19 usable sets; this main positive result needs stronger replication on newer firmware,
+and matching used hardware, firmware, vehicle type and, in a sensitivity analysis, airframe, but not propellers, payloads
+or missions.
 
 \paragraph{Features} Summary features over the whole window (percentiles, shares of time, RMS) were used;
 sequence models or frequency-domain IMU features might capture short precursors that summaries miss. This was not
 tested.
 
 \paragraph{Attrition} Only 37 of the 73 logs behind expert aircraft diagnoses with a checkable cause could still be
-downloaded, so Table~\ref{tab:checks} has very small cells ($n = 2$ to $9$); its results are indicative only.
+downloaded, so several diagnostic comparisons in Table~\ref{tab:checks} have very small sample sizes ($n = 2$ to $9$);
+its results are indicative rather than definitive.
 
 \paragraph{Power} Some comparisons are small (14 pilot-caused matched sets, 12 sets with the newer vibration metric,
 three vibration-diagnosed logs). Null results there are not evidence of no effect.
 
-\paragraph{Language models} The 60 panel cases were written by the authors who wrote the fixed rule, so the rule's
-0 wrong answers is close to a training score; a blind set of cases written by someone who has not seen the rule is in
-preparation. Only 3--4B local models were tested.
+\paragraph{Language models} The AI comparison is preliminary: the experiments use 60 author-generated cases and
+relatively small local models (3--4B parameters). The manuscript itself acknowledges that the fixed rule's performance
+may be optimistic on cases created by the same authors who designed the rule (0 wrong answers is close to a training score);
+a blind set of cases written by someone who has not seen the rule is in preparation. Larger models or alternative prompt
+architectures were not tested.
 
-\paragraph{The tool} The tool's checks are engineering validation on archive data, not field evaluation. Plans in the
-injection test were built from the flights themselves; the description search was tested on forum titles, which are
-shorter and more varied than an operator's report, and its symptom lists were written by the authors; the vibration
-ranking has not been tested prospectively; and the three-dimensional views have had no user study.
+\paragraph{The tool} AeroFleet~2.0's checks are primarily engineering tests on archive data and synthetic fault injections,
+not evidence of improved operational safety. Plans in the injection test were built from the flights themselves; the
+description search was tested on forum titles, which are shorter and more varied than an operator's report, and its symptom
+lists were written by the authors; prospective fleet evaluation of the vibration ranking and user studies of the
+three-dimensional views remain future work (pages 20--25).
 
 % ===================================================================
 \section{Conclusion}
@@ -789,7 +805,7 @@ inspection, keep a record that can be checked, and let a person see a flight or 
 
 % ===================================================================
 \section*{Declaration of competing interest}
-The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. The authors develop the open-source tool described in Section~\ref{sec:tool}; it is not commercial.
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. The authors develop the open-source AeroFleet~2.0 tool described in Section~\ref{sec:tool}; it is not commercial.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
 During the preparation of this work the authors used an AI assistant (Claude, Anthropic) to write analysis code, draft
@@ -799,7 +815,7 @@ the content as needed and take full responsibility for the content of the publis
 \section*{Data availability}
 {\sloppy
 Selection scripts, analysis code, the declared hypotheses with their commit history, derived features, expert labels
-(without forum text), and the source code of the tool are available at
+(without forum text), and the source code of the AeroFleet~2.0 tool are available at
 \url{https://github.com/AdityaPathare46/aerofleet}; a DOI-archived release will be provided on acceptance. Raw logs
 are public on PX4 Flight Review and are referenced by identifier.\par}
 
