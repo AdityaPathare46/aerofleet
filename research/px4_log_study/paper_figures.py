@@ -98,7 +98,7 @@ def _ci(x, rng=np.random.default_rng(0), n=10000):
 
 
 def within_between(out):
-    fig, ax = plt.subplots(figsize=(5.2, 2.9))
+    fig, ax = plt.subplots(figsize=(5.6, 3.1))
     labels, ys = [], []
     for i, (design, fn) in enumerate((("Same drone, earlier flights", _within_ranks), ("Matched drones that did not crash", _between_ranks))):
         for j, (feat, name) in enumerate((("vib_p95", "Vibration"), ("tune_rms", "Rate-tracking error"))):
@@ -114,9 +114,9 @@ def within_between(out):
     ax.set_yticklabels(labels, fontsize=7.5)
     ax.set_xlim(0, 1.0)
     ax.invert_yaxis()
-    ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)")
+    ax.set_xlabel("Mean scaled rank of the crashed drone\n(0.5 = no difference; bars: 95% bootstrap CI)", fontsize=8.0)
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.12)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.18)
     plt.close(fig)
 
 
@@ -141,7 +141,7 @@ def forum_causes(out):
 
 def study_flow(out):
     """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
-    fig = plt.figure(figsize=(8.2, 5.6), dpi=300)
+    fig = plt.figure(figsize=(8.6, 5.8), dpi=300)
     gs = fig.add_gridspec(2, 1, height_ratios=[1.05, 1.25], hspace=0.18)
     ax_flow = fig.add_subplot(gs[0])
     ax_tab = fig.add_subplot(gs[1])
@@ -217,7 +217,7 @@ def study_flow(out):
             if col == 0:
                 cell.set_text_props(weight="semibold", color="#1E3A8A")
 
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.18)
     plt.close(fig)
 
 
@@ -256,7 +256,7 @@ def robustness(out):
         ("Newer accel. metric replication (new cases)", 10, 0.50, 0.5760),
     ]
     y = np.arange(len(rows))
-    fig, ax = plt.subplots(figsize=(5.6, 3.4), dpi=300)
+    fig, ax = plt.subplots(figsize=(6.0, 3.6), dpi=300)
     colors = [BLUE if r[3] < 0.025 else GREY for r in rows]
     ax.scatter([r[2] for r in rows], y, color=colors, s=35, zorder=3)
     for i, r in enumerate(rows):
@@ -269,9 +269,9 @@ def robustness(out):
     ax.invert_yaxis()
     ax.set_ylim(len(rows) - 0.4, -0.8)
     ax.set_xlim(0.40, 0.95)
-    ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=7.8)
+    ax.set_xlabel("Mean scaled rank of the crashed drone (vibration; 0.5 = no difference)", fontsize=8.0)
     fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.15)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.20)
     plt.close(fig)
 
 
