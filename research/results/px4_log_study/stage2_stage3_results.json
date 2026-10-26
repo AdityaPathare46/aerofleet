@@ -1,0 +1,262 @@
+{
+  "A4_decision_tree_bounds": {
+    "0": {
+      "n_total": 148,
+      "n_drone": 112,
+      "n_pilot": 36,
+      "point_auc": 0.5166170634920635,
+      "bootstrap_se": 0.06129824663290339,
+      "ci_95": [
+        0.39207607250711635,
+        0.6355620521477507
+      ],
+      "upper_bound": 0.6355620521477507
+    },
+    "2": {
+      "n_total": 142,
+      "n_drone": 106,
+      "n_pilot": 36,
+      "point_auc": 0.5940775681341719,
+      "bootstrap_se": 0.057362591117822284,
+      "ci_95": [
+        0.4824221993284493,
+        0.7059874885536784
+      ],
+      "upper_bound": 0.7059874885536784
+    },
+    "5": {
+      "n_total": 135,
+      "n_drone": 101,
+      "n_pilot": 34,
+      "point_auc": 0.6025043680838672,
+      "bootstrap_se": 0.0629337136643579,
+      "ci_95": [
+        0.4791097402597403,
+        0.7236872566644869
+      ],
+      "upper_bound": 0.7236872566644869
+    },
+    "10": {
+      "n_total": 114,
+      "n_drone": 87,
+      "n_pilot": 27,
+      "point_auc": 0.3793103448275862,
+      "bootstrap_se": 0.07094089257687465,
+      "ci_95": [
+        0.24932966376514765,
+        0.5236088191242074
+      ],
+      "upper_bound": 0.5236088191242074
+    },
+    "20": {
+      "n_total": 100,
+      "n_drone": 73,
+      "n_pilot": 27,
+      "point_auc": 0.46778285134449515,
+      "bootstrap_se": 0.06900153010881041,
+      "ci_95": [
+        0.3308021075628352,
+        0.6041918423157696
+      ],
+      "upper_bound": 0.6041918423157696
+    },
+    "30": {
+      "n_total": 89,
+      "n_drone": 63,
+      "n_pilot": 26,
+      "point_auc": 0.3663003663003663,
+      "bootstrap_se": 0.07501397773209269,
+      "ci_95": [
+        0.2229670721823839,
+        0.5186226580796253
+      ],
+      "upper_bound": 0.5186226580796253
+    }
+  },
+  "A8_permutation_null": {
+    "asymptotic_se": 0.055493516948202364,
+    "fixed_feature_sd": 0.05493691135127878,
+    "fixed_random_sd": 0.05539046201887807,
+    "cv_refitting_sd": 0.09
+  },
+  "A6_sign_ablation": {
+    "0": {
+      "n_crashes": 148,
+      "n_normals": 139,
+      "crash_motor_sat": 0.4594594594594595,
+      "norm_motor_sat": 0.18705035971223022,
+      "crash_clip": 0.2635135135135135,
+      "norm_clip": 0.04316546762589928,
+      "crash_failsafe": 0.13513513513513514,
+      "norm_failsafe": 0.1366906474820144,
+      "crash_gps": 0.08783783783783784,
+      "norm_gps": 0.03597122302158273,
+      "crash_batt": 0.20945945945945946,
+      "norm_batt": 0.03597122302158273
+    },
+    "2": {
+      "n_crashes": 142,
+      "n_normals": 137,
+      "crash_motor_sat": 0.4154929577464789,
+      "norm_motor_sat": 0.1897810218978102,
+      "crash_clip": 0.24647887323943662,
+      "norm_clip": 0.043795620437956206,
+      "crash_failsafe": 0.11267605633802817,
+      "norm_failsafe": 0.1386861313868613,
+      "crash_gps": 0.09154929577464789,
+      "norm_gps": 0.0364963503649635,
+      "crash_batt": 0.18309859154929578,
+      "norm_batt": 0.0364963503649635
+    },
+    "5": {
+      "n_crashes": 135,
+      "n_normals": 133,
+      "crash_motor_sat": 0.4,
+      "norm_motor_sat": 0.16541353383458646,
+      "crash_clip": 0.2222222222222222,
+      "norm_clip": 0.03759398496240601,
+      "crash_failsafe": 0.1037037037037037,
+      "norm_failsafe": 0.14285714285714285,
+      "crash_gps": 0.08888888888888889,
+      "norm_gps": 0.022556390977443608,
+      "crash_batt": 0.16296296296296298,
+      "norm_batt": 0.03759398496240601
+    },
+    "10": {
+      "n_crashes": 114,
+      "n_normals": 130,
+      "crash_motor_sat": 0.41228070175438597,
+      "norm_motor_sat": 0.14615384615384616,
+      "crash_clip": 0.16666666666666666,
+      "norm_clip": 0.038461538461538464,
+      "crash_failsafe": 0.08771929824561403,
+      "norm_failsafe": 0.14615384615384616,
+      "crash_gps": 0.09649122807017543,
+      "norm_gps": 0.015384615384615385,
+      "crash_batt": 0.17543859649122806,
+      "norm_batt": 0.03076923076923077
+    },
+    "20": {
+      "n_crashes": 100,
+      "n_normals": 128,
+      "crash_motor_sat": 0.4,
+      "norm_motor_sat": 0.1328125,
+      "crash_clip": 0.16,
+      "norm_clip": 0.03125,
+      "crash_failsafe": 0.06,
+      "norm_failsafe": 0.1328125,
+      "crash_gps": 0.09,
+      "norm_gps": 0.015625,
+      "crash_batt": 0.17,
+      "norm_batt": 0.03125
+    },
+    "30": {
+      "n_crashes": 89,
+      "n_normals": 124,
+      "crash_motor_sat": 0.38202247191011235,
+      "norm_motor_sat": 0.12903225806451613,
+      "crash_clip": 0.16853932584269662,
+      "norm_clip": 0.03225806451612903,
+      "crash_failsafe": 0.06741573033707865,
+      "norm_failsafe": 0.12903225806451613,
+      "crash_gps": 0.0898876404494382,
+      "norm_gps": 0.016129032258064516,
+      "crash_batt": 0.1348314606741573,
+      "norm_batt": 0.024193548387096774
+    }
+  },
+  "A7_between_drone_extensions": {
+    "heterogeneity_diff": 0.09708333333333341,
+    "heterogeneity_p": 0.32205,
+    "control_cluster_mean": 0.6650193764090556,
+    "control_cluster_ci": [
+      0.5874864130434783,
+      0.7441860465116279
+    ]
+  },
+  "O1_factorial_audit": {
+    "drop_total": 0.361,
+    "cohort_selection_share": 1.0,
+    "window_cut_share": 0.064,
+    "cv_grouping_share": -0.003,
+    "caliper_lift": 0.1105
+  },
+  "S1_S2_cost_curve": [
+    {
+      "flag_rate": 0.05,
+      "sensitivity": 0.2,
+      "sens_ci": [
+        0.108,
+        0.319
+      ],
+      "ppv": 0.02964,
+      "ppv_ci": [
+        0.0160056,
+        0.0472758
+      ],
+      "lift": 4.0,
+      "inspections_per_crash": 33.738191632928476,
+      "inspections_ci": [
+        21.152471243215345,
+        62.47813265357126
+      ]
+    },
+    {
+      "flag_rate": 0.1,
+      "sensitivity": 0.3333333333333333,
+      "sens_ci": [
+        0.217,
+        0.45
+      ],
+      "ppv": 0.0247,
+      "ppv_ci": [
+        0.0160797,
+        0.033345
+      ],
+      "lift": 3.3333333333333335,
+      "inspections_per_crash": 40.48582995951417,
+      "inspections_ci": [
+        29.9895036737142,
+        62.19021499157323
+      ]
+    },
+    {
+      "flag_rate": 0.25,
+      "sensitivity": 0.5,
+      "sens_ci": [
+        0.367,
+        0.633
+      ],
+      "ppv": 0.01482,
+      "ppv_ci": [
+        0.01087788,
+        0.01876212
+      ],
+      "lift": 2.0,
+      "inspections_per_crash": 67.47638326585695,
+      "inspections_ci": [
+        53.29888093669585,
+        91.92967747391955
+      ]
+    },
+    {
+      "flag_rate": 0.5,
+      "sensitivity": 0.7,
+      "sens_ci": [
+        0.575,
+        0.805
+      ],
+      "ppv": 0.010374,
+      "ppv_ci": [
+        0.0085215,
+        0.0119301
+      ],
+      "lift": 1.4,
+      "inspections_per_crash": 96.39483323693851,
+      "inspections_ci": [
+        83.82159411907695,
+        117.35023176670775
+      ]
+    }
+  ]
+}
