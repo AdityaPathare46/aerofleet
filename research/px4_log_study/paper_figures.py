@@ -144,7 +144,7 @@ def forum_causes(out):
 
 def study_flow(out):
     """Sample flow from the archive to each analysis with explicit exclusions and attrition."""
-    fig = plt.figure(figsize=(9.4, 6.4), dpi=300)
+    fig = plt.figure(figsize=(9.8, 6.4), dpi=300)
     gs = fig.add_gridspec(2, 1, height_ratios=[1.05, 1.25], hspace=0.18)
     ax_flow = fig.add_subplot(gs[0])
     ax_tab = fig.add_subplot(gs[1])
@@ -190,17 +190,17 @@ def study_flow(out):
     draw_arrow(ax_flow, 0.64, 0.72, 0.83, 0.55)
 
     table_data = [
-        ["Q1: Parameter Settings", "100 crash, 477 normal", "43% crash logs lack factory default records", "57 crash, 113 normal"],
-        ["Q2: Fixed Rule Attribution", "205 crashes, 143 normal", "None (evaluates all available crashes: 93 dev + 112 held-out)", "205 crashes, 143 normal"],
-        ["Q2/Q3a: Data Leakage Curve", "205 crashes, 143 normal", "57 dropped (missing topics or duration < 10 s); attrition across margins", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
-        ["Q3b: Within-Drone Longitudinal", "101 crashed drones", "34 dropped (single flight recorded or duration < 10 s)", "67 multi-flight drones (372 flights)\n61 vibration sets, 46 tracking sets"],
-        ["Q3c: Between-Drone Matched Sets", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric across controls)", "60 vibration sets (124 controls, 372 fl.)\n47 rate-tracking sets"],
-        ["Q4: Expert Community Cases", "148 real crash threads", "105 logs unhosted or expired download links", "43 downloadable logs (38 aircraft, 5 pilot)\n35 aircraft logs with fault categories"],
+        ["Q1: Parameters", "100 crash, 477 normal", "43% crash logs lack factory defaults", "57 crash, 113 normal"],
+        ["Q2: Fixed Rule", "205 crashes, 143 normal", "None (evaluates 93 dev + 112 held-out)", "205 crashes, 143 normal"],
+        ["Q2/Q3a: Leak Curve", "205 crashes, 143 normal", "57 dropped (missing topics / dur. < 10 s)", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
+        ["Q3b: Within-Drone", "101 crashed drones", "34 dropped (single flight / dur. < 10 s)", "67 multi-flight drones (372 fl.)\n61 vibration, 46 tracking"],
+        ["Q3c: Between-Drone", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric)", "60 vibration sets (124 ctrl, 372 fl.)\n47 rate-tracking sets"],
+        ["Q4: Expert Cases", "148 real crash threads", "105 logs unhosted or expired links", "43 downloadable (38 aircraft, 5 pilot)\n35 aircraft with fault categories"],
     ]
 
-    headers = ["Analysis Stream (Protocol)", "Initial Candidate Pool", "Exclusions & Attrition Criteria", "Analyzed Sample Size"]
-    col_widths = [0.22, 0.17, 0.38, 0.23]
-    tab = ax_tab.table(cellText=table_data, colLabels=headers, colWidths=col_widths, bbox=[0.01, 0.02, 0.98, 0.96], cellLoc="left")
+    headers = ["Analysis Stream", "Initial Candidate Pool", "Exclusions & Attrition", "Analyzed Sample Size"]
+    col_widths = [0.20, 0.22, 0.32, 0.26]
+    tab = ax_tab.table(cellText=table_data, colLabels=headers, colWidths=col_widths, bbox=[0.02, 0.02, 0.96, 0.96], cellLoc="left")
     tab.auto_set_font_size(False)
     tab.set_fontsize(6.3)
 
