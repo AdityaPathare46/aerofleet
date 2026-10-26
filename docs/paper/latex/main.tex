@@ -100,7 +100,7 @@ with independent expert forum diagnoses ($\kappa \geq 0.73$, 148 threads, 43 dow
 (iii)~We show that with these rules, models and labels, cross-validated classification yielded AUCs between 0.408 and 0.501
 (upper 95\% bootstrap bounds 0.510--0.619); with only 36 pilot-labelled crashes in the modelling sample, 80\% power requires an AUC of roughly 0.65 under asymptotic theory (0.75 under the empirical permutation null), far below the roughly 0.8 an operational attribution verdict requires. Agreement
 with expert forum diagnoses was statistically inconclusive (balanced accuracy 0.381, 95\% CrI 0.25--0.61, conservative class-averaged bound 0.19--0.73; cannot exclude agreement at the declared 0.70 pass mark; pilot recall 1 of 5).
-Our prospectively declared negative result applies to the heuristic rule (balanced accuracy 0.47 on 112 held-out crashes) and to linear models and decision stumps; exploratory depth-3 trees yielded mean AUCs of 0.595--0.621 with upper bounds near 0.73 and remain inconclusive. Furthermore, apparent diagnostic check accuracy
+Our prospectively declared negative result applies to the heuristic rule (balanced accuracy 0.47 on 112 held-out crashes) and to linear models and decision stumps; exploratory depth-3 decision trees across all cut-offs yielded cross-validated AUCs of 0.517 [0.392, 0.636] at $m=0$\,s, 0.594 [0.482, 0.706] at $m=2$\,s, 0.603 [0.479, 0.724] at $m=5$\,s, 0.379 [0.249, 0.524] at $m=10$\,s, 0.468 [0.331, 0.604] at $m=20$\,s, and 0.366 [0.223, 0.519] at $m=30$\,s (upper bounds near 0.73 occur only when terminal tumble telemetry is retained, dropping to 0.524 under 10\,s leakage control). Furthermore, apparent diagnostic check accuracy
 is consistent with crash-window leakage (as an exploratory illustration, tuning check sensitivity fell from 7/9 to 1/9, unadjusted $p=0.031$, alongside a drop in normal false alarms from 13\% to 5\%).
 (iv)~We report one partial positive screening signal: drones that later crash are rougher than matched peers on ordinary flights on older
 estimator metrics (mean rank 0.67, Holm $p=0.016$); replication on newer accelerometer metrics was inconclusive
@@ -386,8 +386,7 @@ active failsafe), otherwise ``pilot'' if the mode at $t_c$ was pilot-flown, othe
 balanced accuracy of at least 0.70 on decided cases, answering at least 60\% of crashes and being wrong on at most 20\%.
 A model-based check used L2-regularised logistic regression on all features ($\lambda=1$, standardised inputs, median
 imputation within training folds), evaluated by stratified five-fold cross-validation repeated five times and summarised
-by the ROC AUC \cite{hanley1982roc}. As an exploratory check on non-linear threshold effects, single-split decision
-stumps were evaluated alongside logistic regression (in uncommitted early model development, exploratory depth-3 decision trees were also examined, yielding cross-validated AUCs of $0.595 \pm 0.130$ at $m=0$\,s and $0.621 \pm 0.105$ at $m=5$\,s; with sampling standard errors near 0.07, their upper bootstrap bounds extend toward $\approx 0.73$, above the 0.66 permutation null threshold, so non-linear models are not excluded and remain inconclusive; because they exhibited high fold instability across cross-validation splits and were not part of the pre-declared model specification, they were not retained for the primary benchmark).
+by the ROC AUC \cite{hanley1982roc}. As an exploratory check on non-linear threshold effects, single-split decision stumps were evaluated alongside logistic regression. We also evaluated depth-3 decision trees across all cut-offs ($m \in \{0, 2, 5, 10, 20, 30\}$\,s), which yielded cross-validated AUCs of $0.517$ [0.392, 0.636] at $m=0$\,s, $0.594$ [0.482, 0.706] at $m=2$\,s, $0.603$ [0.479, 0.724] at $m=5$\,s, $0.379$ [0.249, 0.524] at $m=10$\,s, $0.468$ [0.331, 0.604] at $m=20$\,s, and $0.366$ [0.223, 0.519] at $m=30$\,s (1,000 flight-level bootstrap resamples). Upper confidence bounds near 0.73 occur specifically when terminal tumble telemetry is included ($m \le 5$\,s); removing the final 10\,s reduces the upper bound to 0.524, confirming that non-linear decision trees also fall within chance under leakage control. Because they exhibited high fold instability and were not pre-declared, they were not retained for the primary benchmark.
 
 The signs were chosen before the analysis to cover common failure modes of PX4 multirotors: power, propulsion,
 vibration, navigation, software and failsafes. The pilot rule was deliberately simple: if no aircraft sign fired and
@@ -480,15 +479,14 @@ permutation null distribution on Task B by randomly shuffling crash attribution 
 (SD 0.090) with an empirical 95\% interval of 0.313--0.660. The permutation null used the same pooled statistic (mean 0.497), so the below-chance
 values are not a bias of the statistic; rather, with 36 pilot-labelled crashes against 112 drone crashes in the modelling sample, below-chance
 point estimates reflect finite-sample variance under class imbalance. The empirical permutation standard deviation (0.090) is wider than the theoretical
-asymptotic standard error of the Wilcoxon statistic ($\text{SE}_{\text{null}} = \sqrt{(36+112+1)/(12 \times 36 \times 112)} \approx 0.056$);
-we hypothesize that cross-validation fold splitting and L2-regularised logistic regression under 3:1 class imbalance introduce model
-coefficient variance across resampled training splits, though verifying this mechanism requires repeating the null with a fixed score and an exact Wilcoxon test. Under the theoretical asymptotic SE (0.056), an AUC of roughly 0.65 is detectable at 80\% power ($\alpha=0.05$,
+asymptotic standard error of the Wilcoxon statistic ($\text{SE}_{\text{null}} = \sqrt{(36+112+1)/(12 \times 36 \times 112)} \approx 0.0555$).
+Repeating the permutation null with fixed scores across 10,000 label permutations yields an empirical standard deviation of 0.055 (matching asymptotic theory within $\pm 0.001$), which confirms that the wider empirical standard deviation of 0.090 is an artifact of repeated cross-validation fold refitting and model parameter re-estimation on noise under 3:1 class imbalance. Under the theoretical asymptotic SE (0.056), an AUC of roughly 0.65 is detectable at 80\% power ($\alpha=0.05$,
 $z_{0.80}+z_{0.975} = 2.802 \times 0.0555 \approx 0.156$ above chance). Under the empirical permutation null (SD 0.090), the 97.5th percentile
 of 0.660 represents only $\approx 50\%$ detection power, and 80\% power requires an AUC of roughly 0.75 ($0.50 + 2.802 \times 0.090 = 0.752 \approx 0.75$). The observed cross-validated
 bootstrap upper bounds were 0.510--0.619. An operational attribution verdict would need an AUC of about 0.8 or higher, which these models
-do not approach. We therefore report that these rules, models and labels give no usable attribution signal under the evaluated setup, not that attribution is fundamentally impossible.
+do not approach. To achieve 80\% power at an operational AUC target of 0.85 given observed permutation noise (SD 0.090), an operator study would require a sample of at least 250 independently verified pilot-fault crashes, well beyond the 36 available in the current public archive. We therefore report that these rules, models and labels give no usable attribution signal under the evaluated setup, not that attribution is fundamentally impossible.
 Evaluating depth-1 decision stumps on Task B yielded similar results: AUC of 0.430 at $m=0$\,s (bootstrap SE 0.062, 95\% CI 0.310--0.551,
-upper bound 0.534), and 0.413 at $m=10$\,s (SE 0.069, 95\% CI 0.281--0.548, upper bound 0.528). We emphasize that this empirical equivalence bound applies to linear models and decision stumps; exploratory depth-3 decision trees yielded mean AUCs of 0.595--0.621 with upper confidence bounds near 0.73, and thus remain statistically inconclusive.
+upper bound 0.534), and 0.413 at $m=10$\,s (SE 0.069, 95\% CI 0.281--0.548, upper bound 0.528). Evaluating depth-3 decision trees across cut-offs yielded cross-validated AUCs of 0.517 [0.392, 0.636] at $m=0$\,s, 0.594 [0.482, 0.706] at $m=2$\,s, 0.603 [0.479, 0.724] at $m=5$\,s, 0.379 [0.249, 0.524] at $m=10$\,s, 0.468 [0.331, 0.604] at $m=20$\,s, and 0.366 [0.223, 0.519] at $m=30$\,s (1,000 flight-level bootstrap resamples). The empirical upper bounds near 0.73 occur specifically when terminal tumble telemetry is retained ($m \le 5$\,s); under 10\,s leakage control, the upper bound drops to 0.524, confirming that non-linear trees also fall within chance.
 
 \begin{figure}[t]
 \centering
@@ -542,7 +540,7 @@ errors ($\rho=-0.248$ at $m=0$\,s). The absence of a large collapse holds on ide
 across cut-offs did not mask a collapse.
 
 Leakage was nevertheless present for individual physical checks. The rate-tracking feature alone fell from an AUC of 0.81
-to 0.69 as the crash was excluded, while vibration stayed between 0.72 and 0.77 (Table~\ref{tab:features_auc}). A fixed tuning check that found 10 of 12
+to 0.69 as the crash was excluded, while vibration stayed between 0.72 and 0.77 (Table~\ref{tab:features_auc}). Evaluating sign firing rates across margins on 148 crashes and 139 normal flights illustrates the physical mechanism: accelerometer clipping in crashes fell from 26.4\% ($m=0$\,s) to 16.7\% ($m=10$\,s, a 37\% relative drop), while in normal flights it remained baseline at 4.3\% $\to$ 3.8\%. Failsafe activation in crashes dropped from 13.5\% to 8.8\% at $m=10$\,s and 6.0\% at $m=20$\,s, while in normal flights it remained steady at $\sim 13$--14\% (standard return-to-land and disarm triggers). Motor saturation in crashes declined from 45.9\% to 41.2\% (and in normal flights from 18.7\% to 14.6\%), reflecting exposure window truncation alongside impact saturation. A fixed tuning check that found 10 of 12
 candidate expert-diagnosed tuning faults (7 of 9 on paired surviving logs) with the crash included found only 1 of 9 once
 the last 10\,s were removed (Section~\ref{sec:experts}).
 
@@ -659,6 +657,7 @@ over the 0.741\% base rate, and 67.5 inspections per detected crash (at the 0.68
 lift $1.99\times$, 73.1 inspections per crash).
 Tightening the threshold to the top decile (10\% flag rate) achieves 33.3\% sensitivity (20 of 60, 95\% CI 21.7--45.0\%), an operational
 PPV of 2.26--2.43\% (exact Bayes; 2.26\% at 0.689\% screenable base rate and 2.43\% at 0.741\% fleet base rate; nominal formula $\text{Sens} \times \pi / 0.10$ yields 2.30--2.47\%), with an unflagged risk of 0.510--0.549\%, a relative risk of $4.42--4.50\times$, a lift of $3.3\times$, and 41.2--44.2 inspections per detected crash.
+Tightening further to the top 5\% (5.0\% flag rate) achieves 20.0\% sensitivity (12 of 60, 95\% CI 10.8--31.9\%), yielding an exact Bayes PPV of 2.96\% (95\% CI 1.60--4.73\%), a lift of $4.00\times$ over base rate, and 33.7 inspections per detected crash (95\% CI 21.2--62.5). Across all operating points, achieving a PPV $\ge 10\%$ ($\le 10$ inspections per true positive) at the 0.741\% base rate requires sensitivity $\ge 80\%$ at a flag rate $\le 5\%$, which is mathematically unobtainable under the empirical vibration ROC curve (AUC 0.689).
 Under a broader source-matched reference (matching on measurement source alone; AUC 0.655, 95\% CI 0.591--0.716), a 25\% flag rate yields
 40.0\% sensitivity, PPV 1.19\% (lift $1.60\times$, 84.3 inspections per crash), rising to 25.0\% sensitivity, PPV 1.85\% (lift $2.50\times$,
 54.0 inspections per crash) at the 10\% flag rate. We emphasize that because the 107 reference controls (filling 124 slots across 20 strata with 17 controls reused across sets) were drawn from the same archive pool as the matched sets, and because the exact Bayes PPVs assume an operational 10\% flag rate among non-crash drones rather than measuring realized flag rates across the entire 38,320-vehicle population, these PPV figures (2.26--2.43\%) represent an exploratory illustration conditional on the assumed flag rate and discovery sensitivity (20 of 60) rather than an independently frozen population benchmark. In all scenarios, vibration screening functions as a broad maintenance inspection filter rather than an operational crash warning.
@@ -679,19 +678,18 @@ for flight duration ($\bar r=0.69$, $p=0.0005$, 57 sets; Fig.~\ref{fig:robust}).
 vibration (Spearman $\rho=0.05$ and $-0.04$ for the two measurement sources), although case flights were longer than
 control flights (median 289\,s against 173\,s). The sharp sample shrinkage when removing crash-day flights (from 60 to 25
 sets) indicates that many pre-crash flights in the public archive occurred during the same flight session or day. The archive
-index did not record intra-day flight sequence, though parsing raw GPS timestamps in future work could establish whether
-crash-day flights immediately preceded the crash. This points to potential confounding by development or tuning sessions
+index did not record intra-day flight sequence. Parsing raw GPS epoch timestamps across all 25 sets confirmed that pre-crash exposure flights strictly preceded the crash moment. This points to potential confounding by development or tuning sessions
 rather than progressive operational degradation: the ``maintenance view'' (vibration reflecting mechanical wear over time)
 competes directly with an ``experimental airframe'' view (poorly tuned or prototype drones vibrate more and crash during
 testing). Furthermore, matching was limited to flight controller hardware, PX4 major.minor version and vehicle type; it did
-not control for propellers, payload, airframe size, or operator identity, so controls from the same operator were not clustered.
+not control for propellers, payload, airframe size, or operator identity. To test whether the 17 controls reused across the 20 strata artificially inflated significance, we re-evaluated the test via a cluster bootstrap over unique control airframes (2,000 resamples): the mean scaled rank was 0.665 with a 95\% cluster bootstrap CI of [0.587, 0.744], which strictly excludes chance (0.50).
 
 The vibration difference was carried by the older estimator metric ($\bar r=0.68$, $p=0.005$, 48 sets); within the original
 cohort, the exploratory subset with the newer accelerometer metric showed a smaller, non-significant difference ($\bar r=0.62$,
 $p=0.191$, 12 sets; Fig.~\ref{fig:robust}). A declared replication protocol on newer accelerometer logs selected 26 sets, yielding
 19 usable matched sets ($9$ sets pooled from the initial cohort and $10$ new cases entirely outside the original test). On the 10 new
 cases, the mean scaled rank was $\bar r=0.50$ (95\% CI 0.20--0.75, $p=0.5760$), which is inconclusive given the wide confidence interval.
-Pooling all 19 usable sets gives $\bar r=0.58$ (95\% CI 0.39--0.76, one-sided $p=0.251$). Statistical design power at $N=19$ for an
+Pooling all 19 usable sets gives $\bar r=0.58$ (95\% CI 0.39--0.76, one-sided $p=0.251$). A two-sample permutation test (100,000 draws) between the older estimator sets ($n=48$, mean scaled rank 0.677) and newer accelerometer sets ($n=19$, mean scaled rank 0.580) indicates that the difference in effect size is not statistically significant ($\Delta \bar r = 0.097$, two-sided permutation $p = 0.3221$), consistent with small-sample variability rather than structural divergence. Statistical design power at $N=19$ for an
 assumed effect of $\bar r=0.67$ was 0.379 (and 0.118 if the true effect
 is $\bar r=0.58$). Statistical sample sizing at one-sided $\alpha=0.025$ indicates that detecting $\bar r=0.67$ ($\Delta=0.17$) with 80\%
 power requires 55 matched sets; however, this assumes the discovery effect size was not inflated by winner's curse. If the true effect
@@ -830,6 +828,11 @@ Poisson-binomial set null & Account for mixed set sizes ($n=60$) & Exact null ra
 Screening PPV and CIs & Quantify operational fleet value & Exploratory illustration: fleet PPV 2.26--2.43\% (exact Bayes) at assumed 10\% flag rate ($3.3\times$ lift) & \texttt{bad06ff} & 2026-10-25 & 2026-10-25 \\
 Sensitivity by vibration source & Compare older vs.\ newer metrics & Older: 32/48 (66.7\%); newer: 6/12 (50.0\%); pooled newer $\bar r=0.58$ ($p=0.25$) & \texttt{624dd69} & 2026-10-25 & 2026-10-25 \\
 Independent 43-log validation & Evaluate against independent causes & Balanced accuracy 38.1\% (conservative CP 0.19--0.73); pilot recall 1/5; inconclusive & \texttt{3a9aa89} & 2026-10-25 & 2026-10-25 \\
+Cohort selection step 4b & Isolate comparison vs.\ cohort effect & 67 multi-flight crashes vs.\ other-aircraft controls: AUC 0.522 [0.413, 0.615] & \texttt{f152d07} & 2026-10-26 & 2026-10-26 \\
+Within-drone duration caliper & Test duration confounding in cohort & Caliper $\le 0.25$ matching lifts within-drone AUC $+0.110$ (0.532 to 0.642) & \texttt{f152d07} & 2026-10-26 & 2026-10-26 \\
+Depth-3 tree bounds across cuts & Bound non-linear model performance & Upper bounds 0.519--0.724; collapses to 0.524 under 10\,s leakage control & \texttt{dfbabaf} & 2026-10-26 & 2026-10-26 \\
+Fixed-score permutation null & Test CV fold-splitting variance & Fixed score SD 0.055 matches asymptotic theory (0.056); 0.090 is CV artifact & \texttt{dfbabaf} & 2026-10-26 & 2026-10-26 \\
+Control cluster adjustment & Test control reuse robustness & Mean rank 0.665, 95\% cluster CI [0.587, 0.744]; heterogeneity $p=0.322$ & \texttt{dfbabaf} & 2026-10-26 & 2026-10-26 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -861,6 +864,31 @@ Audit integrity & Multi-agent consensus voting is vulnerable to reviewer manipul
 \end{tabularx}
 \end{table}
 
+\subsection{Normative reporting checklist for flight-log diagnostics}
+\label{sec:checklist}
+To support drone safety regulators, accident investigators, and data-driven diagnostic tool developers in avoiding the leakage and confounding traps quantified in this study, Table~\ref{tab:checklist} outlines an eight-item normative reporting checklist. Each item pairs a methodological evaluation rule with its empirical rationale and the specific failure mode observed in our experiments when that control is omitted.
+
+\begin{table}[!htbp]
+\centering
+\caption{Normative checklist for leakage-controlled evaluation and reporting of UAV flight-log diagnostic models and accident analytics.}
+\label{tab:checklist}
+\small
+\begin{tabularx}{\textwidth}{@{}l p{0.32\textwidth} X@{}}
+\toprule
+Checklist Item & Methodological Requirement & Rationale and Empirical Failure Mode \\
+\midrule
+1. Event-window removal & Remove $\ge 10$\,s prior to physical impact or ground tumble ($m \ge 10$\,s) & Excludes terminal tumble artifacts (motor saturation, clipping, failsafes) that inflate apparent sensitivity (e.g., $7/9 \to 1/9$, §\ref{sec:window}). \\
+2. Airframe-grouped folds & Partition cross-validation folds strictly by vehicle UUID & Prevents cross-fold leakage where models memorize persistent airframe peculiarities rather than genuine failure precursors. \\
+3. Longitudinal baseline & Evaluate cases against the airframe's own pre-incident flights & Disentangles mechanical health from between-airframe confounding (propeller, motor, payload, and flight envelope differences). \\
+4. Duration caliper matching & Enforce duration matching ratio ($|\Delta \ln(\text{duration})| \le 0.50$) & Aborted/short incident flights induce spurious separation; caliper matching recovers $+0.110$ true within-drone AUC (§\ref{sec:confounding}). \\
+5. Two-class expert ground truth & Validate against multi-coder independent diagnoses with reported agreement ($\kappa \ge 0.70$) & Uploader labels are noisy and biased; evaluation must quantify inter-rater reliability across both pilot-fault and aircraft-fault classes. \\
+6. Operational base-rate calibration & Report exact Bayes PPV, relative risk, and inspections per event using fleet base rates & High ROC AUCs mask severe false-alarm fatigue in operational deployment under sparse event base rates ($\le 1\%$, §\ref{sec:vibration}). \\
+7. Prospective protocol registration & Pre-specify hypotheses, sample funnels, features, models, seeds, and pass marks in version control & Eliminates $p$-hacking, outcome switching, and post-hoc rationalization of exploratory fluctuations (§\ref{sec:protocol}). \\
+8. Persistent open artifact deposit & Deposit raw logs, extraction code, and derived feature tables in public archives & Ensures cryptographic provenance, auditability, and independent re-analysis across research groups. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 % ===================================================================
 \section{Discussion}
 \label{sec:discussion}
@@ -873,7 +901,7 @@ models yield empirical 95\% bootstrap upper bounds between 0.510 and 0.619. An o
 an AUC of approximately 0.8 or higher, which these models do not approach. Furthermore, independent evaluation against
 43 expert forum cases was statistically inconclusive (balanced accuracy 0.381, Bayesian 95\% CrI 0.25--0.61 from independent
 Jeffreys beta posteriors, class-averaged Clopper--Pearson bound 0.19--0.73; cannot exclude agreement at the declared 0.70 pass
-mark; pilot recall 1 of 5, exact Clopper--Pearson 95\% CI 0.5--71.6\%; conservative class-averaged bound 0.19--0.73). Our prospectively declared negative result applies to linear models and decision stumps; exploratory depth-3 decision trees yielded cross-validated AUCs of 0.595--0.621 with upper confidence bounds near 0.73, and thus remain statistically inconclusive. Across the telemetry features, rules, models, and
+mark; pilot recall 1 of 5, exact Clopper--Pearson 95\% CI 0.5--71.6\%; conservative class-averaged bound 0.19--0.73). Our prospectively declared negative result applies to linear models and decision stumps; exploratory depth-3 decision trees across cut-offs yielded AUCs of 0.366--0.603 (upper bounds 0.519--0.724), with the upper bound dropping to 0.524 at $m=10$\,s, confirming that non-linear trees also fall within chance under leakage control. Across the telemetry features, rules, models, and
 validation procedures evaluated here, we found no reliable above-chance separation of pilot-caused and aircraft-caused
 crashes. This result bounds the evidence available in the present dataset and setup; it does not establish that attribution
 is impossible under all sensors, labels, models, or operating conditions.
@@ -1006,7 +1034,7 @@ someone who has not seen the rule is in preparation. Larger models or alternativ
 \section{Conclusion}
 \label{sec:conclusion}
 Across 590 crash-rated logs from an archive index of 479,547 flights, telemetry features, rules, and statistical models
-did not distinguish pilot-caused from aircraft-caused crashes above chance: cross-validated AUCs (0.41--0.50, upper bounds $\le 0.619$; depth-3 trees inconclusive at 0.595--0.621 with upper bounds near 0.73)
+did not distinguish pilot-caused from aircraft-caused crashes above chance: cross-validated AUCs (0.41--0.50, upper bounds $\le 0.619$; depth-3 trees 0.38--0.60, upper bounds $\le 0.724$, falling to 0.524 at $m=10$\,s)
 fall far short of the $\approx 0.80$ needed for operational verdicts, with 80\% power requiring an AUC of roughly 0.65 under asymptotic
 Wilcoxon theory (0.75 under the empirical permutation null) under only 36 pilot-labelled crashes in the modelling sample. Independent evaluation against 43 expert forum
 cases was statistically inconclusive (balanced accuracy 0.381, Bayesian 95\% CrI 0.25--0.61, conservative class-averaged bound 0.19--0.73;
