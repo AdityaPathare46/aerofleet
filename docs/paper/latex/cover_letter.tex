@@ -1,33 +1,45 @@
 \documentclass[11pt]{letter}
-\usepackage[margin=2.5cm]{geometry}
+\usepackage[margin=2.2cm,top=1.5cm,bottom=1.5cm]{geometry}
+\usepackage{enumitem}
+\setlist{itemsep=1pt,topsep=3pt,leftmargin=*}
 \signature{Dr. Nagesh Chougule\\ {}on behalf of all authors}
 \address{Department of Mechanical Engineering\\ {}COEP Technological University\\ {}Pune, India\\ {}nkc.mech@coeptech.ac.in}
 \begin{document}
 \begin{letter}{The Editor-in-Chief\\ Reliability Engineering \& System Safety}
 \opening{Dear Editor,}
+\setlength{\parskip}{0.4em}
 
-We submit the manuscript ``Evidence, not verdicts: what 590 public PX4 crash logs can and cannot tell a drone fleet operator'' for consideration as a research article.
+We submit the manuscript ``Evidence, not verdicts: what 590 public PX4 crash logs can and cannot tell a drone fleet operator'' as a research article.
 
-Flight logs are increasingly used to decide why a small drone crashed and who was responsible. We tested that use on
-the largest public archive of real autopilot logs. Every confirmatory test was committed to version control, with its
-threshold, before the data were analysed, and decisive tests were repeated on held-out data. The results are of direct
-relevance to the journal's readership in safety and reliability:
+Flight logs are increasingly used to decide why a small drone crashed, who was responsible, and which aircraft to
+inspect next. We tested those uses on the largest public archive of real autopilot logs (PX4 Flight Review, 479,547
+logs). Each confirmatory test was committed to version control with its pass mark before it was run;
+analyses added during review are marked as exploratory.
+
+Two findings are, to our knowledge, new and apply to any evaluation of log-based diagnostics:
 \begin{itemize}
-\item neither a declared rule nor a cross-validated model could separate pilot-caused from aircraft-caused crashes;
-\item checks that appear to diagnose a fault can owe their accuracy to the crash itself (a form of data leakage);
-\item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
-crashed vibrated more than matched drones on ordinary flights, a result that survived correction for multiple testing
-and several robustness checks;
-\item small language-model review panels performed worse than a fixed rule and could be steered by one compromised
-reviewer, and matching a written problem description against expert-diagnosed crashes named the cause less often
-than the base rate;
-\item the findings are carried into the design of an open-source fleet-assurance tool, AeroFleet~2.0 (evidence timeline, vibration
-ranking, signed record, three-dimensional replay and rehearsal), whose parts were checked with injected faults and a
-leave-one-out test, and which presents evidence rather than verdicts.
+\item \textbf{Evaluation choices create much of the apparent signal.} A factorial audit of 32 evaluation settings
+attributes 0.21 [0.06, 0.34] of a crash-vs-normal AUC of 0.88 to choices of samples and
+validation. Only one choice mattered on its own: grouping
+cross-validation folds by vehicle, where drones contribute several flights. Comparing each drone with its own earlier flights brought the AUC to
+chance.
+\item \textbf{Flight order cannot be taken from archive dates.} GPS time showed that 40--50\% of crash-day
+``earlier'' flights (47 of 95 in one sample, 85 of 210 in another) were flown after the crash. Our main results
+held without them; an apparent within-drone effect did not, and we have withdrawn it.
 \end{itemize}
-Together these findings separate what logs can support (ranking airframes for inspection) from what they cannot
-(attributing an individual crash), and they give practical guidance for evaluating log-based diagnostics. Code,
-declarations, derived features and labels are released.
+These rest on declared tests:
+\begin{itemize}
+\item neither a declared rule nor cross-validated models separated pilot-caused from aircraft-caused crashes
+(balanced accuracy 0.47 on 112 held-out crashes);
+\item checks that seem to diagnose a fault can owe their accuracy to the crash itself (crash-window leakage);
+\item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
+crashed vibrated more than matched drones on ordinary flights (Holm-adjusted $p=0.016$; $p=0.002$ after removing
+post-crash flights), useful for inspection ranking, not crash warning;
+\item small language-model panels did worse than a fixed rule and could be steered by one compromised
+reviewer.
+\end{itemize}
+The findings feed a recommended reporting checklist and an open-source fleet-assurance tool, AeroFleet~2.0, that
+presents evidence rather than verdicts. Code, declarations, derived features and labels are released.
 
 The manuscript is original, has not been published and is not under consideration elsewhere. All authors approve the
 submission. An AI assistant was used in preparing code and text, as declared in the manuscript.
