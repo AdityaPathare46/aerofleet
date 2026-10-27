@@ -31,10 +31,10 @@ These rest on declared tests:
 \begin{itemize}
 \item neither a declared rule nor cross-validated models separated pilot-caused from aircraft-caused crashes
 (balanced accuracy 0.47 on 112 held-out crashes);
-\item checks that seem to diagnose a fault can owe their accuracy to the crash itself (crash-window leakage);
+\item one rule-based check owed its accuracy to the crash itself; for models, leakage was immaterial;
 \item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
-crashed vibrated more than matched drones on ordinary flights (Holm-adjusted $p=0.016$; $p=0.002$ after removing
-post-crash flights), useful for inspection ranking, not crash warning;
+crashed vibrated more than matched drones on ordinary flights, a suggestive signal ($p=0.012$ clustered by airframe,
+Holm-adjusted 0.08) useful for inspection ranking, not crash warning;
 \item small language-model panels did worse than a fixed rule and could be steered by one compromised
 reviewer.
 \end{itemize}

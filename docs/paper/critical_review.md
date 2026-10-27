@@ -429,3 +429,23 @@ Declared `0d38f5d`, results `4fe4f58`. 85 of 210 crash-day earlier flights in th
 | Same-aircraft factorial cell | Unchanged (0.507) | Noted in §5.4 |
 
 Threats "Flight order" paragraph now reports both audits. Abstract 258 words. PDF 55 pages, Word and Overleaf zip rebuilt.
+
+## Twenty-third pass: Round 15 (27 October 2026)
+
+Round 15 rated 9.2/10 (originality 8.0, rigor 9.4, support 8.9, significance 8.2, clarity 8.8). Declared audit `6fff27d` (amended `016dafe`), results `2d1bbca`.
+
+| Item | Resolution | Status |
+|---|---|---|
+| 1 Attribution bounds | Refit permutation null for logistic and trees: AUC 0.42-0.59, upper bounds <= 0.69, 80% power AUC 0.72; only the rule is "prospectively declared" | Done |
+| 2 Between-drone dependence | Clustered p 0.012, Holm 0.08; declared rule makes it "suggestive" in abstract, contributions, Table 5, design table, conclusion, highlights | Done |
+| 3 Same vs other aircraft | Paired difference on 67 crashes +0.083 [-0.007, 0.166]; +0.113 [0.029, 0.212] without post-crash flights; "further 0.21" cells named; Conclusion, design table and revision row aligned; "may reflect"; "disjoint vehicles" | Done |
+| 4 Caliper wording | "No longer clearly distinguishable; interval includes earlier estimate; detectable lift ~0.18 at n = 24"; one number (+0.086) | Done |
+| 5 Regeneration | Table 6 regenerated with fixed seeds; Step 1 grouping 0.882 -> 0.826 (old "no difference" not reproducible) | Done |
+| 6 Leakage framing | "Tested; immaterial for model AUC (0.014); present in one rule-based check"; tuning check circularity stated | Done |
+| 7 Expert intervals | Bayesian CrI 0.25-0.61 the single primary interval; class-averaged bound removed; contribution (ii) rewritten (9 with uploader labels) | Done |
+| 8 Within-drone GPS Results | New Results paragraph with flow (475 -> 305 -> 217/210 -> 85 after, 18 undated, 78 removed); stale sentence removed | Done |
+| 9 What "crash" means | 54% of crashed vehicles fly again; 72/148 crash moments tilt-defined, 116 plausible by rule; 50-trace review sheet | Done; **manual check pending** |
+| 10 Smaller items | Abstract 226 words; contributions 620 -> ~210 words; clipping denominators explained; typo; +- defined; dagger footnote in LM table replaced; 24 Oct commits and archive status stated | Done |
+| Prior work | MAYDAY, GRYPHON, Wang et al. ICSE 2024, Vieira et al. 2025 verified and added; search note in Related work; O6 protocol addendum; Kose et al. verified via Crossref | Done |
+
+Also found: the Round 13 two-stage bootstrap counted resampled drones once (corrected); my declared hypothesis that missing tie correction caused low tree AUCs was wrong (stated in results).
