@@ -390,3 +390,17 @@ The Round 11 peer review rated the manuscript **8.9/10** (Methodological rigor 9
 | **6** | **Smaller Items & Sensitivity Details:** Permutation variance hypothesis; pitch/roll tilt threshold numbers. | Framed wider permutation SD as a hypothesis in §5.2; corrected S7 sensitivity details in §8 to vibration across pitch/roll tilt thresholds (56 drones at 45$^\circ$ [0.46, $p=0.79$], 61 drones at 60$^\circ$ [0.48, $p=0.67$], 64 drones at 75$^\circ$ [0.50, $p=0.54$]); confirmed reference records (AAIB, Kose et al., Silalahi et al., EASA, Duvvuru). | **RESOLVED** |
 
 All artifacts, figures, and submission packages (`main.pdf`, `cover_letter.pdf`, `manuscript.docx`, `latex_source_for_overleaf.zip`) have been regenerated and verified. The paper is in full alignment for publication grade ($\ge 9.2/10$).
+
+
+## Twentieth pass: Round 14 factorial optimism audit (27 October 2026)
+
+Round 14 rated the manuscript 9.1/10 (originality 7.8). Its main problem was that the "cohort selection" explanation contradicted the 0.891 multi-history result.
+
+| Item | Resolution | Status |
+|---|---|---|
+| **1** (2x2) | Declared `factorial_audit.py` (`3c34530`), amended A3 tolerance after a rounding abort (`f6ba424`), results `4812f58`. Neither effect supported; abstract now uses the declared wording "depends on the comparison set; the cause is not isolated". Step 4b 0.522 replaced by 0.623 (one extractor). Disclosed the 67 are not a subset of the 103. | Done |
+| **2** (caliper) | Fixed 30 s window (duration fixed at source) did not reproduce the lift (0.455); alternative duration reading added to abstract, contribution (i) and discussion. Lift without the three features and single-seed paired CI not yet done. | Partly |
+| Originality | Full 5-factor factorial with exact Shapley split: 0.212 drop, grouped folds the only material factor (0.062 [0.034, 0.087]). New §5.4 and table. Checklist item 2 now cites this instead of "independent validation". | Done |
+| 3, 4, 5 | 250-pilot formula, count mismatches, registration times: not yet addressed. | Open |
+
+Abstract trimmed from 299 to about 258 words; every interval kept. PDF (53 pages), Word and Overleaf zip rebuilt; page 1 checked; the zip compiles standalone.
