@@ -1,0 +1,112 @@
+{
+ "population": 520,
+ "on_disk": 520,
+ "R1_all": {
+  "n": 520,
+  "unreadable": 75,
+  "fallback": 262,
+  "tilt_unconfirmed": 73,
+  "confirmed": 110
+ },
+ "R1_rotary": {
+  "n": 381,
+  "unreadable": 40,
+  "fallback": 209,
+  "tilt_unconfirmed": 41,
+  "confirmed": 91
+ },
+ "R2_rating": {
+  "crash_sw_hw": {
+   "n": 260,
+   "unreadable": 13,
+   "fallback": 137,
+   "tilt_unconfirmed": 34,
+   "confirmed": 76
+  },
+  "crash_pilot": {
+   "n": 121,
+   "unreadable": 27,
+   "fallback": 72,
+   "confirmed": 15,
+   "tilt_unconfirmed": 7
+  },
+  "fisher_p_tilt": 0.0003049467540150707
+ },
+ "R2_year": {
+  "<=2019": {
+   "n": 169,
+   "unreadable": 8,
+   "fallback": 92,
+   "confirmed": 45,
+   "tilt_unconfirmed": 24
+  },
+  "2020-2022": {
+   "n": 105,
+   "fallback": 55,
+   "unreadable": 6,
+   "confirmed": 31,
+   "tilt_unconfirmed": 13
+  },
+  ">=2023": {
+   "n": 107,
+   "unreadable": 26,
+   "fallback": 62,
+   "tilt_unconfirmed": 4,
+   "confirmed": 15
+  }
+ },
+ "R2_version": {
+  "<1.12": {
+   "n": 243,
+   "unreadable": 13,
+   "fallback": 130,
+   "confirmed": 65,
+   "tilt_unconfirmed": 35
+  },
+  ">=1.12": {
+   "n": 136,
+   "unreadable": 26,
+   "fallback": 78,
+   "tilt_unconfirmed": 6,
+   "confirmed": 26
+  },
+  "unknown": {
+   "n": 2,
+   "unreadable": 1,
+   "fallback": 1
+  }
+ },
+ "R3": {
+  "readable_rotary": 341,
+  "share_tilt": 0.3870967741935484,
+  "review_contains_given_tilt": [
+   25,
+   25
+  ],
+  "review_contains_given_fallback": [
+   4,
+   22
+  ],
+  "estimated_share_containing_crash": 0.49853372434017595,
+  "ci95": [
+   0.39249200213276464,
+   0.6061083711010397
+  ]
+ },
+ "R4_selection": {
+  "modelled": {
+   "n": 108,
+   "fallback": 67,
+   "confirmed": 29,
+   "tilt_unconfirmed": 12
+  },
+  "other": {
+   "n": 273,
+   "unreadable": 40,
+   "fallback": 142,
+   "tilt_unconfirmed": 29,
+   "confirmed": 62
+  },
+  "fisher_p_tilt": 0.9050710099149324
+ }
+}
