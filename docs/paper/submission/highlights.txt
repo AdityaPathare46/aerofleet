@@ -1,6 +1,6 @@
 Highlights
 - No rule or model separated pilot-caused from aircraft-caused crashes
-- Evaluation choices, chiefly ungrouped folds, inflated crash-log AUC by 0.21
-- By GPS time, 40-50% of crash-day "earlier" flights came after the crash
+- Grouping folds by vehicle removed part of an apparent crash-detection signal
+- By GPS time, 44-55% of dated crash-day "earlier" flights followed the crash
 - Drones that later crashed vibrated more than matched peers (suggestive)
 - An open-source tool shows evidence and ranks airframes without verdicts

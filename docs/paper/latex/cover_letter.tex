@@ -18,22 +18,21 @@ analyses added during review are marked as exploratory.
 
 Two findings are, to our knowledge, new and apply to any evaluation of log-based diagnostics:
 \begin{itemize}
-\item \textbf{Evaluation choices create much of the apparent signal.} A factorial audit of 32 evaluation settings
-attributes 0.21 [0.06, 0.34] of a crash-vs-normal AUC of 0.88 to choices of samples and
-validation. Only one choice mattered on its own: grouping
-cross-validation folds by vehicle, where drones contribute several flights. Comparing each drone with its own earlier flights brought the AUC to
+\item \textbf{Evaluation choices shape the apparent signal.} In a factorial audit of 32 evaluation settings, a
+crash-vs-normal AUC of 0.88 fell by 0.21 [0.06, 0.34]; the one choice that could be isolated, grouping
+cross-validation folds by vehicle, accounted for 0.06. Comparing each drone with its own earlier flights brought the AUC to
 chance.
-\item \textbf{Flight order cannot be taken from archive dates.} GPS time showed that 40--50\% of crash-day
-``earlier'' flights (47 of 95 in one sample, 85 of 210 in another) were flown after the crash. Our main results
+\item \textbf{Dates cannot order flights within a day.} GPS time showed that 44--55\% of dated crash-day
+``earlier'' flights (47 of 85 in one sample, 85 of 192 in another) were flown after the crash. Our main results
 held without them; an apparent within-drone effect did not, and we have withdrawn it.
 \end{itemize}
 These rest on declared tests:
 \begin{itemize}
 \item neither a declared rule nor cross-validated models separated pilot-caused from aircraft-caused crashes
 (balanced accuracy 0.47 on 112 held-out crashes);
-\item one rule-based check owed its accuracy to the crash itself; for models, leakage was immaterial;
+\item crash-window leakage was small overall, larger among the few crashes with a confirmed crash moment;
 \item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
-crashed vibrated more than matched drones on ordinary flights, a suggestive signal ($p=0.012$ clustered by airframe,
+crashed vibrated more than matched drones on ordinary flights, a suggestive signal ($p=0.012$ with one set per airframe,
 Holm-adjusted 0.08) useful for inspection ranking, not crash warning;
 \item small language-model panels did worse than a fixed rule and could be steered by one compromised
 reviewer.

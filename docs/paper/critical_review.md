@@ -449,3 +449,21 @@ Round 15 rated 9.2/10 (originality 8.0, rigor 9.4, support 8.9, significance 8.2
 | Prior work | MAYDAY, GRYPHON, Wang et al. ICSE 2024, Vieira et al. 2025 verified and added; search note in Related work; O6 protocol addendum; Kose et al. verified via Crossref | Done |
 
 Also found: the Round 13 two-stage bootstrap counted resampled drones once (corrected); my declared hypothesis that missing tie correction caused low tree AUCs was wrong (stated in results).
+
+## Twenty-fourth pass: Round 16 (27 October 2026)
+
+Round 16 rated 9.3/10 (originality 8.2, rigor 9.5, support 9.1, significance 8.3, clarity 8.8). Declared audit `48c2fa7`, results `6c17f7f`.
+
+| Item | Resolution |
+|---|---|
+| 1 Crash moment | Confirmed subset defined and analysed: 40/148 confirmed; leak drop 0.103 on confirmed vs 0.035 overall; leakage now "small overall, larger among confirmed crashes"; new Results paragraph; manual check still pending (authors) |
+| 2 Dates and "flew again" | Index date is mostly the flight date (80% exact, 90% within a day); no cross-day misorder; wording now "dates cannot order flights within a day", dated-only 44-55%; "later log from the same flight controller", controller may move between frames |
+| 3 Table 7 and like-for-like | Step 1b (grouped, constant cohort, m=0: 0.833); grouped leak curve on one cohort, criterion still fails; old "no difference" stated as not reproducible; paired-difference cells labelled |
+| 4 Clustered p | Method stated (shifted 0.012, percentile 0.025); declared rule and commit named; one-set-per-airframe values for every variant and the roughest test; Fig. 5 caption flags unclustered p-values |
+| 5 Bounds and stumps | "Approximate" bounds with reason; trees "cannot rule out a modest signal"; stumps recomputed (0.447, 0.481) |
+| 6 Overclaims | "Of a 0.21 drop, 0.06 from fold grouping"; intro fixed; ranking a hypothesis for prospective testing; "marked leakage" removed; Fisher test reported |
+| 7 Consistency | 39 normals explained (shared with within-drone crashes, not the 148); "report duration" |
+| 8 Presentation | Internal labels removed; dagger renamed; abstract ~213 words; Tables 4, 12, 14 were overflowing and are rebuilt |
+| 9 References | Wang et al. in Table 1 and text; page range 2593-2605; citation chasing added Hakani 2025, Seong 2026, Li 2026; MAYDAY chase incomplete (stated); Kose verified via Crossref earlier |
+
+Still open: manual crash-trace check; originality beyond 8.2 needs a new contribution (external test set, published-detector re-evaluation or injection study).
