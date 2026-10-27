@@ -7,18 +7,21 @@ set -e
 cd "$(dirname "$0")"
 
 PYTHON="${PYTHON:-python3}"
-if [ ! -d .venv ]; then
-  echo "Creating the Python environment (.venv)..."
-  "$PYTHON" -m venv .venv
+# AEROFLEET_VENV lets the environment live outside the repo (e.g. ~/.venvs/aerofleet when the repo is on an
+# exFAT drive, which cannot hold the symlinks a venv needs). Default: .venv in the repo.
+VENV="${AEROFLEET_VENV:-.venv}"
+if [ ! -d "$VENV" ]; then
+  echo "Creating the Python environment ($VENV)..."
+  "$PYTHON" -m venv "$VENV"
 fi
-source .venv/bin/activate
+source "$VENV/bin/activate"
 
 # Install only when requirements.txt changed since the last install.
-if [ ! -f .venv/.req-installed ] || [ requirements.txt -nt .venv/.req-installed ]; then
+if [ ! -f "$VENV/.req-installed" ] || [ requirements.txt -nt "$VENV/.req-installed" ]; then
   echo "Installing Python dependencies (first run takes a few minutes)..."
   pip install -q --upgrade pip
   pip install -q -r requirements.txt
-  touch .venv/.req-installed
+  touch "$VENV/.req-installed"
 fi
 
 export DATABASE_URL="${DATABASE_URL:-sqlite:///./aerofleet.db}"

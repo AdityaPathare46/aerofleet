@@ -44,6 +44,8 @@ These come from the project owner. Keep to them.
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 8. Writing style the owner wants: plain, short, critical, data-backed. Rate work honestly.
 
+**Python environment (27 Oct 2026):** the working environment is `~/.venvs/aerofleet` (Python 3.10, numpy 1.26.4, scipy 1.14.1); point `AEROFLEET_VENV` at it. scipy 1.15.x fails to load on this macOS (dyld rejects `_spropack`), so requirements cap scipy below 1.15. The old in-repo `.venv` (12 GB, damaged) is kept but unused; delete it when you are sure. pytest-cov is now in requirements.
+
 **macOS/exFAT quirk:** the repo is on an exFAT drive, so macOS creates `._*` files inside `.git/objects/pack/`, and git
 prints many `non-monotonic index` errors. They are harmless. Clean them after a commit/push with:
 `find .git/objects/pack -name '._*' -size -5k -delete`
@@ -53,9 +55,10 @@ prints many `non-monotonic index` errors. They are harmless. Clean them after a 
 ## 3. How to run everything
 
 ```bash
-./start.sh            # sets up .venv + npm packages if missing, starts API (:8000) and app (:1420), opens browser
+export AEROFLEET_VENV=~/.venvs/aerofleet   # the environment lives on the internal disk (rebuilt 27 Oct 2026)
+./start.sh            # sets up the venv + npm packages if missing, starts API (:8000) and app (:1420), opens browser
 ./start.sh api        # API only
-.venv/bin/python -m pytest -q --no-cov tests/unit tests/integration     # full suite: 657 pass (about 3 min)
+$AEROFLEET_VENV/bin/python -m pytest -q --no-cov tests/unit tests/integration   # full suite: 657 pass (about 3 min)
 cd tauri-app && npx tsc --noEmit -p .                                   # typecheck the app
 ```
 
