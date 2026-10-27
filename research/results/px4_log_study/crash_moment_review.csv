@@ -1,0 +1,51 @@
+panel,log_id_prefix,log_id,reviewer_1,reviewer_2,notes
+1,1e0335f6,1e0335f6-6cf5-4ba3-a42b-636f2ad47c76,,too early,"Brief tilt spike at t=0, recovers and climbs afterward (auto-implausible)"
+2,6eb8ebd6,6eb8ebd6-0e3d-47f3-a04a-19e47e57a2b9,,correct,Sharp altitude drop and tilt spike at t=0
+3,79e9ea4d,79e9ea4d-5ebe-4c13-8c16-72dfbe5ec52c,,correct,Tilt shoots up to 180 deg and altitude drops to ground at t=0
+4,294a905a,294a905a-872c-4f73-af50-6d05a293d6ad,,correct,Tilt shoots up to ~160 deg and sharp altitude drop at t=0
+5,a3f6c3b5,a3f6c3b5-7525-4746-85ed-34bf44d13ed0,,no crash visible,"Normal flight, tilt flat near 0 deg, log ends"
+6,de0871d5,de0871d5-23af-405f-b7d6-b9f2dd2aec59,,no crash visible,"Tilt stays below 25 deg, altitude ~5.5m, log ends before t=0"
+7,28de39c3,28de39c3-83b7-469a-9111-03217373f9ba,,correct,Sharp tilt spike >120 deg and altitude drop at t=0
+8,39117d35,39117d35-4f84-47b5-aefc-f43eda1302ac,,correct,Sudden tilt spike >100 deg and sharp altitude drop at t=0
+9,67466a39,67466a39-f663-4df1-97d2-5bd4131294b1,,correct,Tilt spikes >80 deg and altitude drops sharply to 0 at t=0
+10,3385261e,3385261e-876c-4720-8b38-774a42f967bb,,no crash visible,"Tilt stays <20 deg, altitude recovers to 0.6m, log ends"
+11,efd9600d,efd9600d-e1b3-43cb-99e4-6d4c3ac76a62,,no crash visible,"Tilt completely flat near 0 deg, altitude flat at 0, no crash"
+12,425b2442,425b2442-8359-4644-923f-c6386a4d60fe,,no crash visible,"Smooth descent/landing to 0.2m by t=-5s, tilt <20 deg"
+13,4409c13e,4409c13e-e035-4f49-ae6a-5e0c1ad3af50,,too early,Brief tilt spike at t=0 but drone recovers and climbs to 30m afterward
+14,c77a53f5,c77a53f5-40ba-416d-8a33-60bdc0a021c1,,no crash visible,"Tilt flat near 0 deg, minor altitude variation (0.65-0.78m), log ends"
+15,0918f170,0918f170-ea61-4fdc-a55b-2f804cac6ace,,no crash visible,"Tilt flat near 0 deg, steady descent from -1.8m to -2.0m, log ends"
+16,a65a5721,a65a5721-5bac-4d04-8642-576cc7fe7125,,correct,Sudden tilt spike to 160 deg and sharp altitude drop at t=0
+17,402542c3,402542c3-20ef-41c2-93b1-ca1a50a195f8,,correct,Tilt shoots over 120 deg and altitude drops from 80m to ground at t=0
+18,ef5d183f,ef5d183f-b402-4f59-9f45-d83aed560f08,,correct,Sharp tilt spike to 175 deg and sudden altitude drop at t=0
+19,31de4767,31de4767-874a-46df-b836-8f4b72fa7487,,no crash visible,"Tilt completely flat near 0 deg, tiny altitude variation (~22.3m)"
+20,e9b88fa4,e9b88fa4-941d-47c9-b93a-0f41bec86eaa,,correct,Tilt passes 60 deg (up to 175 deg) and altitude drops sharply from 200m at t=0
+21,ac0c8693,ac0c8693-39bd-4b0e-a570-9ba7fdede4b6,,no crash visible,"Tilt stays <10 deg, normal low-altitude fluctuations, log ends"
+22,e0a4a2ab,e0a4a2ab-fee4-471a-9bf3-03db90378e44,,no crash visible,"Noisy tilt below 40 deg, low altitude (0-5m), no clear crash at t=0"
+23,f2f905f8,f2f905f8-af4c-42c3-9639-b502fd9096d1,,correct,Tilt shoots immediately to 180 deg (flip) and altitude drops at t=0
+24,fe55b547,fe55b547-9e3b-4f88-a25b-7355761e26f8,,no crash visible,"Tilt stays <20 deg, altitude climbs slightly to 1.25m, log ends"
+25,4678e5e2,4678e5e2-4806-4d5f-a780-89ec63a357ec,,correct,Sudden tilt jump to ~90 deg and sharp altitude drop at t=0
+26,4605d9d5,4605d9d5-1f60-47da-b5cb-434cb370a4c7,,no crash visible,"Tilt completely flat near 0 deg, minor altitude change (-1.65 to -1.80m)"
+27,8554b463,8554b463-dfb5-4373-847f-03394dfd041d,,correct,Sharp tilt spike to 140 deg and altitude drop to ground at t=0
+28,f874e687,f874e687-0f97-420d-9027-f511093fb523,,correct,Tilt shoots to 120 deg at t=0 as altitude hits 0
+29,aa0ae4df,aa0ae4df-c24e-495d-b423-e616da35a7b3,,correct,Sudden tilt spike to 120 deg and sharp altitude drop from 100m at t=0
+30,a7493f02,a7493f02-fc13-4566-80eb-f2f49d000c25,,no crash visible,"Tilt stays <35 deg, altitude already near ground before t=0, log ends"
+31,3e091e5f,3e091e5f-424e-4ced-88bb-163b33e46bb0,,too late,Sharp vertical altitude drop from 7m to 0m happens at t=-3s before the line
+32,e76eb7ce,e76eb7ce-e39c-4dec-80b0-a7a399bb3b5b,,no crash visible,"Tilt flat near 0 deg, gentle altitude descent to -0.75m, log ends"
+33,e010d43d,e010d43d-4261-4504-9bfb-315bcda41424,,no crash visible,"Tilt flat near 0 deg, minor altitude variation (-1.65 to -1.90m)"
+34,06834b93,06834b93-1a62-456b-8a79-bf41eb2b6f15,,correct,Sudden flip (tilt shoots to 175 deg) and sharp altitude drop at t=0
+35,985dd7fe,985dd7fe-3478-49da-b4fc-53716e31b59d,,correct,Sudden flip (tilt shoots to 175 deg) and altitude drop to 0 at t=0
+36,0597c2d2,0597c2d2-31df-44dc-96c4-aa745e532cf6,,correct,Tilt shoots up past 60 deg at t=0 with sharp drop
+37,10376e80,10376e80-bf80-4bb3-94fb-f7f93a64fa72,,no crash visible,"Descent finishes around t=-12s, tilt and altitude flat at t=0"
+38,4ab1f906,4ab1f906-94f8-42d3-9f8b-00fd041b9f7e,,can't tell,"Empty panel, no data plotted"
+39,7f504e23,7f504e23-430a-4d11-a143-ccd3cb6c5d54,,correct,Sudden flip (tilt shoots to 175 deg) and sharp altitude drop at t=0
+40,1eef499d,1eef499d-3877-4f9c-98b3-556dd5f7c66d,,correct,Tilt shoots to 110 deg at t=0 as altitude reaches ground
+41,47139a68,47139a68-2f91-4697-99ea-33e579ff1787,,correct,Sudden flip (tilt shoots to 175 deg) and steep altitude drop at t=0
+42,cb1a1025,cb1a1025-60ed-4f21-9709-0757a255795a,,too early,"Brief tilt spike at t=0, but major flip and altitude drop to ground occur at t=+8s"
+43,7752fd6e,7752fd6e-874e-4bfe-99b6-209eee7e1677,,no crash visible,"Activity ends by t=-10s, completely flat tilt and altitude at t=0"
+44,ed868302,ed868302-266e-4250-b664-9f1d7572b30f,,can't tell,"Chaotic oscillations throughout, altitude remains high (30-50m), no clear crash at t=0"
+45,8cdf6565,8cdf6565-caf7-4f85-b7eb-2d54a68a93f3,,correct,Sudden flip (tilt shoots to 140 deg) and sharp altitude drop at t=0
+46,41918ee7,41918ee7-7248-42e8-bbba-a11a507c1f17,,no crash visible,Log ends around t=-5s with flat tilt and stable altitude (215.8m)
+47,eb8c2818,eb8c2818-69f7-432c-ac39-a7dc90198a1f,,too late,Tilt shoots >60 deg around t=-10s and stays high; loss of control happened well before t=0
+48,2df68fc9,2df68fc9-fa7f-4153-ae14-559bd71c55cb,,can't tell,"Empty panel, no data plotted"
+49,bcea9683,bcea9683-433d-4c92-a11b-a95ace6eb91a,,too early,Line is on initial wobble/climb at t=0; altitude peaks later and drops around t=+5 to +10s
+50,469472ca,469472ca-7d81-499e-b68a-88cf9ec79ddf,,correct,Sudden flip (tilt shoots to 175 deg) and altitude drop at t=0
