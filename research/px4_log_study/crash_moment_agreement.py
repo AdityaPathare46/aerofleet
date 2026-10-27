@@ -19,6 +19,9 @@ Reported (descriptive, no hypothesis test):
   - share of fallback logs labelled "no crash visible".
 Limits stated in the output: one reviewer, not blind to the panel titles, 50 of 148 logs.
 
+AMENDMENT 1 (27 Oct 2026, before any output): scipy failed to load (corrupted binary on the external drive), so the
+Clopper-Pearson interval is computed exactly in plain Python. Nothing else changes.
+
     python research/px4_log_study/crash_moment_agreement.py DATA_ROOT
 """
 import csv
@@ -27,7 +30,7 @@ import os
 import sys
 from collections import Counter, defaultdict
 
-from scipy.stats import beta
+from math import comb
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(SCRIPT_DIR)
@@ -37,11 +40,29 @@ from r16_audit import crash_status
 RESULTS_DIR = os.path.join(SCRIPT_DIR, "..", "results", "px4_log_study")
 
 
+def _tail(k, n, p, upper):
+    """P(X >= k) if upper else P(X <= k), X ~ Binomial(n, p)."""
+    r = range(k, n + 1) if upper else range(0, k + 1)
+    return sum(comb(n, i) * p ** i * (1 - p) ** (n - i) for i in r)
+
+
+def _solve(f, target):
+    lo, hi = 0.0, 1.0
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        if f(mid) < target:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def cp(k, n):
+    """Exact Clopper-Pearson 95% interval (Amendment 1: plain Python; scipy failed to load)."""
     if n == 0:
         return [None, None]
-    lo = 0.0 if k == 0 else float(beta.ppf(0.025, k, n - k + 1))
-    hi = 1.0 if k == n else float(beta.ppf(0.975, k + 1, n - k))
+    lo = 0.0 if k == 0 else _solve(lambda p: _tail(k, n, p, True), 0.025)
+    hi = 1.0 if k == n else _solve(lambda p: -_tail(k, n, p, False), -0.025)
     return [lo, hi]
 
 
