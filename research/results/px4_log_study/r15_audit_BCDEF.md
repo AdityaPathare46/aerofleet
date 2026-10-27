@@ -1,0 +1,288 @@
+# Round 15 audit
+
+Declared in `research/px4_log_study/r15_audit.py` (docstring). Exploratory (dagger).
+
+Full numbers are in `r15_audit.json`.
+
+```
+{
+ "declared_in": "research/px4_log_study/r15_audit.py docstring",
+ "B": {
+  "declared": {
+   "mean_rank": 0.6666666666666666,
+   "p": 0.0023,
+   "n": 60,
+   "top": 0.55,
+   "expected_top": 0.4055555555555555
+  },
+  "n_sets": 60,
+  "n_case_airframes": 40,
+  "n_control_airframes": 94,
+  "r13_method": {
+   "mean": 0.6632976300674006,
+   "ci": [
+    0.5208333333333334,
+    0.7917025862068964
+   ]
+  },
+  "anchors_pass": true,
+  "two_stage": {
+   "mean": 0.6617281227195838,
+   "ci": [
+    0.5019817073170733,
+    0.8086495031616981
+   ],
+   "p": 0.0115
+  },
+  "one_per_airframe": {
+   "sets": 40,
+   "median_mean_rank": 0.6625,
+   "median_p": 0.0121,
+   "share_p_below_0025": 0.764,
+   "median_top_share": 0.55,
+   "median_expected_top": 0.3958333333333333
+  },
+  "holm": {
+   "between_vib": 0.0805,
+   "clipping": 0.27,
+   "between_track": 0.75,
+   "manual": 0.75,
+   "within_track": 1.0,
+   "protections": 1.0,
+   "within_vib": 1.0
+  },
+  "supported": false
+ },
+ "C": {
+  "other": {
+   "auc": 0.6226520132456688,
+   "n_crash": 67,
+   "n_comp": 311,
+   "ci": [
+    0.5291683352457448,
+    0.7169998577618275
+   ]
+  },
+  "same": {
+   "auc": 0.5394323464643993,
+   "n_crash": 67,
+   "n_comp": 305,
+   "ci": [
+    0.4868442781844576,
+    0.5973009700704481
+   ]
+  },
+  "same_F": {
+   "auc": 0.5096324544677493,
+   "n_crash": 67,
+   "n_comp": 227,
+   "ci": [
+    0.43384572345485334,
+    0.569993203801017
+   ]
+  },
+  "diff_other_minus_same": {
+   "diff": 0.08321966678126946,
+   "ci": [
+    -0.0067164911115483086,
+    0.16617658936013244
+   ]
+  },
+  "diff_other_minus_same_F": {
+   "diff": 0.11301955877791947,
+   "ci": [
+    0.02850992362984646,
+    0.2119933038907201
+   ]
+  },
+  "factorial_further_021_cells": "constant subset; other = C2 vs N2 at m10, grouped, first30 (0.666); same = C2 vs S at m10, first30, grouped (0.455)"
+ },
+ "D": {
+  "permutation_control": 0.4849078845032081,
+  "0": {
+   "n_crash": 148,
+   "n_comp": 139,
+   "auc": 0.8822866031499125,
+   "sd_over_repeats": 0.0038732677157853825,
+   "ci": [
+    0.7757003135534029,
+    0.9350321704296496
+   ]
+  },
+  "1": {
+   "n_crash": 148,
+   "n_comp": 139,
+   "auc": 0.8255201244409879,
+   "sd_over_repeats": 0.026143712253801386,
+   "ci": [
+    0.7262208554930074,
+    0.8947500394636388
+   ]
+  },
+  "2": {
+   "n_crash": 89,
+   "n_comp": 124,
+   "auc": 0.7986770569046756,
+   "sd_over_repeats": 0.02952720002322263,
+   "ci": [
+    0.6679724458358179,
+    0.8909399863335639
+   ]
+  },
+  "3": {
+   "n_crash": 89,
+   "n_comp": 124,
+   "auc": 0.7910474809713665,
+   "sd_over_repeats": 0.029595060140141388,
+   "ci": [
+    0.6619416868084617,
+    0.8894379320897745
+   ]
+  },
+  "4": {
+   "n_crash": 148,
+   "n_comp": 139,
+   "auc": 0.737750340268326,
+   "sd_over_repeats": 0.04404664518936425,
+   "ci": [
+    0.6483549416236764,
+    0.8273939611154855
+   ]
+  },
+  "5": {
+   "n_crash": 67,
+   "n_comp": 305,
+   "auc": 0.5461071690726695,
+   "sd_over_repeats": 0.01760023277832615,
+   "ci": [
+    0.48516129032258065,
+    0.6051054117423312
+   ]
+  },
+  "6": {
+   "n_crash": 67,
+   "n_comp": 305,
+   "auc": 0.5589723513579642,
+   "sd_over_repeats": 0.015390074308692088,
+   "ci": [
+    0.5121830347289119,
+    0.617097793362333
+   ]
+  },
+  "6b": {
+   "n_crash": 57,
+   "n_comp": 227,
+   "auc": 0.5817914831130689,
+   "sd_over_repeats": 0.01143268798472603,
+   "ci": [
+    0.5236570485363866,
+    0.657689979023646
+   ]
+  }
+ },
+ "E": {
+  "archive": {
+   "crashes": 490,
+   "later_log": 264,
+   "share_later": 0.5387755102040817,
+   "within_1d": 83,
+   "within_7d": 166,
+   "within_30d": 214,
+   "median_days": 4.5
+  },
+  "task_a_148": {
+   "crashes": 140,
+   "later_log": 75,
+   "share_later": 0.5357142857142857,
+   "within_1d": 14,
+   "within_7d": 40,
+   "within_30d": 56,
+   "median_days": 7.0
+  },
+  "within_67": {
+   "crashes": 101,
+   "later_log": 83,
+   "share_later": 0.8217821782178217,
+   "within_1d": 35,
+   "within_7d": 64,
+   "within_30d": 76,
+   "median_days": 3.0
+  },
+  "case_airframes_40": {
+   "crashes": 40,
+   "later_log": 31,
+   "share_later": 0.775,
+   "within_1d": 17,
+   "within_7d": 24,
+   "within_30d": 28,
+   "median_days": 1.0
+  },
+  "same_day_after_crash_from_gps_audits": {
+   "between_drone": "47 of 95",
+   "within_drone": "85 of 210"
+  }
+ },
+ "F": {
+  "logs": 148,
+  "counts": {
+   "fallback_end_of_arming": 76,
+   "plausible": 116,
+   "tilt_defined": 72,
+   "implausible": 32
+  },
+  "review_sheet_logs": [
+   "1e0335f6-6cf5-4ba3-a42b-636f2ad47c76",
+   "6eb8ebd6-0e3d-47f3-a04a-19e47e57a2b9",
+   "79e9ea4d-5ebe-4c13-8c16-72dfbe5ec52c",
+   "294a905a-872c-4f73-af50-6d05a293d6ad",
+   "a3f6c3b5-7525-4746-85ed-34bf44d13ed0",
+   "de0871d5-23af-405f-b7d6-b9f2dd2aec59",
+   "28de39c3-83b7-469a-9111-03217373f9ba",
+   "39117d35-4f84-47b5-aefc-f43eda1302ac",
+   "67466a39-f663-4df1-97d2-5bd4131294b1",
+   "3385261e-876c-4720-8b38-774a42f967bb",
+   "efd9600d-e1b3-43cb-99e4-6d4c3ac76a62",
+   "425b2442-8359-4644-923f-c6386a4d60fe",
+   "4409c13e-e035-4f49-ae6a-5e0c1ad3af50",
+   "c77a53f5-40ba-416d-8a33-60bdc0a021c1",
+   "0918f170-ea61-4fdc-a55b-2f804cac6ace",
+   "a65a5721-5bac-4d04-8642-576cc7fe7125",
+   "402542c3-20ef-41c2-93b1-ca1a50a195f8",
+   "ef5d183f-b402-4f59-9f45-d83aed560f08",
+   "31de4767-874a-46df-b836-8f4b72fa7487",
+   "e9b88fa4-941d-47c9-b93a-0f41bec86eaa",
+   "ac0c8693-39bd-4b0e-a570-9ba7fdede4b6",
+   "e0a4a2ab-fee4-471a-9bf3-03db90378e44",
+   "f2f905f8-af4c-42c3-9639-b502fd9096d1",
+   "fe55b547-9e3b-4f88-a25b-7355761e26f8",
+   "4678e5e2-4806-4d5f-a780-89ec63a357ec",
+   "4605d9d5-1f60-47da-b5cb-434cb370a4c7",
+   "8554b463-dfb5-4373-847f-03394dfd041d",
+   "f874e687-0f97-420d-9027-f511093fb523",
+   "aa0ae4df-c24e-495d-b423-e616da35a7b3",
+   "a7493f02-fc13-4566-80eb-f2f49d000c25",
+   "3e091e5f-424e-4ced-88bb-163b33e46bb0",
+   "e76eb7ce-e39c-4dec-80b0-a7a399bb3b5b",
+   "e010d43d-4261-4504-9bfb-315bcda41424",
+   "06834b93-1a62-456b-8a79-bf41eb2b6f15",
+   "985dd7fe-3478-49da-b4fc-53716e31b59d",
+   "0597c2d2-31df-44dc-96c4-aa745e532cf6",
+   "10376e80-bf80-4bb3-94fb-f7f93a64fa72",
+   "4ab1f906-94f8-42d3-9f8b-00fd041b9f7e",
+   "7f504e23-430a-4d11-a143-ccd3cb6c5d54",
+   "1eef499d-3877-4f9c-98b3-556dd5f7c66d",
+   "47139a68-2f91-4697-99ea-33e579ff1787",
+   "cb1a1025-60ed-4f21-9709-0757a255795a",
+   "7752fd6e-874e-4bfe-99b6-209eee7e1677",
+   "ed868302-266e-4250-b664-9f1d7572b30f",
+   "8cdf6565-caf7-4f85-b7eb-2d54a68a93f3",
+   "41918ee7-7248-42e8-bbba-a11a507c1f17",
+   "eb8c2818-69f7-432c-ac39-a7dc90198a1f",
+   "2df68fc9-fa7f-4153-ae14-559bd71c55cb",
+   "bcea9683-433d-4c92-a11b-a95ace6eb91a",
+   "469472ca-7d81-499e-b68a-88cf9ec79ddf"
+  ],
+  "human_check": "pending (authors)"
+ }
+}
+```

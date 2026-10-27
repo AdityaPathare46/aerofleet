@@ -42,3 +42,20 @@
 | **Wang et al. (2021)** *ESEC/FSE 2021*, pp. 20–31 | Taxonomy of 569 bugs in PX4 and ArduPilot | Source code commit logs and bug tracker issues | Code-level software bug study; complementary to our finding that configuration/tuning and parameter errors dominate physical hardware failures. | **Verified** [doi:10.1145/3468264.3468559](https://doi.org/10.1145/3468264.3468559) |
 | **AAIB (2026)** *Annual Safety Review 2025* | UK official drone accident investigations | 84 investigated UAS occurrences in 2024–2025 | Official government investigation reports; emphasizes lost-link and motor failure modes; no telemetry models evaluated. | **Verified** [gov.uk/aaib](https://www.gov.uk/government/organisations/air-accidents-investigation-branch) |
 | **EASA (2026)** *Easy Access Rules for UAS* | European drone regulatory framework | Revision of Regulations (EU) 2019/947 and 2019/945 | Regulatory specifications for incident reporting and flight data logging standards. | **Verified** [easa.europa.eu](https://www.easa.europa.eu) |
+
+---
+
+## 3. Addendum (27 October 2026): studies missed by the search
+
+Peer Review Round 15 named four closely related studies that the queries above did not return. Each was verified
+(Crossref, USENIX or arXiv) and added to the manuscript. The search was done by one author and is not a systematic review.
+
+| Citation | Contribution | Relation to the present study | Verification |
+|---|---|---|---|
+| **Kim et al. (2020)** USENIX Security, MAYDAY | Flight logs hold only high-level control states; adds program-level logging; traces 10 ArduPilot accidents to control-semantic bugs | Mechanistic counterpart of our statistical finding that logs cannot attribute crashes | [usenix.org](https://www.usenix.org/conference/usenixsecurity20/presentation/kim) |
+| **Mantas & Patsakis (2019)** LNCS, GRYPHON | Six-step forensic method for ArduPilot Dataflash logs ending in a timeline | Overlaps AeroFleet's evidence timeline; no attribution | [doi:10.1007/978-3-030-26834-3_22](https://doi.org/10.1007/978-3-030-26834-3_22) |
+| **Wang et al. (2024)** ICSE | 178 abnormal PX4/ArduPilot logs from real software-bug incidents | Possible external labelled set; not yet opened | [doi:10.1145/3597503.3639186](https://doi.org/10.1145/3597503.3639186) |
+| **Vieira et al. (2025)** arXiv 2509.22267 | Segment-wise splits leak in bearing fault diagnosis; bearing-wise partitioning proposed | Unit-wise splitting is not new; we measure its effect on crash logs | [arXiv:2509.22267](https://arxiv.org/abs/2509.22267) |
+
+Kose et al. (2026), previously unconfirmed by a reviewer's search, was re-checked against Crossref on 27 October 2026
+(Sensors 26(10):3188, issued 18 May 2026; title and authors match).
