@@ -416,3 +416,16 @@ Abstract trimmed from 299 to about 258 words; every interval kept. PDF (53 pages
 | **2** (caliper) | Lift without the three features +0.077 [+0.013, +0.204]; single-seed lifts with paired CIs reported; old CI replaced by the reproducible one. | Done |
 
 Open: audit within-drone, caliper and factorial same-aircraft samples for post-crash flights (needs its own declaration); Software Heritage archive of the new commits.
+
+## Twenty-second pass: post-crash flight audit (27 October 2026)
+
+Declared `0d38f5d`, results `4fe4f58`. 85 of 210 crash-day earlier flights in the within-drone samples were flown after the crash.
+
+| Analysis | Declared verdict | Paper change |
+|---|---|---|
+| Within-drone rank test | Unchanged (no warning) | Values without post-crash flights added |
+| Within-drone Group-CV | Changed: 0.582 [0.525, 0.660] excludes chance | "At chance" replaced by "at most a weak signal, pipeline-dependent" (recomputed features 0.507); Table 6 Step 6b added |
+| Caliper lift | Masking loses support (+0.063 [-0.087, +0.159]) | Masking reading withdrawn in abstract, contribution (i), §5.3, checklist item 4 (now "Duration reporting"), discussion |
+| Same-aircraft factorial cell | Unchanged (0.507) | Noted in §5.4 |
+
+Threats "Flight order" paragraph now reports both audits. Abstract 258 words. PDF 55 pages, Word and Overleaf zip rebuilt.
