@@ -1,0 +1,116 @@
+{
+ "declared_in": "research/px4_log_study/r16_audit.py docstring",
+ "B": {
+  "logs": 491,
+  "with_gps": 456,
+  "gps_date_equals_index_date": 365,
+  "within_one_day": 410,
+  "pairs": 475,
+  "earlier_dated_pairs": 258,
+  "earlier_dated_pairs_with_both_gps": 221,
+  "earlier_dated_but_after_crash_by_gps": 0,
+  "dated_only_shares": {
+   "between": "47 of 85 (55%)",
+   "within": "85 of 192 (44%)"
+  }
+ },
+ "D": {
+  "S8": "duration-adjusted variant not re-run; unclustered",
+  "declared": {
+   "sets_all": 60,
+   "airframes": 40,
+   "median_mean_rank": 0.6625,
+   "median_p": 0.01205,
+   "share_p_below_0025": 0.791,
+   "median_top_share": 0.55,
+   "median_top_p": 0.031
+  },
+  "S1_same_airframe": {
+   "sets_all": 39,
+   "airframes": 32,
+   "median_mean_rank": 0.671875,
+   "median_p": 0.0259,
+   "share_p_below_0025": 0.416,
+   "median_top_share": 0.625,
+   "median_top_p": 0.0463
+  },
+  "S2_no_crash_day": {
+   "sets_all": 25,
+   "airframes": 18,
+   "median_mean_rank": 0.7222222222222222,
+   "median_p": 0.0233,
+   "share_p_below_0025": 0.663,
+   "median_top_share": 0.6111111111111112,
+   "median_top_p": 0.054
+  },
+  "S3_accelerometer": {
+   "sets_all": 12,
+   "airframes": 10,
+   "median_mean_rank": 0.6,
+   "median_p": 0.2751,
+   "share_p_below_0025": 0.0,
+   "median_top_share": 0.4,
+   "median_top_p": 0.4313
+  },
+  "S3_estimator": {
+   "sets_all": 48,
+   "airframes": 30,
+   "median_mean_rank": 0.6833333333333333,
+   "median_p": 0.0187,
+   "share_p_below_0025": 0.547,
+   "median_top_share": 0.6,
+   "median_top_p": 0.042050000000000004
+  },
+  "gps_without_following": {
+   "sets_all": 45,
+   "airframes": 34,
+   "median_mean_rank": 0.6617647058823529,
+   "median_p": 0.0194,
+   "share_p_below_0025": 0.683,
+   "median_top_share": 0.5588235294117647,
+   "median_top_p": 0.03825
+  },
+  "gps_without_following_or_undated": {
+   "sets_all": 41,
+   "airframes": 30,
+   "median_mean_rank": 0.6833333333333333,
+   "median_p": 0.0139,
+   "share_p_below_0025": 0.822,
+   "median_top_share": 0.6,
+   "median_top_p": 0.0197
+  },
+  "D2_bootstrap_p": {
+   "rbar": 0.6666666666666666,
+   "shifted_p": 0.0115,
+   "percentile_p": 0.025,
+   "ci": [
+    0.5019817073170733,
+    0.8086495031616981
+   ]
+  }
+ },
+ "E": {
+  "m0": {
+   "n": 148,
+   "auc": 0.4474206349206349,
+   "null_mean": 0.48545151289682537,
+   "null_sd": 0.04637306132657544,
+   "p": 0.7711442786069652,
+   "approx_bounds": [
+    0.356529434720547,
+    0.5383118351207228
+   ]
+  },
+  "m10": {
+   "n": 114,
+   "auc": 0.48092805449127285,
+   "null_mean": 0.4837098765432099,
+   "null_sd": 0.055528365344016554,
+   "p": 0.46766169154228854,
+   "approx_bounds": [
+    0.3720924584170004,
+    0.5897636505655452
+   ]
+  }
+ }
+}

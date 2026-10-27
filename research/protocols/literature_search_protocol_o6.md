@@ -59,3 +59,14 @@ Peer Review Round 15 named four closely related studies that the queries above d
 
 Kose et al. (2026), previously unconfirmed by a reviewer's search, was re-checked against Crossref on 27 October 2026
 (Sensors 26(10):3188, issued 18 May 2026; title and authors match).
+
+## 4. Citation chasing (27 October 2026)
+
+Forward citations of Wang et al. (2024), GRYPHON (2019) and Vieira et al. (2025) were listed with the Semantic Scholar
+Graph API (13, 27 and 16 citing papers). Three were judged close enough to cite and verified: Hakani et al. (2025)
+IEEE Sensors Reviews, doi:10.1109/SR.2025.3597582 (battery-induced crash diagnostics from hexacopter logs); Seong
+et al. (2026) Comput. Electr. Eng. 135:111144, doi:10.1016/j.compeleceng.2026.111144 (log recovery for ArduPilot,
+PX4, Betaflight); Li et al. (2026) Expert Syst. Appl. 327:132859, doi:10.1016/j.eswa.2026.132859 (LLM forensic
+agent). A leakage-safe bearing benchmarking paper (PHM Society) was not cited because its author list differs between
+the abstract page and the PDF. MAYDAY's forward citations could not be listed (API rate limit; web search found none).
+Backward chasing (reference lists) was not done.
