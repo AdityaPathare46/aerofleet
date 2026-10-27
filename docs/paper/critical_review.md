@@ -404,3 +404,15 @@ Round 14 rated the manuscript 9.1/10 (originality 7.8). Its main problem was tha
 | 3, 4, 5 | 250-pilot formula, count mismatches, registration times: not yet addressed. | Open |
 
 Abstract trimmed from 299 to about 258 words; every interval kept. PDF (53 pages), Word and Overleaf zip rebuilt; page 1 checked; the zip compiles standalone.
+
+## Twenty-first pass: remaining Round 14 items (27 October 2026)
+
+| Item | Resolution | Status |
+|---|---|---|
+| **3** (250 pilots) | Hanley-McNeil at AUC 0.85, 3.1 aircraft per pilot crash: ~100 for SE <= 0.0255, ~200 for 80% power. Formula now in §5.2; 250 stated as an error. | Done |
+| **4** (counts) | 40 case airframes = 60 sets from 40 drones (11 crashed more than once). Same-day: 39 of the 60 sets (44 counted all 66). Depth-3 "0.524" and tumble claims replaced (0.519-0.604 at m >= 10 s; m = 0-5 s differences are noise). Commit mapping in the registration table was shifted by one test; fixed. | Done |
+| **4** (GPS) | Round 13 check compared dates only. Declared GPS check (`0e26db0`/`187f570`): 47 of 95 crash-day exposure flights followed the crash. Between-drone holds without them (0.698, p 0.0021). Disclosed in §5.4, Threats and abstract. | Done; within-drone samples not yet audited |
+| **5** (registration) | Table now gives declaration and results commits with IST times; run bounded between them. Q1 found to be a first-pass result (code and result in one commit); relabelled, kept in the Holm set. | Done |
+| **2** (caliper) | Lift without the three features +0.077 [+0.013, +0.204]; single-seed lifts with paired CIs reported; old CI replaced by the reproducible one. | Done |
+
+Open: audit within-drone, caliper and factorial same-aircraft samples for post-crash flights (needs its own declaration); Software Heritage archive of the new commits.
