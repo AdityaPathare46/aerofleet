@@ -56,6 +56,14 @@ ABORT RULES (run first; if any fails, stop, report, compute nothing else):
      on >= 95% of flights.
   A4 permutation control: 20 label permutations of cell (C2, N2, m10, group, full): mean AUC 0.50 +- 0.05.
 
+AMENDMENT 1 (27 Oct 2026, after the first run aborted, before any AUC beyond the anchors was computed):
+  The first run (declaration commit 3c34530; run 13:13-13:21 IST) passed A1 (0.8905) and A2 (0.5590) and
+  aborted at A3: 124/374 flights agreed. Diagnosis (feature values only, no scoring): every disagreement is
+  float32 rounding (largest relative difference 4.9e-6 on tilt_p95; batt_min 5.6e-8; stick_p95 3.9e-6) or an
+  allowed vib_p95/tune_rms fallback. The absolute 1e-6 tolerance cannot hold for values near 40-90 stored as
+  float32. A3 now reads: agree if abs diff <= 1e-5 * max(abs(stored), 1) or both missing. Nothing else changes;
+  cached features from the first run are reused.
+
 STAGE 1, PRIMARY: the 2 x 2 Round 14 asked for. One scheme: m = 10, group CV, full window, same extractor.
   Cells (C1, N1), (C1, N2), (C2, N1), (C2, N2); C1e reported in the same table as a third crash row.
   Effects (AUC differences, averaged over the other factor):
@@ -395,7 +403,7 @@ def extractor_check(cache):
                 continue
             a, b = r[k], new[k]
             a_nan, b_nan = a is None or (isinstance(a, float) and math.isnan(a)), b is None
-            if a_nan != b_nan or (not a_nan and abs(a - b) > 1e-6):
+            if a_nan != b_nan or (not a_nan and abs(a - b) > 1e-5 * max(abs(a), 1.0)):  # Amendment 1
                 ok = False
         agree += ok
     return agree, total
