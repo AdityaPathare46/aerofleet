@@ -467,3 +467,7 @@ Round 16 rated 9.3/10 (originality 8.2, rigor 9.5, support 9.1, significance 8.3
 | 9 References | Wang et al. in Table 1 and text; page range 2593-2605; citation chasing added Hakani 2025, Seong 2026, Li 2026; MAYDAY chase incomplete (stated); Kose verified via Crossref earlier |
 
 Still open: manual crash-trace check; originality beyond 8.2 needs a new contribution (external test set, published-detector re-evaluation or injection study).
+
+## Twenty-fifth pass: crash-moment review (27 October 2026)
+
+One co-author labelled 50 crash-moment panels by eye (not blind to the automatic label). Declared `97974ad`, amended `bfda684` (exact Clopper-Pearson without scipy). Tilt-defined t_c correct in 21 of 26; 18 of 24 fallback logs contain no crash; confirmed rule precise (11/12) but misses half the real crashes (11/23). Paper: "pending" text replaced in the confirmed-crash Results paragraph and Threats; revision-table row added. Also corrected the exact 95% CI for aircraft recall 18/32 to 37.7-73.6%. Still open: a second, blind reviewer.
