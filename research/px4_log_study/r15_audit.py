@@ -75,6 +75,10 @@ PART F - Crash moment plausibility (Round 15 problem 9), descriptive
   plausible, implausible, unreadable. A review sheet of 50 logs (seed 2036: tilt and altitude around t_c, t_c
   marked) is written for a human check by the authors; this script does not claim that check was done.
 
+AMENDMENT 1 (27 Oct 2026, after the first run): the Part F review sheet subtracted t_c from unsigned log timestamps,
+so times before t_c wrapped around and the plots were unreadable. Plot times are now cast to signed integers. The
+Part F counts compare t_end - t_c (never negative) and are unchanged; no other part is affected. Part F is re-run.
+
 Outputs: research/results/px4_log_study/r15_audit[_PARTS].md and .json (one pair per run; parts may run as separate
 processes), r15_crash_moment_sheet.png.
 
@@ -462,8 +466,8 @@ def part_f(root):
             alt = None
             if lp is not None and "z" in lp:
                 ml = between(lp, tc - 30e6, tc + 15e6)
-                alt = ((lp["timestamp"][ml] - tc) / 1e6, -lp["z"][ml])
-            traces[lid] = ((att["timestamp"][m] - tc) / 1e6, tilt, alt, ok)
+                alt = ((lp["timestamp"][ml].astype(np.int64) - int(tc)) / 1e6, -lp["z"][ml])
+            traces[lid] = ((att["timestamp"][m].astype(np.int64) - int(tc)) / 1e6, tilt, alt, ok)
     pick = list(np.random.default_rng(2036).choice(sorted(traces), size=min(50, len(traces)), replace=False))
     fig, axes = plt.subplots(10, 5, figsize=(20, 26))
     for ax, lid in zip(axes.flat, pick):
