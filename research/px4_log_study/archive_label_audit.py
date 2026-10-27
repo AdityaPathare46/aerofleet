@@ -30,6 +30,12 @@ REPORTED (descriptive; reported whatever the result):
      blind, 50 reviewed logs drawn from the modelled sample, and the review rates are assumed to carry over.
   R4 Selection check: tilt-defined share in the 148 modelled crashes vs the other crash-rated logs (Fisher, two-sided).
 
+AMENDMENT 1 (27 Oct 2026, after the first analyze run; only R1_all was unaffected): the rotary-wing subset used the
+log's vehicle_status.is_rotary_wing, which is missing in 175 of 320 quadrotor logs (older firmware), so R1_rotary,
+R2, R3 and R4 covered a skewed 202 logs (6 of the 148 modelled crashes). Multicopters are now defined by the
+archive index: mav_type Quadrotor, Hexarotor or Octorotor (381 logs; VTOL, fixed-wing, rover and unknown types
+excluded). Nothing else changes; the first run's output is kept as archive_label_audit_first_run.json.
+
     python research/px4_log_study/archive_label_audit.py fetch DATA_ROOT
     python research/px4_log_study/archive_label_audit.py analyze DATA_ROOT
 """
@@ -52,6 +58,7 @@ from r16_audit import crash_status
 
 RESULTS_DIR = os.path.join(SCRIPT_DIR, "..", "results", "px4_log_study")
 CRASH = ("crash_sw_hw", "crash_pilot")
+MULTI = ("Quadrotor", "Hexarotor", "Octorotor")
 
 
 def population(root):
@@ -116,7 +123,8 @@ def analyze(root):
         c = Counter(status[i] for i in sel)
         return {"n": len(sel), **dict(c)}
 
-    rot = [i for i in ids if rotary[i]]
+    # Amendment 1: multicopter = dbinfo mav_type, not the log's is_rotary_wing field (missing in many older logs).
+    rot = [i for i in ids if meta[i].get("mav_type") in MULTI]
     out = {"population": len(ids), "on_disk": sum(i in paths for i in ids), "R1_all": shares(ids), "R1_rotary": shares(rot)}
 
     def split(groups):
