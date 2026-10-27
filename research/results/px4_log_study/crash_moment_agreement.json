@@ -1,0 +1,63 @@
+{
+ "n": 50,
+ "table": {
+  "tilt_unconfirmed": {
+   "too early": 3,
+   "correct": 10,
+   "can't tell": 1
+  },
+  "fallback": {
+   "correct": 2,
+   "no crash visible": 18,
+   "too late": 2,
+   "can't tell": 2
+  },
+  "confirmed": {
+   "correct": 11,
+   "too early": 1
+  }
+ },
+ "correct_overall": [
+  23,
+  50
+ ],
+ "correct_by_status": {
+  "tilt_unconfirmed": [
+   10,
+   14
+  ],
+  "fallback": [
+   2,
+   24
+  ],
+  "confirmed": [
+   11,
+   12
+  ]
+ },
+ "confirmed_recall": [
+  11,
+  23,
+  [
+   0.2681961861755533,
+   0.6941219985086264
+  ]
+ ],
+ "confirmed_precision": [
+  11,
+  12,
+  [
+   0.6152038348490558,
+   0.9978924067681398
+  ]
+ ],
+ "fallback_no_crash": [
+  18,
+  24,
+  [
+   0.5328871975773306,
+   0.902269590525467
+  ]
+ ],
+ "limits": "one reviewer, not blind to panel titles, 50 of 148 logs"
+}
