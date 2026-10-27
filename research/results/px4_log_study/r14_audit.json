@@ -1,0 +1,67 @@
+{
+ "declared_in": "research/px4_log_study/r14_audit.py docstring",
+ "A": {
+  "airframes": 36,
+  "matched_flights": 113,
+  "unmatched_flights": 199,
+  "F11": {
+   "matched_5": 0.636002886002886,
+   "unmatched_5": 0.526346284935242,
+   "lift_5": 0.10965660106764397,
+   "ci_5": [
+    0.027646196321346076,
+    0.2052691285067144
+   ],
+   "matched_42": 0.6085858585858586,
+   "unmatched_42": 0.5110770279481935,
+   "lift_42": 0.09750883063766502,
+   "ci_42": [
+    0.018738768773990614,
+    0.17568206796607524
+   ]
+  },
+  "anchors_pass": true,
+  "F8": {
+   "matched_5": 0.5727272727272726,
+   "unmatched_5": 0.49584185412406273,
+   "lift_5": 0.07688541860320991,
+   "ci_5": [
+    0.012985039126973984,
+    0.20402057786928432
+   ],
+   "matched_42": 0.5613275613275613,
+   "unmatched_42": 0.4996591683708248,
+   "lift_42": 0.06166839295673654,
+   "ci_42": [
+    -0.007863144742266953,
+    0.13155848111488075
+   ]
+  },
+  "masking_supported": true
+ },
+ "B": {
+  "analysed_sets": 60,
+  "declared_test": [
+   0.6666666666666666,
+   0.0023,
+   60
+  ],
+  "same_day_sets": 39,
+  "same_day_flights": 98,
+  "counts": {
+   "precedes": 38,
+   "follows": 47,
+   "undeterminable": 10
+  },
+  "without_following": [
+   0.6976744186046512,
+   0.00212,
+   43
+  ],
+  "without_following_or_undeterminable": [
+   0.717948717948718,
+   0.00143,
+   39
+  ]
+ }
+}
