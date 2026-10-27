@@ -1,6 +1,6 @@
 Highlights
 - No rule or model separated pilot-caused from aircraft-caused crashes
 - Grouping folds by vehicle removed part of an apparent crash-detection signal
-- By GPS time, 44-55% of dated crash-day "earlier" flights followed the crash
+- Only about half of crash-rated PX4 archive logs contain the crash itself
 - Drones that later crashed vibrated more than matched peers (suggestive)
 - An open-source tool shows evidence and ranks airframes without verdicts

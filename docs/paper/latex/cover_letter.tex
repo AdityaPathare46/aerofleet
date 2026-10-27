@@ -22,9 +22,9 @@ Two findings are, to our knowledge, new and apply to any evaluation of log-based
 crash-vs-normal AUC of 0.88 fell by 0.21 [0.06, 0.34]; the one choice that could be isolated, grouping
 cross-validation folds by vehicle, accounted for 0.06. Comparing each drone with its own earlier flights brought the AUC to
 chance.
-\item \textbf{Dates cannot order flights within a day.} GPS time showed that 44--55\% of dated crash-day
-``earlier'' flights (47 of 85 in one sample, 85 of 192 in another) were flown after the crash. Our main results
-held without them; an apparent within-drone effect did not, and we have withdrawn it.
+\item \textbf{Crash labels are weaker than assumed.} Only about half of crash-rated multicopter logs contain the
+crash (50\%, 95\% CI 39--61\%; pilot-rated 23\% vs aircraft-rated 45\%), and 44--55\% of dated crash-day
+``earlier'' flights were flown after the crash.
 \end{itemize}
 These rest on declared tests:
 \begin{itemize}

@@ -64,3 +64,4 @@ pyserial>=3.5
 
 # PX4 .ulg flight logs (aerofleet/assurance/flightlog.py and research/px4_log_study)
 pyulog>=1.2.0
+python-docx>=1.1.0  # docs/paper/make_docx.py builds the Word manuscript

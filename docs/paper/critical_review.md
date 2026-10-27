@@ -471,3 +471,7 @@ Still open: manual crash-trace check; originality beyond 8.2 needs a new contrib
 ## Twenty-fifth pass: crash-moment review (27 October 2026)
 
 One co-author labelled 50 crash-moment panels by eye (not blind to the automatic label). Declared `97974ad`, amended `bfda684` (exact Clopper-Pearson without scipy). Tilt-defined t_c correct in 21 of 26; 18 of 24 fallback logs contain no crash; confirmed rule precise (11/12) but misses half the real crashes (11/23). Paper: "pending" text replaced in the confirmed-crash Results paragraph and Threats; revision-table row added. Also corrected the exact 95% CI for aircraft recall 18/32 to 37.7-73.6%. Still open: a second, blind reviewer.
+
+## Twenty-sixth pass: archive-wide label audit (27 October 2026)
+
+New contribution for originality and significance. Declared `09cf99c`; amended `18b0eff` (first run defined multicopters by a log field missing in older logs; now by the index vehicle type); results `f4bd714`. All 520 crash-rated real-hardware logs read. About half of crash-rated multicopter logs contain the crash (50% [39%, 61%]); pilot-rated logs show a crash-like tilt far less often than aircraft-rated ones (23% vs 45%, p = 0.0003), a label confound for any attribution classifier. Paper: new Results paragraph, abstract, contribution (ii), conclusion, threats, highlights, cover letter, revision table.
