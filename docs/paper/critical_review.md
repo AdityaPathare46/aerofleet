@@ -475,3 +475,7 @@ One co-author labelled 50 crash-moment panels by eye (not blind to the automatic
 ## Twenty-sixth pass: archive-wide label audit (27 October 2026)
 
 New contribution for originality and significance. Declared `09cf99c`; amended `18b0eff` (first run defined multicopters by a log field missing in older logs; now by the index vehicle type); results `f4bd714`. All 520 crash-rated real-hardware logs read. About half of crash-rated multicopter logs contain the crash (50% [39%, 61%]); pilot-rated logs show a crash-like tilt far less often than aircraft-rated ones (23% vs 45%, p = 0.0003), a label confound for any attribution classifier. Paper: new Results paragraph, abstract, contribution (ii), conclusion, threats, highlights, cover letter, revision table.
+
+## Twenty-seventh pass: second, blind crash-moment review (28 October 2026)
+
+A second author labelled the blind sheet (two earlier submissions were rejected: one labelled the unblinded sheet, the other reordered those labels via the key). Declared `59c8212`, results `5d7c0ce`. Agreement on whether the computed crash moment is right 85% (kappa 0.70); on whether fallback logs contain the crash only kappa 0.32. The archive-wide "about half contain the crash" estimate depended on the first reviewer (50%) and becomes 86% with the blind reviewer, so the paper now claims only that 61% of crash-rated multicopter logs lack a crash-like tilt and that the crash moment there is usually wrong. Abstract, contribution (ii), Results, threats, conclusion, highlights, cover letter and revision table corrected.
