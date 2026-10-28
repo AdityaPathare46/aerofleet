@@ -479,3 +479,12 @@ New contribution for originality and significance. Declared `09cf99c`; amended `
 ## Twenty-seventh pass: second, blind crash-moment review (28 October 2026)
 
 A second author labelled the blind sheet (two earlier submissions were rejected: one labelled the unblinded sheet, the other reordered those labels via the key). Declared `59c8212`, results `5d7c0ce`. Agreement on whether the computed crash moment is right 85% (kappa 0.70); on whether fallback logs contain the crash only kappa 0.32. The archive-wide "about half contain the crash" estimate depended on the first reviewer (50%) and becomes 86% with the blind reviewer, so the paper now claims only that 61% of crash-rated multicopter logs lack a crash-like tilt and that the crash moment there is usually wrong. Abstract, contribution (ii), Results, threats, conclusion, highlights, cover letter and revision table corrected.
+
+## Twenty-eighth pass: Round 17 (28 October 2026)
+
+Round 17 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.2, significance 8.6, clarity 8.6). The review PDF had no "remaining problems" list, so this pass addressed the stated clarity drop and searched for inconsistencies directly. No new analyses.
+
+- Inconsistency fixed: Section 3.1 described the 520 crash-rated logs as filtered by duration and firmware; they are simply the real-hardware ones (590 minus 70 simulator logs).
+- Clarity: contributions regrouped into two short lists with one finding each (contribution (ii) split into crash moments, label confound and flight order); a "Main findings at a glance" table (Table 6) opens the Results with finding, evidence type, verdict and section; floats now stay in their section/subsection (tables no longer pile up pages away from their text); the exploratory-analysis log moved to Appendix A.
+- Focus and originality: the introduction now names the archive's own records as a third source of optimism alongside leakage and confounding.
+- Significance: new Discussion paragraph on implications for anyone using Flight Review crash ratings; checklist gains a ninth item (label audit).
