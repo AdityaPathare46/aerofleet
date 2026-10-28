@@ -172,7 +172,7 @@ def study_flow(out):
 
     draw_box(ax_flow, 0.02, 0.15, 0.30, 0.40,
              "Crash-Rated Flight Logs",
-             "590 rated logs (402 aircraft, 188 pilot)\n520 real hardware with duration \u2265 10 s\n(from 284 distinct airframes)",
+             "590 rated logs (402 aircraft, 188 pilot)\n520 real hardware (70 simulator logs excluded)\n(from 284 distinct airframes)",
              fc="#F0F5FA", ec=BLUE)
 
     draw_box(ax_flow, 0.35, 0.15, 0.30, 0.40,

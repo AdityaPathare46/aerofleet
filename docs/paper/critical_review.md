@@ -488,3 +488,15 @@ Round 17 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.2, significance 8.6
 - Clarity: contributions regrouped into two short lists with one finding each (contribution (ii) split into crash moments, label confound and flight order); a "Main findings at a glance" table (Table 6) opens the Results with finding, evidence type, verdict and section; floats now stay in their section/subsection (tables no longer pile up pages away from their text); the exploratory-analysis log moved to Appendix A.
 - Focus and originality: the introduction now names the archive's own records as a third source of optimism alongside leakage and confounding.
 - Significance: new Discussion paragraph on implications for anyone using Flight Review crash ratings; checklist gains a ninth item (label audit).
+
+## Twenty-ninth pass: Round 18 (28 October 2026)
+
+Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 because the label-confound claim was stated too strongly], significance 8.6, clarity 8.9). Declared audit `35103da`, results `96a277f`.
+
+- Label confound: survives era and vehicle-type adjustment (MH OR 2.08 [1.17, 3.69], p 0.011; logistic agrees); tilt alone separates labels at AUC 0.61 (archive) but 0.55 (modelled), so our classifiers did not exploit it. One hedge ("could") everywhere; "any method" removed.
+- Crash moment: objective detector (tilt or > 4 g) failed its gate (kappa 0.72 vs reviewer A, 0.38 vs blind reviewer B; fires on 64% of normal flights), so t_c is unchanged. Window analyses rerun on tilt-defined crashes: factorial window effect 0.067 [0.015, 0.131] (material), leak drop 0.084 (criterion not met). Leakage now "small overall but material among crashes with a crash-like tilt". 72/148 vs 38% reconciled (31 fixed-wing/VTOL among the 72; multicopters 41/108). Kappa CIs added.
+- Consistency: the two 0.014 figures labelled (Shapley share vs mean four-cell difference); Table 7 Q3a gives the grouped drop; "largely because" -> "possibly in part because"; rule ablation in Section 5.2.
+- Structure: crash moments and archive labels get their own subsection; within-drone/caliper paragraph moved to the within-drone subsection.
+- Wording: "third source of optimism" rewritten as a validity threat; uncited Discussion claim now cites UAV-SEAD only for "real PX4 logs underpin anomaly datasets"; sequence audit labels replaced; small typos; archive note now "all commits after 25 October"; Figure 1 label corrected and regenerated; abstract 211 words.
+- References: Seong et al. and Li et al. DOIs resolve at doi.org to Elsevier (PII S0045790626002168, S0957417426017720); Kose et al. confirmed on Crossref.
+- Not done: a third independent rater; independent relabelling of pilot-rated crashes; a published-detector re-evaluation or injection study.
