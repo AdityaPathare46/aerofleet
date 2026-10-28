@@ -1,51 +1,51 @@
 panel,label,notes
-1,,
-2,,
-3,,
-4,,
-5,,
-6,,
-7,,
-8,,
-9,,
-10,,
-11,,
-12,,
-13,,
-14,,
-15,,
-16,,
-17,,
-18,,
-19,,
-20,,
-21,,
-22,,
-23,,
-24,,
-25,,
-26,,
-27,,
-28,,
-29,,
-30,,
-31,,
-32,,
-33,,
-34,,
-35,,
-36,,
-37,,
-38,,
-39,,
-40,,
-41,,
-42,,
-43,,
-44,,
-45,,
-46,,
-47,,
-48,,
-49,,
-50,,
+1,correct,Tilt flips to 180 and altitude drops at the line
+2,too late,Altitude collapse and ground impact occur well before the black line.
+3,too early,Tilt recovers after the line; real crash happens later.
+4,correct,Sustained high tilt and sharp altitude drop at the black line.
+5,too early,Black line is on a wobble; the real flip happens later.
+6,correct,tilt spikes to 90+ and altitude drops at line
+7,correct,sharp altitude collapse to ground at line
+8,no crash visible,Tilt remains low and altitude never reaches ground level.
+9,no crash visible,Tilt remains low and altitude is stable; no crash event.
+10,correct,Black line marks the start of the sharp altitude drop and tilt spike.
+11,correct,Tilt spikes to 180 and altitude drops at line
+12,too late,Altitude spikes sharply just before the black line; crash occurred earlier.
+13,too late,Crash and ground impact occurred around -10s; line is at 0s.
+14,too early,Tilt recovers after the line; real crash happens later.
+15,correct,Tilt sustains high values starting exactly at black line
+16,correct,Tilt spikes to 180 and altitude drops to zero at the line
+17,correct,Sudden tilt spike and altitude drop at the black line.
+18,correct,altitude collapses from 60m to 0 at the black line
+19,correct,Sudden tilt flip to 180 degrees exactly at the line
+20,too late,Altitude collapses at -4s; black line is at 0s.
+21,correct,Tilt spikes to 90 and altitude drops at line
+22,correct,Tilt jumps to max and altitude drops at line
+23,no crash visible,Tilt remains low; altitude stays above ground; no crash event.
+24,correct,Tilt spikes sharply right at the black line
+25,can't tell,panel is empty; only axes shown; no data lines
+26,correct,Tilt spikes to 180 and altitude drops at line
+27,too late,Crash (flip) happened earlier; black line is at the end of the event.
+28,correct,Sharp tilt spike to 180 right at line
+29,correct,Sustained tilt flip and sharp altitude drop at the black line.
+30,correct,Tilt flips to 180 and altitude crashes at line
+31,too late,Crash (tilt spike) occurs around -10s; black line is at 0s.
+32,correct,sharp flip and ground impact at black line
+33,correct,sudden flip to high tilt at black line
+34,no crash visible,Tilt is stable near zero; altitude shows normal flight variation.
+35,too early,Tilt is still low; sharp altitude drop happens after the line.
+36,correct,Tilt spikes to 90+ and altitude drops at line
+37,too late,Crash (altitude drop) happened before the black line.
+38,correct,Sharp tilt flip and altitude drop at line
+39,correct,Sudden flip and altitude collapse at the black line.
+40,correct,Sudden tilt jump to 90 degrees at line
+41,can't tell,Panel is empty; no data lines are visible.
+42,correct,sharp altitude drop and tilt spike at line
+43,correct,altitude collapses to zero exactly at black line
+44,correct,altitude hits ground right at the black line
+45,no crash visible,Tilt remains low and altitude stays high; no crash event.
+46,too late,Crash (altitude collapse) happened before the black line.
+47,correct,sharp altitude drop and tilt flip at line
+48,correct,sharp altitude drop and tilt spike at line
+49,correct,sharp altitude drop and tilt spike at line
+50,too late,Crash (altitude drop) occurred around -5s; before the black line at 0.
