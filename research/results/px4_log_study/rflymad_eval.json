@@ -1,0 +1,245 @@
+{
+ "declared_in": "research/px4_log_study/rflymad_eval.py docstring",
+ "n_logs": 493,
+ "errors": {},
+ "excluded": {
+  "fault folder, no fault code": 5
+ },
+ "n_by_class": {
+  "motor": 240,
+  "no_fault": 51,
+  "sensor": 197
+ },
+ "fault_ids": {
+  "123450": 240,
+  "123456": 37,
+  "123452": 34,
+  "123454": 45,
+  "123453": 39,
+  "123455": 42
+ },
+ "airframes_SYS_AUTOSTART": {
+  "4011": 488
+ },
+ "pseudo_onset_median_s": {
+  "acce": 20.098855,
+  "circling": 55.16708,
+  "hover": 20.4476445,
+  "velocity": 13.571453,
+  "waypoint": 55.304463
+ },
+ "I1": {
+  "motor": {
+   "n": 240,
+   "drone": 8,
+   "share": 0.03333333333333333,
+   "ci": [
+    0.016985260309156956,
+    0.0643855968374497
+   ],
+   "verdicts": {
+    "pilot": 226,
+    "drone": 8,
+    "unknown": 6
+   }
+  },
+  "sensor": {
+   "n": 197,
+   "drone": 10,
+   "share": 0.050761421319796954,
+   "ci": [
+    0.027802852664836904,
+    0.09090562207346431
+   ],
+   "verdicts": {
+    "pilot": 182,
+    "drone": 10,
+    "unknown": 5
+   }
+  },
+  "no_fault": {
+   "n": 51,
+   "drone": 2,
+   "share": 0.0392156862745098,
+   "ci": [
+    0.010820856268751206,
+    0.13216548986265267
+   ],
+   "verdicts": {
+    "pilot": 49,
+    "drone": 2
+   }
+  },
+  "ba_motor_vs_nofault": 0.4970588235294118,
+  "ba_motor_ci": [
+   0.4657148319091968,
+   0.5212798729980981
+  ],
+  "ba_sensor_vs_nofault": 0.5057728675226436,
+  "ba_sensor_ci": [
+   0.47257084662872917,
+   0.5343156707127296
+  ]
+ },
+ "I2": {
+  "pre": {
+   "n_fault": 437,
+   "n_nofault": 51,
+   "critical_share": {
+    "motor": 0.30833333333333335,
+    "sensor": 0.3197969543147208,
+    "no_fault": 0.29411764705882354
+   },
+   "mean_score": {
+    "motor": 84.14666666666666,
+    "sensor": 83.98324873096445,
+    "no_fault": 83.98627450980392
+   },
+   "auc_badness": 0.46845694799658993,
+   "auc_ci": [
+    0.3920629272625731,
+    0.5481824075567021
+   ]
+  },
+  "fault": {
+   "n_fault": 437,
+   "n_nofault": 51,
+   "critical_share": {
+    "motor": 0.22083333333333333,
+    "sensor": 0.2233502538071066,
+    "no_fault": 0.3333333333333333
+   },
+   "mean_score": {
+    "motor": 84.3025,
+    "sensor": 79.24416243654822,
+    "no_fault": 83.69215686274511
+   },
+   "auc_badness": 0.5122941625162651,
+   "auc_ci": [
+    0.443690727987116,
+    0.5790896264915507
+   ]
+  },
+  "whole": {
+   "n_fault": 437,
+   "n_nofault": 51,
+   "critical_share": {
+    "motor": 0.14166666666666666,
+    "sensor": 0.16751269035532995,
+    "no_fault": 0.0392156862745098
+   },
+   "mean_score": {
+    "motor": 80.46833333333333,
+    "sensor": 76.08274111675127,
+    "no_fault": 83.27254901960784
+   },
+   "auc_badness": 0.6917934221743617,
+   "auc_ci": [
+    0.631684855832293,
+    0.7532919797830281
+   ]
+  }
+ },
+ "I4_pre_within_status": {
+  "strata": [
+   {
+    "status": "acce",
+    "n": 58,
+    "auc": 0.8395833333333333
+   },
+   {
+    "status": "circling",
+    "n": 94,
+    "auc": 0.9226190476190477
+   },
+   {
+    "status": "hover",
+    "n": 105,
+    "auc": 0.9506769825918762
+   },
+   {
+    "status": "velocity",
+    "n": 82,
+    "auc": 0.8055555555555556
+   },
+   {
+    "status": "waypoint",
+    "n": 149,
+    "auc": 0.8683453237410071
+   }
+  ],
+  "pooled": 0.8825453192103205
+ },
+ "I3": {
+  "fault_vs_nofault": {
+   "n_fault": 437,
+   "n_nofault": 51,
+   "pre": {
+    "auc": 0.8579979360165119,
+    "sd_repeats": 0.004972949491035094,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.05733291256325686
+   },
+   "fault": {
+    "auc": 0.8503073540629066,
+    "sd_repeats": 0.005791528320924727,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.055039714329607095
+   },
+   "whole": {
+    "auc": 0.8182258715843318,
+    "sd_repeats": 0.009288441569760348,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.056836805905899915
+   },
+   "fault_minus_pre": -0.00769058195360528,
+   "fault_minus_pre_ci": [
+    -0.03306939283630583,
+    0.018193552613606674
+   ],
+   "whole_minus_pre": -0.039772064432180065,
+   "whole_minus_pre_ci": [
+    -0.10103332552335265,
+    0.018691899917958336
+   ]
+  },
+  "motor_vs_nofault": {
+   "n_fault": 240,
+   "n_nofault": 51,
+   "pre": {
+    "auc": 0.8980882352941177,
+    "sd_repeats": 0.004658611069589016,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.06040989117372396
+   },
+   "fault": {
+    "auc": 0.9139869281045752,
+    "sd_repeats": 0.0022625851863310523,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.05893741123168697
+   },
+   "whole": {
+    "auc": 0.8459967320261438,
+    "sd_repeats": 0.00931458544361556,
+    "perm_p": 0.004975124378109453,
+    "null_sd": 0.05760812848957898
+   },
+   "fault_minus_pre": 0.015898692810457415,
+   "fault_minus_pre_ci": [
+    -0.012653904537021398,
+    0.04281167267751
+   ],
+   "whole_minus_pre": -0.05209150326797396,
+   "whole_minus_pre_ci": [
+    -0.11776687096819344,
+    0.012914351366204327
+   ]
+  }
+ },
+ "wording": {
+  "tools_recognise_motor_faults": false,
+  "separation_before_fault": true,
+  "fault_adds_signal": false
+ },
+ "limits": "three airframes, one operator; firmware-injected efficiency loss and sensor noise, mostly not ending in a crash; stratified, not vehicle-grouped, folds"
+}
