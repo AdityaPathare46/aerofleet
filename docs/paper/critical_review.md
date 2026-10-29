@@ -500,3 +500,13 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Wording: "third source of optimism" rewritten as a validity threat; uncited Discussion claim now cites UAV-SEAD only for "real PX4 logs underpin anomaly datasets"; sequence audit labels replaced; small typos; archive note now "all commits after 25 October"; Figure 1 label corrected and regenerated; abstract 211 words.
 - References: Seong et al. and Li et al. DOIs resolve at doi.org to Elsevier (PII S0045790626002168, S0957417426017720); Kose et al. confirmed on Crossref.
 - Not done: a third independent rater; independent relabelling of pilot-rated crashes; a published-detector re-evaluation or injection study.
+
+## Thirtieth pass (Round 19 review)
+
+- Aircraft type: the 148 modelled crashes are 108 multicopter, 18 fixed-wing, 22 VTOL. §4.2 now states what the code does (tilt rule skipped only when the log's rotary flag says fixed-wing; older logs lack it), defines VTOL, and restricts crash-moment results to multicopters. "Confirmed" is noted as trivially met by fixed-wing/VTOL that bank, land and disarm. Type breakdown given for the modelled set and the 50 reviewed logs (all 15 multicopter tilt moments correct for both reviewers).
+- Window effect: post hoc status stated; n and paired-bootstrap intervals for every subset (new Table "Crash-window effect by crash subset"); headline moved to tilt-defined multicopters 0.089 [0.019, 0.168]; without tilt and stick features 0.131 [0.042, 0.226] (declared rule: abstract keeps "material"). The two 0.014 figures explained (0.0144 vs 0.0136, different estimands).
+- Label link: reworded to "partly encodes whether the log shows a tilt-type crash" with the physical alternative; tilt-alone AUC 0.53 in modelled multicopters; attribution within tilt strata 0.63 (p 0.10) and 0.62 (p 0.11), bounds stated.
+- Rule proxy: described as a feature-based proxy with intervals; below-0.5 explained (aircraft signs fire on 55-68% of all crashes; pilot recall 19-29%).
+- Detector: multi-cue detector declared and run; failed gate (kappa 0.82 / 0.32; 32% false alarms). Reported, not used.
+- Discussion "Leakage and confounding" now gives the subgroup result; Implications and checklist add "tilt rules for multicopters only". Figure 1 says "window < 10 s".
+- Not done: a third, non-author rater; independent relabelling of pilot-rated crashes; a published-detector re-evaluation or injection study.

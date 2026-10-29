@@ -192,8 +192,8 @@ def study_flow(out):
     table_data = [
         ["Q1: Parameters", "100 crash, 477 normal", "43% crash logs lack factory defaults", "57 crash, 113 normal"],
         ["Q2: Fixed Rule", "205 crashes, 143 normal", "None (evaluates 93 dev + 112 held-out)", "205 crashes, 143 normal"],
-        ["Q2/Q3a: Leak Curve", "205 crashes, 143 normal", "57 dropped (missing topics / dur. < 10 s)", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
-        ["Q3b: Within-Drone", "101 crashed drones", "34 dropped (single flight / dur. < 10 s)", "67 multi-flight drones (372 fl.)\n61 vibration, 46 tracking"],
+        ["Q2/Q3a: Leak Curve", "205 crashes, 143 normal", "57 dropped (missing topics / window < 10 s)", "148 crash, 139 normal (m=0 s)\n89 crash, 124 normal (m=30 s)"],
+        ["Q3b: Within-Drone", "101 crashed drones", "34 dropped (single flight / window < 10 s)", "67 multi-flight drones (372 fl.)\n61 vibration, 46 tracking"],
         ["Q3c: Between-Drone", "66 matched sets (101 cases)", "6 sets dropped (unmatched sensor metric)", "60 vibration sets (124 ctrl, 372 fl.)\n47 rate-tracking sets"],
         ["Q4: Expert Cases", "148 real crash threads", "105 logs unhosted or expired links", "43 downloadable (38 aircraft, 5 pilot)\n35 aircraft with fault categories"],
     ]
