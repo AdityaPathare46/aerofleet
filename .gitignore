@@ -163,3 +163,6 @@ docs/paper/latex/*.bbl
 docs/paper/latex/*.blg
 docs/paper/latex/*.out
 docs/paper/latex/*.log
+
+# Blind relabelling pack (plots, workbook, key) - never commit
+research/px4_log_study/relabel_pack/
