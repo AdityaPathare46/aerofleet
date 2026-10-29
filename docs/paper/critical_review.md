@@ -510,3 +510,8 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Detector: multi-cue detector declared and run; failed gate (kappa 0.82 / 0.32; 32% false alarms). Reported, not used.
 - Discussion "Leakage and confounding" now gives the subgroup result; Implications and checklist add "tilt rules for multicopters only". Figure 1 says "window < 10 s".
 - Not done: a third, non-author rater; independent relabelling of pilot-rated crashes; a published-detector re-evaluation or injection study.
+
+## Thirty-first pass (originality: independent tool)
+
+- Added §"A published log checker under the same protocol": FlightMD re-evaluated (declared fa5fb0b, results 7edb6ea). Same pattern as our pipeline: between-aircraft separation (AUC 0.72 at m10), no within-drone warning, attribution at chance. Abstract, contributions (new item iv), Table 6, Discussion, Conclusion and Appendix A updated; FlightMD cited as non-peer-reviewed software.
+- Pending: independent relabelling by a non-author expert (pack built); RflyMAD fault-injection study (data downloading).
