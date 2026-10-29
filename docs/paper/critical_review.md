@@ -515,3 +515,9 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 
 - Added §"A published log checker under the same protocol": FlightMD re-evaluated (declared fa5fb0b, results 7edb6ea). Same pattern as our pipeline: between-aircraft separation (AUC 0.72 at m10), no within-drone warning, attribution at chance. Abstract, contributions (new item iv), Table 6, Discussion, Conclusion and Appendix A updated; FlightMD cited as non-peer-reviewed software.
 - Pending: independent relabelling by a non-author expert (pack built); RflyMAD fault-injection study (data downloading).
+
+## Thirty-second pass (originality: known-cause control)
+
+- Added §"A known-cause control: injected faults on real flights" (RflyMAD real subset, declared a9877c1, results 95fa814): the declared rule recognised 3% of known motor faults (BA 0.50); the study's features separated faulty from fault-free flights at AUC 0.86 before injection (fault adds -0.008), so fault-vs-normal AUC can arise without a fault. Undeclared same-date check (0.82) labelled as such.
+- Abstract (249 words), contributions (new item v), Table 6, Discussion (prior datasets), checklist item 10 (pre-onset baseline), Threats (injected faults), Conclusion, Appendix A updated.
+- Pending: independent relabelling by a non-author expert.
