@@ -166,3 +166,5 @@ docs/paper/latex/*.log
 
 # Blind relabelling pack (plots, workbook, key) - never commit
 research/px4_log_study/relabel_pack/
+research/px4_log_study/reviewer3_pack/
+research/px4_log_study/reviewer3_pack.zip
