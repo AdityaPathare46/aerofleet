@@ -528,3 +528,9 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Independent blind relabelling of 72 crashes (declared fa5fb0b): agreement with uploader ratings kappa -0.10; declared rule vs reviewer labels BA 0.55 [0.42, 0.66], FlightMD 0.52, tilt AUC 0.54. Wording rule: attribution failure "not explained by uploader labels". Threats: one reviewer, plots only, reviewer reliability not measurable.
 - Abstract (250 words), contributions (ii) and (vii), Table 6 (new row; crash-moment row), Discussion, Conclusion, Threats (Labels) and Appendix A updated. The 44-55% flight-order figure moved out of the abstract (still in contributions and §5.6).
 - Still not done from earlier rounds: operator clustering; a blind case set for the language-model panels; the screening reference (about 5 controls per stratum).
+
+## Thirty-fourth pass (operator clustering and screening reference)
+
+- Operator clustering (declared cfb79b9): location proxy; the 40 crashed airframes come from 23 sites. Site-clustered p 0.006 (Holm 0.042) meets the declared rule for "supported", but one set per site gives median p 0.14; the paper keeps "suggestive" and reports this as a deviation from the declared rule.
+- Screening reference A5 (declared 4961234): 412 non-crash drones, thresholds fixed on one half and flag rates measured on the other. The nominal 10% threshold flagged 13.7%; lift 1.77 [1.00, 2.60]; declared wording "not shown to beat random inspection". The assumed-flag-rate PPVs (2.26-2.43%, 3.3x) are withdrawn in Results, Discussion, design section, Table 6, Conclusion, checklist item 6, abstract, contributions, highlights and cover letter.
+- Still open: the blind language-model case set (97 real cases), running on an RTX machine.
