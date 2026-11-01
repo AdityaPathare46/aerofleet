@@ -1,0 +1,218 @@
+# Screening reference from non-crash drones
+
+Declared in `research/px4_log_study/screening_reference.py`.
+
+```
+{
+ "declared_in": "research/px4_log_study/screening_reference.py docstring",
+ "n_cases": 60,
+ "n_strata": 31,
+ "reference_drones": {
+  "CUBEPILOT_CUBEORANGE|1.13|Hexarotor|imu": 12,
+  "CUBEPILOT_CUBEORANGE|1.13|VTOL Standard|imu": 30,
+  "PX4FMU_V2|1.6|Fixed Wing|estimator_vibe": 3,
+  "PX4FMU_V2|1.6|Hexarotor|estimator_vibe": 2,
+  "PX4FMU_V2|1.6|Quadrotor|estimator_vibe": 8,
+  "PX4FMU_V2|1.7|Fixed Wing|estimator_vibe": 2,
+  "PX4FMU_V2|1.7|Quad-rotor VTOL (Tailsitter)|estimator_vibe": 1,
+  "PX4FMU_V2|1.7|Quadrotor|estimator_vibe": 15,
+  "PX4FMU_V2|1.8|Fixed Wing|estimator_vibe": 7,
+  "PX4FMU_V2|1.8|Octorotor|estimator_vibe": 4,
+  "PX4FMU_V2|1.8|Quadrotor|estimator_vibe": 18,
+  "PX4FMU_V2|1.8|Tiltrotor VTOL|estimator_vibe": 1,
+  "PX4FMU_V4PRO|1.6|Quadrotor|estimator_vibe": 2,
+  "PX4FMU_V4PRO|1.8|Quadrotor|estimator_vibe": 1,
+  "PX4FMU_V4|1.8|Fixed Wing|estimator_vibe": 3,
+  "PX4FMU_V5|1.8|Fixed Wing|estimator_vibe": 3,
+  "PX4FMU_V5|1.8|Quadrotor|estimator_vibe": 12,
+  "PX4_FMU_V2|1.9|Quadrotor|estimator_vibe": 1,
+  "PX4_FMU_V3|1.9|Quadrotor|estimator_vibe": 9,
+  "PX4_FMU_V4|1.10|Quadrotor|estimator_vibe": 7,
+  "PX4_FMU_V5|1.10|Quadrotor|estimator_vibe": 25,
+  "PX4_FMU_V5|1.11|Fixed Wing|imu": 8,
+  "PX4_FMU_V5|1.12|Quadrotor|imu": 39,
+  "PX4_FMU_V5|1.12|VTOL Standard|imu": 30,
+  "PX4_FMU_V5|1.13|Quadrotor|imu": 38,
+  "PX4_FMU_V5|1.14|Fixed Wing|imu": 33,
+  "PX4_FMU_V5|1.9|Quadrotor|estimator_vibe": 19,
+  "PX4_FMU_V5|1.9|Tiltrotor VTOL|estimator_vibe": 1,
+  "PX4_FMU_V6C|1.13|Quadrotor|imu": 37,
+  "PX4_FMU_V6X|1.13|Quadrotor|imu": 35,
+  "TAP_V2|1.8|Hexarotor|estimator_vibe": 6
+ },
+ "n_reference_drones": 412,
+ "features_missing_logs": 143,
+ "fit_A_test_B": {
+  "25": {
+   "flag_rate": 0.20930232558139536,
+   "sensitivity": 0.35,
+   "n_test_ref": 215,
+   "ppv_fleet": 0.012329750126329066,
+   "lift_fleet": 1.6639338901928564,
+   "ppv_screenable": 0.01146849350914644,
+   "lift_screenable": 1.6645128460299623
+  },
+  "10": {
+   "flag_rate": 0.10697674418604651,
+   "sensitivity": 0.2,
+   "n_test_ref": 215,
+   "ppv_fleet": 0.013764785166881227,
+   "lift_fleet": 1.8575958389853209,
+   "ppv_screenable": 0.012804588163092429,
+   "lift_screenable": 1.8584307929016586
+  },
+  "5": {
+   "flag_rate": 0.08837209302325581,
+   "sensitivity": 0.16666666666666666,
+   "n_test_ref": 215,
+   "ppv_fleet": 0.013883852508283123,
+   "lift_fleet": 1.8736643061110827,
+   "ppv_screenable": 0.012915458435345849,
+   "lift_screenable": 1.8745222692809649
+  },
+  "auc": 0.6915799727448334,
+  "pooled_strata": 15
+ },
+ "fit_B_test_A": {
+  "25": {
+   "flag_rate": 0.3299492385786802,
+   "sensitivity": 0.4166666666666667,
+   "n_test_ref": 197,
+   "ppv_fleet": 0.009339311690482785,
+   "lift_fleet": 1.2603659501326296,
+   "ppv_screenable": 0.0086851060537876,
+   "lift_screenable": 1.2605378887935559
+  },
+  "10": {
+   "flag_rate": 0.16751269035532995,
+   "sensitivity": 0.2833333333333333,
+   "n_test_ref": 197,
+   "ppv_fleet": 0.01246949285270165,
+   "lift_fleet": 1.6827925577195209,
+   "ppv_screenable": 0.011598589569574772,
+   "lift_screenable": 1.6833947125652788
+  },
+  "5": {
+   "flag_rate": 0.13705583756345177,
+   "sensitivity": 0.2,
+   "n_test_ref": 197,
+   "ppv_fleet": 0.010776437696248812,
+   "lift_fleet": 1.4543100804654268,
+   "ppv_screenable": 0.01002258187758174,
+   "lift_screenable": 1.4546562957302962
+  },
+  "auc": 0.6178380666461162,
+  "pooled_strata": 13
+ },
+ "mean": {
+  "25": {
+   "flag_rate": 0.2696257820800378,
+   "sensitivity": 0.3833333333333333,
+   "n_test_ref": 206.0,
+   "ppv_fleet": 0.010834530908405925,
+   "lift_fleet": 1.462149920162743,
+   "ppv_screenable": 0.01007679978146702,
+   "lift_screenable": 1.462525367411759
+  },
+  "10": {
+   "flag_rate": 0.13724471727068824,
+   "sensitivity": 0.24166666666666667,
+   "n_test_ref": 206.0,
+   "ppv_fleet": 0.013117139009791438,
+   "lift_fleet": 1.7701941983524208,
+   "ppv_screenable": 0.012201588866333601,
+   "lift_screenable": 1.7709127527334687
+  },
+  "5": {
+   "flag_rate": 0.11271396529335379,
+   "sensitivity": 0.18333333333333335,
+   "n_test_ref": 206.0,
+   "ppv_fleet": 0.012330145102265967,
+   "lift_fleet": 1.6639871932882548,
+   "ppv_screenable": 0.011469020156463795,
+   "lift_screenable": 1.6645892825056305
+  },
+  "auc": 0.6547090196954748
+ },
+ "ci95": {
+  "25|flag_rate": [
+   0.2505740172352733,
+   0.3256802620705938
+  ],
+  "25|sensitivity": [
+   0.30833333333333335,
+   0.5916666666666667
+  ],
+  "25|ppv_fleet": [
+   0.008165488502131975,
+   0.015840665862388383
+  ],
+  "25|lift_fleet": [
+   1.1019552634456107,
+   2.1377416818337904
+  ],
+  "25|ppv_screenable": [
+   0.0075928774465544024,
+   0.0147380494135022
+  ],
+  "25|lift_screenable": [
+   1.1020141431864154,
+   2.1390492617564876
+  ],
+  "10|flag_rate": [
+   0.13385668752213437,
+   0.1977216385314603
+  ],
+  "10|sensitivity": [
+   0.16666666666666666,
+   0.4
+  ],
+  "10|ppv_fleet": [
+   0.007389446938109755,
+   0.01925157872627313
+  ],
+  "10|lift_fleet": [
+   0.9972263074372139,
+   2.598053809213648
+  ],
+  "10|ppv_screenable": [
+   0.006871093784246691,
+   0.017916706539641197
+  ],
+  "10|lift_screenable": [
+   0.9972559919080828,
+   2.6003928214283305
+  ],
+  "5|flag_rate": [
+   0.10677753511982056,
+   0.1691825050171172
+  ],
+  "5|sensitivity": [
+   0.125,
+   0.35
+  ],
+  "5|ppv_fleet": [
+   0.00690468651804326,
+   0.02095317055197906
+  ],
+  "5|lift_fleet": [
+   0.9318065476441647,
+   2.8276883336004124
+  ],
+  "5|ppv_screenable": [
+   0.006419989443968909,
+   0.0195031955462208
+  ],
+  "5|lift_screenable": [
+   0.9317836638561551,
+   2.830652474052365
+  ],
+  "auc": [
+   0.565995721476334,
+   0.7432290732107876
+  ]
+ },
+ "wording": "not shown to beat random inspection",
+ "limits": "'no crash-rated log' does not mean the drone never crashed; reference drones have >= 3 archive flights; strata are those of the 60 sets"
+}
+```
