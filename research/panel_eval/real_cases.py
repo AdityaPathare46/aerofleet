@@ -29,6 +29,12 @@ deferred, with Wilson 95% intervals; separately for in-scope (truth is a panel c
 WORDING RULE (fixed now): the paper's statement that language-model panels are "not recommended" stands unless, for some
 model, the panel has more right answers AND no more wrong answers than the rule on all real cases; in that case the
 paper reports it as an exploratory exception for that model.
+AMENDMENT 1 (1 Nov 2026, before any result was read): runs moved to a second machine with an NVIDIA RTX GPU because
+the Mac took about 110 s per case. All four models are run there on all 97 cases, with the same Ollama tags and
+model IDs (gemma3:4b 68ceab7e468a, phi4-mini 78fad5d182a7, qwen2.5:3b 357c53fb659c, qwen3:4b 359d7dd4bcda); a run
+with a different ID is reported as such. The 33 gemma3:4b cases first run on the Mac are kept only as a
+cross-machine check (mac_partial_real_gemma3_4b.jsonl: share of identical rule/single/panel answers), not pooled.
+Instructions: docs/aerofleet2/RTX_PANEL_RUN.md.
 Limits stated in the output: forum labels are community diagnoses; the R labels come from one reviewer working from
 plots; the 20 s window may miss a cause that began earlier; small local models only.
 
