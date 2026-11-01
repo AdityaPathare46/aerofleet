@@ -521,3 +521,10 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Added §"A known-cause control: injected faults on real flights" (RflyMAD real subset, declared a9877c1, results 95fa814): the declared rule recognised 3% of known motor faults (BA 0.50); the study's features separated faulty from fault-free flights at AUC 0.86 before injection (fault adds -0.008), so fault-vs-normal AUC can arise without a fault. Undeclared same-date check (0.82) labelled as such.
 - Abstract (249 words), contributions (new item v), Table 6, Discussion (prior datasets), checklist item 10 (pre-onset baseline), Threats (injected faults), Conclusion, Appendix A updated.
 - Pending: independent relabelling by a non-author expert.
+
+## Thirty-third pass (third rater and independent relabelling)
+
+- Third non-author rater on the blind crash-moment sheet (declared fdb3b7c): Fleiss' kappa 0.71 on whether the moment is right; 0.33 on whether fallback logs contain the crash, so the archive range (50-86%) is kept per the declared rule; the third rater sided with the blind reviewer on 11 of 13 disputed logs (majority estimate 80% [68, 92]).
+- Independent blind relabelling of 72 crashes (declared fa5fb0b): agreement with uploader ratings kappa -0.10; declared rule vs reviewer labels BA 0.55 [0.42, 0.66], FlightMD 0.52, tilt AUC 0.54. Wording rule: attribution failure "not explained by uploader labels". Threats: one reviewer, plots only, reviewer reliability not measurable.
+- Abstract (250 words), contributions (ii) and (vii), Table 6 (new row; crash-moment row), Discussion, Conclusion, Threats (Labels) and Appendix A updated. The 44-55% flight-order figure moved out of the abstract (still in contributions and §5.6).
+- Still not done from earlier rounds: operator clustering; a blind case set for the language-model panels; the screening reference (about 5 controls per stratum).
