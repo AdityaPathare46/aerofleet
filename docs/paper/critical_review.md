@@ -534,3 +534,9 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Operator clustering (declared cfb79b9): location proxy; the 40 crashed airframes come from 23 sites. Site-clustered p 0.006 (Holm 0.042) meets the declared rule for "supported", but one set per site gives median p 0.14; the paper keeps "suggestive" and reports this as a deviation from the declared rule.
 - Screening reference A5 (declared 4961234): 412 non-crash drones, thresholds fixed on one half and flag rates measured on the other. The nominal 10% threshold flagged 13.7%; lift 1.77 [1.00, 2.60]; declared wording "not shown to beat random inspection". The assumed-flag-rate PPVs (2.26-2.43%, 3.3x) are withdrawn in Results, Discussion, design section, Table 6, Conclusion, checklist item 6, abstract, contributions, highlights and cover letter.
 - Still open: the blind language-model case set (97 real cases), running on an RTX machine.
+
+## Thirty-fifth pass (blind real-log language-model test)
+
+- The blind case set asked for since the early rounds: 97 real crash logs with independent labels (35 forum-expert, 62 blind relabelling), facts extracted by the tool's code, run on an RTX 4060 (declared 5b15715, amended 7405264). No panel beats the rule; "not recommended" stands. The rule itself was wrong in 62 of 97 real cases (synthetic: 0 of 60), confirming the reviewers' concern that the generated cases flattered it. Panel verdicts changed between two machines in 17 of 33 cases.
+- New Table (tab:llm_real); §5.11, Table 6, Discussion and Threats (Language models) and Appendix A updated; "in preparation" removed.
+- All review items from earlier rounds are now addressed.

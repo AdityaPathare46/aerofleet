@@ -505,7 +505,7 @@ Independent relabelling & Blind non-author reviewer vs.\ uploader: $\kappa=-0.10
 Flight order & 44--55\% of dated crash-day ``earlier'' flights flown after the crash & Exploratory & Dates insufficient & \ref{sec:postcrash} \\
 Published log checker & FlightMD: crash vs normal AUC 0.72 [0.58, 0.81] without the last 10\,s; attribution BA 0.52; no within-drone warning ($p=0.66$) & Exploratory & Same pattern as our pipeline & \ref{sec:flightmd} \\
 Injected faults (known cause) & 488 real RflyMAD flights: features AUC 0.86 \emph{before} the fault; rule called 3\% of motor faults aircraft-caused (BA 0.50) & Exploratory & Separation without a fault; rule insensitive & \ref{sec:rflymad} \\
-Language-model panels & Worse than the fixed rule; one compromised reviewer flipped consensus & Exploratory, 60 cases & Not recommended & \ref{sec:lm_summary} \\
+Language-model panels & Worse than the fixed rule on 60 generated and 97 blind real cases; on real cases the rule itself was wrong in 64\%; one compromised reviewer flipped most verdicts & Exploratory & Not recommended & \ref{sec:lm_summary} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -920,6 +920,26 @@ Battery or power & 0/4 & 0/2 & 0/2 & 0 ($p=1.00$) & 4/143 (3\%) & 1/130 (1\%) \\
 \label{sec:lm_summary}
 Because language-model assistants are increasingly proposed for automated flight log analysis, we conducted a preliminary exploratory evaluation on 60 author-generated fault cases using four local models (3--4B parameters) configured both as single agents and as multi-agent review panels (Table~\ref{tab:llm}). While a fixed deterministic rule achieved 75\% accuracy (naming the true cause in 35 of 50 active cases and correctly abstaining on 10 no-cause cases) with 0\% error (referring 15 cases to human operators), local language models produced substantial error rates (10--63\% wrong), suffered from mode collapse or complete abstention on active causes, and proved highly vulnerable to consensus manipulation: in a worst-case sensitivity sweep, a single compromised reviewer systematically flipped the panel's consensus decision in 45 to 56 of the 60 cases. In contrast, deterministic numeric telemetry extraction into code prevented direct prompt injection by construction across 40 hostile input strings. This exploratory comparison indicates that the tested small local models and review-panel configurations were unreliable on the 60 author-generated cases. Because the cases and fixed rule were developed by the same authors, the comparison is not an independent benchmark and should not be generalized to language models as a class or larger architectures. These preliminary results emphasize that multi-agent consensus voting without cryptographic proofs or fact-citation constraints cannot provide dependable safety assurance.
 
+$^\dagger$\emph{Blind real-log cases.} To remove the authors from the cases, we repeated the comparison on 97 real crash logs (declared \texttt{5b15715}, amended \texttt{7405264}): 35 from forum threads with expert-diagnosed causes and 62 from the independent relabelling (Section~\ref{sec:attribution}). No case was written by an author: the tool's own parser and fact builder extracted each case's facts from the last 20\,s of the log, and the labels were mapped to the panel's causes before any run; 21 cases had a cause outside the panel's list (motor, vibration, software and similar), where the right answer is to defer. The four models were run on an NVIDIA RTX~4060 laptop with the same model versions (the runner's note lists the declared model IDs; the models were removed before \texttt{ollama list} was captured). The rule's answers and the labels matched a local recomputation on all 388 rows. Table~\ref{tab:llm_real} gives the results. The fixed rule, which looked flawless on the generated cases, named a wrong cause in 62 of 97 real crashes (64\%) and was right in 26. By the declared criterion (more right answers and no more wrong ones than the rule) no panel beat it, so the conclusion that such panels are not recommended stands. Single agents gemma3 and phi4-mini were never wrong, but only because they deferred about three quarters of the cases; with a single compromised reviewer the panel switched to the attacker's cause in 83 to 89 of 97 cases (16 for qwen2.5). On the 33 cases also run on the authors' Mac, the rule and the single agent gave identical answers on both machines, but the five-reviewer panel did so in only 16, so at temperature~0 the panel's verdict still depended on the hardware. On real logs, then, neither the rule nor any model named the cause reliably: the generated cases had flattered the rule.
+
+\begin{table}[!htbp]
+\centering
+\caption{$^\dagger$Rule and language models on 97 real crash logs with independent labels (35 forum-expert, 62 blind relabelling; 21 with a cause outside the panel's list, where deferring is right): right (R), wrong (W) and deferred (Def) counts. Flips: cases in which one compromised reviewer moved the panel to its target cause.}
+\label{tab:llm_real}
+\footnotesize
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l ccc@{}}
+\toprule
+Method & Single agent R / W / Def & Review panel R / W / Def & Flips / 97 \\
+\midrule
+Fixed rule (no model) & 26 / 62 / 9 & -- & -- \\
+\texttt{gemma3:4b} & 21 / 0 / 76 & 12 / 57 / 28 & 83 \\
+\texttt{phi4-mini} & 23 / 0 / 74 & 17 / 40 / 40 & 89 \\
+\texttt{qwen2.5:3b} & 27 / 70 / 0 & 26 / 69 / 2 & 16 \\
+\texttt{qwen3:4b} & 23 / 28 / 46 & 20 / 35 / 42 & 88 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
 \begin{table}[!htbp]
 \centering
 \caption{Language-model review panels on 60 generated cases: counts of right (R), wrong (W), and deferred (Def) cases, with coverage (Cov., share of cases decided) and accuracy when answering (Acc.). ``Right'' includes correctly leaving a no-cause case open. Single-agent gemma3 and phi4 answered only the 10 no-cause cases (0\% coverage on active causes). Adversary flips show consensus changes caused by a single compromised reviewer in a worst-case sweep.}
@@ -1046,8 +1066,7 @@ implications for fleet assurance: structured evidence review without automated v
 and tamper-evident telemetry records.
 
 \paragraph{Language models} On this task small local models (3--4B parameters) added errors and voting vulnerabilities
-rather than accuracy on the 60 author-generated cases. Because the cases and deterministic rule were developed by the same
-authors, the comparison is not an independent benchmark and should not be generalized to language models as a class or
+rather than accuracy, on the 60 author-generated cases and $^\dagger$on 97 blind real crash logs. The real cases also showed that the deterministic rule's perfect score on generated cases was a training-like score: on real logs it named a wrong cause in 64\% of crashes. The comparison should not be generalized to language models as a class or
 larger architectures. While deterministic numeric parsing prevented direct prompt injection by construction, multi-agent
 voting consensus was easily manipulated by a single compromised reviewer in this setup.
 
@@ -1131,8 +1150,7 @@ the capacity of the public archive, definitive replication requires multi-fleet 
 
 \paragraph{Language models} The AI comparison is preliminary: the experiments use 60 author-generated cases and
 relatively small local models (3--4B parameters). The fixed rule's performance may be optimistic on cases created by
-the same authors who designed the rule (0 wrong answers is close to a training score); a blind set of cases written by
-someone who has not seen the rule is in preparation. Larger models or alternative prompt architectures were not tested.
+the same authors who designed the rule (0 wrong answers is close to a training score). $^\dagger$The blind real-log set confirms this: the rule was wrong in 64\% of 97 real cases. Its labels come from forum experts and one reviewer working from plots, the facts cover only the last 20\,s of each log, and the panel's verdict changed between two machines in half the cases checked. Larger models or alternative prompt architectures were not tested.
 
 \paragraph{Injected faults$^\dagger$} The RflyMAD control uses three airframes flown by one team, faults injected in firmware (mostly a 15--20\% motor efficiency loss or sensor noise) that rarely end in a crash, and stratified rather than vehicle-grouped folds, because three airframes are too few to group by. Its pre-fault separation shows that fault and fault-free flights were flown differently; it does not show how large that effect is in other datasets. The rule's low sensitivity there concerns faults the controller absorbs; it does not show the rule would miss a fault that ends in a crash.
 
@@ -1212,6 +1230,7 @@ Third rater$^\dagger$ & Non-author rater on the blind crash-moment sheet & Momen
 Independent relabelling$^\dagger$ & Blind non-author relabelling of 72 crashes from plots & Agreement with uploader $\kappa=-0.10$ [$-0.34$, 0.17]; 16/36 pilot-rated called aircraft; rule vs.\ reviewer BA 0.55 [0.42, 0.66]; FlightMD 0.52; tilt AUC 0.54 & \texttt{fa5fb0b} & 2026-11-01 \\
 Operator clustering$^\dagger$ & Cluster the between-drone test by operator (location proxy, 2\,km) & 40 crashed airframes from 23 sites; site-clustered $p=0.006$ (Holm 0.042); one set per site median $p=0.14$; kept as suggestive (deviation from declared rule) & \texttt{cfb79b9} & 2026-11-01 \\
 Screening reference$^\dagger$ & Rebuild reference from 412 non-crash drones; measure flag rates & Nominal 10\% flagged 13.7\%; lift $1.77\times$ [1.00, 2.60]; AUC 0.65; not shown to beat random inspection & \texttt{4961234} & 2026-11-01 \\
+Blind real-log panel test$^\dagger$ & Rule and four local models on 97 real crash logs with independent labels & Rule 26 right / 62 wrong; no panel beats it; single agents defer $\sim$77\%; flips 16--89; Mac vs RTX panel agreement 16/33 & \texttt{5b15715}, \texttt{7405264} & 2026-11-02 \\
 Crash-moment review$^\dagger$ & Check $t_c$ by eye (two authors, second blind) & $t_c$ right: agreement 85\%, $\kappa=0.70$; tilt-defined correct 21 and 24 of 26 (multicopters 15 of 15 for both), fallback 2 and 6 of 24; whether fallback logs contain the crash $\kappa=0.32$ & \texttt{97974ad}, \texttt{59c8212} & 2026-10-28 \\
 Crash-moment and date audit$^\dagger$ & Confirmed crashes, dates vs GPS, grouped leak curve, clustered variants, stumps & 40 of 148 crashes confirmed; leak drop 0.035 overall, 0.103 confirmed; index date = GPS date for 80\%, no cross-day misorder; clustered variant $p$ 0.014--0.026 (newer metric 0.28); stumps 0.447/0.481 & \texttt{48c2fa7} & 2026-10-27 \\
 Clustering and refit audit$^\dagger$ & Refit nulls, clustered between-drone $p$, paired comparison, fixed-seed Table~\ref{tab:decomposition}, re-flights, crash moment & Between-drone clustered $p=0.012$ (Holm 0.08); other minus own flights $+0.113$ [0.029, 0.212]; Step~1 grouping 0.882 $\to$ 0.826; 54\% of crash-rated logs have a later log from the same flight controller; Task~B refit-null upper bounds $\le 0.69$ & \texttt{6fff27d}, \texttt{016dafe} & 2026-10-27 \\
