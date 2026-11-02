@@ -1,0 +1,876 @@
+{
+ "declared_in": "research/panel_eval/real_cases.py docstring",
+ "cases": {
+  "R|PILOT_MANUAL_CONTROL": 23,
+  "R|LOW_BATTERY_RESPONSE": 14,
+  "F|CONFIGURATION": 13,
+  "R|WIND_OR_ENVIRONMENT": 13,
+  "F|UNKNOWN": 11,
+  "R|UNKNOWN": 10,
+  "F|LOW_BATTERY_RESPONSE": 4,
+  "F|PILOT_MANUAL_CONTROL": 4,
+  "F|GPS_DEGRADED": 3,
+  "R|GPS_DEGRADED": 1,
+  "R|CONFIGURATION": 1
+ },
+ "gemma3:4b": {
+  "all|rule": {
+   "n": 97,
+   "right": 26,
+   "wrong": 62,
+   "deferred": 9,
+   "right_ci": [
+    0.19,
+    0.364
+   ],
+   "wrong_ci": [
+    0.54,
+    0.728
+   ]
+  },
+  "all|single": {
+   "n": 97,
+   "right": 21,
+   "wrong": 0,
+   "deferred": 76,
+   "right_ci": [
+    0.146,
+    0.308
+   ],
+   "wrong_ci": [
+    0.0,
+    0.038
+   ]
+  },
+  "all|panel": {
+   "n": 97,
+   "right": 12,
+   "wrong": 57,
+   "deferred": 28,
+   "right_ci": [
+    0.072,
+    0.204
+   ],
+   "wrong_ci": [
+    0.488,
+    0.68
+   ]
+  },
+  "in_scope|rule": {
+   "n": 76,
+   "right": 25,
+   "wrong": 42,
+   "deferred": 9,
+   "right_ci": [
+    0.234,
+    0.441
+   ],
+   "wrong_ci": [
+    0.441,
+    0.659
+   ]
+  },
+  "in_scope|single": {
+   "n": 76,
+   "right": 0,
+   "wrong": 0,
+   "deferred": 76,
+   "right_ci": [
+    0.0,
+    0.048
+   ],
+   "wrong_ci": [
+    0.0,
+    0.048
+   ]
+  },
+  "in_scope|panel": {
+   "n": 76,
+   "right": 3,
+   "wrong": 45,
+   "deferred": 28,
+   "right_ci": [
+    0.014,
+    0.11
+   ],
+   "wrong_ci": [
+    0.48,
+    0.696
+   ]
+  },
+  "outside|rule": {
+   "n": 21,
+   "right": 1,
+   "wrong": 20,
+   "deferred": 0,
+   "right_ci": [
+    0.008,
+    0.227
+   ],
+   "wrong_ci": [
+    0.773,
+    0.992
+   ]
+  },
+  "outside|single": {
+   "n": 21,
+   "right": 21,
+   "wrong": 0,
+   "deferred": 0,
+   "right_ci": [
+    0.845,
+    1.0
+   ],
+   "wrong_ci": [
+    0.0,
+    0.155
+   ]
+  },
+  "outside|panel": {
+   "n": 21,
+   "right": 9,
+   "wrong": 12,
+   "deferred": 0,
+   "right_ci": [
+    0.245,
+    0.635
+   ],
+   "wrong_ci": [
+    0.365,
+    0.755
+   ]
+  },
+  "forum|rule": {
+   "n": 35,
+   "right": 2,
+   "wrong": 28,
+   "deferred": 5,
+   "right_ci": [
+    0.016,
+    0.186
+   ],
+   "wrong_ci": [
+    0.641,
+    0.9
+   ]
+  },
+  "forum|single": {
+   "n": 35,
+   "right": 11,
+   "wrong": 0,
+   "deferred": 24,
+   "right_ci": [
+    0.186,
+    0.48
+   ],
+   "wrong_ci": [
+    0.0,
+    0.099
+   ]
+  },
+  "forum|panel": {
+   "n": 35,
+   "right": 8,
+   "wrong": 18,
+   "deferred": 9,
+   "right_ci": [
+    0.121,
+    0.39
+   ],
+   "wrong_ci": [
+    0.356,
+    0.67
+   ]
+  },
+  "reviewer|rule": {
+   "n": 62,
+   "right": 24,
+   "wrong": 34,
+   "deferred": 4,
+   "right_ci": [
+    0.276,
+    0.512
+   ],
+   "wrong_ci": [
+    0.425,
+    0.666
+   ]
+  },
+  "reviewer|single": {
+   "n": 62,
+   "right": 10,
+   "wrong": 0,
+   "deferred": 52,
+   "right_ci": [
+    0.09,
+    0.272
+   ],
+   "wrong_ci": [
+    -0.0,
+    0.058
+   ]
+  },
+  "reviewer|panel": {
+   "n": 62,
+   "right": 4,
+   "wrong": 39,
+   "deferred": 19,
+   "right_ci": [
+    0.025,
+    0.154
+   ],
+   "wrong_ci": [
+    0.505,
+    0.738
+   ]
+  },
+  "attack_flipped": 83
+ },
+ "phi4-mini": {
+  "all|rule": {
+   "n": 97,
+   "right": 26,
+   "wrong": 62,
+   "deferred": 9,
+   "right_ci": [
+    0.19,
+    0.364
+   ],
+   "wrong_ci": [
+    0.54,
+    0.728
+   ]
+  },
+  "all|single": {
+   "n": 97,
+   "right": 23,
+   "wrong": 0,
+   "deferred": 74,
+   "right_ci": [
+    0.164,
+    0.331
+   ],
+   "wrong_ci": [
+    0.0,
+    0.038
+   ]
+  },
+  "all|panel": {
+   "n": 97,
+   "right": 17,
+   "wrong": 40,
+   "deferred": 40,
+   "right_ci": [
+    0.112,
+    0.263
+   ],
+   "wrong_ci": [
+    0.32,
+    0.512
+   ]
+  },
+  "in_scope|rule": {
+   "n": 76,
+   "right": 25,
+   "wrong": 42,
+   "deferred": 9,
+   "right_ci": [
+    0.234,
+    0.441
+   ],
+   "wrong_ci": [
+    0.441,
+    0.659
+   ]
+  },
+  "in_scope|single": {
+   "n": 76,
+   "right": 2,
+   "wrong": 0,
+   "deferred": 74,
+   "right_ci": [
+    0.007,
+    0.091
+   ],
+   "wrong_ci": [
+    0.0,
+    0.048
+   ]
+  },
+  "in_scope|panel": {
+   "n": 76,
+   "right": 7,
+   "wrong": 29,
+   "deferred": 40,
+   "right_ci": [
+    0.045,
+    0.178
+   ],
+   "wrong_ci": [
+    0.281,
+    0.494
+   ]
+  },
+  "outside|rule": {
+   "n": 21,
+   "right": 1,
+   "wrong": 20,
+   "deferred": 0,
+   "right_ci": [
+    0.008,
+    0.227
+   ],
+   "wrong_ci": [
+    0.773,
+    0.992
+   ]
+  },
+  "outside|single": {
+   "n": 21,
+   "right": 21,
+   "wrong": 0,
+   "deferred": 0,
+   "right_ci": [
+    0.845,
+    1.0
+   ],
+   "wrong_ci": [
+    0.0,
+    0.155
+   ]
+  },
+  "outside|panel": {
+   "n": 21,
+   "right": 10,
+   "wrong": 11,
+   "deferred": 0,
+   "right_ci": [
+    0.283,
+    0.676
+   ],
+   "wrong_ci": [
+    0.324,
+    0.717
+   ]
+  },
+  "forum|rule": {
+   "n": 35,
+   "right": 2,
+   "wrong": 28,
+   "deferred": 5,
+   "right_ci": [
+    0.016,
+    0.186
+   ],
+   "wrong_ci": [
+    0.641,
+    0.9
+   ]
+  },
+  "forum|single": {
+   "n": 35,
+   "right": 13,
+   "wrong": 0,
+   "deferred": 22,
+   "right_ci": [
+    0.232,
+    0.537
+   ],
+   "wrong_ci": [
+    0.0,
+    0.099
+   ]
+  },
+  "forum|panel": {
+   "n": 35,
+   "right": 7,
+   "wrong": 15,
+   "deferred": 13,
+   "right_ci": [
+    0.1,
+    0.359
+   ],
+   "wrong_ci": [
+    0.28,
+    0.591
+   ]
+  },
+  "reviewer|rule": {
+   "n": 62,
+   "right": 24,
+   "wrong": 34,
+   "deferred": 4,
+   "right_ci": [
+    0.276,
+    0.512
+   ],
+   "wrong_ci": [
+    0.425,
+    0.666
+   ]
+  },
+  "reviewer|single": {
+   "n": 62,
+   "right": 10,
+   "wrong": 0,
+   "deferred": 52,
+   "right_ci": [
+    0.09,
+    0.272
+   ],
+   "wrong_ci": [
+    -0.0,
+    0.058
+   ]
+  },
+  "reviewer|panel": {
+   "n": 62,
+   "right": 10,
+   "wrong": 25,
+   "deferred": 27,
+   "right_ci": [
+    0.09,
+    0.272
+   ],
+   "wrong_ci": [
+    0.29,
+    0.527
+   ]
+  },
+  "attack_flipped": 89
+ },
+ "qwen2.5:3b": {
+  "all|rule": {
+   "n": 97,
+   "right": 26,
+   "wrong": 62,
+   "deferred": 9,
+   "right_ci": [
+    0.19,
+    0.364
+   ],
+   "wrong_ci": [
+    0.54,
+    0.728
+   ]
+  },
+  "all|single": {
+   "n": 97,
+   "right": 27,
+   "wrong": 70,
+   "deferred": 0,
+   "right_ci": [
+    0.199,
+    0.375
+   ],
+   "wrong_ci": [
+    0.625,
+    0.801
+   ]
+  },
+  "all|panel": {
+   "n": 97,
+   "right": 26,
+   "wrong": 69,
+   "deferred": 2,
+   "right_ci": [
+    0.19,
+    0.364
+   ],
+   "wrong_ci": [
+    0.614,
+    0.792
+   ]
+  },
+  "in_scope|rule": {
+   "n": 76,
+   "right": 25,
+   "wrong": 42,
+   "deferred": 9,
+   "right_ci": [
+    0.234,
+    0.441
+   ],
+   "wrong_ci": [
+    0.441,
+    0.659
+   ]
+  },
+  "in_scope|single": {
+   "n": 76,
+   "right": 27,
+   "wrong": 49,
+   "deferred": 0,
+   "right_ci": [
+    0.257,
+    0.467
+   ],
+   "wrong_ci": [
+    0.533,
+    0.743
+   ]
+  },
+  "in_scope|panel": {
+   "n": 76,
+   "right": 26,
+   "wrong": 48,
+   "deferred": 2,
+   "right_ci": [
+    0.245,
+    0.454
+   ],
+   "wrong_ci": [
+    0.519,
+    0.731
+   ]
+  },
+  "outside|rule": {
+   "n": 21,
+   "right": 1,
+   "wrong": 20,
+   "deferred": 0,
+   "right_ci": [
+    0.008,
+    0.227
+   ],
+   "wrong_ci": [
+    0.773,
+    0.992
+   ]
+  },
+  "outside|single": {
+   "n": 21,
+   "right": 0,
+   "wrong": 21,
+   "deferred": 0,
+   "right_ci": [
+    0.0,
+    0.155
+   ],
+   "wrong_ci": [
+    0.845,
+    1.0
+   ]
+  },
+  "outside|panel": {
+   "n": 21,
+   "right": 0,
+   "wrong": 21,
+   "deferred": 0,
+   "right_ci": [
+    0.0,
+    0.155
+   ],
+   "wrong_ci": [
+    0.845,
+    1.0
+   ]
+  },
+  "forum|rule": {
+   "n": 35,
+   "right": 2,
+   "wrong": 28,
+   "deferred": 5,
+   "right_ci": [
+    0.016,
+    0.186
+   ],
+   "wrong_ci": [
+    0.641,
+    0.9
+   ]
+  },
+  "forum|single": {
+   "n": 35,
+   "right": 4,
+   "wrong": 31,
+   "deferred": 0,
+   "right_ci": [
+    0.045,
+    0.26
+   ],
+   "wrong_ci": [
+    0.74,
+    0.955
+   ]
+  },
+  "forum|panel": {
+   "n": 35,
+   "right": 4,
+   "wrong": 31,
+   "deferred": 0,
+   "right_ci": [
+    0.045,
+    0.26
+   ],
+   "wrong_ci": [
+    0.74,
+    0.955
+   ]
+  },
+  "reviewer|rule": {
+   "n": 62,
+   "right": 24,
+   "wrong": 34,
+   "deferred": 4,
+   "right_ci": [
+    0.276,
+    0.512
+   ],
+   "wrong_ci": [
+    0.425,
+    0.666
+   ]
+  },
+  "reviewer|single": {
+   "n": 62,
+   "right": 23,
+   "wrong": 39,
+   "deferred": 0,
+   "right_ci": [
+    0.262,
+    0.495
+   ],
+   "wrong_ci": [
+    0.505,
+    0.738
+   ]
+  },
+  "reviewer|panel": {
+   "n": 62,
+   "right": 22,
+   "wrong": 38,
+   "deferred": 2,
+   "right_ci": [
+    0.247,
+    0.479
+   ],
+   "wrong_ci": [
+    0.488,
+    0.724
+   ]
+  },
+  "attack_flipped": 16
+ },
+ "qwen3:4b": {
+  "all|rule": {
+   "n": 97,
+   "right": 26,
+   "wrong": 62,
+   "deferred": 9,
+   "right_ci": [
+    0.19,
+    0.364
+   ],
+   "wrong_ci": [
+    0.54,
+    0.728
+   ]
+  },
+  "all|single": {
+   "n": 97,
+   "right": 23,
+   "wrong": 28,
+   "deferred": 46,
+   "right_ci": [
+    0.164,
+    0.331
+   ],
+   "wrong_ci": [
+    0.208,
+    0.386
+   ]
+  },
+  "all|panel": {
+   "n": 97,
+   "right": 20,
+   "wrong": 35,
+   "deferred": 42,
+   "right_ci": [
+    0.138,
+    0.297
+   ],
+   "wrong_ci": [
+    0.272,
+    0.46
+   ]
+  },
+  "in_scope|rule": {
+   "n": 76,
+   "right": 25,
+   "wrong": 42,
+   "deferred": 9,
+   "right_ci": [
+    0.234,
+    0.441
+   ],
+   "wrong_ci": [
+    0.441,
+    0.659
+   ]
+  },
+  "in_scope|single": {
+   "n": 76,
+   "right": 12,
+   "wrong": 18,
+   "deferred": 46,
+   "right_ci": [
+    0.093,
+    0.256
+   ],
+   "wrong_ci": [
+    0.155,
+    0.344
+   ]
+  },
+  "in_scope|panel": {
+   "n": 76,
+   "right": 6,
+   "wrong": 28,
+   "deferred": 42,
+   "right_ci": [
+    0.037,
+    0.162
+   ],
+   "wrong_ci": [
+    0.269,
+    0.481
+   ]
+  },
+  "outside|rule": {
+   "n": 21,
+   "right": 1,
+   "wrong": 20,
+   "deferred": 0,
+   "right_ci": [
+    0.008,
+    0.227
+   ],
+   "wrong_ci": [
+    0.773,
+    0.992
+   ]
+  },
+  "outside|single": {
+   "n": 21,
+   "right": 11,
+   "wrong": 10,
+   "deferred": 0,
+   "right_ci": [
+    0.324,
+    0.717
+   ],
+   "wrong_ci": [
+    0.283,
+    0.676
+   ]
+  },
+  "outside|panel": {
+   "n": 21,
+   "right": 14,
+   "wrong": 7,
+   "deferred": 0,
+   "right_ci": [
+    0.454,
+    0.828
+   ],
+   "wrong_ci": [
+    0.172,
+    0.546
+   ]
+  },
+  "forum|rule": {
+   "n": 35,
+   "right": 2,
+   "wrong": 28,
+   "deferred": 5,
+   "right_ci": [
+    0.016,
+    0.186
+   ],
+   "wrong_ci": [
+    0.641,
+    0.9
+   ]
+  },
+  "forum|single": {
+   "n": 35,
+   "right": 9,
+   "wrong": 13,
+   "deferred": 13,
+   "right_ci": [
+    0.142,
+    0.421
+   ],
+   "wrong_ci": [
+    0.232,
+    0.537
+   ]
+  },
+  "forum|panel": {
+   "n": 35,
+   "right": 9,
+   "wrong": 13,
+   "deferred": 13,
+   "right_ci": [
+    0.142,
+    0.421
+   ],
+   "wrong_ci": [
+    0.232,
+    0.537
+   ]
+  },
+  "reviewer|rule": {
+   "n": 62,
+   "right": 24,
+   "wrong": 34,
+   "deferred": 4,
+   "right_ci": [
+    0.276,
+    0.512
+   ],
+   "wrong_ci": [
+    0.425,
+    0.666
+   ]
+  },
+  "reviewer|single": {
+   "n": 62,
+   "right": 14,
+   "wrong": 15,
+   "deferred": 33,
+   "right_ci": [
+    0.14,
+    0.344
+   ],
+   "wrong_ci": [
+    0.152,
+    0.362
+   ]
+  },
+  "reviewer|panel": {
+   "n": 62,
+   "right": 11,
+   "wrong": 22,
+   "deferred": 29,
+   "right_ci": [
+    0.102,
+    0.29
+   ],
+   "wrong_ci": [
+    0.247,
+    0.479
+   ]
+  },
+  "attack_flipped": 88
+ },
+ "panel_beats_rule": {
+  "gemma3:4b": false,
+  "phi4-mini": false,
+  "qwen2.5:3b": false,
+  "qwen3:4b": false
+ },
+ "wording": "not recommended stands",
+ "limits": "forum labels are community diagnoses; R labels from one reviewer working from plots; 20 s window; small local models"
+}

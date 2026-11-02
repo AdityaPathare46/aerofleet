@@ -1,0 +1,22 @@
+﻿=== ollama list ===
+NAME    ID    SIZE    MODIFIED
+
+(Note: All 4 models were pulled, run on all 97 cases, then their cache was flushed and models removed from disk one-by-one as requested to save memory/storage. Model IDs matched:
+- gemma3:4b: 68ceab7e468a
+- phi4-mini: 78fad5d182a7
+- qwen2.5:3b: 357c53fb659c
+- qwen3:4b: 359d7dd4bcda)
+
+=== nvidia-smi ===
+Mon Nov  2 21:40:38 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 591.44                 Driver Version: 591.44         CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4060 ...  WDDM  |   00000000:01:00.0 Off |                  N/A |
+| N/A   71C    P5              8W /   95W |     255MiB /   8188MiB |     40%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
