@@ -540,3 +540,13 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - The blind case set asked for since the early rounds: 97 real crash logs with independent labels (35 forum-expert, 62 blind relabelling), facts extracted by the tool's code, run on an RTX 4060 (declared 5b15715, amended 7405264). No panel beats the rule; "not recommended" stands. The rule itself was wrong in 62 of 97 real cases (synthetic: 0 of 60), confirming the reviewers' concern that the generated cases flattered it. Panel verdicts changed between two machines in 17 of 33 cases.
 - New Table (tab:llm_real); §5.11, Table 6, Discussion and Threats (Language models) and Appendix A updated; "in preparation" removed.
 - All review items from earlier rounds are now addressed.
+
+## Thirty-sixth pass (Round 20: clarity and focus)
+
+- Structure: main text cut from about 24,900 to 14,700 words (70 to 47 pages) by moving detail, unchanged, to a supplement (S1-S10, 28 pages; xr cross-references both ways). Abstract 220 words (was ~330), five contributions (was nine), Discussion, Threats and Conclusion rewritten.
+- Problem 1: relabelling wording fixed ("label noise cannot be excluded"; "not an artefact" removed); reviewer described (engineering student, non-author, blind plots, also the third rater).
+- Problem 2: RflyMAD with folds grouped by day 0.75 / by pattern 0.79 (p 0.005); separation stated as feature-specific; rule result labelled out of domain; checklist item 10 qualified.
+- Problem 3: attribution on 108 multicopters (rule 0.43 held out; trees 0.61-0.64 only with the crash's final seconds, none after Holm); "near chance" holds.
+- Problem 4: declared site-weighted test p 0.076 (suggestive) now the primary; abstract gives airframe and site p; screening flag-rate asymmetry explained; leave-one-out lift 1.68 [0.94, 3.31].
+- Problem 5: "the tilt rule misses most crashes", not "records are defective". Problem 6: LM label mapping stated; "wrong" means disagreement with contested labels; panel moved to the supplement.
+- Problem 8: dates, checklist count, Table 10 note, FlightMD eighth check, touchdown pseudo moment (no change), ethics note (location proxies, RflyMAD terms), references [18], [25], [30] confirmed on Crossref.

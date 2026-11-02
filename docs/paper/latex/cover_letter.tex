@@ -7,7 +7,7 @@
 \begin{document}
 \begin{letter}{The Editor-in-Chief\\ Reliability Engineering \& System Safety}
 \opening{Dear Editor,}
-\setlength{\parskip}{0.4em}
+\setlength{\parskip}{0.3em}
 
 We submit the manuscript ``Evidence, not verdicts: what 590 public PX4 crash logs can and cannot tell a drone fleet operator'' as a research article.
 
@@ -20,25 +20,24 @@ Two findings are, to our knowledge, new and apply to any evaluation of log-based
 \begin{itemize}
 \item \textbf{Evaluation choices shape the apparent signal.} In a factorial audit of 32 evaluation settings, a
 crash-vs-normal AUC of 0.88 fell by 0.21 [0.06, 0.34]; the one choice that could be isolated, grouping
-cross-validation folds by vehicle, accounted for 0.06. Comparing each drone with its own earlier flights brought the AUC to
-chance.
-\item \textbf{Crash labels are weaker than assumed.} 61\% of crash-rated multicopter logs show no crash-like tilt,
-where two reviewers found the computed crash moment mostly wrong; pilot-rated logs show one less often (23\% vs
-45\%); and 44--55\% of dated crash-day ``earlier'' flights were flown after the crash.
+cross-validation folds by vehicle, accounted for 0.06. Comparing each drone with its own earlier flights brought it to chance.
+\item \textbf{Archive records need care.} The usual tilt rule finds no crash-like tilt in 61\% of crash-rated
+multicopter logs, though most contain a crash (three raters); pilot-rated logs show one less often (23\% vs
+45\%); and dates cannot order flights within a day.
 \end{itemize}
 These rest on declared tests:
 \begin{itemize}
 \item neither a declared rule nor cross-validated models separated pilot-caused from aircraft-caused crashes
-(balanced accuracy 0.47 on 112 held-out crashes);
+(balanced accuracy 0.47 on 112 held-out crashes), nor recovered a blind relabelling;
 \item crash-window leakage was small overall but material among multicopter crashes with a crash-like tilt;
 \item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
 crashed vibrated more than matched drones on ordinary flights, a suggestive signal ($p=0.012$ per airframe,
-Holm 0.08) that did not clearly beat random inspection against 412 non-crash drones;
-\item small language-model panels did worse than a fixed rule and could be steered by one compromised
-reviewer.
+0.076 per operator site) that did not clearly beat random inspection against 412 non-crash drones;
+\item on real flights with injected faults, flight-style features separated faulty from fault-free flights before
+the fault existed.
 \end{itemize}
-The findings feed a recommended reporting checklist and an open-source fleet-assurance tool, AeroFleet~2.0, that
-presents evidence rather than verdicts. Code, declarations, derived features and labels are released.
+The findings feed a reporting checklist and an open-source tool that presents evidence rather than verdicts;
+code, declarations, derived features and labels are released.
 
 The manuscript is original, has not been published and is not under consideration elsewhere. All authors approve the
 submission. An AI assistant was used in preparing code and text, as declared in the manuscript.

@@ -68,8 +68,9 @@ API docs: http://localhost:8000/docs (assurance endpoints under `/api/v1/assuran
 Paper build (needs `tectonic`):
 
 ```bash
-cd docs/paper/latex && tectonic -X compile main.tex && tectonic -X compile cover_letter.tex
-cp main.pdf ../submission/manuscript.pdf; cp cover_letter.pdf ../submission/
+cd docs/paper/latex && for f in main supplement main supplement; do tectonic -X compile --keep-intermediates $f.tex; done
+tectonic -X compile cover_letter.tex
+cp main.pdf ../submission/manuscript.pdf; cp supplement.pdf cover_letter.pdf ../submission/
 ```
 
 Word version (needs `pandoc` from Homebrew and `python-docx` in `.venv`): build the PDF with
@@ -77,7 +78,11 @@ Word version (needs `pandoc` from Homebrew and `python-docx` in `.venv`): build 
 `main.aux`), then `.venv/bin/python docs/paper/make_docx.py` writes `docs/paper/submission/manuscript.docx`.
 The LaTeX is the master copy; regenerate the Word file after every edit.
 
-The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must contain `main.tex`, `refs.bib`,
+The main text and the supplement (`supplement.tex`, sections S1-S10) cross-reference each other with `xr-hyper`
+(`\externaldocument[S-]{supplement}` / `[M-]{main}`), so compile main, supplement, main, supplement. Detail lives in the
+supplement; keep the main text short.
+
+The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must contain `main.tex`, `supplement.tex`, `refs.bib`,
 `cover_letter.tex`, `highlights.txt` and `figures/` with every figure `main.tex` includes. Rebuild it after edits.
 
 ---
@@ -129,6 +134,7 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 | Q3c between drones (the positive result) | Crashed drones rougher: **0.67, 95% CI 0.57-0.77, p = 0.0023, Holm 0.016** (60 sets); top-rank 33/60 (55.0%) vs Poisson-binomial null 40.3% (p = 0.0137; lift 1.37x over null rate, relative risk 3.58x over unflagged); Q3 flag 38/60 (63.3%, older 66.7%, newer 50.0%); matched-set PPV 0.96-1.04% (lift 1.40x, 96-104 insp./crash) across screenable multi-flight base rate (0.689%, 182/26,421) and fleet vehicle base rate (0.741%, 284/38,320); stratum-matched fleet-ref: top decile (10% flag) PPV 2.26-2.47% [1.48-3.33%] (relative risk 4.50x, lift 3.28-3.33x, 40.5-44.2 insp./crash), top quartile (25% flag) PPV 1.37-1.48% [1.01-1.88%] (relative risk 3.00x, lift 1.99-2.00x, 67.5-73.1 insp./crash) | `rough_drone.md` |
 | Archive-wide label audit (declared `09cf99c`, amended `18b0eff`) | All 520 crash-rated real-hardware logs downloaded (212 new, 1.53 GB, in `archive_crash/`). Of 341 readable multicopter logs, 132 (39%) show a tilt event; share containing the crash **50% (reviewer A) to 86% (blind reviewer B), 66% on agreed logs - no single figure claimed**; **pilot-rated 23% vs aircraft-rated 45% (Fisher p 0.0003)**, so the label can leak into a classifier; 23% from 2023; modelled sample representative (38% vs 39%) | `archive_label_audit.md` |
 | FlightMD re-evaluation (declared `fa5fb0b`, results `7edb6ea`) | Published open-source PX4 log checker run unchanged (parser, analysers, score; not its geocoding/weather/AI pipeline) in `~/.venvs/flightmd` (Python 3.12). Crash vs normal AUC 0.79 whole, 0.74 at t_c, 0.72 [0.58, 0.81] at m10 (mostly EKF module); window drops < 0.05; attribution BA 0.52 [0.44, 0.61]; within-drone rank 0.48 p 0.66; 1.4% normals < 60. Paper §5.8. |
+| Round 20 audit (declared `e45b583`, results `7c1681e`) | RflyMAD folds grouped by day: pre-fault AUC 0.75 (p 0.005). Multicopters: rule held-out BA 0.43; models near chance after Holm (trees 0.61-0.64 only while the last 0-5 s are kept). Site-weighted between-drone p 0.076 (suggestive, declared primary). Screening leave-one-out lift 1.68 [0.94, 3.31]. Touchdown pseudo moment leaves leak drops unchanged. |
 | Operator clustering (declared `cfb79b9`, results `4806e09`) | Location proxy (first GPS fix, 2 km). 40 crashed airframes from 23 sites. Site-clustered p 0.006, Holm 0.042 (declared rule: supported) but one set per site median p 0.14, so the paper keeps 'suggestive' and states the deviation. |
 | Screening reference (declared `4961234`, results `77a0bc1`) | 412 non-crash reference drones (31 strata; logs in `AeroFleet_px4_data/screen_ref/`). Nominal 10% threshold flagged 13.7%; lift 1.77 [1.00, 2.60]; AUC 0.65. 'Not shown to beat random inspection'; the 3.3x lift is withdrawn. |
 | LM blind real-case test (declared `5b15715`, amended `7405264`; results `e256e3d` from the RTX runner, Mac check `355bca3`) | 97 real crash cases on an RTX 4060. Rule 26 right / 62 wrong; no panel beats it ('not recommended' stands); single agents defer ~77%; one compromised reviewer flips 16-89 of 97; Mac vs RTX panel agreement 16/33. Paper §5.11, Table tab:llm_real. All four models deleted from the Mac afterwards. |

@@ -1,6 +1,6 @@
 Highlights
 - No rule or model separated pilot-caused from aircraft-caused crashes
 - Grouping folds by vehicle removed part of an apparent crash-detection signal
-- 61% of crash-rated PX4 logs lack a crash-like tilt; crash timing there fails
+- The usual tilt rule misses most crashes in crash-rated multicopter logs
 - Crashed drones vibrated more than peers, but did not beat random inspection
-- An open-source tool shows evidence and ranks airframes without verdicts
+- Flight-style features separated injected faults before the fault existed
