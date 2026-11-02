@@ -1,0 +1,97 @@
+{
+ "note": "Parts C-E of r20_audit.py run in a parallel process with the declared code and seeds, because Part B is slow; same functions, separate output file.",
+ "C": {
+  "case_sites": 23,
+  "sets": 60,
+  "site_weighted_mean_rank": 0.612598814229249,
+  "p": 0.07582,
+  "holm": 0.45492,
+  "airframe_level_p_r15": 0.012,
+  "wording": "suggestive"
+ },
+ "D": {
+  "D1": {
+   "A_to_B": {
+    "25": {
+     "in_sample": 0.24873096446700507,
+     "out_of_sample": 0.20930232558139536
+    },
+    "10": {
+     "in_sample": 0.1218274111675127,
+     "out_of_sample": 0.10697674418604651
+    },
+    "5": {
+     "in_sample": 0.08121827411167512,
+     "out_of_sample": 0.08837209302325581
+    }
+   },
+   "B_to_A": {
+    "25": {
+     "in_sample": 0.2558139534883721,
+     "out_of_sample": 0.3299492385786802
+    },
+    "10": {
+     "in_sample": 0.12558139534883722,
+     "out_of_sample": 0.16751269035532995
+    },
+    "5": {
+     "in_sample": 0.08372093023255814,
+     "out_of_sample": 0.13705583756345177
+    }
+   }
+  },
+  "D2_flag10_bootstrap": {
+   "median": 0.16536418368551528,
+   "p2_5": 0.1217984889623421,
+   "p97_5": 0.2140231377641364
+  },
+  "D3_leave_one_out_10": {
+   "flag_rate": 0.12864077669902912,
+   "sensitivity": 0.21666666666666667,
+   "lift": 1.6757797043779423,
+   "ci": {
+    "flag_rate": [
+     0.10194174757281553,
+     0.13349514563106796
+    ],
+    "sensitivity": [
+     0.11666666666666667,
+     0.38333333333333336
+    ],
+    "lift": [
+     0.942733510950406,
+     3.305382128849813
+    ]
+   }
+  }
+ },
+ "E": {
+  "normals_dropped": 1,
+  "all": {
+   "n_crash": 89,
+   "n_normal": 124,
+   "auc_m0": 0.8353751359188111,
+   "auc_m10": 0.7982783617252627,
+   "drop": 0.0370967741935484,
+   "drop_ci95": [
+    0.007699479703458695,
+    0.08167880995749839
+   ]
+  },
+  "tilt_multicopter": {
+   "n_crash": 24,
+   "n_normal": 124,
+   "auc_m0": 0.8776209677419354,
+   "auc_m10": 0.764247311827957,
+   "drop": 0.11337365591397841,
+   "drop_ci95": [
+    0.030735713037891875,
+    0.241552177929131
+   ]
+  },
+  "published": {
+   "all": 0.035,
+   "tilt_multicopter": 0.114
+  }
+ }
+}

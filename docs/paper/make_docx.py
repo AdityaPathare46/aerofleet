@@ -19,8 +19,17 @@ TMP = os.path.join(HERE, "latex", "_docx_input.tex")
 
 
 def labels():
+    """Labels of main.aux, plus supplement.aux under the S- prefix used by xr (\\externaldocument[S-]{supplement})."""
+    out = _labels(AUX, "")
+    sup = os.path.join(HERE, "latex", "supplement.aux")
+    if os.path.exists(sup):
+        out.update(_labels(sup, "S-"))
+    return out
+
+
+def _labels(path, prefix):
     out = {}
-    content = open(AUX).read()
+    content = open(path).read()
     for m in re.finditer(r"\\newlabel\{([^}]+)\}\{", content):
         k = m.group(1)
         i = m.end()
@@ -36,7 +45,7 @@ def labels():
             val = content[i + 1:j - 1]
             val = re.sub(r"\\nobreakspace\s*(\{\})?", " ", val)
             val = re.sub(r"\s+", " ", val).strip()
-            out[k] = val
+            out[prefix + k] = val
     return out
 
 
