@@ -1,6 +1,6 @@
 Highlights
 - No rule or model separated pilot-caused from aircraft-caused crashes
 - Grouping folds by vehicle removed part of an apparent crash-detection signal
-- The usual tilt rule misses 37-58% of crashes in multicopter crash logs
+- The usual tilt rule misses 7-50% of multicopter crashes, by rater
 - Crashed drones vibrated more than peers, but did not beat random inspection
-- A published fault detector lost most of its skill when whole days were held out
+- A re-implemented fault detector fell from AUC 0.94 to 0.63 with days held out

@@ -22,7 +22,7 @@ Two findings are, to our knowledge, new and apply to any evaluation of log-based
 crash-vs-normal AUC of 0.88 fell by 0.21 [0.06, 0.34]; the one choice that could be isolated, grouping
 cross-validation folds by vehicle, accounted for 0.06. Comparing each drone with its own earlier flights brought it to chance.
 \item \textbf{Archive records need care.} The usual tilt rule finds no crash-like tilt in 61\% of crash-rated
-multicopter logs and misses 37--58\% of crashes, depending on the reviewer; pilot-rated logs show one less often (23\% vs
+multicopter logs and misses roughly 7--50\% of crashes, depending on the rater; pilot-rated logs show one less often (23\% vs
 45\%); and dates cannot order flights within a day.
 \end{itemize}
 These rest on declared tests:
@@ -33,8 +33,8 @@ These rest on declared tests:
 \item the flight that crashed was no different from the same drone's earlier flights, whereas drones that later
 crashed vibrated more than matched drones on ordinary flights, a suggestive signal ($p=0.012$ per airframe,
 0.076 per operator site) that did not clearly beat random inspection against 412 non-crash drones;
-\item a published trained fault detector, re-implemented, fell from AUC 0.94 to 0.63 once whole days were held
-out, and separated fault flights before any fault existed (AUC 0.85).
+\item a re-implementation of a published trained fault detector fell from AUC 0.94 to 0.63 once whole
+days were held out.
 \end{itemize}
 The findings feed a reporting checklist and an open-source tool that presents evidence rather than verdicts;
 code, declarations, derived features and labels are released.
