@@ -550,3 +550,10 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Problem 4: declared site-weighted test p 0.076 (suggestive) now the primary; abstract gives airframe and site p; screening flag-rate asymmetry explained; leave-one-out lift 1.68 [0.94, 3.31].
 - Problem 5: "the tilt rule misses most crashes", not "records are defective". Problem 6: LM label mapping stated; "wrong" means disagreement with contested labels; panel moved to the supplement.
 - Problem 8: dates, checklist count, Table 10 note, FlightMD eighth check, touchdown pseudo moment (no change), ethics note (location proxies, RflyMAD terms), references [18], [25], [30] confirmed on Crossref.
+
+## Thirty-seventh pass (Round 21)
+
+- Originality: a published trained detector re-evaluated (RflyMAD LeNet-5, re-implemented; declared 1e0bf0f): AUC 0.94 with random windows, 0.92 flights held out, 0.63 days held out (drop 0.33 [0.28, 0.38]); 0.85 on pre-fault data where no fault exists. New §5.9 and Supplement S10; abstract, contribution (ii), Table 6, Discussion, Conclusion, checklist item 2, highlight and cover letter updated.
+- Problem 1: "of which 0.06 came from grouping folds by vehicle" in abstract and Conclusion. Problem 2: "misses 37-58% of crashes, depending on the reviewer" throughout. Problem 3: run date corrected to 2 November; internal round labels removed from S10.
+- Problem 4: per-day pre-fault AUC 0.96/0.85/0.32/0.68 (mean 0.68), window-length confound, whole-flight discussion, "p <= 0.005". Problem 5: tuning caveat back in §5.3. Problem 6: tests table uses the site-weighted p (Holm 0.46; clipping 0.32).
+- Problem 7: third rater 13 of 15 multicopter tilt moments (main-text claim corrected); concentration on one non-author stated. Problem 8: decided-only rule BA 0.46 / 0.40; tree wording. Problem 9: Table 6 now a long table (no footer overlap), self-reference fixed, "MIT", references confirmed on Crossref.
