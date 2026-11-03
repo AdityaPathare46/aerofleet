@@ -33,6 +33,10 @@ PART B - The published detector by day and with length-matched windows (review p
   Wording rule: the paper says the detector "separates fault flights before the fault even with matched windows" only
   if the B2 flight-grouped AUC >= 0.70 with p < 0.05; otherwise that the pre-fault separation depends on window span.
 
+AMENDMENT 1 (after an interrupted first run, before any B result was saved): in B1 a mixed day can hold no fault
+  windows of the task's positive class, which made the size-weighted mean undefined (nan). The mean is now taken over
+  days with both classes, and one-class days are listed. Parts A and C ran unchanged and are kept; Part B is rerun.
+
 PART C - Duration on the injected-fault flights (review problem 3)
   C1 AUC of window length alone (pre-fault window length; whole-flight length) for fault vs fault-free flights
      (rflymad_eval sample).
@@ -158,7 +162,9 @@ def part_b(rdir):
         for d in mixed:
             idx = [i for i, dd in enumerate(dy) if dd == d]
             per.append({"day": d, "n_windows": len(idx), "n_neg": int((y[idx] == 0).sum()), "auc": fa.auc(y[idx], S[idx])})
-        out[name] = {"per_day": per, "weighted_mean": float(sum(p["n_windows"] * p["auc"] for p in per) / sum(p["n_windows"] for p in per))}
+        both = [p for p in per if p["auc"] == p["auc"]]   # amendment 1: a day with one class has no AUC
+        out[name] = {"per_day": per, "one_class_days": [p["day"] for p in per if p["auc"] != p["auc"]],
+                     "weighted_mean": float(sum(p["n_windows"] * p["auc"] for p in both) / sum(p["n_windows"] for p in both)) if both else None}
         print(name, out[name]["weighted_mean"], flush=True)
 
     per_day({"FAULT"}, {"NORMAL_PRE", "NORMAL_POST"}, "B1_fault_vs_normal_by_day")
@@ -270,5 +276,14 @@ def main(root, rdir):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "/Volumes/One Touch/AeroFleet_px4_data",
-         sys.argv[2] if len(sys.argv) > 2 else "/Volumes/One Touch/AeroFleet_px4_data/external/rflymad")
+    if len(sys.argv) > 1 and sys.argv[1] == "--only-b":   # amendment 1: rerun Part B into the existing output
+        rep = json.load(open(os.path.join(RESULTS_DIR, "r22_audit.json")))
+        rep["B"] = part_b(sys.argv[2] if len(sys.argv) > 2 else "/Volumes/One Touch/AeroFleet_px4_data/external/rflymad")
+        json.dump(rep, open(os.path.join(RESULTS_DIR, "r22_audit.json"), "w"), indent=1, default=float)
+        open(os.path.join(RESULTS_DIR, "r22_audit.md"), "w").write(
+            "# Round 22 audit\n\nDeclared in `research/px4_log_study/r22_audit.py`. Exploratory (dagger).\n\n```\n"
+            + json.dumps(rep, indent=1, default=float) + "\n```\n")
+        print(json.dumps(rep["B"], indent=1, default=float))
+    else:
+        main(sys.argv[1] if len(sys.argv) > 1 else "/Volumes/One Touch/AeroFleet_px4_data",
+             sys.argv[2] if len(sys.argv) > 2 else "/Volumes/One Touch/AeroFleet_px4_data/external/rflymad")
