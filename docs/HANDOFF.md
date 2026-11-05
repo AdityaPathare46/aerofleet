@@ -82,6 +82,9 @@ The main text and the supplement (`supplement.tex`, sections S1-S10) cross-refer
 (`\externaldocument[S-]{supplement}` / `[M-]{main}`), so compile main, supplement, main, supplement. Detail lives in the
 supplement; keep the main text short.
 
+Before any submission, run `python docs/paper/check_numbers.py`: it checks 28 key numbers in the main text,
+supplement, highlights and cover letter against the results JSON files and exits non-zero on any mismatch.
+
 The Overleaf zip (`docs/paper/submission/latex_source_for_overleaf.zip`) must contain `main.tex`, `supplement.tex`, `refs.bib`,
 `cover_letter.tex`, `highlights.txt` and `figures/` with every figure `main.tex` includes. Rebuild it after edits.
 

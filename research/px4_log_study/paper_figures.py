@@ -278,6 +278,52 @@ def robustness(out):
     plt.close(fig)
 
 
+
+def summary(out):
+    """One-glance summary: apparent skill falls as evaluation gets stricter (a); no attribution test reaches the pass
+    mark (b). Values are the published results of the audits cited in the caption."""
+    fig, (a, b) = plt.subplots(1, 2, figsize=(9.6, 3.9), gridspec_kw={"width_ratios": [1.35, 1]})
+    steps = ["Usual\nsplit", "Flights or\nvehicles\nheld out", "Strictest\nsplit", "Same aircraft's\nown history"]
+    series = [  # (label, colour, marker, {step index: AUC})
+        ("Our features, archive crashes", "#2a78d6", "o", {0: 0.882, 1: 0.826, 2: 0.666, 3: 0.455}),
+        ("FlightMD (published, untrained)", "#eb6834", "s", {0: 0.79, 2: 0.72, 3: 0.48}),
+        ("Published LeNet-5 detector, RflyMAD", "#1baf7a", "^", {0: 0.943, 1: 0.921, 2: 0.626}),
+    ]
+    for label, col, mk, pts in series:
+        xs = sorted(pts)
+        a.plot(xs, [pts[x] for x in xs], color=col, lw=2, marker=mk, ms=7, mec="white", mew=1.2, zorder=3, label=label)
+    a.axhline(0.5, color=GREY, lw=1, ls=":")
+    a.text(3.25, 0.51, "chance", color=GREY, fontsize=7.5, ha="right")
+    a.set_xticks(range(4))
+    a.set_xticklabels(steps, fontsize=8)
+    a.set_xlim(-0.3, 3.3)
+    a.legend(frameon=False, loc="lower left", fontsize=7.5, handlelength=2.2)
+    a.set_ylim(0.4, 1.0)
+    a.set_ylabel("AUC (FlightMD own-history value: mean rank)", fontsize=8)
+    a.set_title("(a) Apparent skill falls as evaluation gets stricter", fontsize=9, loc="left")
+    a.grid(axis="y", color="#e6e6e6", lw=0.6)
+    rows = [("Rule, uploader labels (held out)", 0.47, None), ("Rule, multicopters (held out)", 0.43, (0.33, 0.54)),
+            ("Rule, independent relabelling", 0.55, (0.42, 0.66)), ("Rule, expert diagnoses", 0.38, (0.25, 0.61)),
+            ("FlightMD verdict", 0.52, (0.44, 0.61))]
+    for i, (lab, v, iv) in enumerate(rows[::-1]):
+        if iv:
+            b.plot(iv, [i, i], color="#2a78d6", lw=2, solid_capstyle="round")
+        b.plot([v], [i], marker="o", ms=7, color="#2a78d6", mec="white", mew=1.2, zorder=3)
+    b.set_yticks(range(len(rows)))
+    b.set_yticklabels([r[0] for r in rows[::-1]], fontsize=8)
+    b.axvline(0.5, color=GREY, lw=1, ls=":")
+    b.axvline(0.70, color="#333333", lw=1, ls="--")
+    b.text(0.505, -0.75, "chance", color=GREY, fontsize=7.5)
+    b.text(0.705, -0.75, "pass mark", color="#333333", fontsize=7.5)
+    b.set_ylim(-0.95, len(rows) - 0.5)
+    b.set_xlim(0.2, 0.8)
+    b.set_xlabel("Balanced accuracy, pilot vs aircraft (bars: 95% interval)", fontsize=8)
+    b.set_title("(b) No attribution test reaches the pass mark", fontsize=9, loc="left")
+    b.grid(axis="x", color="#e6e6e6", lw=0.6)
+    fig.tight_layout()
+    fig.savefig(out, dpi=300)
+    plt.close(fig)
+
 if __name__ == "__main__":
     out_dir = sys.argv[1]
     os.makedirs(out_dir, exist_ok=True)
@@ -287,6 +333,7 @@ if __name__ == "__main__":
     study_flow(os.path.join(out_dir, "fig_study_flow.png"))
     sign_rates(os.path.join(out_dir, "fig_sign_rates.png"))
     robustness(os.path.join(out_dir, "fig_robustness.png"))
+    summary(os.path.join(out_dir, "fig_summary.png"))
     for f, fn in (("vib_p95", _within_ranks), ("tune_rms", _within_ranks)):
         print("within", f, np.round(_ci(fn(f)), 3), len(fn(f)))
     for f in ("vib_p95", "tune_rms"):

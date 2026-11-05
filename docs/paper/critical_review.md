@@ -565,3 +565,12 @@ Round 18 rated 9.4/10 (originality 8.4, rigor 9.5, support 9.1 [down from 9.2 be
 - Problem 3: detector per day (pre-fault mean 0.51), length-matched windows (0.85 flights, 0.53 days), window-length AUC 0.67, length-matched features 0.75 by day; abstract and Table 6 give the days-held-out pre-fault 0.57; explanations reconciled (session-tied for the detector, feature separation varies by day).
 - Problem 4: "no usable signal; if anything reversed, plausibly because impacts trigger the signs"; flipped rule about 0.60, below 0.70.
 - Problem 5: Holm over 36 cells (0.54); "13 to 15 of 15"; RflyMAD 7 real fault types and 231 vs 240; duplicate phrase removed; §5.7-5.9 merged into one external-checks section with a table; FlightMD detail moved to the supplement. Problem 6: references confirmed.
+
+## Thirty-ninth pass (external reviews: Argon and Claude)
+
+- Claude review's mismatch confirmed and fixed: §5.4 gave the third rater's crash-containing share as 86% (all 50 reviewed logs) while S3's miss calculation used the 34 multicopter logs (82%). Main text now uses the multicopter basis throughout (50%, 82%, 82%, majority 67%); S3 keeps the all-type figures, labelled.
+- New `docs/paper/check_numbers.py` (28 checks against results JSON). It found one more mismatch: the site-weighted Holm value was 0.46 in Tables 7 and 12 but 0.455 in the results (0.45 elsewhere); fixed. All 28 checks now agree.
+- Version-history notes ("earlier version ... withdrawn", "regenerated", "supersedes") removed from the main text; earlier values kept in Supplement S2 and the revision log.
+- Contributions and Conclusion rewritten around three claims (evaluation design creates apparent skill; archives need auditing before records are used as labels; logs support evidence review, not verdicts) plus outputs.
+- New Figure 2 (`fig_summary.png`): apparent skill against evaluation strictness for our features, FlightMD and the re-implemented detector; attribution tests against chance and the pass mark.
+- Not addressable without people: a second independent rater; the prospective fleet study; journal-scope advice from Dr. Chougule.
