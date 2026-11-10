@@ -61,6 +61,7 @@ CHECKS = [
     ("multicopter decided held out", r(r21("D", "holdout", "ba_decided"), 2), r"(0\.4\d) \[0\.35, 0\.56\]"),
     ("crash-containing, third rater (multicopter)", "82", r"(\d+)\\% \[68--94\\%\]"),
     ("crash-containing, majority (multicopter)", "67", r"(\d+)\\% \[50--85\\%\]"),
+    ("within-drone model without post-crash flights", "[" + ", ".join(r(x, 3) for x in j("postcrash_audit.json", "F", "B", "cluster_ci")) + "]", r"0\.582 (\[0\.\d+, 0\.\d+\])"),
 ]
 
 
