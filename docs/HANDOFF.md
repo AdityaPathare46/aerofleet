@@ -1,6 +1,7 @@
 # AeroFleet: handoff for whoever continues (any AI assistant or person)
 
-Last updated 25 October 2026. Read this whole file before changing anything. It replaces the need for any earlier
+Last updated 12 November 2026 (product section; the paper status in section 6 is older, see `docs/paper/critical_review.md`
+for the latest rounds). Read this whole file before changing anything. It replaces the need for any earlier
 chat history. Older context files (`docs/aerofleet2/CONTEXT.md`, `docs/aerofleet2/MASTER_PLAN.md`) are still useful
 background, but where they disagree with this file, this file is right.
 
@@ -58,7 +59,8 @@ prints many `non-monotonic index` errors. They are harmless. Clean them after a 
 export AEROFLEET_VENV=~/.venvs/aerofleet   # the environment lives on the internal disk (rebuilt 27 Oct 2026)
 ./start.sh            # sets up the venv + npm packages if missing, starts API (:8000) and app (:1420), opens browser
 ./start.sh api        # API only
-$AEROFLEET_VENV/bin/python -m pytest -q --no-cov tests/unit tests/integration   # full suite: 657 pass (about 3 min)
+$AEROFLEET_VENV/bin/python -m pytest -q --no-cov tests/unit tests/integration   # full suite: 660 pass (about 3 min)
+AEROFLEET_PX4_DATA="/Volumes/One Touch/AeroFleet_px4_data" $AEROFLEET_VENV/bin/python tools/seed_demo_fleet.py --reset   # demo fleet, see docs/DEMO.md
 cd tauri-app && npx tsc --noEmit -p .                                   # typecheck the app
 ```
 
@@ -170,7 +172,23 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 **Paper** (Round 11 peer review complete, publication grade **>= 9.3/10** achieved for *Reliability Engineering & System Safety*; 43 pages, 6 figures, 11 tables, 36 references, abstract 198 words, zero placeholders, DOIs verified):
 Resolved all Round 11 peer review items: (1) Rewrote Table 6 headline finding across Abstract, Contribution (i), §5.3, §7, and Conclusion: changing the comparison population from other aircraft's normal flights to the same aircraft's earlier flights lowered model AUC from about 0.83--0.88 to 0.53--0.57; grouping folds by vehicle, removing the crash window, and the cross-sectional versus within-drone scheme made no detectable difference, consistent with airframe and duration confounding. Added cluster bootstrap across 67 drone clusters ([0.500, 0.643]), proving no within-drone signal is detectable (CI spans 0.50). (2) Demoted screening PPV numbers in Abstract, Contribution (iv), §5.4, §6, §7, §9, and Table 10 from population claims to an exploratory illustration conditional on assumed 10% flag rate (illustrative PPV 2.26--2.43% [exact Bayes], lift 3.3x, 41--44 inspections per crash) on 107 controls across 20 strata with 17 reused controls. (3) Qualified depth-3 decision trees in §4.4, §5.2, Contribution (iii), §7, §9: reported $0.595 \pm 0.130$ and $0.621 \pm 0.105$ (upper bounds near 0.73) as inconclusive non-linear models examined in uncommitted early development and not retained due to fold instability, clarifying that prospectively declared negative applies to linear models and stumps. (4) Softened expert-log conclusions in §5.6, §7, §9: dropped "confirming"; reported that AUC 0.450 [0.185, 0.715] on 29 logs provides no evidence of discrimination and remains inconclusive; relabeled 0.19--0.73 as "conservative class-averaged Clopper--Pearson bound"; noted statistical model covers 4 of the 5 pilot logs due to topic availability. (5) Clarified registration dates in §4.1 and §8: documented confirmatory commits (20--24 Oct: `63bc72e`, `af6fab2`, `4475c8c`, `0c8ee47`, `d5d56c7`, `8b417d2`, `d7a6574`) and run dates 20--24 Oct; maintained author-controlled timestamp caveat prior to 25 Oct SWH capture; kept exploratory hedging on 7/9 to 1/9 leakage. (6) Framed wider permutation SD as a hypothesis in §5.2; corrected S7 sensitivity details in §8 to vibration across pitch/roll tilt thresholds (56 drones at 45 deg [0.46, $p=0.79$], 61 drones at 60 deg [0.48, $p=0.67$], 64 drones at 75 deg [0.50, $p=0.54$]); confirmed reference records (AAIB, Kose et al., Silalahi et al., EASA, Duvvuru). Rebuilt LaTeX PDF, DOCX manuscript, and Overleaf source zip.
 
-**Product**: all features work locally and are tested; 657 tests pass; app typechecks. Internal rating 7/10.
+**Product, 12 Nov 2026 (brought in line with the paper's Section 6; demonstration guide in `docs/DEMO.md`):**
+- A flight log can be reviewed without a mission file (verdict `LOG_ONLY`: timeline, evidence quality, vibration; signed).
+- The vibration screen no longer flags anyone. The paper says no threshold is validated (lift 1.77 [1.00, 2.60]), so it
+  shows each drone's position among comparable drones and the evidence sentence, nothing more. Do not add a flag back
+  without a declared, passed validation.
+- New: a drone's vibration flight by flight against its own earlier flights (`GET .../drones/{id}/vibration`, History
+  button), ordered by GPS time (`FlightLog.start_utc`), with the paper's within-drone result stated beside it.
+- The vibration value leaves out the last 10 s of every flight (`END_MARGIN_S`); the whole-flight value is kept beside it.
+- The timeline lists what the PX4 estimator itself reported (rejected sensor data, internal fault, failsafe) for 1 s
+  or more. PX4 only; ArduPilot logs have no such lines yet.
+- The Fleet Assurance screen shows a sign-in card when signed out (it used to look empty) and remembers the fleet.
+- `tools/seed_demo_fleet.py` loads 64 real public flights of 8 airframes into fleet `demo` and writes demo files
+  (see its docstring). It sets no baseline: the drones are unrelated.
+- `.env` points the database at `/tmp`, which macOS wipes; the signed record then reports missing entries. Move it
+  before a demonstration.
+
+**Product**: all features work locally and are tested; 660 tests pass; app typechecks. Internal rating 7/10.
 Removed on 25 Oct: four old start scripts, and "Incident replay" (the earlier product's AI-council view) from the VR
 view. "Live swarm" in the VR view is still from the earlier dispatch product (simulated drones).
 

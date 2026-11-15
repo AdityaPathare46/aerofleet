@@ -329,7 +329,31 @@ def test_fleet_vibration_ranks_drones_from_their_reviewed_flights(api_client, au
         files = {"plan": ("m.waypoints", plan.encode(), "text/plain"), "log": ("f.tlog", open(log, "rb").read(), "application/octet-stream")}
         assert api_client.post(f"{URL}/drones/V{k}/flights", headers=auth_headers, files=files).status_code == 200
     out = api_client.get(f"{URL}/vibration", headers=auth_headers).json()
-    assert [d["drone_id"] for d in out["drones"]] == ["V3", "V2", "V1", "V0"] and out["flagged"] == ["V3"]
+    assert [d["drone_id"] for d in out["drones"]] == ["V3", "V2", "V1", "V0"]
+    assert "flagged" not in out and "not shown to beat random inspection" in out["evidence"]      # position only, no flag line
+    one = api_client.get(f"{URL}/drones/V3/vibration", headers=auth_headers).json()
+    assert one["among_peers"]["rank"] == 1 and len(one["flights"]) == 1 and one["latest_vs_own"] is None
+
+
+def test_a_log_can_be_reviewed_without_a_mission_file(api_client, auth_headers, tmp_path):
+    """Public logs and most field logs come with no plan: the events, evidence quality and vibration are still reviewed,
+    signed and printable, and nothing is said to conform or deviate."""
+    from tests.unit.test_assurance_ulog import TRACK, write_ulog
+
+    log = write_ulog(str(tmp_path / "solo.ulg"), TRACK, nav_states=((0.0, 2), (20.0, 3)), vibration=[(1.0 + i, 5.0) for i in range(60)])
+    files = {"log": ("solo.ulg", open(log, "rb").read(), "application/octet-stream")}
+    r = api_client.post(f"{URL}/drones/SOLO/flights", headers=auth_headers, files=files)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    rep = body["report"]
+    assert body["verdict"] == "LOG_ONLY" and rep["episodes"] == [] and rep["input_files"]["plan"] is None
+    assert len(rep["input_files"]["log"]["sha256"]) == 64 and body["ledger_seq"] >= 1
+    assert rep["manual_control"][0]["mode"] == "POSCTL" and rep["vibration"]["end_margin_s"] == 10.0
+    assert any(e["kind"] == "mode" for e in rep["evidence_timeline"]) and rep["replay"]["planned"] == []
+    html = api_client.get(f"{URL}/flights/{body['id']}/report", headers=auth_headers).text
+    assert "reviewed on its own" in html and "does not name a cause" in html and "Flew the plan" not in html
+    listed = api_client.get(f"{URL}/flights", headers=auth_headers).json()
+    assert listed[0]["verdict"] == "LOG_ONLY" and listed[0]["max_off_route_m"] is None
 
 
 def test_a_review_states_the_quality_of_its_evidence(api_client, auth_headers, tmp_path):

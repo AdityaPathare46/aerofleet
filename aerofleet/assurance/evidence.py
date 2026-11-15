@@ -18,6 +18,7 @@ from aerofleet.assurance.reconcile import PILOT_MODES
 AUTO_MODES = {"AUTO", "MISSION", "RTL", "SMART_RTL", "LAND", "GUIDED", "HOLD", "TAKEOFF", "PRECLAND", "DESCEND"}
 LOW_BATTERY_PCT, CRITICAL_BATTERY_PCT = 20.0, 10.0
 MIN_SATS, MAX_HDOP = 6, 2.5
+MIN_HEALTH_S = 1.0         # shorter estimator complaints are common on healthy flights and are not listed
 LOOKBACK_S = 30.0          # events this long before an episode count as "around it"
 
 
@@ -40,7 +41,7 @@ def _spans(samples: Sequence[Tuple[float, bool]], t0: float) -> List[Tuple[float
     return out
 
 
-def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_changes=()) -> List[Dict[str, Any]]:
+def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_changes=(), health=()) -> List[Dict[str, Any]]:
     """All notable events in the flight, in time order."""
     if not track:
         return []
@@ -81,6 +82,10 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
         if b - a >= 2.0 and b >= 0:
             ev.append(_event(a, "gps", "warning", f"Poor GPS for {b - a:.0f} s (fewer than {MIN_SATS} satellites, no 3D fix, "
                              f"or HDOP above {MAX_HDOP:g})", end_s=round(b, 1)))
+
+    for a, b, what in health:                 # the autopilot's own reports, repeated with their times
+        if b - a >= MIN_HEALTH_S and b >= t0:
+            ev.append(_event(max(a - t0, 0.0), "sensor", "warning", f"{what} for {b - a:.0f} s", end_s=round(b - t0, 1)))
 
     labels = {"off_route": "Off the planned route", "off_altitude": "Off the planned height", "in_no_fly_zone": "Inside a no-fly zone"}
     for i, e in enumerate(report.get("episodes", [])):

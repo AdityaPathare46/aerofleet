@@ -1,0 +1,161 @@
+# AeroFleet demonstration guide
+
+A walk-through that shows each claim the paper makes about the tool (Section 6, Table 12), on real public PX4
+flights, with the questions an examiner is likely to ask. About 10 minutes.
+
+Last checked 12 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
+
+## 1. Set up (once)
+
+```bash
+export AEROFLEET_VENV=~/.venvs/aerofleet
+AEROFLEET_PX4_DATA="/Volumes/One Touch/AeroFleet_px4_data" $AEROFLEET_VENV/bin/python tools/seed_demo_fleet.py --reset
+./start.sh
+```
+
+The seed script loads 64 real flights of 8 public PX4 airframes into the fleet `demo`, through the same code as an
+upload in the app. It also writes files for the live steps into `AeroFleet_px4_data/demo_files/`:
+
+| File | What it is |
+|---|---|
+| `PX4-01_approved.params` | The real settings of drone PX4-01 in its first flight |
+| `PX4-01_changed.params` | The same, with the RC-loss failsafe switched off by the script (made up, to show the check) |
+| `SURVEY-A/B/C.waypoints` | Three made-up missions over Pune; A and B cross at the same height |
+| `../demo_fleet_key.json` | Presenter's key: which flight of each drone the uploader rated a crash |
+
+Then open http://localhost:1420, sign in, and type `demo` in the Fleet box. The app remembers the fleet.
+
+**What the demo data is, said plainly.** The eight drones come from the study's within-drone selection: each has
+one flight that its uploader rated a crash, and earlier flights. They are unrelated public airframes, not one
+operator's fleet, so no settings baseline is set for them. The tool is never given the crash ratings.
+
+## 2. The walk-through
+
+Each step names the paper claim it shows.
+
+### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
+
+1. In **Flight reviews**, open the newest flight of `PX4-08` (the one the uploader rated a crash).
+2. Show the timeline: mode changes with times, "pilot took control" where the pilot took over from an automatic
+   mode, and on some flights "Estimator rejected compass data for N s" (the autopilot's own report).
+3. Show **Evidence quality**: position rate, GPS satellites and HDOP, how height and time were measured.
+4. Point at the sentence under the timeline: the tool does not name a cause.
+
+Say: on 590 public crash logs, neither a fixed rule nor a trained model separated pilot-caused from aircraft-caused
+crashes better than chance (balanced accuracy 0.47 on held-out crashes). So the tool puts the facts in order and
+leaves the judgement to a person.
+
+### Step 2. Vibration against the drone's own history (within-drone finding, Q3)
+
+1. In **Vibration across the fleet**, press **History** on `PX4-01`.
+2. The orange point is the flight the uploader rated a crash. It is lower than all 7 earlier flights.
+3. Press **History** on `PX4-03`: there the last flight is higher than 5 of its 7 earlier flights.
+
+Say: this is the paper's within-drone result seen on single drones. Across 61 drones the flight before a crash did
+not vibrate more than the drone's own earlier flights (mean rank 0.48, p = 0.67). One drone goes up, another goes
+down. That is why the screen calls a rise "a reason to look, not a warning".
+
+Also point out: flights are ordered by GPS time, not upload date. In the archive 85 of 210 same-day "earlier"
+flights had been flown after the crash.
+
+### Step 3. Position among comparable drones, with no flag line (between-drone finding)
+
+1. Stay on the vibration table. Each drone has a bar, a position ("3 of 8") and a multiple of the group median.
+2. There is no "inspect" flag and no threshold.
+
+Say: between drones there was an association (mean rank 0.67 over 60 matched sets), but it weakened under stricter
+tests (Holm-adjusted p 0.016 as declared, 0.08 clustered by airframe, 0.45 with operator sites weighted equally),
+and measured against 412 non-crash drones a top-decile threshold gave a lift of only 1.77 [1.00, 2.60]. So the tool
+shows the position and draws no line. An earlier version flagged the top quarter; that was removed because it
+claimed a validation the study does not have.
+
+Also: the last 10 seconds of every flight are left out of the value, so an impact cannot make a drone look rough
+(the review shows both values).
+
+### Step 4. Settings drift (deterministic check)
+
+1. Type a new fleet name, for example `demo-settings`.
+2. **Set baseline** with `PX4-01_approved.params`.
+3. Enter drone id `PX4-01`, **Upload parameter file** with `PX4-01_changed.params`.
+4. The drone is blocked: the RC-loss failsafe (`NAV_RCL_ACT`) differs from the approved value.
+5. Write a reason and approve it, to show that an approval is recorded with who and why.
+
+Say: this is plain comparison code. The change in the second file was made by our script; the first file is real.
+
+### Step 5. Mission conflict and wind (pre-flight checks)
+
+1. **Will these missions conflict?** Choose `SURVEY-A`, `SURVEY-B` and `SURVEY-C` together, then **Check and fix**.
+2. A and B conflict at the crossing (about 1 m apart at the same height); the tool proposes a staggered start.
+3. Optional: **Rehearse in 3D**.
+
+Say: these missions are made up for the demonstration.
+
+### Step 6. Signed record (audit integrity)
+
+1. Scroll to **Signed record**, press **Check the record**: every review, baseline and approval is there, each
+   signed (Ed25519) and linked to the one before, with the SHA-256 of the uploaded file.
+2. Press **Export for an auditor**, then run the standalone checker on the file:
+   `python tools/verify_ledger.py <exported file>`
+3. Open the printable report of a flight review: it states whether it matches its entry in the record.
+
+Say: the record shows whether anything was altered afterwards. It does not prove the uploaded files were genuine.
+
+## 3. Questions an examiner may ask
+
+**Does the tool predict crashes?**
+No. The paper found no per-flight warning within a drone, and the between-drone association did not beat random
+inspection as a screening rule. The tool shows evidence and position; it gives no alarm.
+
+**Then what is the use of it?**
+Three things an operator can use today: (1) one place where a flight's events are in time order with the quality
+of the evidence, (2) settings checked against an approved configuration, (3) a signed history of who checked what.
+The study's main value is the negative results and the ten-item checklist for anyone who builds log diagnostics.
+
+**Why no machine learning in the tool, when the paper trains models?**
+The models were the object of study. They failed at attribution, and a published detector we re-implemented fell
+from AUC 0.94 to 0.63 once whole days were held out. Putting such a model in the tool would repeat the error the
+paper documents.
+
+**Why no AI or language model?**
+We tested language-model review panels. On 97 real crash cases no panel beat a plain rule, and one compromised
+reviewer changed between 16 and 89 of the 97 verdicts. So every number in the tool comes from fixed code.
+
+**The demo drones all crashed. Is that a fair fleet?**
+It is not a fleet and we do not present it as one. It is the study's within-drone sample, chosen because each drone
+has a rated crash and earlier flights, which is what the within-drone finding is about. A fair fleet needs a
+partner operator's logs; that is declared future work (prospective test and user study).
+
+**Who said those flights were crashes?**
+The uploader, in the public archive. The paper shows that label is weak: independent reviewers disagreed on whether
+a log contains the crash (the usual tilt rule misses 7 to 50% of multicopter crashes depending on the rater). The
+tool never uses the label.
+
+**What does "Estimator rejected compass data" mean? Is that a fault?**
+It is the autopilot's own report that a sensor reading disagreed with its estimate for that long. The tool repeats
+it with its time. It does not say why, and it is not counted as a fault.
+
+**Is the vibration value comparable between drones?**
+Only between drones whose logs report the same measurement, and only when at least four share it. Units differ
+between autopilots and firmware versions; the "Measured as" column shows which one.
+
+**Could someone tamper with the signed record?**
+Editing or deleting an entry breaks the chain and the check says where. Someone with the private key and the
+database could rebuild the whole chain; a copy of the heads file kept by someone else exposes that. Timestamps
+come from this computer's clock, and no trusted hardware is involved.
+
+**Has it been tested with real operators?**
+No. 660 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+has been done. The paper says so.
+
+**Does it work with ArduPilot?**
+Log reading, the timeline, settings and vibration work for ArduPilot `.tlog` and `.bin` logs and are covered by
+tests. The sensor-health lines are read from PX4 logs only. The study itself used PX4 logs only.
+
+## 4. Known limits of this demonstration
+
+- The demo fleet is 8 unrelated public airframes, all with a crash-rated flight. It shows the tool working on real
+  logs; it is not evidence for any claim.
+- The changed settings file and the three missions are made up by the seed script.
+- The local database location is set in `.env`. If it points into `/tmp`, macOS can wipe it; the signed record will
+  then (correctly) report that earlier entries are missing. Keep the database somewhere permanent before a demo.
+- The 3D view and the Quest headset path were not re-checked for this guide.

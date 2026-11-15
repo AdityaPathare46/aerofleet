@@ -189,7 +189,7 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
         out["report"] = row.report
     else:
         r = row.report
-        out.update({"flight_s": r["flight_s"], "max_off_route_m": r["horizontal_m"]["max"], "episodes": len(r["episodes"]),
+        out.update({"flight_s": r["flight_s"], "max_off_route_m": (r.get("horizontal_m") or {}).get("max"), "episodes": len(r["episodes"]),
                     "manual_control": len(r["manual_control"]),
                     "settings_changed_critical": (r.get("settings_changed_in_flight") or {}).get("safety_critical", 0)})
     return out
@@ -208,7 +208,7 @@ CLOCK = {"tlog": "the flight controller's time since boot (not the recording com
          "bin": "the flight controller's time since boot", "ulg": "time since the log started"}
 
 
-def _data_quality(flight, corridor_m: float, altitude_m: float) -> Dict[str, Any]:
+def _data_quality(flight, corridor_m: float, altitude_m: float, compared: bool = True) -> Dict[str, Any]:
     """How good the evidence behind a verdict is: sampling, GPS quality, height reference and clock.
 
     Deviations smaller than the tolerances are not reported, and positions are only as good as the GPS."""
@@ -227,16 +227,33 @@ def _data_quality(flight, corridor_m: float, altitude_m: float) -> Dict[str, Any
         "gps_hdop_worst": round(max(hdop), 2) if hdop else None,
         "height_reference": HEIGHT_REFERENCE.get(flight.position_source, flight.position_source),
         "clock": CLOCK.get(flight.format, flight.format),
-        "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_m},
-        "note": ("Positions are only as accurate as the GPS (typically a few metres horizontally, more vertically). "
-                 f"Deviations under {corridor_m:g} m sideways or {altitude_m:g} m in height are not reported."),
+        "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_m} if compared else None,
+        "note": ("Positions are only as accurate as the GPS (typically a few metres horizontally, more vertically)."
+                 + (f" Deviations under {corridor_m:g} m sideways or {altitude_m:g} m in height are not reported." if compared else "")),
     }
 
 
-def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: str, plan_name: str, log_bytes: bytes,
+def _log_only(flight) -> Dict[str, Any]:
+    """The review of a log with no mission file: nothing is compared, so nothing conforms or deviates."""
+    from aerofleet.assurance.reconcile import PILOT_MODES
+
+    t0, t_end = flight.track[0][0], flight.track[-1][0]
+    ends = [t for t, _ in flight.modes[1:]] + [t_end]
+    manual = [{"mode": m.upper(), "start_s": round(max(t - t0, 0.0), 1), "duration_s": round(max(0.0, min(until, t_end) - max(t, t0)), 1)}
+              for (t, m), until in zip(flight.modes, ends)
+              if m.upper() in PILOT_MODES and t <= t_end and until > t0 and min(until, t_end) - max(t, t0) >= 1.0]
+    return {"verdict": "LOG_ONLY", "tolerances": None, "horizontal_m": None, "vertical_m": None,
+            "max_height_m": {"flown": round(max(p[3] for p in flight.track), 1), "planned": None},
+            "time_off_route_s": None, "flight_s": round(t_end - t0, 1), "points": len(flight.track),
+            "episodes": [], "manual_control": manual,
+            "notes": ["No mission file was given, so the flight was not compared with a plan."]}
+
+
+def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text: Optional[str], plan_name: str, log_bytes: bytes,
                   log_name: str, city: Optional[str] = None, corridor_m: float = 30.0, altitude_m: float = 15.0,
                   plan_bytes: Optional[bytes] = None) -> Dict[str, Any]:
     """Compare one flight log with its approved mission, store the review, sign it, and return it.
+    With no mission (`plan_text` None) the log is reviewed on its own: events in time order, evidence quality, vibration.
 
     Shared by the assurance upload and POST /api/v1/missions/{id}/reconcile. Raises 422 on unusable files.
     """
@@ -252,7 +269,7 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     if len(log_bytes) > LOG_MAX:
         raise HTTPException(status_code=422, detail="The log file is larger than 200 MB")
     try:
-        mission = parse_waypoints(plan_text)
+        mission = parse_waypoints(plan_text) if plan_text is not None else None
     except PlanError as e:
         raise HTTPException(status_code=422, detail=str(e))
     zone_at = None
@@ -266,14 +283,18 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
         with os.fdopen(fd, "wb") as f:
             f.write(log_bytes)
         flight = read_flight_log(tmp)
-        report = reconcile(mission, flight.track, flight.modes, corridor_m=corridor_m, altitude_tol_m=altitude_m, zone_at=zone_at)
+        report = (reconcile(mission, flight.track, flight.modes, corridor_m=corridor_m, altitude_tol_m=altitude_m, zone_at=zone_at)
+                  if mission is not None else _log_only(flight))
     except (FlightLogError, PlanError) as e:
         raise HTTPException(status_code=422, detail=str(e))
     finally:
         os.unlink(tmp)
     report["log"] = flight.summary()
-    report["data_quality"] = _data_quality(flight, corridor_m, altitude_m)
-    report["input_files"] = {"plan": ledger.file_fingerprint(plan_name, plan_bytes if plan_bytes is not None else plan_text.encode()),
+    if mission is None:                       # the multirotor caveat is about the plan comparison, which was not made
+        report["log"]["notes"] = [n for n in report["log"]["notes"] if "planned-versus-flown" not in n]
+    report["data_quality"] = _data_quality(flight, corridor_m, altitude_m, compared=mission is not None)
+    report["input_files"] = {"plan": ledger.file_fingerprint(plan_name, plan_bytes if plan_bytes is not None else plan_text.encode())
+                             if mission is not None else None,
                              "log": ledger.file_fingerprint(log_name, log_bytes)}
     report["zones_checked"] = city
     changed = in_flight_changes(flight.param_changes, flight.track[0][0])
@@ -290,13 +311,14 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     step = max(1, len(flight.track) // REPLAY_POINTS + 1)
     t0 = flight.track[0][0]
     report["replay"] = {          # what the VR table and the desktop draw: the plan and a thinned copy of the flown track
-        "home": [round(mission.home[0], 7), round(mission.home[1], 7)],
-        "planned": [[round(la, 7), round(lo, 7), round(h, 1)] for la, lo, h in mission.path],
+        "home": [round(mission.home[0], 7), round(mission.home[1], 7)] if mission is not None
+                else [round(flight.track[0][1], 7), round(flight.track[0][2], 7)],
+        "planned": [[round(la, 7), round(lo, 7), round(h, 1)] for la, lo, h in mission.path] if mission is not None else [],
         "flown": [[round(t - t0, 1), round(la, 7), round(lo, 7), round(h, 1)] for t, la, lo, h in flight.track[::step]]}
     from aerofleet.assurance.vibration import flight_vibration
 
     report["vibration"] = flight_vibration(flight)
-    events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes)
+    events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes, flight.health)
     report["evidence_timeline"] = events
     report["around_episodes"] = around_episodes(report, events)
     row = FlightReview(drone_id=drone_id, fleet=fleet, verdict=report["verdict"], report=report,
@@ -312,30 +334,51 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
 
 
 @router.post("/fleets/{fleet}/drones/{drone_id}/flights")
-async def upload_flight(fleet: str, drone_id: str, plan: UploadFile = File(...), log: UploadFile = File(...),
+async def upload_flight(fleet: str, drone_id: str, plan: Optional[UploadFile] = File(None), log: UploadFile = File(...),
                         city: Optional[str] = Query(None, description="Check the track against this city's no-fly zones"),
                         corridor_m: float = Query(30.0, gt=0, le=1000), altitude_m: float = Query(15.0, gt=0, le=500),
                         user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Compare a flight log (.tlog / .bin) with the approved mission file (.waypoints).
+    """Review a flight log (.tlog / .bin / .ulg), compared with the approved mission file (.waypoints) when one is given.
 
     The parameters found in the log are also stored as the drone's newest snapshot, so the drift check
     covers the configuration it actually flew with. The review lists the log's events in time order (no cause is named).
     """
     from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
 
-    plan_bytes = await plan.read(MAX_BYTES + 1)
-    return review_flight(db, user, fleet, drone_id, plan_bytes.decode("utf-8", errors="replace"), plan.filename or "",
+    plan_bytes = await plan.read(MAX_BYTES + 1) if plan is not None else None
+    return review_flight(db, user, fleet, drone_id, plan_bytes.decode("utf-8", errors="replace") if plan_bytes is not None else None,
+                         (plan.filename or "") if plan is not None else "",
                          await log.read(LOG_MAX + 1), log.filename or "", city, corridor_m, altitude_m, plan_bytes=plan_bytes)
+
+
+def _vibration_rows(db: Session, fleet: str) -> List[Dict[str, Any]]:
+    rows = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
+    return [{"id": r.id, "drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report, "log_name": r.log_name}
+            for r in rows]
 
 
 @router.get("/fleets/{fleet}/vibration")
 async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Drones ranked by vibration over their recent reviewed flights (see aerofleet/assurance/vibration.py)."""
+    """Each drone's vibration over its recent reviewed flights and its place among comparable drones. Nothing is flagged
+    (see aerofleet/assurance/vibration.py for why)."""
     from aerofleet.assurance.vibration import fleet_ranking
 
     _check_id(fleet, "Fleet")
-    rows = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
-    return fleet_ranking({"drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report} for r in rows)
+    return fleet_ranking(_vibration_rows(db, fleet))
+
+
+@router.get("/fleets/{fleet}/drones/{drone_id}/vibration")
+async def drone_vibration(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
+                          db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """One drone's vibration flight by flight in the order flown, the newest flight against its own earlier flights,
+    and its place among comparable drones."""
+    from aerofleet.assurance.vibration import drone_history, fleet_ranking
+
+    _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
+    rows = _vibration_rows(db, fleet)
+    out = drone_history(rows, drone_id)
+    out["among_peers"] = next((d for d in fleet_ranking(rows)["drones"] if d["drone_id"] == drone_id), None)
+    return out
 
 
 class TroubleshootQuery(BaseModel):
@@ -358,8 +401,7 @@ async def troubleshoot(body: TroubleshootQuery, user: User = Depends(get_current
     if body.fleet and body.drone_id:
         _check_id(body.fleet, "Fleet")
         _check_id(body.drone_id, "Drone")
-        rows = db.query(FlightReview).filter(FlightReview.fleet == body.fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
-        ranking = fleet_ranking({"drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report} for r in rows)
+        ranking = fleet_ranking(_vibration_rows(db, body.fleet))
         mine = [d for d in ranking["drones"] if d["drone_id"] == body.drone_id]
         vibration = mine[0] if mine else {"drone_id": body.drone_id, "message": "No reviewed flight with a vibration value yet."}
     return search(body.description, body.limit, vibration)

@@ -38,6 +38,8 @@ class FlightLog:
     vibration: List[Tuple[float, float]] = field(default_factory=list)   # (t_s, worst axis) — units depend on the source
     vibration_source: Optional[str] = None                   # ardupilot_vibe | px4_imu | px4_estimator: compare only like with like
     notes: List[str] = field(default_factory=list)
+    start_utc: Optional[float] = None                        # GPS time (Unix s) at the first fix: when the flight was flown
+    health: List[Tuple[float, float, str]] = field(default_factory=list)   # (start_s, end_s, what) the autopilot itself reported
 
     @property
     def duration_s(self) -> float:
@@ -49,8 +51,8 @@ class FlightLog:
                                                            for t, m in self.modes],
                 "position_source": self.position_source, "vehicle": self.vehicle, "battery_samples": len(self.battery), "gps_samples": len(self.gps),
                 "param_changes": len(self.param_changes), "vibration_samples": len(self.vibration),
-                "vibration_source": self.vibration_source,
-                "notes": self.notes}
+                "vibration_source": self.vibration_source, "start_utc": self.start_utc,
+                "health_reports": len(self.health), "notes": self.notes}
 
 
 def _valid(lat: float, lon: float) -> bool:
@@ -120,6 +122,9 @@ def _read_ulog(path: str) -> FlightLog:
         hdop = g["hdop"] if "hdop" in g else [None] * len(sats)
         for t, n, h, fix in list(zip(g["timestamp"], sats, hdop, g["fix_type"]))[:MAX_POINTS]:
             log.gps.append((sec(t), int(n), float(h) if h is not None else None, int(fix)))
+        if "time_utc_usec" in g:          # GPS time, not the upload date: flights must be put in the order they were flown
+            utc = [float(u) / 1e6 for u, fix in zip(g["time_utc_usec"], g["fix_type"]) if fix >= 3 and u > 1e15]
+            log.start_utc = utc[0] if utc else None
         if not log.track:
             pts = [(sec(t), float(la), float(lo), float(al)) for t, la, lo, al, fix in
                    zip(g["timestamp"], lat, lon, alt, g["fix_type"]) if fix >= 3 and _valid(float(la), float(lo))][:MAX_POINTS]
@@ -149,11 +154,48 @@ def _read_ulog(path: str) -> FlightLog:
             if mode != last:
                 log.modes.append((sec(t), mode))
                 last = mode
+    if est is not None:
+        _px4_health(log, est, sec)
+    if st is not None and "failsafe" in st:
+        log.health += _runs(st["timestamp"], [bool(f) for f in st["failsafe"]], sec, "Autopilot in failsafe")
+    log.health.sort()
     if log.vehicle is not None and log.vehicle not in MULTIROTORS:
         log.notes.append(f"This log is from a {log.vehicle}; the planned-versus-flown comparison assumes a multirotor")
     if not log.track:
         raise FlightLogError("No position records found in the log — nothing to compare with a plan")
     return log
+
+
+EST_CHECKS = (("mag_test_ratio", "compass"), ("vel_test_ratio", "velocity"), ("pos_test_ratio", "position"),
+              ("hgt_test_ratio", "height"))
+MAX_HEALTH = 200
+
+
+def _runs(times, bad, sec, what: str) -> List[Tuple[float, float, str]]:
+    """(start, end, what) for each run of samples where `bad` is true."""
+    out, start = [], None
+    for t, b in zip(times, bad):
+        if b and start is None:
+            start = t
+        elif not b and start is not None:
+            out.append((sec(start), sec(t), what))
+            start = None
+    if start is not None:
+        out.append((sec(start), sec(times[-1]), what))
+    return out[:MAX_HEALTH]
+
+
+def _px4_health(log: FlightLog, est, sec) -> None:
+    """What the PX4 estimator itself reported: an internal fault, or sensor data it rejected (test ratio above 1).
+
+    These are the autopilot's own numbers, repeated with their times. They say a sensor reading disagreed with the
+    estimate; they do not say why."""
+    ts = est["timestamp"]
+    if "filter_fault_flags" in est:
+        log.health += _runs(ts, [int(f) != 0 for f in est["filter_fault_flags"]], sec, "Estimator reported an internal fault")
+    for field_name, label in EST_CHECKS:
+        if field_name in est:
+            log.health += _runs(ts, [float(r) > 1.0 for r in est[field_name]], sec, f"Estimator rejected {label} data")
 
 
 def read_flight_log(path: str) -> FlightLog:
@@ -224,6 +266,8 @@ def read_flight_log(path: str) -> FlightLog:
             if len(log.gps) < MAX_POINTS:
                 log.gps.append((t, int(m.satellites_visible), m.eph / 100.0 if m.eph != 65535 else None, int(m.fix_type)))
             continue
+        if kind == "GPS" and log.start_utc is None and getattr(m, "Status", 0) >= 3 and getattr(m, "GWk", 0):
+            log.start_utc = 315964800.0 + m.GWk * 604800.0 + m.GMS / 1000.0 - 18.0     # GPS week and ms to Unix time
         if kind == "GPS" and len(log.gps) < MAX_POINTS:
             hdop = getattr(m, "HDop", None)
             log.gps.append((t, int(getattr(m, "NSats", 0)), float(hdop) if hdop is not None else None, int(getattr(m, "Status", 0))))

@@ -33,24 +33,29 @@ def _table(head, rows) -> str:
 def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, Any]], matches_record: Optional[bool]) -> str:
     r = review["report"]
     deviated = review["verdict"] == "DEVIATED"
+    log_only = review["verdict"] == "LOG_ONLY"          # no mission file: events and evidence only
     tol = r["tolerances"]
     parts = [f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>Flight review {e(str(review['id']))} - {e(review['drone_id'])}</title><style>{CSS}</style></head><body>",
              f"<h1>Flight review: {e(review['drone_id'])}</h1>",
              f"<div class='muted'>Fleet {e(review['fleet'])} · review #{e(str(review['id']))} · uploaded {e(review['uploaded_at'])} UTC by {e(review['uploaded_by'])}</div>",
-             f"<p><span class='{'bad' if deviated else 'ok'}'>{'Deviated from the plan' if deviated else 'Flew the plan'}</span> — "
-             f"log <span class='mono'>{e(review.get('log_name') or '')}</span> compared with mission <span class='mono'>{e(review.get('plan_name') or '')}</span>.</p>",
+             (f"<p>Log <span class='mono'>{e(review.get('log_name') or '')}</span> reviewed on its own (no mission file to compare with).</p>"
+              if log_only else
+              f"<p><span class='{'bad' if deviated else 'ok'}'>{'Deviated from the plan' if deviated else 'Flew the plan'}</span> — "
+              f"log <span class='mono'>{e(review.get('log_name') or '')}</span> compared with mission <span class='mono'>{e(review.get('plan_name') or '')}</span>.</p>"),
              "<h2>Summary</h2>",
-             _table(["Measure", "Value"], [
-                 ["Flight time", e(_clock(r["flight_s"]))],
+             _table(["Measure", "Value"], [["Flight time", e(_clock(r["flight_s"]))]] + ([
+                 ["Highest flown", f"{e(str(r['max_height_m']['flown']))} m"]] if log_only else [
                  ["Furthest off route", f"{e(str(r['horizontal_m']['max']))} m (typical {e(str(r['horizontal_m']['median']))} m)"],
                  ["Furthest off planned height", f"{e(str(r['vertical_m']['max']))} m"],
-                 ["Highest flown / planned", f"{e(str(r['max_height_m']['flown']))} m / {e(str(r['max_height_m']['planned']))} m"],
+                 ["Highest flown / planned", f"{e(str(r['max_height_m']['flown']))} m / {e(str(r['max_height_m']['planned']))} m"]]) + [
                  ["Positions read from the log", e(str(r["log"]["points"]))],
                  ["No-fly zones checked for", e(str(r.get("zones_checked") or "not checked"))]])]
     events = [[e(KIND.get(x["kind"], x["kind"])), e(_clock(x["start_s"])), f"{e(str(x['duration_s']))} s",
                "—" if x["kind"] == "in_no_fly_zone" else f"{e(str(x['max_m']))} m", f"{e(str(x['lat']))}, {e(str(x['lon']))}"] for x in r["episodes"]]
-    events += [[f"Pilot took manual control ({e(m['mode'])})", e(_clock(m["start_s"])), f"{e(str(m['duration_s']))} s", "—", "—"] for m in r["manual_control"]]
-    parts += ["<h2>What happened</h2>", _table(["What", "Starting at", "For", "Worst", "Where"], events) or "<p>No excursions and no manual takeovers.</p>"]
+    events += [[f"Pilot {'flew in' if log_only else 'took manual control'} ({e(m['mode'])})", e(_clock(m["start_s"])),
+                f"{e(str(m['duration_s']))} s" if m.get("duration_s") is not None else "—", "—", "—"] for m in r["manual_control"]]
+    parts += ["<h2>What happened</h2>", _table(["What", "Starting at", "For", "Worst", "Where"], events)
+              or ("<p>No pilot-flown modes in the log.</p>" if log_only else "<p>No excursions and no manual takeovers.</p>")]
     changed = r.get("settings_changed_in_flight") or {"count": 0, "changes": []}
     if changed["count"]:
         rows = [[e(_clock(c["t_s"])), f"<span class='mono'>{e(c['name'])}</span>", e(SEVERITY.get(c["severity"], c["severity"])), e(f"{c['old']:g}"), e(f"{c['new']:g}")]
@@ -67,9 +72,17 @@ def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, 
         if around:
             parts += ["<p><b>Around each deviation</b> (from 30 s before it to its end):</p><ul>"
                       + "".join(f"<li>{e(KIND.get(a['kind'], a['kind']))} at {e(_clock(a['start_s']))}: {e(a['summary'])}</li>" for a in around)
-                      + "</ul>",
-                      "<p class='muted'>AeroFleet lists these facts but does not name a cause: on public PX4 crash logs a fixed rule "
-                      "could not reliably tell a pilot error from an aircraft fault, so that judgement is left to a person.</p>"]
+                      + "</ul>"]
+        parts.append("<p class='muted'>AeroFleet lists these facts but does not name a cause: on public PX4 crash logs neither a fixed rule "
+                     "nor a trained model could tell a pilot error from an aircraft fault better than chance, so that judgement is left to a person.</p>")
+    vib = r.get("vibration")
+    if vib:
+        parts += ["<h2>Vibration</h2>", _table(["Measure", "Value"], [
+            ["95th percentile", f"{e(str(vib['p95']))} ({e(str(vib.get('source') or ''))})"],
+            ["Left out at the end of the flight", f"{e(str(vib.get('end_margin_s', 0)))} s"],
+            ["Whole flight, for comparison", e(str(vib.get("p95_whole_flight", vib["p95"])))]]),
+            "<p class='muted'>The end of the flight is left out so that an impact cannot make the drone look rough. "
+            "This value is context for an inspector, not a prediction: no threshold has been validated.</p>"]
     dq = r.get("data_quality")
     if dq:
         def v(x, unit=""):
@@ -82,9 +95,10 @@ def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, 
             ["Times are", e(str(dq.get("clock") or ""))]]),
             f"<p class='muted'>{e(dq.get('note') or '')}</p>"]
     parts += ["<h2>How this was judged</h2>",
-              f"<p class='muted'>Counted as a deviation beyond {e(str(tol['corridor_m']))} m sideways or {e(str(tol['altitude_m']))} m in height for "
-              f"{e(str(tol['min_duration_s']))} s or more. These are the fleet's tolerances, not regulatory limits. Every figure was computed by "
-              "deterministic code from the uploaded files; no language model was involved. "
+              "<p class='muted'>" + ("" if log_only else
+              f"Counted as a deviation beyond {e(str(tol['corridor_m']))} m sideways or {e(str(tol['altitude_m']))} m in height for "
+              f"{e(str(tol['min_duration_s']))} s or more. These are the fleet's tolerances, not regulatory limits. ") +
+              "Every figure was computed by deterministic code from the uploaded files; no language model was involved. "
               + " ".join(e(n) + "." for n in list(r.get("notes", [])) + list(r["log"].get("notes", []))) + "</p>",
               "<h2>Signed record</h2>"]
     if ledger_entry is None:

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import type { RehearsalDto } from '../components/vr/Rehearsal'
+import SignInCard from '../components/SignInCard'
 
 // AeroFleet 2.0 — configuration drift from uploaded parameter files (no drone connected).
 // An operator sets the fleet's approved baseline; anyone signed in uploads a drone's parameter
@@ -21,13 +22,15 @@ interface Fleet { has_baseline: boolean; drones: FleetRow[]; summary: Record<Ver
 interface Baseline { param_count: number; source: string | null; set_by: string; set_at: string; approved: Record<string, { value: number; by: string; note: string }> }
 interface Check { id: string; title: string; status: string; detail: string; fix: string }
 interface Episode { kind: 'off_route' | 'off_altitude' | 'in_no_fly_zone'; start_s: number; duration_s: number; max_m: number; lat: number; lon: number }
-interface FlightRow { id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number; episodes: number; manual_control: number; settings_changed_critical?: number }
+type FlightVerdict = 'CONFORMED' | 'DEVIATED' | 'LOG_ONLY'   // LOG_ONLY: a log reviewed with no mission file
+interface FlightRow { id: number; drone_id: string; verdict: FlightVerdict; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number | null; episodes: number; manual_control: number; settings_changed_critical?: number }
 interface Review {
-  id: number; drone_id: string; verdict: 'CONFORMED' | 'DEVIATED'; plan_name: string | null; log_name: string | null
+  id: number; drone_id: string; verdict: FlightVerdict; plan_name: string | null; log_name: string | null
   report: {
-    tolerances: { corridor_m: number; altitude_m: number; min_duration_s: number }
-    horizontal_m: { max: number; p95: number; median: number }; vertical_m: { max: number }
-    max_height_m: { flown: number; planned: number }; time_off_route_s: number; flight_s: number
+    tolerances: { corridor_m: number; altitude_m: number; min_duration_s: number } | null
+    horizontal_m: { max: number; p95: number; median: number } | null; vertical_m: { max: number } | null
+    max_height_m: { flown: number; planned: number | null }; time_off_route_s: number | null; flight_s: number
+    vibration?: { p95: number; median: number; p95_whole_flight?: number; end_margin_s?: number; source: string; flown_at?: string } | null
     episodes: Episode[]; manual_control: { mode: string; start_s: number; duration_s: number }[]; notes: string[]
     log: { points: number; param_count: number; notes: string[] }
     settings_changed_in_flight?: { count: number; safety_critical: number; flight_limit: number; changes: { t_s: number; name: string; old: number; new: number; severity: Severity }[] }
@@ -37,13 +40,20 @@ interface Review {
   }
   drift?: Drift | null
 }
-interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; flag: boolean }
-interface Vibration { drones: VibrationRow[]; flagged: string[]; note: string }
+// No drone is flagged: the study did not show a vibration threshold to beat random inspection, so only the position is shown.
+interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; comparable: boolean; times_group_median: number | null }
+interface Vibration { drones: VibrationRow[]; evidence: string; note: string }
+interface VibFlight { review_id: number; p95: number; when: string; ordered_by: 'gps_time' | 'upload_time'; log_name: string | null }
+interface VibHistory {
+  drone_id: string; source?: string; flights: VibFlight[]; evidence: string; order_note?: string; message: string | null
+  latest_vs_own: { latest_p95: number; earlier_median: number; earlier_flights: number; higher_than: number; times_own_median: number | null } | null
+  among_peers: VibrationRow | null
+}
 interface CheckItem { cause: string; experts_found: string; mentioned: boolean; matched_words: string[]; checks: string[]; fixes: string[]; aerofleet_check: string }
 interface SimilarCase { title: string; url: string; score: number; expert_conclusion: string; cause: string; who_diagnosed: string; poster_confirmed_fix: string; flight_review_logs: string[] }
 interface Troubleshoot { checklist: CheckItem[]; similar_cases: SimilarCase[]; cases_searched: number; note: string; how_well_it_works: string; message?: string; this_drone_vibration?: Partial<VibrationRow> & { message?: string } }
 const VIB_SOURCE: Record<string, string> = { ardupilot_vibe: 'ArduPilot VIBE (m/s²)', px4_imu: 'PX4 accel vibration metric', px4_estimator: 'PX4 estimator vibration (older firmware)' }
-interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
+interface TimelineEvent { t_s: number; kind: 'mode' | 'setting' | 'battery' | 'gps' | 'sensor' | 'plan' | 'end'; level: 'warning' | 'notice' | 'info'; text: string }
 const LEVEL_COLOR: Record<TimelineEvent['level'], string> = { warning: 'var(--status-red)', notice: '#92400E', info: 'var(--text-secondary)' }
 interface Conflict { a: string; b: string; t_s: number; horizontal_m: number; vertical_m: number; duration_s: number }
 interface Deconflicted {
@@ -97,8 +107,9 @@ const when = (iso: string) => new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLo
 
 export default function FleetAssurancePage() {
   const { apiUrl, setVrFlight, setVrRehearsal, setActivePage } = useAppStore()
-  const [fleet, setFleet] = useState('default')
-  const [fleetDraft, setFleetDraft] = useState('default')   // applied on Enter or blur, not on every keystroke
+  const remembered = (() => { try { return localStorage.getItem('aerofleet_fleet') || 'default' } catch { return 'default' } })()
+  const [fleet, setFleet] = useState(remembered)             // the last fleet opened on this computer
+  const [fleetDraft, setFleetDraft] = useState(remembered)   // applied on Enter or blur, not on every keystroke
   const epoch = useRef(0)                                    // discards replies that belong to a previous fleet
   const [droneId, setDroneId] = useState('')
   const [baseline, setBaseline] = useState<Baseline | null>(null)
@@ -116,6 +127,7 @@ export default function FleetAssurancePage() {
   const [flightLog, setFlightLog] = useState<File | null>(null)
   const [flights, setFlights] = useState<FlightRow[]>([])
   const [vibration, setVibration] = useState<Vibration | null>(null)
+  const [history, setHistory] = useState<VibHistory | null>(null)
   const [review, setReview] = useState<Review | null>(null)
   const missionFiles = useRef<HTMLInputElement>(null)
   const [missions, setMissions] = useState<File[]>([])
@@ -131,10 +143,13 @@ export default function FleetAssurancePage() {
   const [symptom, setSymptom] = useState('')
   const [help, setHelp] = useState<Troubleshoot | null>(null)
   const [ledgerCheck, setLedgerCheck] = useState<LedgerCheck | null>(null)
+  const [needsAuth, setNeedsAuth] = useState(false)      // the API answered 401: show the sign-in card instead of an empty page
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
+  useEffect(() => { try { localStorage.setItem('aerofleet_fleet', fleet.trim() || 'default') } catch { /* private window */ } }, [fleet])
 
   const call = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
     const r = await fetch(base + path, { ...init, headers: { ...token(), ...(init?.headers || {}) } })
+    setNeedsAuth(r.status === 401)
     if (r.status === 401) throw new Error('Sign in to use fleet assurance.')
     if (r.status === 403) throw new Error('Only an operator can set the baseline or approve a change.')
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
@@ -154,7 +169,7 @@ export default function FleetAssurancePage() {
     setChecks(await call<Checks>(`/drones/${encodeURIComponent(id)}/checks`).catch(() => null))
   }, [call])
 
-  useEffect(() => { epoch.current += 1; setBaseline(null); setRows(null); setFlights([]); setVibration(null); setDrift(null); setChecks(null); setReview(null); refresh() }, [refresh])
+  useEffect(() => { epoch.current += 1; setBaseline(null); setRows(null); setFlights([]); setVibration(null); setHistory(null); setDrift(null); setChecks(null); setReview(null); refresh() }, [refresh])
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true); setError(null)
@@ -177,8 +192,8 @@ export default function FleetAssurancePage() {
   const compare = () => act(async () => {
     const id = droneId.trim()
     if (!id) throw new Error('Enter the drone id first.')
-    if (!plan || !flightLog) throw new Error('Choose both the mission file and the flight log.')
-    const body = new FormData(); body.append('plan', plan); body.append('log', flightLog)
+    if (!flightLog) throw new Error('Choose the flight log.')
+    const body = new FormData(); if (plan) body.append('plan', plan); body.append('log', flightLog)   // the mission file is optional
     const r = await call<Review>(`/drones/${encodeURIComponent(id)}/flights`, { method: 'POST', body })
     setReview(r); if (r.drift) setDrift(r.drift); setPlan(null); setFlightLog(null); await refresh()
   })
@@ -235,6 +250,7 @@ export default function FleetAssurancePage() {
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
     download(`flight-review-${id}`, await r.text(), '.html')
   })
+  const openHistory = (id: string) => act(async () => setHistory(await call<VibHistory>(`/drones/${encodeURIComponent(id)}/vibration`)))
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
@@ -246,9 +262,12 @@ export default function FleetAssurancePage() {
       <div>
         <h1 style={{ margin: 0, fontSize: 22 }}>Fleet Assurance</h1>
         <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
-          Upload a drone's parameter file to see which settings have drifted from the fleet's approved configuration. No drone needs to be connected.
+          Checks a fleet from the files you already have: settings against the approved configuration, each flight's events in time order,
+          and each drone's vibration against its own history and comparable drones. No drone needs to be connected, and no cause is named.
         </div>
       </div>
+
+      {needsAuth && <SignInCard apiUrl={apiUrl} reason="Fleet assurance keeps a signed record of who checked what, so it needs a signed-in user." onSignedIn={() => { setNeedsAuth(false); refresh() }} />}
 
       <div className="card" style={{ padding: 16, display: 'grid', gap: 12 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
@@ -273,13 +292,13 @@ export default function FleetAssurancePage() {
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.param, .parm or .params saved from Mission Planner, MAVProxy or QGroundControl</span>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 12 }}>
-          <b style={{ fontSize: 13 }}>Did it fly the plan?</b>
+          <b style={{ fontSize: 13 }}>Review a flight</b>
           <input ref={planFile} id="flight-plan-file" type="file" hidden onChange={(e) => { setPlan(e.target.files?.[0] ?? null); e.target.value = '' }} />
           <input ref={logFile} id="flight-log-file" type="file" hidden onChange={(e) => { setFlightLog(e.target.files?.[0] ?? null); e.target.value = '' }} />
-          <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Choose mission file'}</button>
+          <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Mission file (optional)'}</button>
           <button className="btn" disabled={busy} onClick={() => logFile.current?.click()}>{flightLog ? flightLog.name : 'Choose flight log'}</button>
-          <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !plan || !flightLog} onClick={compare}>Compare</button>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>.waypoints mission and a flight log (ArduPilot .tlog or .bin, PX4 .ulg), for the drone id above</span>
+          <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !flightLog} onClick={compare}>{plan ? 'Compare with plan' : 'Review log'}</button>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>A flight log (ArduPilot .tlog or .bin, PX4 .ulg) for the drone id above. Add the .waypoints mission to also check whether it flew the plan.</span>
         </div>
         {error && <div role="alert" style={{ color: 'var(--status-red)', fontSize: 13 }}>{error}</div>}
       </div>
@@ -351,14 +370,15 @@ export default function FleetAssurancePage() {
 
       {flights.length > 0 && (
         <div className="card" style={{ padding: 16 }} id="flight-list">
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>Flight reviews · {flights.filter((f) => f.verdict === 'DEVIATED').length} deviated of {flights.length}</div>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Flight reviews · latest {flights.length} · {flights.filter((f) => f.verdict === 'DEVIATED').length} deviated of {flights.filter((f) => f.verdict !== 'LOG_ONLY').length} compared with a plan</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Result</th><th>Flight time</th><th>Furthest off route</th><th>Excursions</th><th>Settings changed in flight</th><th>Reviewed</th><th /></tr></thead>
             <tbody>{flights.map((f) => (
               <tr key={f.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
                 <td style={{ padding: '6px 0', fontWeight: 600 }}>{f.drone_id}</td>
-                <td><Pill verdict={f.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={f.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} /></td>
-                <td>{clock(f.flight_s)}</td><td>{f.max_off_route_m} m</td><td>{f.episodes + f.manual_control}</td>
+                <td>{f.verdict === 'LOG_ONLY' ? <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Log only</span>
+                  : <Pill verdict={f.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={f.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />}</td>
+                <td>{clock(f.flight_s)}</td><td>{f.max_off_route_m == null ? '—' : `${f.max_off_route_m} m`}</td><td>{f.episodes + f.manual_control}</td>
                 <td style={{ color: f.settings_changed_critical ? 'var(--status-red)' : 'var(--text-muted)', fontWeight: f.settings_changed_critical ? 700 : 400 }}>{f.settings_changed_critical ? `${f.settings_changed_critical} safety-critical` : 'none'}</td><td>{when(f.uploaded_at)}</td>
                 <td><button className="btn" onClick={() => openReview(f.id)}>View</button></td>
               </tr>))}</tbody>
@@ -370,18 +390,25 @@ export default function FleetAssurancePage() {
         <div className="card" style={{ padding: 16, display: 'grid', gap: 10 }} id="flight-detail">
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 16 }}>{review.drone_id} · flight review</span>
-            <Pill verdict={review.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={review.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{review.log_name} against {review.plan_name}</span>
+            {review.verdict === 'LOG_ONLY' ? <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Log only · no plan to compare with</span>
+              : <Pill verdict={review.verdict === 'DEVIATED' ? 'BLOCK' : 'OK'} label={review.verdict === 'DEVIATED' ? 'Deviated' : 'Flew the plan'} />}
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{review.log_name}{review.verdict === 'LOG_ONLY' ? '' : ` against ${review.plan_name}`}</span>
             <button className="btn" id="btn-printable-report" disabled={busy} onClick={() => printable(review.id)} title="A self-contained page; open it and print to PDF">Printable report</button>
             <button className="btn" id="btn-show-vr" onClick={() => { setVrFlight({ fleet: fleet.trim() || 'default', id: review.id }); setActivePage('vr') }}
               title="Replay this flight on the VR table: plan against flown track, with the log's events; a paired headset follows">Show on the VR table</button>
           </div>
           <div style={{ fontSize: 13 }}>
-            Flight time {clock(review.report.flight_s)} · furthest off route <b>{review.report.horizontal_m.max} m</b> (typical {review.report.horizontal_m.median} m) ·
-            furthest off planned height <b>{review.report.vertical_m.max} m</b> · highest flown {review.report.max_height_m.flown} m against {review.report.max_height_m.planned} m planned
+            Flight time {clock(review.report.flight_s)}
+            {review.report.horizontal_m && review.report.vertical_m
+              ? <> · furthest off route <b>{review.report.horizontal_m.max} m</b> (typical {review.report.horizontal_m.median} m) ·
+                furthest off planned height <b>{review.report.vertical_m.max} m</b> · highest flown {review.report.max_height_m.flown} m against {review.report.max_height_m.planned} m planned</>
+              : <> · highest flown {review.report.max_height_m.flown} m</>}
+            {review.report.vibration && <> · vibration (95th pct.) <b>{fmt(review.report.vibration.p95)}</b>
+              {review.report.vibration.end_margin_s ? ` with the last ${review.report.vibration.end_margin_s} s left out` : ''}
+              {review.report.vibration.p95_whole_flight != null && review.report.vibration.p95_whole_flight !== review.report.vibration.p95 ? ` (whole flight ${fmt(review.report.vibration.p95_whole_flight)})` : ''}</>}
           </div>
           {review.report.episodes.length === 0 && review.report.manual_control.length === 0
-            ? <div style={{ fontSize: 13 }}>No excursions and no manual takeovers.</div>
+            ? <div style={{ fontSize: 13 }}>{review.verdict === 'LOG_ONLY' ? 'No pilot-flown modes in the log.' : 'No excursions and no manual takeovers.'}</div>
             : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>What happened</th><th>Starting at</th><th>For</th><th>Worst</th><th>Where</th></tr></thead>
@@ -393,7 +420,7 @@ export default function FleetAssurancePage() {
                     </tr>))}
                   {review.report.manual_control.map((m, i) => (
                     <tr key={`m${i}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
-                      <td style={{ padding: '6px 0', fontWeight: 600, color: '#92400E' }}>Pilot took manual control ({m.mode})</td>
+                      <td style={{ padding: '6px 0', fontWeight: 600, color: '#92400E' }}>{review.verdict === 'LOG_ONLY' ? 'Pilot flew in' : 'Pilot took manual control'} ({m.mode})</td>
                       <td>{clock(m.start_s)}</td><td>{m.duration_s} s</td><td>—</td><td>—</td>
                     </tr>))}
                 </tbody>
@@ -425,7 +452,7 @@ export default function FleetAssurancePage() {
           {review.report.evidence_timeline && review.report.evidence_timeline.length > 1 && (
             <div id="evidence-timeline" style={{ display: 'grid', gap: 6 }}>
               <div style={{ fontSize: 13 }}><b>Timeline from the log</b>
-                <span style={{ color: 'var(--text-secondary)' }}> — what happened and when. AeroFleet does not name a cause: on real crash logs a fixed rule could not reliably tell pilot error from an aircraft fault, so that call is yours.</span>
+                <span style={{ color: 'var(--text-secondary)' }}> — what happened and when. AeroFleet does not name a cause: on 590 public crash logs neither a fixed rule nor a trained model told pilot error from an aircraft fault better than chance, so that call is yours.</span>
               </div>
               {(review.report.around_episodes ?? []).map((a) => (
                 <div key={a.episode} style={{ fontSize: 13, padding: '6px 10px', borderLeft: '3px solid var(--status-red)', background: 'var(--bg-secondary, #F8FAFC)' }}>
@@ -449,7 +476,7 @@ export default function FleetAssurancePage() {
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Counted as a deviation beyond {review.report.tolerances.corridor_m} m sideways or {review.report.tolerances.altitude_m} m in height for {review.report.tolerances.min_duration_s} s or more; these are this fleet's tolerances, not regulatory limits.
+            {review.report.tolerances && <>Counted as a deviation beyond {review.report.tolerances.corridor_m} m sideways or {review.report.tolerances.altitude_m} m in height for {review.report.tolerances.min_duration_s} s or more; these are this fleet's tolerances, not regulatory limits.</>}
             {' '}{review.report.log.points} positions read from the log.{[...review.report.notes, ...review.report.log.notes].map((n) => ` ${n}.`)}
           </div>
         </div>
@@ -457,24 +484,67 @@ export default function FleetAssurancePage() {
 
       {vibration && vibration.drones.length > 0 && (
         <div className="card" style={{ padding: 16, display: 'grid', gap: 8 }} id="vibration-card">
-          <div style={{ fontWeight: 600 }}>Vibration across the fleet · {vibration.flagged.length} to inspect</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Each drone's vibration over its last few reviewed flights. In public PX4 logs, drones that later crashed were already
-            vibrating more on ordinary flights than comparable drones that did not (60 matched pairs). A flag means check mounting,
-            propellers and motors; it is not a crash prediction.
-          </div>
+          <div style={{ fontWeight: 600 }}>Vibration across the fleet</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{vibration.evidence}</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Vibration (95th pct.)</th><th>Rank</th><th>Measured as</th><th>Flights</th><th></th></tr></thead>
-            <tbody>{vibration.drones.map((d) => (
-              <tr key={`${d.source}-${d.drone_id}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
-                <td style={{ padding: '6px 0', fontWeight: 600 }}>{d.drone_id}</td>
-                <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(d.vibration_p95)}</td>
-                <td>{d.rank} of {d.group_size}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{VIB_SOURCE[d.source] ?? d.source}</td>
-                <td>{d.flights}</td>
-                <td>{d.flag ? <Pill verdict="REVIEW" label="Inspect" /> : d.group_size < 4 ? <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>too few to rank</span> : null}</td>
-              </tr>))}</tbody>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Vibration (95th pct.)</th><th style={{ width: '26%' }}>Against comparable drones</th><th>Position</th><th>Measured as</th><th>Flights</th><th /></tr></thead>
+            <tbody>{vibration.drones.map((d) => {
+              const top = Math.max(...vibration.drones.filter((x) => x.source === d.source).map((x) => x.vibration_p95))
+              return (
+                <tr key={`${d.source}-${d.drone_id}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                  <td style={{ padding: '6px 8px 6px 0', fontWeight: 600, whiteSpace: 'nowrap' }}>{d.drone_id}</td>
+                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(d.vibration_p95)}</td>
+                  <td style={{ paddingRight: 12 }}>{d.comparable
+                    ? <div title={`${d.times_group_median ?? '?'} × the group median`} style={{ height: 8, borderRadius: 4, background: 'var(--bg-secondary, #F1F5F9)' }}>
+                        <div style={{ width: `${top > 0 ? Math.max(2, 100 * d.vibration_p95 / top) : 0}%`, height: 8, borderRadius: 4, background: '#2a78d6' }} /></div>
+                    : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>fewer than 4 drones with this measurement</span>}</td>
+                  <td>{d.comparable ? <>{d.rank} of {d.group_size}{d.times_group_median != null ? ` · ${d.times_group_median}× median` : ''}</> : '—'}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{VIB_SOURCE[d.source] ?? d.source}</td>
+                  <td>{d.flights}</td>
+                  <td><button className="btn" onClick={() => openHistory(d.drone_id)}>History</button></td>
+                </tr>)})}</tbody>
           </table>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{vibration.note}</div>
+        </div>
+      )}
+
+      {history && (
+        <div className="card" style={{ padding: 16, display: 'grid', gap: 8 }} id="vibration-history">
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <span style={{ fontWeight: 600, flex: 1 }}>{history.drone_id} · vibration against its own earlier flights</span>
+            <button className="btn" onClick={() => setHistory(null)}>Close</button>
+          </div>
+          {history.flights.length > 0 && (() => {
+            const W = 640, H = 150, L = 62, B = 22, top = Math.max(...history.flights.map((f) => f.p95)) * 1.1 || 1
+            const x = (i: number) => L + (history.flights.length === 1 ? (W - L) / 2 : (i * (W - L - 12)) / (history.flights.length - 1))
+            const y = (v: number) => H - B - (v / top) * (H - B - 8)
+            const own = history.latest_vs_own?.earlier_median
+            const day = (t: string) => { const d = new Date(t); return isNaN(d.getTime()) ? t.slice(0, 10) : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) }
+            return (
+              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 760 }} role="img" aria-label="Vibration of each flight in the order flown">
+                <line x1={L} y1={H - B} x2={W} y2={H - B} stroke="#94A3B8" /><line x1={L} y1={8} x2={L} y2={H - B} stroke="#94A3B8" />
+                <text x={L - 6} y={y(top / 1.1) + 4} fontSize="10" textAnchor="end" fill="#64748B">{fmt(top / 1.1)}</text>
+                <text x={L - 6} y={H - B + 3} fontSize="10" textAnchor="end" fill="#64748B">0</text>
+                {own != null && <><line x1={L} y1={y(own)} x2={W} y2={y(own)} stroke="#1baf7a" strokeDasharray="5 4" />
+                  <text x={W - 4} y={y(own) - 4} fontSize="10" textAnchor="end" fill="#1baf7a">median of its earlier flights</text></>}
+                <polyline fill="none" stroke="#2a78d6" strokeWidth="1.5" points={history.flights.map((f, i) => `${x(i)},${y(f.p95)}`).join(' ')} />
+                {history.flights.map((f, i) => (
+                  <circle key={f.review_id} cx={x(i)} cy={y(f.p95)} r={i === history.flights.length - 1 ? 5 : 3.5} fill={i === history.flights.length - 1 ? '#eb6834' : '#2a78d6'}
+                    style={{ cursor: 'pointer' }} onClick={() => openReview(f.review_id)}>
+                    <title>{`${day(f.when)} · ${fmt(f.p95)} · ${f.log_name ?? ''} (click to open the review)`}</title></circle>))}
+                <text x={L} y={H - 6} fontSize="10" fill="#64748B">{day(history.flights[0].when)}</text>
+                <text x={W} y={H - 6} fontSize="10" textAnchor="end" fill="#64748B">{day(history.flights[history.flights.length - 1].when)} (newest, orange)</text>
+              </svg>)
+          })()}
+          {history.latest_vs_own && (
+            <div style={{ fontSize: 13 }}>
+              Newest flight <b>{fmt(history.latest_vs_own.latest_p95)}</b>: higher than <b>{history.latest_vs_own.higher_than} of its {history.latest_vs_own.earlier_flights}</b> earlier flights
+              {history.latest_vs_own.times_own_median != null ? ` (${history.latest_vs_own.times_own_median}× its own median of ${fmt(history.latest_vs_own.earlier_median)})` : ''}.
+              {history.among_peers?.comparable ? ` Among comparable drones: ${history.among_peers.rank} of ${history.among_peers.group_size}.` : ''}
+            </div>)}
+          {history.message && <div style={{ fontSize: 13 }}>{history.message}</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{history.evidence}</div>
+          {history.order_note && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{history.order_note}</div>}
         </div>
       )}
 
@@ -483,7 +553,7 @@ export default function FleetAssurancePage() {
           <div style={{ fontWeight: 600 }}>Something wrong with a drone? Describe it</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             You get a checklist in the order PX4 experts most often found each cause, with the causes your words mention marked, and
-            the most similar past crash threads to read. It is not a diagnosis. Enter the drone id above to add its vibration rank.
+            the most similar past crash threads to read. It is not a diagnosis. Enter the drone id above to add its vibration.
           </div>
         </div>
         <textarea id="troubleshoot-text" rows={3} value={symptom} onChange={(e) => setSymptom(e.target.value)} maxLength={4000}
@@ -509,7 +579,7 @@ export default function FleetAssurancePage() {
             {help.this_drone_vibration && (
               <div style={{ fontSize: 13 }}>
                 <b>This drone's vibration:</b>{' '}
-                {help.this_drone_vibration.message ?? `${fmt(help.this_drone_vibration.vibration_p95 ?? 0)}, rank ${help.this_drone_vibration.rank} of ${help.this_drone_vibration.group_size}${help.this_drone_vibration.flag ? ' (above the fleet upper quartile: inspect)' : ''}`}
+                {help.this_drone_vibration.message ?? `${fmt(help.this_drone_vibration.vibration_p95 ?? 0)}${help.this_drone_vibration.comparable ? `, ${help.this_drone_vibration.rank} of ${help.this_drone_vibration.group_size} among comparable drones` : ''} (context, not a prediction)`}
               </div>)}
             {help.similar_cases.length > 0 && (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>

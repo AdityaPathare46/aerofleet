@@ -34,3 +34,13 @@ def test_around_an_episode_lists_only_what_happened_near_it():
 def test_no_cause_is_named():
     ev = timeline(REPORT, TRACK, [(90.0, "AUTO")])
     assert all("cause" not in e for e in ev) and not any("cause" in e["text"].lower() for e in ev)
+
+
+def test_what_the_autopilot_reported_about_its_sensors_is_listed_with_its_time_and_no_cause():
+    from aerofleet.assurance.evidence import timeline
+
+    track = [(10.0 + i, 18.52, 73.85, 20.0) for i in range(60)]
+    health = [(25.0, 33.0, "Estimator rejected compass data"), (40.0, 40.4, "Estimator rejected height data")]
+    ev = [e for e in timeline({"episodes": []}, track, [], health=health) if e["kind"] == "sensor"]
+    assert len(ev) == 1 and ev[0]["t_s"] == 15.0 and ev[0]["text"] == "Estimator rejected compass data for 8 s"     # the 0.4 s one is noise
+    assert ev[0]["level"] == "warning" and ev[0]["end_s"] == 23.0
