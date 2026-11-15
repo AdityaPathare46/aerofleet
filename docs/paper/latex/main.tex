@@ -1,5 +1,6 @@
 \documentclass[preprint,12pt]{elsarticle}
-% Elsevier's official article class. Reference style: numbered (elsarticle-num).
+% Elsevier's official article class. Reference style: numbered in square brackets, in order of citation
+% (elsarticle-num), as the Accident Analysis & Prevention guide for authors asks.
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -23,7 +24,7 @@
 \graphicspath{{../figures/}{figures/}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
-\journal{Reliability Engineering \& System Safety}
+\journal{Accident Analysis \& Prevention}
 
 \begin{document}
 
@@ -41,10 +42,10 @@
 \author[a]{Piyush Bhamare}
 \cortext[cor1]{Corresponding author.}
 \affiliation[a]{organization={Department of Mechanical Engineering, COEP Technological University},
-            city={Pune}, country={India}}
+            addressline={Wellesley Road, Shivajinagar}, city={Pune}, postcode={411005}, state={Maharashtra}, country={India}}
 
 \begin{abstract}\small
-Flight logs are expected to show whether the pilot or the aircraft caused a drone crash, and which drones will fail next. We tested both on 590 crash logs from a 479,547-flight PX4 archive, declaring confirmatory tests in advance ($^\dagger$marks later exploratory analyses). A fixed rule reached 0.47 balanced accuracy on 112 held-out crashes (pass mark 0.70) and models stayed near chance, also on multicopters; a published log checker did no better. $^\dagger$A blind independent relabelling agreed with the uploaders no better than chance and was not recovered either, so label noise cannot be excluded. $^\dagger$Much apparent crash-detection skill came from the evaluation design: across 32 settings, AUC fell by 0.21 [0.06, 0.34], of which 0.06 came from grouping folds by vehicle, and a re-implemented published fault detector (short of its published accuracy) fell from AUC 0.94 to 0.63 once whole days were held out; before any fault existed it separated fault flights at 0.85 with flights held out, but 0.57 with days held out. $^\dagger$The tilt rule that usually fixes the crash moment misses roughly 7--50\% of crashes, depending on the rater, and pilot-rated logs show a tilt event half as often as aircraft-rated ones. Crash flights showed no warning against the drone's own earlier flights. Drones that later crashed vibrated more than matched drones ($^\dagger$$p=0.012$ by airframe; 0.076 with operator sites weighted equally), but vibration ranking did not clearly beat random inspection. We give a reporting checklist and an evidence-first assurance design.
+Flight logs are expected to show whether pilot or aircraft caused a drone crash, and which drones will fail next. We tested both on 590 crash logs from a 479,547-flight PX4 archive, declaring confirmatory tests in advance ($^\dagger$marks later exploratory analyses). A fixed rule reached 0.47 balanced accuracy on 112 held-out crashes (pass mark 0.70) and models stayed near chance, also on multicopters; a published log checker did no better. $^\dagger$A blind independent relabelling agreed with uploaders no better than chance and was not recovered either, so label noise cannot be excluded. $^\dagger$Much apparent crash-detection skill came from the evaluation design: across 32 settings, AUC fell by 0.21 [0.06, 0.34], of which 0.06 came from grouping folds by vehicle, and a re-implemented published fault detector (short of its published accuracy) fell from AUC 0.94 to 0.63 once whole days were held out; before any fault it separated fault flights at 0.85 with flights held out, but 0.57 with days held out. $^\dagger$The usual crash-moment tilt rule misses roughly 7--50\% of crashes, by rater, and pilot-rated logs show a tilt event half as often as aircraft-rated ones. Crash flights showed no warning against the drone's own earlier flights. Drones that later crashed vibrated more than matched drones ($^\dagger$$p=0.012$ by airframe; 0.076 with operator sites weighted equally), but vibration ranking did not clearly beat random inspection. We give a reporting checklist and an evidence-first assurance design.
 \end{abstract}
 
 \begin{keyword}
@@ -67,8 +68,8 @@ record available. Open-source log viewers, commercial fleet platforms and, more 
 language-model prototypes promise to turn that log into an answer: what failed, and whether the pilot or the aircraft
 was responsible \cite{duvvuru2025llm,silalahi2026droptc}.
 
-The question matters beyond engineering curiosity. In aviation safety science, accidents are recognized as systemic,
-multi-causal events involving human factors, environmental conditions and organizational influences \cite{wiegmann2003hfacs}.
+The question matters beyond engineering curiosity. In aviation safety science, accidents are recognised as systemic,
+multi-causal events involving human factors, environmental conditions and organisational influences \cite{wiegmann2003hfacs}.
 Commercial warranty claims, insurance settlements and regulatory filings nevertheless frequently compress these dynamics
 into a binary decision: whether the pilot or the aircraft was primarily responsible. An automatic verdict that looks
 objective can carry weight it has not earned. Fleet operators face a related but different question: not why one flight
@@ -85,7 +86,7 @@ flight that crashed (between-aircraft confounding). Public fault datasets are do
 \cite{keipour2021alfa,le2025rflymad,kabaoglu2026uavsead}, and accident statistics classify outcomes such as loss of
 control rather than causes visible in a log \cite{wild2016drone,aaib2024review}; neither resource tests
 whether real crash logs, evaluated under leakage-free and within-aircraft protocols, can support the attribution and
-prioritization decisions that operators actually need.
+prioritisation decisions that operators actually need.
 
 The central question this paper asks of the largest public archive of real autopilot logs, PX4 Flight Review
 \cite{meier2015px4,px4flightreview}, is: \textit{what evidentiary value can flight logs carry for a drone fleet
@@ -147,7 +148,7 @@ from partial degradation to failure \cite{petritoli2018reliability}, the view ou
 
 \paragraph{Accident analysis} Analyses of civil drone occurrences find equipment problems and loss of control
 prominent \cite{wild2016drone}. Human-factors frameworks for remotely piloted aircraft (such as the Human Factors
-Analysis and Classification System, HFACS) model mishaps as multi-causal sequences involving organizational influences,
+Analysis and Classification System, HFACS) model mishaps as multi-causal sequences involving organisational influences,
 environmental preconditions, and supervisory failures alongside direct operator actions \cite{wiegmann2003hfacs,tvaryanas2006hfacs}.
 In operational practice, post-incident reporting and warranty claims often collapse these complex systemic interactions into
 a single nominal party: pilot versus aircraft. Because such classifications depend heavily on the rater and framing,
@@ -232,12 +233,12 @@ Vehicle types & quadrotor 320, fixed wing 71, hexarotor 38 & quadrotor 19,890, f
 
 \subsection{Samples}
 Figure~\ref{fig:flow} and Table~\ref{tab:samples} show how each analysis sample was drawn. We evaluate two primary classification tasks: Task A (separating crash flights from normal flights) and Task B (binary attribution of crash responsibility between drone and pilot). We distinguish two distinct
-cohorts that each happen to number 148: (1) the leak-curve and attribution modeling sample of 148 crashes and 139 normal
+cohorts that each happen to number 148: (1) the leak-curve and attribution modelling sample of 148 crashes and 139 normal
 flights at $m=0$\,s (Section~\ref{sec:methods}), and (2) the expert community sample of 148 crash discussion threads on the
 PX4 forum (Section~\ref{sec:experts}). The attribution rule was evaluated on 205 crashes (93 development and 112 held-out).
 All 148 crashes entering the statistical attribution models are a strict complete-case subset of these 205 crashes (100\%
-overlap); 57 crashes were excluded from modeling because required ULog topics were unrecorded or the flight window before
-cut-off was shorter than 10\,s. In the leak-curve and attribution modeling sample, sample sizes across cut-off margins
+overlap); 57 crashes were excluded from modelling because required ULog topics were unrecorded or the flight window before
+cut-off was shorter than 10\,s. In the leak-curve and attribution modelling sample, sample sizes across cut-off margins
 $m \in \{0, 2, 5, 10, 20, 30\}$\,s reflect progressive attrition as flights with duration under 10\,s before cut-off are dropped:
 for Task A (crash vs.\ normal), 148 vs.\ 139 ($m=0$\,s), 142 vs.\ 137 ($m=2$\,s), 135 vs.\ 133 ($m=5$\,s), 114 vs.\ 130
 ($m=10$\,s), 100 vs.\ 128 ($m=20$\,s), and 89 vs.\ 124 ($m=30$\,s); for Task B (drone vs.\ pilot responsibility among crashes),
@@ -271,7 +272,7 @@ evaluated in the within-drone longitudinal model.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{fig_study_flow.png}
+\includegraphics[width=\textwidth]{fig_study_flow.pdf}
 \caption{From the public index to each analysis. Counts are logs unless stated.}
 \label{fig:flow}
 \end{figure}
@@ -459,14 +460,14 @@ Figure~\ref{fig:summary} shows the two main results at a glance, and Table~\ref{
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{fig_summary.png}
+\includegraphics[width=\textwidth]{fig_summary.pdf}
 \caption{The paper at a glance. (a) Apparent skill falls as evaluation gets stricter. Our features: flight-stratified folds, vehicle-grouped folds, the most conservative factorial setting, and the same drones' earlier flights (Table~\ref{tab:decomposition}, Section~\ref{sec:factorial}). FlightMD: whole log, last 10\,s removed, and the crash flight's mean rank against the drone's own earlier flights (Section~\ref{sec:flightmd}). Published LeNet-5 detector, re-implemented: random windows, flights held out, days held out (Section~\ref{sec:trained}). (b) Balanced accuracy of the pilot-or-aircraft tests against chance and the declared 0.70 pass mark (Sections~\ref{sec:attribution},~\ref{sec:experts}).}
 \label{fig:summary}
 \end{figure}
 
 {\footnotesize
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}p{0.43\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.07\textwidth}@{}}
-\caption{Main findings at a glance. ``Declared'': hypothesis and pass mark committed before the test ran; ``exploratory'': added after the declared protocol ($^\dagger$ in the text).}
+\caption{Main findings at a glance. ``Declared'': hypothesis and pass mark committed before the test ran; ``exploratory'': added after the declared protocol (marked $^\dagger$ where reported).}
 \label{tab:summary}\\
 \toprule
 Question & Finding & Evidence & Verdict & Section \\
@@ -525,7 +526,7 @@ Cross-validated logistic regression and depth-3 trees on the 148 modelled crashe
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.78\textwidth]{fig_sign_rates.png}
+\includegraphics[width=0.78\textwidth]{fig_sign_rates.pdf}
 \caption{How often each aircraft-fault sign fired in held-out crashes, by uploader label, and in normal flights.}
 \label{fig:signs}
 \end{figure}
@@ -590,7 +591,7 @@ Step & Evaluation protocol specification & Sample flights & ROC AUC [95\% CI] \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.72\textwidth]{fig_leak_curve.png}
+\includegraphics[width=0.72\textwidth]{fig_leak_curve.pdf}
 \caption{Cross-validated AUC on the constant subset ($n=213$ for crash vs.\ normal, $n=89$ for pilot vs.\ aircraft) as the end of the analysis window moves away from the crash moment. Bars: 95\% bootstrap confidence intervals.}
 \label{fig:leak}
 \end{figure}
@@ -683,7 +684,7 @@ $^\dagger$\emph{Screening value.} To test whether vibration could tell an operat
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.78\textwidth]{fig_within_between.png}
+\includegraphics[width=0.78\textwidth]{fig_within_between.pdf}
 \caption{Mean scaled rank of the crashed drone against its own earlier flights (top) and against matched drones
 without a recorded crash (bottom). 0.5 indicates no difference.}
 \label{fig:within}
@@ -793,7 +794,7 @@ Item & What to do & Why: what happened here without it \\
 5. Two-class expert ground truth & Validate against multi-coder independent diagnoses with reported agreement ($\kappa \ge 0.70$) & Uploader labels are contestable; report how well independent raters agree, for both pilot-fault and aircraft-fault cases (§\ref{sec:experts}). \\
 6. Operational base-rate calibration & Measure flag rates on held-out non-case units, then report exact Bayes PPV, lift and inspections per event at fleet base rates & At base rates of 1\% or less a high AUC still means many false alarms; assumed flag rates overstated lift here ($3.3\times$ assumed, $1.77\times$ measured; §\ref{sec:vibration}). \\
 7. Prospective protocol registration & Pre-specify hypotheses, sample funnels, features, models, seeds, and pass marks in version control & Guards against choosing analyses after seeing results, and makes exploratory additions visible (§\ref{sec:protocol}). \\
-8. Persistent open artifact deposit & Deposit raw logs, extraction code, and derived feature tables in public archives & Lets others check and repeat the analysis. \\
+8. Persistent open artefact deposit & Deposit raw logs, extraction code, and derived feature tables in public archives & Lets others check and repeat the analysis. \\
 9. Label audit$^\dagger$ & Check that each label class actually contains the event it names (e.g.\ share of logs with a crash-like signature, per class) & 61\% of crash-rated multicopter logs show no crash-like tilt, and the share differs by responsibility label (23\% vs 45\%), so a classifier could separate labels without learning cause (§\ref{sec:archivelabels}). \\
 10. Pre-onset baseline$^\dagger$ & Where onset is known, report the same classifier on data before the onset & In one injected-fault dataset, flight-style features reached AUC 0.75 before the fault with folds grouped by day, and the fault added nothing (§\ref{sec:rflymad}); how large this effect is elsewhere is unknown, which is why it should be reported. \\
 \bottomrule
@@ -856,13 +857,20 @@ Third, these logs support evidence review, not verdicts. No rule, model, publish
 Log-based diagnostics should therefore be evaluated with vehicle- and session-grouped folds, against each aircraft's own history and with flights ordered by GPS time, and fleet tools should present evidence rather than issue verdicts. The checklist in Table~\ref{tab:checklist} sets out these controls, and AeroFleet~2.0 implements the evidence-first design as an open-source tool.
 
 % ===================================================================
+\section*{CRediT authorship contribution statement}
+\textbf{Nagesh Chougule:} Supervision, Writing -- review \& editing.
+\textbf{Vibhav Ambardekar:} Investigation, Writing -- review \& editing.
+\textbf{Aditya Pathare:} Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation,
+Visualization, Writing -- original draft.
+\textbf{Atharv Waghmare:} Validation.
+% ROLES PENDING: Shreyash Pawar, Piyush Bhamare (no contribution reported; see authorship criteria)
+
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. The authors develop the open-source AeroFleet~2.0 tool described in Section~\ref{sec:tool}; it is not commercial.
 
-\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
-During the preparation of this work the authors used an AI assistant (Claude, Anthropic) to write analysis code, draft
-and revise text, and assist the recording of forum diagnoses. After using this tool, the authors reviewed and edited
-the content as needed and take full responsibility for the content of the published article.
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit
+sectors.
 
 \section*{Data availability}
 {\sloppy
@@ -871,9 +879,14 @@ Selection scripts, analysis code, the declared hypotheses with their commit hist
 \url{https://github.com/AdityaPathare46/aerofleet}; a DOI-archived release will be provided on acceptance. Raw logs
 are public on PX4 Flight Review and are referenced by identifier. The RflyMAD real flights were taken from the dataset's Kaggle copy (\texttt{xianglile/rflymad}) under its non-commercial terms and are not redistributed. Take-off locations used as an operator proxy were computed in memory and are neither stored nor released; only cluster sizes are reported. Returned review workbooks are not released; derived labels are.\par}
 
-\section*{Funding}
-This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit
-sectors.
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work the authors used an AI assistant (Claude, Anthropic) to write analysis code, draft
+and revise text, and assist the recording of forum diagnoses. After using this tool, the authors reviewed and edited
+the content as needed and take full responsibility for the content of the published article.
+
+\section*{Acknowledgements}
+We thank the independent reviewer, not an author, who relabelled crash logs and rated crash moments blind, and the
+PX4 community members whose public logs and forum diagnoses made this study possible.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}

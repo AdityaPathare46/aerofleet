@@ -90,6 +90,7 @@ saved_missions/*.json
 # Reports (generated)
 *.pdf
 !docs/*.pdf
+!docs/paper/figures/fig_*.pdf
 
 # Temporary Files
 tmp/

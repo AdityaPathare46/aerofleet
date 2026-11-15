@@ -1,6 +1,7 @@
 """Figures for the paper, from the committed result files only (no logs needed).
 
-    python3 research/px4_log_study/paper_figures.py OUT_DIR
+    python3 research/px4_log_study/paper_figures.py OUT_DIR            # PNG, 300 dpi
+    python3 research/px4_log_study/paper_figures.py OUT_DIR pdf        # vector PDF, as journals ask for charts
 """
 import csv
 import json
@@ -326,14 +327,17 @@ def summary(out):
 
 if __name__ == "__main__":
     out_dir = sys.argv[1]
+    ext = sys.argv[2] if len(sys.argv) > 2 else "png"      # savefig picks the format from the extension
+    if ext == "pdf":
+        plt.rcParams["pdf.fonttype"] = 42                  # embed fonts as TrueType, as Elsevier asks for vector art
     os.makedirs(out_dir, exist_ok=True)
-    leak_curve(os.path.join(out_dir, "fig_leak_curve.png"))
-    within_between(os.path.join(out_dir, "fig_within_between.png"))
-    forum_causes(os.path.join(out_dir, "fig_forum_causes.png"))
-    study_flow(os.path.join(out_dir, "fig_study_flow.png"))
-    sign_rates(os.path.join(out_dir, "fig_sign_rates.png"))
-    robustness(os.path.join(out_dir, "fig_robustness.png"))
-    summary(os.path.join(out_dir, "fig_summary.png"))
+    leak_curve(os.path.join(out_dir, f"fig_leak_curve.{ext}"))
+    within_between(os.path.join(out_dir, f"fig_within_between.{ext}"))
+    forum_causes(os.path.join(out_dir, f"fig_forum_causes.{ext}"))
+    study_flow(os.path.join(out_dir, f"fig_study_flow.{ext}"))
+    sign_rates(os.path.join(out_dir, f"fig_sign_rates.{ext}"))
+    robustness(os.path.join(out_dir, f"fig_robustness.{ext}"))
+    summary(os.path.join(out_dir, f"fig_summary.{ext}"))
     for f, fn in (("vib_p95", _within_ranks), ("tune_rms", _within_ranks)):
         print("within", f, np.round(_ci(fn(f)), 3), len(fn(f)))
     for f in ("vib_p95", "tune_rms"):

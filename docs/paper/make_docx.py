@@ -66,8 +66,9 @@ def prepare():
     authors = [a for a in re.findall(r"\\author\[[^\]]*\]\{([^}\\]+)", s)]
     email = re.search(r"\\ead\{([^}]+)\}", s).group(1)
     org = re.search(r"organization=\{([^}]+)\}", s).group(1)
-    city = re.search(r"city=\{([^}]+)\}", s).group(1)
-    country = re.search(r"country=\{([^}]+)\}", s).group(1)
+    opt = lambda k: (re.search(k + r"=\{([^}]+)\}", s) or [None, None])[1]          # noqa: E731
+    city = ", ".join(x for x in (opt("addressline"), " ".join(x for x in (opt("city"), opt("postcode")) if x), opt("state")) if x)
+    country = opt("country")
     abstract = s[s.index("\\begin{abstract}") + 16:s.index("\\end{abstract}")].strip()
     keywords = s[s.index("\\begin{keyword}") + 15:s.index("\\end{keyword}")].strip()
     keywords = "; ".join(k.strip() for k in keywords.split("\\sep"))
@@ -108,6 +109,8 @@ def prepare():
     body = re.sub(r"\\begin\{enumerate\}(.*?)\\end\{enumerate\}",        # labelled list (Q1-Q4) as plain paragraphs
                   lambda m: re.sub(r"\\item\[([^\]]+)\]\s*", r"\n\n\\textbf{\1} ", m.group(1)), body, flags=re.S)
     body = body.replace("\\FloatBarrier", "")
+    # the LaTeX uses vector PDF figures; Word cannot embed those, so take the PNG copies made from the same script
+    body = re.sub(r"(\\includegraphics(?:\[[^\]]*\])?\{fig_[a-z_]+)\.pdf\}", r"\1.png}", body)
 
     front = (f"\\begin{{center}}\n{', '.join(authors[:-1])} and {authors[-1]}\n\n"
              f"\\emph{{{org}, {city}, {country}}}\n\nCorresponding author: {authors[0]} ({email})\n\\end{{center}}\n\n"
