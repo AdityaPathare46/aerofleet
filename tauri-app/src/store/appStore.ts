@@ -133,7 +133,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
   // Navigation
-  activePage: 'assurance',
+  activePage: 'overview',            // the Overview opens a demonstration; Fleet Assurance is one click away
   setActivePage: (page) => set({ activePage: page }),
   vrFlight: null,
   setVrFlight: (f) => set({ vrFlight: f }),

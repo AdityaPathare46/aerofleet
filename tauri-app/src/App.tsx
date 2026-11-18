@@ -13,6 +13,7 @@ import ScenarioRunnerPage from './pages/ScenarioRunner'
 import KnowledgeBasePage from './pages/KnowledgeBase'
 import HardwarePanelPage from './pages/HardwarePanel'
 import FleetAssurancePage from './pages/FleetAssurance'
+import OverviewPage from './pages/Overview'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -25,6 +26,7 @@ import SetupWizard from './components/SetupWizard'
 
 // Icons (inline SVG)
 const Icons = {
+  Info:        () => <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 110-2 1 1 0 010 2z"/></svg>,
   Dashboard:   () => <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H2a1 1 0 01-1-1V2zm7 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V2zM1 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H2a1 1 0 01-1-1v-4zm7-1a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>,
   Mission:     () => <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.5 4.5a.5.5 0 00-1 0V8a.5.5 0 00.146.354l3 3a.5.5 0 00.708-.708L8.5 7.793V4.5z"/></svg>,
   Council:     () => <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 100-6 3 3 0 000 6zM5.216 14A2.238 2.238 0 015 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 005 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/></svg>,
@@ -39,6 +41,7 @@ const Icons = {
 }
 
 const PAGES = [
+  { id: 'overview',    label: 'Overview',           Icon: Icons.Info },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
   { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
   { id: 'mission',     label: 'Dispatch Console',   Icon: Icons.Mission },
@@ -60,6 +63,7 @@ const LEGACY_PAGES = ['dashboard', 'mission', 'council', 'incidents', 'policy', 
 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,
+  overview:   OverviewPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,

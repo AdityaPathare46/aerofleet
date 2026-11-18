@@ -3,7 +3,7 @@
 A walk-through that shows each claim the paper makes about the tool (Section 6, Table 12), on real public PX4
 flights, with the questions an examiner is likely to ask. About 10 minutes.
 
-Last checked 12 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
+Last checked 18 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
 
 ## 1. Set up (once)
 
@@ -23,7 +23,9 @@ upload in the app. It also writes files for the live steps into `AeroFleet_px4_d
 | `SURVEY-A/B/C.waypoints` | Three made-up missions over Pune; A and B cross at the same height |
 | `../demo_fleet_key.json` | Presenter's key: which flight of each drone the uploader rated a crash |
 
-Then open http://localhost:1420, sign in, and type `demo` in the Fleet box. The app remembers the fleet.
+Then open http://localhost:1420. The app opens on **Overview**. Sign in once (on the Fleet Assurance page); after that
+the Overview shows live counts of the demo fleet, and every "Open ..." button there jumps to the right section of the
+demo fleet.
 
 **What the demo data is, said plainly.** The eight drones come from the study's within-drone selection: each has
 one flight that its uploader rated a crash, and earlier flights. They are unrelated public airframes, not one
@@ -32,6 +34,22 @@ operator's fleet, so no settings baseline is set for them. The tool is never giv
 ## 2. The walk-through
 
 Each step names the paper claim it shows.
+
+### Step 0. The pitch (Overview page, about 3 minutes)
+
+Scroll the Overview from top to bottom; it is written to be read aloud.
+
+1. **What it is.** "Evidence, not verdicts": a ground-side tool that checks the settings, plans and logs an operator
+   already has, keeps a signed record, and never names a cause.
+2. **The problem.** Rules demand records (three years in the EU and UK; accident reports within 48 hours in India and
+   ten days in the US), while tools promise verdicts from logs. We tested whether logs can carry that weight.
+3. **What we found.** Six cards, each with its number and "So:" line saying what it means for an operator.
+4. **How the tool answers it.** Each design choice next to the finding it comes from; the buttons jump into the demo.
+5. **How it is used.** Before a flight, after a flight, over the fleet's life, when something goes wrong.
+6. **Benefits, measured results and what is not yet shown.** Read the yellow box out loud: it pre-empts the hardest
+   questions.
+
+Every number on that page is checked against the paper and the result files by `docs/paper/check_numbers.py`.
 
 ### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
 

@@ -1,5 +1,6 @@
 """Check that key numbers agree between the results files, the main text, the supplement, the highlights and the cover
-letter. Each check takes the value from a results JSON where one exists, then finds every occurrence of the quantity
+letter, and that every passage the app's Overview page quotes (tauri-app/src/lib/studyFacts.ts) is in its source.
+Each check takes the value from a results JSON where one exists, then finds every occurrence of the quantity
 in the documents (by a regex with one capture group) and flags any occurrence that differs from the expected
 rounding. Run after any edit:
 
@@ -65,9 +66,40 @@ CHECKS = [
 ]
 
 
+APP_FACTS = os.path.join(HERE, "..", "..", "tauri-app", "src", "lib", "studyFacts.ts")
+ROOT = os.path.join(HERE, "..", "..")
+
+
+def app_sources():
+    """Each `{ file: '...', text: '...' }` in the app's Overview facts must appear word for word in that file
+    (`main` and `supp` are the paper's main text and supplement; other paths are from the repository root)."""
+    if not os.path.exists(APP_FACTS):
+        return 0
+    src = open(APP_FACTS).read()
+    norm = lambda t: re.sub(r"\s+", " ", t)                                  # noqa: E731
+    bad, pairs = 0, re.findall(r"file:\s*'([^']+)',\s*text:\s*'((?:[^'\\]|\\.)*)'", src)
+    for f, t in pairs:
+        t = re.sub(r"\\(.)", r"\1", t)                                       # undo the TypeScript escapes
+        path = DOCS[f] if f in DOCS else os.path.join(ROOT, f)
+        ok = os.path.exists(path) and norm(t) in norm(open(path).read())
+        bad += not ok
+        if not ok:
+            print(f"FAIL  app fact not found in {f}: {t[:90]}")
+    # each finding's headline number must be one its own sources state
+    for block in re.split(r"\n  \{\n    id: ", src)[1:]:
+        big = re.search(r"big: '([^']+)'", block)
+        quotes = " ".join(re.sub(r"\\(.)", r"\1", t) for _, t in re.findall(r"file:\s*'([^']+)',\s*text:\s*'((?:[^'\\]|\\.)*)'", block))
+        missing = [n for n in re.findall(r"\d+(?:\.\d+)?", big.group(1)) if n not in quotes] if big else []
+        if missing:
+            bad += 1
+            print(f"FAIL  app headline {big.group(1)!r}: {missing} not in its sources")
+    print(f"{'OK ' if not bad else 'FAIL'}  app Overview facts: {len(pairs)} passages and every headline number checked against their sources")
+    return bad
+
+
 def main():
     text = {k: open(p).read() for k, p in DOCS.items() if os.path.exists(p)}
-    bad = 0
+    bad = app_sources()
     for name, want, rx in CHECKS:
         found = []
         for doc, t in text.items():
@@ -79,7 +111,7 @@ def main():
         status = "OK " if found and not wrong else ("MISS" if not found else "FAIL")
         bad += status != "OK "
         print(f"{status}  {name}: expected {want}; " + ", ".join(f"{d}:{l}={v}" for d, l, v in found))
-    print(f"\n{len(CHECKS) - bad} of {len(CHECKS)} checks agree")
+    print(f"\n{len(CHECKS) + 1 - bad} of {len(CHECKS) + 1} checks agree")
     sys.exit(1 if bad else 0)
 
 
