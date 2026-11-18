@@ -11,7 +11,9 @@ No fleet baseline is set: these are unrelated public drones, not one operator's 
 with one another would show differences that mean nothing. For the settings check the script writes two files for
 one drone into `<data>/demo_files/`: `<drone>_approved.params` (the settings in its first flight, unchanged) and
 `<drone>_changed.params` (the same with one failsafe switched off and one tuning value changed BY THIS SCRIPT, to show
-what the check reports). The presenter sets the first as the baseline of a fresh fleet and uploads the second.
+what the check reports). It then prepares the fleet `<fleet>-settings` with the first as its approved baseline and the
+second uploaded for that drone, because setting a baseline needs an operator account and the demo should not depend
+on one. The presenter can still repeat it by hand with an operator account.
 It also writes three made-up missions (`SURVEY-A/B/C.waypoints`; A and B cross) for the conflict and wind checks.
 
 What it is not: a test or a result. Nothing here is measured or claimed; it only loads data for a demonstration.
@@ -147,6 +149,36 @@ def main() -> None:
     print(f"Made-up missions for the conflict and wind checks: {', '.join(demo_missions(os.path.join(DATA, 'demo_files')))} (.waypoints)")
     if files:
         print(f"Settings files for the drift check: {files[0]} (approved), {files[1]} (changed: {files[2]})")
+        seed_settings_fleet(db, f"{a.fleet}-settings", files)
+
+
+def seed_settings_fleet(db, fleet: str, files) -> None:
+    """A fleet whose baseline is the approved file and whose drone has the changed file uploaded, as the app would
+    record it: baseline, then the settings check, both in the signed record."""
+    from aerofleet.api.routes.assurance import _drift
+    from aerofleet.assurance import ledger
+    from aerofleet.assurance.params import parse_param_bytes
+    from aerofleet.data.models.models import FleetBaseline, ParamSnapshot
+
+    approved, changed = (open(f, "rb").read() for f in files[:2])
+    drone = os.path.basename(files[1]).split("_")[0]
+    db.query(ParamSnapshot).filter(ParamSnapshot.fleet == fleet).delete()
+    db.query(FleetBaseline).filter(FleetBaseline.fleet == fleet).delete()
+    base = parse_param_bytes(approved)
+    db.add(FleetBaseline(fleet=fleet, params=base.params, approved={}, source=os.path.basename(files[0]),
+                         set_by=SEEDER.username, set_at=datetime.utcnow()))
+    ledger.append(db, "baseline", fleet, {"params": base.params, "source": os.path.basename(files[0]),
+                                          "input_file": ledger.file_fingerprint(os.path.basename(files[0]), approved)}, SEEDER.username)
+    parsed = parse_param_bytes(changed)
+    db.add(ParamSnapshot(drone_id=drone, fleet=fleet, params=parsed.params, file_format=parsed.format,
+                         filename=os.path.basename(files[1]), uploaded_by=SEEDER.username))
+    db.flush()
+    report = _drift(db, fleet, drone)
+    report["input_file"] = ledger.file_fingerprint(os.path.basename(files[1]), changed)
+    ledger.append(db, "drift", f"{fleet}/{drone}", report, SEEDER.username)
+    db.commit()
+    print(f"Fleet '{fleet}': baseline from {os.path.basename(files[0])}, {drone} uploaded with {os.path.basename(files[1])} "
+          f"-> {report['verdict']} ({', '.join(c['name'] for c in report['vs_baseline']['changes'])})")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np
 
+from aerofleet.assurance.public_reference import vehicle_kind, vibration_position
+
 RECENT_FLIGHTS = 5          # a drone's value: the median over its most recent reviewed flights
 MIN_GROUP = 4               # a position among peers is given only when at least this many drones share a measurement
 END_MARGIN_S = 10.0         # left out at the end of every flight (the study's crash-window margin)
@@ -68,6 +70,7 @@ def _flights(reviews: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
         v = (r.get("report") or {}).get("vibration")
         if v and v.get("source") and v.get("p95") is not None:
             out.append({"review_id": r.get("id"), "drone_id": r["drone_id"], "source": v["source"], "p95": v["p95"],
+                        "vehicle": ((r.get("report") or {}).get("log") or {}).get("vehicle"),
                         "when": v.get("flown_at") or r["created_at"], "ordered_by": "gps_time" if v.get("flown_at") else "upload_time",
                         "log_name": r.get("log_name")})
     return out
@@ -80,11 +83,15 @@ def fleet_ranking(reviews: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
         per[(f["drone_id"], f["source"])].append(f)
     drones = []
     for (drone, source), fl in per.items():
-        recent = [f["p95"] for f in sorted(fl, key=lambda f: f["when"], reverse=True)[:RECENT_FLIGHTS]]
-        drones.append({"drone_id": drone, "source": source, "flights": len(recent), "vibration_p95": _sig(median(recent))})
-    by_source: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        newest = sorted(fl, key=lambda f: f["when"], reverse=True)
+        recent = [f["p95"] for f in newest[:RECENT_FLIGHTS]]
+        value = _sig(median(recent))
+        drones.append({"drone_id": drone, "source": source, "flights": len(recent), "vibration_p95": value,
+                       "vehicle": vehicle_kind(newest[0]["vehicle"]), "public": vibration_position(source, newest[0]["vehicle"], value)})
+    # a fixed-wing and a multirotor vibrate differently even with the same sensor, so they are not ranked together
+    by_source: Dict[tuple, List[Dict[str, Any]]] = defaultdict(list)
     for d in drones:
-        by_source[d["source"]].append(d)
+        by_source[(d["source"], d["vehicle"])].append(d)
     for group in by_source.values():
         group.sort(key=lambda d: d["vibration_p95"], reverse=True)
         n = len(group)
@@ -93,11 +100,11 @@ def fleet_ranking(reviews: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
             d["rank"], d["group_size"] = i + 1, n
             d["comparable"] = n >= MIN_GROUP
             d["times_group_median"] = _sig(d["vibration_p95"] / mid, 3) if d["comparable"] and mid > 0 else None
-    out = sorted(drones, key=lambda d: (d["source"], d["rank"]))
+    out = sorted(drones, key=lambda d: (d["source"], d["vehicle"], d["rank"]))
     return {"drones": out, "evidence": EVIDENCE,
             "note": (f"Each drone's value is the median over its last {RECENT_FLIGHTS} reviewed flights, with the last "
-                     f"{END_MARGIN_S:g} s of each flight left out. Drones are compared only with drones whose logs report the "
-                     f"same measurement, and only when at least {MIN_GROUP} share it.")}
+                     f"{END_MARGIN_S:g} s of each flight left out. In this fleet, drones are compared only with drones of the same kind "
+                     f"(multirotor, fixed wing, ...) whose logs report the same measurement, and only when at least {MIN_GROUP} share it.")}
 
 
 def drone_history(reviews: Iterable[Dict[str, Any]], drone_id: str) -> Dict[str, Any]:
@@ -109,6 +116,9 @@ def drone_history(reviews: Iterable[Dict[str, Any]], drone_id: str) -> Dict[str,
     source = mine[-1]["source"]
     same = [f for f in mine if f["source"] == source]          # a firmware change can change the measurement
     latest, earlier = same[-1], same[:-1]
+    for f in same:
+        pos = vibration_position(source, f["vehicle"], f["p95"])
+        f["public_pct"] = pos["higher_than_pct"] if pos else None
     versus = None
     if len(earlier) >= MIN_OWN_FLIGHTS:
         base = median(f["p95"] for f in earlier)
@@ -117,6 +127,7 @@ def drone_history(reviews: Iterable[Dict[str, Any]], drone_id: str) -> Dict[str,
                   "times_own_median": _sig(latest["p95"] / base, 3) if base > 0 else None}
     upload_ordered = sum(1 for f in same if f["ordered_by"] == "upload_time")
     return {"drone_id": drone_id, "source": source, "flights": same, "latest_vs_own": versus, "evidence": OWN_EVIDENCE,
+            "latest_vs_public": vibration_position(source, latest["vehicle"], latest["p95"]),
             "order_note": ("Flights are in the order they were flown (GPS time)." if not upload_ordered else
                            f"{upload_ordered} of {len(same)} flights have no GPS time and are placed by upload time, "
                            "which may not be the order flown."),

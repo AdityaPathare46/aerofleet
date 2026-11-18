@@ -10,7 +10,10 @@ import SignInCard from '../components/SignInCard'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'TUNING' | 'INFO'
 type Verdict = 'BLOCK' | 'REVIEW' | 'OK' | 'NO_REFERENCE'
-interface Change { name: string; kind: 'changed' | 'added' | 'removed'; old: number | null; new: number | null; severity: Severity; approved: boolean }
+interface PublicSetting { same_value_pct: number; logs: number; most_common: string; most_common_pct: number; note: string }
+interface Change { name: string; kind: 'changed' | 'added' | 'removed'; old: number | null; new: number | null; severity: Severity; approved: boolean; public?: PublicSetting | null }
+// Where a value stands among public PX4 flights rated good or great (aerofleet/assurance/public_reference.py)
+interface PublicVib { higher_than_pct: number; flights: number; vehicles: number; median: number; source: string; vehicle: string; note: string }
 interface Side { verdict: Verdict; counts: Record<Severity, number>; changes: Change[] }
 interface Drift {
   drone_id: string; verdict: Verdict; decided_by: 'vs_baseline' | 'vs_previous' | null; param_count: number
@@ -39,15 +42,17 @@ interface Review {
     around_episodes?: { episode: number; kind: Episode['kind']; start_s: number; summary: string }[]
   }
   drift?: Drift | null
+  public_vibration?: PublicVib | null
 }
 // No drone is flagged: the study did not show a vibration threshold to beat random inspection, so only the position is shown.
-interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; comparable: boolean; times_group_median: number | null }
+interface VibrationRow { drone_id: string; source: string; flights: number; vibration_p95: number; rank: number; group_size: number; comparable: boolean; times_group_median: number | null; public?: PublicVib | null }
 interface Vibration { drones: VibrationRow[]; evidence: string; note: string }
-interface VibFlight { review_id: number; p95: number; when: string; ordered_by: 'gps_time' | 'upload_time'; log_name: string | null }
+interface VibFlight { review_id: number; p95: number; when: string; ordered_by: 'gps_time' | 'upload_time'; log_name: string | null; public_pct?: number | null }
 interface VibHistory {
   drone_id: string; source?: string; flights: VibFlight[]; evidence: string; order_note?: string; message: string | null
   latest_vs_own: { latest_p95: number; earlier_median: number; earlier_flights: number; higher_than: number; times_own_median: number | null } | null
   among_peers: VibrationRow | null
+  latest_vs_public?: PublicVib | null
 }
 interface CheckItem { cause: string; experts_found: string; mentioned: boolean; matched_words: string[]; checks: string[]; fixes: string[]; aerofleet_check: string }
 interface SimilarCase { title: string; url: string; score: number; expert_conclusion: string; cause: string; who_diagnosed: string; poster_confirmed_fix: string; flight_review_logs: string[] }
@@ -335,7 +340,7 @@ export default function FleetAssurancePage() {
           {side && side.changes.length > 0 && (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Setting</th><th>Kind</th><th>Approved value</th><th>On this drone</th><th /></tr></thead>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Setting</th><th>Kind</th><th>Approved value</th><th>On this drone</th><th title="How public PX4 flights rated good or great set this value">Public PX4 flights</th><th /></tr></thead>
                 <tbody>{side.changes.map((c) => (
                   <tr key={c.name} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
                     <td style={{ padding: '6px 0', fontFamily: 'var(--font-mono, monospace)', fontWeight: 600 }}>
@@ -343,12 +348,18 @@ export default function FleetAssurancePage() {
                     </td>
                     <td style={{ color: c.severity === 'CRITICAL' ? 'var(--status-red)' : c.severity === 'HIGH' ? '#92400E' : 'var(--text-secondary)', fontWeight: c.severity === 'CRITICAL' ? 700 : 400 }}>{SEVERITY_LABEL[c.severity]}</td>
                     <td>{fmt(c.old)}</td><td style={{ fontWeight: 600 }}>{c.kind === 'removed' ? 'missing' : fmt(c.new)}</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }} title={c.public?.note}>
+                      {c.public ? <><b style={{ color: c.public.same_value_pct < 10 ? 'var(--status-red)' : 'inherit' }}>{c.public.same_value_pct}%</b> use this value
+                        {c.public.most_common !== fmt(c.new) && <> · most use {c.public.most_common} ({c.public.most_common_pct}%)</>}</> : '—'}
+                    </td>
                     <td style={{ textAlign: 'right' }}>
                       {c.approved ? <span style={{ color: 'var(--status-green)', fontSize: 12, fontWeight: 600 }}>Approved</span>
                         : c.new !== null && baseline && (c.severity === 'CRITICAL' || c.severity === 'HIGH') && <button className="btn" disabled={busy} onClick={() => approve(c)}>Approve</button>}
                     </td>
                   </tr>))}</tbody>
               </table>
+              {side.changes.find((c) => c.public)?.public && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{side.changes.find((c) => c.public)?.public?.note}</div>)}
               {baseline && side.changes.some((c) => !c.approved && c.new !== null && (c.severity === 'CRITICAL' || c.severity === 'HIGH')) && (
                 <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Reason for approving (operators only; recorded with your name)
                   <input id="approval-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Bench drone, no RC receiver fitted" />
@@ -405,7 +416,8 @@ export default function FleetAssurancePage() {
               : <> · highest flown {review.report.max_height_m.flown} m</>}
             {review.report.vibration && <> · vibration (95th pct.) <b>{fmt(review.report.vibration.p95)}</b>
               {review.report.vibration.end_margin_s ? ` with the last ${review.report.vibration.end_margin_s} s left out` : ''}
-              {review.report.vibration.p95_whole_flight != null && review.report.vibration.p95_whole_flight !== review.report.vibration.p95 ? ` (whole flight ${fmt(review.report.vibration.p95_whole_flight)})` : ''}</>}
+              {review.report.vibration.p95_whole_flight != null && review.report.vibration.p95_whole_flight !== review.report.vibration.p95 ? ` (whole flight ${fmt(review.report.vibration.p95_whole_flight)})` : ''}
+              {review.public_vibration && <span title={review.public_vibration.note}>, <b>higher than {review.public_vibration.higher_than_pct}%</b> of {review.public_vibration.flights} public PX4 flights rated good or great</span>}</>}
           </div>
           {review.report.episodes.length === 0 && review.report.manual_control.length === 0
             ? <div style={{ fontSize: 13 }}>{review.verdict === 'LOG_ONLY' ? 'No pilot-flown modes in the log.' : 'No excursions and no manual takeovers.'}</div>
@@ -487,24 +499,28 @@ export default function FleetAssurancePage() {
           <div style={{ fontWeight: 600 }}>Vibration across the fleet</div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{vibration.evidence}</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Vibration (95th pct.)</th><th style={{ width: '26%' }}>Against comparable drones</th><th>Position</th><th>Measured as</th><th>Flights</th><th /></tr></thead>
+            <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Drone</th><th>Vibration (95th pct.)</th><th style={{ width: '24%' }} title="Share of public PX4 flights rated good or great, with the same measurement and kind of vehicle, that vibrated less">Against public PX4 flights</th><th>In this fleet</th><th>Measured as</th><th>Flights</th><th /></tr></thead>
             <tbody>{vibration.drones.map((d) => {
-              const top = Math.max(...vibration.drones.filter((x) => x.source === d.source).map((x) => x.vibration_p95))
               return (
                 <tr key={`${d.source}-${d.drone_id}`} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
                   <td style={{ padding: '6px 8px 6px 0', fontWeight: 600, whiteSpace: 'nowrap' }}>{d.drone_id}</td>
                   <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(d.vibration_p95)}</td>
-                  <td style={{ paddingRight: 12 }}>{d.comparable
-                    ? <div title={`${d.times_group_median ?? '?'} × the group median`} style={{ height: 8, borderRadius: 4, background: 'var(--bg-secondary, #F1F5F9)' }}>
-                        <div style={{ width: `${top > 0 ? Math.max(2, 100 * d.vibration_p95 / top) : 0}%`, height: 8, borderRadius: 4, background: '#2a78d6' }} /></div>
-                    : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>fewer than 4 drones with this measurement</span>}</td>
-                  <td>{d.comparable ? <>{d.rank} of {d.group_size}{d.times_group_median != null ? ` · ${d.times_group_median}× median` : ''}</> : '—'}</td>
+                  <td style={{ paddingRight: 12 }}>{d.public
+                    ? <div title={d.public.note} style={{ display: 'grid', gap: 2 }}>
+                        <div style={{ height: 8, borderRadius: 4, background: 'var(--bg-secondary, #F1F5F9)', position: 'relative' }}>
+                          <div style={{ width: `${Math.max(2, d.public.higher_than_pct)}%`, height: 8, borderRadius: 4, background: '#2a78d6' }} />
+                          <div style={{ position: 'absolute', left: '50%', top: -2, height: 12, borderLeft: '2px dashed #94A3B8' }} title="public median" />
+                        </div>
+                        <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>higher than {d.public.higher_than_pct}% of {d.public.flights}</span>
+                      </div>
+                    : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>no public reference for this measurement</span>}</td>
+                  <td>{d.comparable ? <>{d.rank} of {d.group_size}{d.times_group_median != null ? ` · ${d.times_group_median}× median` : ''}</> : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>fewer than 4 to compare</span>}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{VIB_SOURCE[d.source] ?? d.source}</td>
                   <td>{d.flights}</td>
                   <td><button className="btn" onClick={() => openHistory(d.drone_id)}>History</button></td>
                 </tr>)})}</tbody>
           </table>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{vibration.note}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{vibration.note} The public column compares each drone with real PX4 flights from the public Flight Review archive that their pilots rated good or great (dashed line: their median); it works for a fleet of any size. {vibration.drones.find((d) => d.public)?.public?.note}</div>
         </div>
       )}
 
@@ -515,10 +531,11 @@ export default function FleetAssurancePage() {
             <button className="btn" onClick={() => setHistory(null)}>Close</button>
           </div>
           {history.flights.length > 0 && (() => {
-            const W = 640, H = 150, L = 62, B = 22, top = Math.max(...history.flights.map((f) => f.p95)) * 1.1 || 1
+            const W = 640, H = 150, L = 62, B = 22, top = Math.max(...history.flights.map((f) => f.p95), history.latest_vs_public?.median ?? 0) * 1.1 || 1
             const x = (i: number) => L + (history.flights.length === 1 ? (W - L) / 2 : (i * (W - L - 12)) / (history.flights.length - 1))
             const y = (v: number) => H - B - (v / top) * (H - B - 8)
             const own = history.latest_vs_own?.earlier_median
+            const pub = history.latest_vs_public?.median
             const day = (t: string) => { const d = new Date(t); return isNaN(d.getTime()) ? t.slice(0, 10) : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) }
             return (
               <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 760 }} role="img" aria-label="Vibration of each flight in the order flown">
@@ -527,6 +544,8 @@ export default function FleetAssurancePage() {
                 <text x={L - 6} y={H - B + 3} fontSize="10" textAnchor="end" fill="#64748B">0</text>
                 {own != null && <><line x1={L} y1={y(own)} x2={W} y2={y(own)} stroke="#1baf7a" strokeDasharray="5 4" />
                   <text x={W - 4} y={y(own) - 4} fontSize="10" textAnchor="end" fill="#1baf7a">median of its earlier flights</text></>}
+                {pub != null && <><line x1={L} y1={y(pub)} x2={W} y2={y(pub)} stroke="#94A3B8" strokeDasharray="2 3" />
+                  <text x={(L + W) / 2} y={y(pub) - 4} fontSize="10" textAnchor="middle" fill="#64748B">median of public PX4 flights</text></>}
                 <polyline fill="none" stroke="#2a78d6" strokeWidth="1.5" points={history.flights.map((f, i) => `${x(i)},${y(f.p95)}`).join(' ')} />
                 {history.flights.map((f, i) => (
                   <circle key={f.review_id} cx={x(i)} cy={y(f.p95)} r={i === history.flights.length - 1 ? 5 : 3.5} fill={i === history.flights.length - 1 ? '#eb6834' : '#2a78d6'}
@@ -541,6 +560,11 @@ export default function FleetAssurancePage() {
               Newest flight <b>{fmt(history.latest_vs_own.latest_p95)}</b>: higher than <b>{history.latest_vs_own.higher_than} of its {history.latest_vs_own.earlier_flights}</b> earlier flights
               {history.latest_vs_own.times_own_median != null ? ` (${history.latest_vs_own.times_own_median}× its own median of ${fmt(history.latest_vs_own.earlier_median)})` : ''}.
               {history.among_peers?.comparable ? ` Among comparable drones: ${history.among_peers.rank} of ${history.among_peers.group_size}.` : ''}
+            </div>)}
+          {history.latest_vs_public && (
+            <div style={{ fontSize: 13 }} title={history.latest_vs_public.note}>
+              Against public PX4 flights rated good or great ({history.latest_vs_public.flights} flights, {history.latest_vs_public.vehicles} vehicles): the newest flight is
+              {' '}<b>higher than {history.latest_vs_public.higher_than_pct}%</b> of them.
             </div>)}
           {history.message && <div style={{ fontSize: 13 }}>{history.message}</div>}
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{history.evidence}</div>

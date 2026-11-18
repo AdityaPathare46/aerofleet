@@ -55,6 +55,12 @@ def _drift(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:
     baseline = db.get(FleetBaseline, fleet)
     report = drift_report(snaps[0].params, baseline.params if baseline else None,
                           snaps[1].params if len(snaps) > 1 else None, _approved_values(baseline))
+    from aerofleet.assurance.public_reference import setting_context
+
+    for side in ("vs_baseline", "vs_previous"):           # how public PX4 flights set each safety-critical value
+        for c in (report.get(side) or {}).get("changes", []):
+            if c.get("severity") == "CRITICAL":
+                c["public"] = setting_context(c["name"], c.get("new"))
     report.update({"drone_id": drone_id, "fleet": fleet, "snapshot_id": snaps[0].id, "filename": snaps[0].filename,
                    "uploaded_by": snaps[0].uploaded_by, "uploaded_at": snaps[0].created_at.isoformat(),
                    "baseline_set_at": baseline.set_at.isoformat() if baseline else None})
@@ -187,6 +193,10 @@ def _review(row: FlightReview, full: bool = True) -> Dict[str, Any]:
            "log_name": row.log_name, "uploaded_by": row.uploaded_by, "uploaded_at": row.created_at.isoformat()}
     if full:
         out["report"] = row.report
+        from aerofleet.assurance.public_reference import vibration_position
+
+        v = (row.report or {}).get("vibration") or {}
+        out["public_vibration"] = vibration_position(v.get("source"), ((row.report or {}).get("log") or {}).get("vehicle"), v.get("p95"))
     else:
         r = row.report
         out.update({"flight_s": r["flight_s"], "max_off_route_m": (r.get("horizontal_m") or {}).get("max"), "episodes": len(r["episodes"]),

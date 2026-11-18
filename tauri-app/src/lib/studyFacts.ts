@@ -25,6 +25,46 @@ export const STUDY = {
   from: [{ file: 'main', text: '590 crash logs from a 479,547-flight PX4 archive' }] as Source[],
 }
 
+// The public PX4 Flight Review archive, from the whole index down to what the study used (paper Section 3, Fig. 1).
+export interface ArchiveStep { id: string; big: string; count: number; label: string; note: string; from: Source[] }
+export const ARCHIVE: ArchiveStep[] = [
+  {
+    id: 'index',
+    big: '479,547', count: 479547, label: 'flight logs in the public archive',
+    note: 'Every log uploaded to PX4 Flight Review, as indexed on 20 October 2026.',
+    from: [{ file: 'main', text: 'index on 20 October 2026: 479,547 logs' }],
+  },
+  {
+    id: 'real',
+    big: '442,929', count: 442929, label: 'from real aircraft, not simulators',
+    note: 'Flown by 38,320 distinct vehicles.',
+    from: [{ file: 'main', text: 'of which 442,929 came from real hardware rather than simulation, from 38,320 distinct vehicle identifiers' }],
+  },
+  {
+    id: 'normal',
+    big: '21,112', count: 21112, label: 'real flights their pilots rated good or great',
+    note: 'The pool that comparison flights were drawn from.',
+    from: [{ file: 'main', text: 'Logs & 520 & 21,112' }],
+  },
+  {
+    id: 'crash',
+    big: '590', count: 590, label: 'logs rated a crash by the uploader',
+    note: '402 blamed on the aircraft and 188 on the pilot, by the uploader; 520 from real aircraft.',
+    from: [{ file: 'main', text: 'A total of 590 logs carry an uploader crash rating (402 aircraft-caused, 188 pilot-caused)' }],
+  },
+  {
+    id: 'forum',
+    big: '148', count: 148, label: 'crashes diagnosed by PX4 experts on the forum',
+    note: 'An independent second opinion on what went wrong.',
+    from: [{ file: 'main', text: 'Expert forum cases & 148 real crash threads' }],
+  },
+]
+export const BASE_RATE = {
+  big: '0.741%',
+  text: 'Only 284 of the 38,320 vehicles have a crash-rated log from real hardware. When crashes are this rare, even an accurate alarm raises far more false alarms than true ones.',
+  from: { file: 'supp', text: 'empirical vehicle crash base rate of 0.741\\% (284/38,320)' } as Source,
+}
+
 export const REGULATION: { where: string; rule: string; from: Source }[] = [
   { where: 'EU and UK', rule: 'Operators in the specific category keep records of operations, maintenance and personnel for at least three years.',
     from: { file: 'main', text: 'for at least three years' } },

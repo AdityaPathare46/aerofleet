@@ -56,3 +56,11 @@ def test_history_is_in_the_order_flown_not_the_order_uploaded():
 
 def test_no_vibration_no_entry():
     assert fleet_ranking([{"drone_id": "X", "created_at": "2026", "report": {"vibration": None}}])["drones"] == []
+
+
+def test_fixed_wing_and_multirotor_drones_are_not_ranked_together():
+    def r(d, p, veh):
+        return {"drone_id": d, "created_at": "2026-10-01", "report": {"vibration": {"p95": p, "source": "px4_estimator"}, "log": {"vehicle": veh}}}
+    rows = [r(f"M{i}", 1.0 + i, "quadcopter") for i in range(4)] + [r("FW1", 99.0, "fixed wing")]
+    out = {d["drone_id"]: d for d in fleet_ranking(rows)["drones"]}
+    assert out["M3"]["rank"] == 1 and out["M3"]["group_size"] == 4 and out["FW1"]["group_size"] == 1 and out["FW1"]["comparable"] is False

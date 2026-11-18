@@ -86,7 +86,7 @@ def app_sources():
         if not ok:
             print(f"FAIL  app fact not found in {f}: {t[:90]}")
     # each finding's headline number must be one its own sources state
-    for block in re.split(r"\n  \{\n    id: ", src)[1:]:
+    for block in re.split(r"\n  \{\n    id: ", src)[1:]:                 # FINDINGS and ARCHIVE entries
         big = re.search(r"big: '([^']+)'", block)
         quotes = " ".join(re.sub(r"\\(.)", r"\1", t) for _, t in re.findall(r"file:\s*'([^']+)',\s*text:\s*'((?:[^'\\]|\\.)*)'", block))
         missing = [n for n in re.findall(r"\d+(?:\.\d+)?", big.group(1)) if n not in quotes] if big else []

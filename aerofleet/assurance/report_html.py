@@ -80,7 +80,10 @@ def flight_review_html(review: Dict[str, Any], ledger_entry: Optional[Dict[str, 
         parts += ["<h2>Vibration</h2>", _table(["Measure", "Value"], [
             ["95th percentile", f"{e(str(vib['p95']))} ({e(str(vib.get('source') or ''))})"],
             ["Left out at the end of the flight", f"{e(str(vib.get('end_margin_s', 0)))} s"],
-            ["Whole flight, for comparison", e(str(vib.get("p95_whole_flight", vib["p95"])))]]),
+            ["Whole flight, for comparison", e(str(vib.get("p95_whole_flight", vib["p95"])))]]
+            + ([["Against public PX4 flights", f"higher than {e(str(review['public_vibration']['higher_than_pct']))}% of "
+                 f"{e(str(review['public_vibration']['flights']))} flights rated good or great "
+                 f"({e(str(review['public_vibration']['vehicles']))} vehicles)"]] if review.get("public_vibration") else [])),
             "<p class='muted'>The end of the flight is left out so that an impact cannot make the drone look rough. "
             "This value is context for an inspector, not a prediction: no threshold has been validated.</p>"]
     dq = r.get("data_quality")

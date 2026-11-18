@@ -3,7 +3,7 @@
 // docs/paper/check_numbers.py checks against the paper and the result files.
 import { useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { FINDINGS, NOT_YET, REGULATION, STUDY, TOOL_TESTS, type Finding } from '../lib/studyFacts'
+import { ARCHIVE, BASE_RATE, FINDINGS, NOT_YET, REGULATION, STUDY, TOOL_TESTS, type Finding } from '../lib/studyFacts'
 
 const BLUE = '#2a78d6', ORANGE = '#eb6834', GREEN = '#1baf7a'
 const DEMO_FLEET = 'demo'
@@ -59,6 +59,7 @@ const HOW: { finding: string; does: string; section: string; button: string }[] 
   { finding: 'Logs cannot assign blame', does: 'Each flight review lists the log\'s events in time order (mode changes, the pilot taking over, battery, GPS, what the autopilot reported about its sensors) with the quality of the evidence, and names no cause.', section: 'flight-list', button: 'Open a flight review' },
   { finding: 'No warning within a drone', does: 'Each drone\'s vibration flight by flight, in the order flown (GPS time, not upload date), with the newest flight against its own earlier ones, as context.', section: 'vibration-card', button: 'Open a drone\'s history' },
   { finding: 'Rough drones, weak screen', does: 'Each drone\'s position among drones with the same measurement, with no pass/fail line, and the study\'s evidence printed beside it. The last 10 s of each flight are left out so an impact cannot make a drone look rough.', section: 'vibration-card', button: 'Open the fleet view' },
+  { finding: 'Small fleets have nothing to compare with', does: 'Every flight and drone is also placed among real public PX4 flights that their pilots rated good or great, from vehicles that never crashed, and each safety-critical setting shows how often public PX4 flights use that value. This works from the first drone; the in-fleet comparison needs four.', section: 'vibration-card', button: 'Compare with public flights' },
   { finding: 'AI added errors; records are required', does: 'Fixed code only. Every baseline, approval, check and review is signed (Ed25519), chained and tied to the SHA-256 of the uploaded file, with a printable report and an export an auditor can verify without AeroFleet.', section: 'ledger-card', button: 'Check the signed record' },
 ]
 
@@ -103,7 +104,7 @@ export default function OverviewPage() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
           <button className="btn" style={{ background: '#fff', color: 'var(--accent)', fontWeight: 700 }} onClick={() => goTo()}>Open the demo fleet</button>
           <button className="btn" style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.6)' }}
-            onClick={() => document.getElementById('overview-findings')?.scrollIntoView({ behavior: 'smooth' })}>What the study found</button>
+            onClick={() => document.getElementById('overview-data')?.scrollIntoView({ behavior: 'smooth' })}>What the study found</button>
         </div>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
           <span>Reads files only, never contacts the aircraft</span><span>No AI in any decision</span><span>Open source</span>
@@ -129,7 +130,34 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 3. What the study found */}
+      {/* 3. Where the data comes from */}
+      <div className="card" style={card} id="overview-data">
+        <div style={kicker}>The data</div>
+        <h2 style={h2}>The largest public archive of real autopilot logs</h2>
+        <div style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--text-secondary)' }}>
+          PX4 Flight Review is where PX4 users upload their flight logs. We started from the whole archive and narrowed it to the
+          logs a crash question can use. Bars are on a log scale, so each step down is a factor of ten.
+        </div>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {ARCHIVE.map((a) => {
+            const share = Math.log10(a.count) / Math.log10(ARCHIVE[0].count)
+            return (
+              <div key={a.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(96px, 120px) 1fr', gap: 14, alignItems: 'center' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{a.big}</div>
+                <div style={{ display: 'grid', gap: 3 }}>
+                  <div style={{ height: 10, width: `${Math.max(4, 100 * share)}%`, borderRadius: 5, background: a.id === 'crash' ? ORANGE : BLUE }} />
+                  <div style={{ fontSize: 13 }}><b>{a.label}.</b> <span style={{ color: 'var(--text-secondary)' }}>{a.note}</span></div>
+                </div>
+              </div>)
+          })}
+        </div>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)' }}>
+          <span style={{ fontSize: 24, fontWeight: 700, color: ORANGE, fontVariantNumeric: 'tabular-nums' }}>{BASE_RATE.big}</span>
+          <span style={{ fontSize: 13, lineHeight: 1.5 }}>{BASE_RATE.text}</span>
+        </div>
+      </div>
+
+      {/* 4. What the study found */}
       <div className="card" style={card} id="overview-findings">
         <div style={kicker}>What we found · {STUDY.crashLogs} crash logs · {STUDY.logs}-log PX4 archive · tests declared before they were run</div>
         <h2 style={h2}>Six findings, each with what it means for an operator</h2>
@@ -148,7 +176,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 4. How the tool follows from the findings */}
+      {/* 5. How the tool follows from the findings */}
       <div className="card" style={card}>
         <div style={kicker}>How AeroFleet answers it</div>
         <h2 style={h2}>Each design choice comes from a finding</h2>
@@ -162,7 +190,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 5. How an operator uses it */}
+      {/* 6. How an operator uses it */}
       <div className="card" style={card}>
         <div style={kicker}>How it is used</div>
         <h2 style={h2}>One workflow, before and after every flight</h2>
@@ -179,7 +207,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 6. Benefits and evidence */}
+      {/* 7. Benefits and evidence */}
       <div style={grid(420)}>
         <div className="card" style={card}>
           <div style={kicker}>Who benefits</div>

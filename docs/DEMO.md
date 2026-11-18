@@ -92,13 +92,27 @@ Also: the last 10 seconds of every flight are left out of the value, so an impac
 
 ### Step 4. Settings drift (deterministic check)
 
-1. Type a new fleet name, for example `demo-settings`.
-2. **Set baseline** with `PX4-01_approved.params`.
-3. Enter drone id `PX4-01`, **Upload parameter file** with `PX4-01_changed.params`.
-4. The drone is blocked: the RC-loss failsafe (`NAV_RCL_ACT`) differs from the approved value.
-5. Write a reason and approve it, to show that an approval is recorded with who and why.
+1. Type `demo-settings` in the Fleet box (the seed script prepared it) and press **View** on `PX4-01`.
+2. The drone is marked Blocked: the RC-loss failsafe (`NAV_RCL_ACT`) is 0 where the approved value is 2.
+3. Point at the **Public PX4 flights** column: only 8% of public PX4 flights rated good or great switch it off; 86%
+   use 2. That is context from real flying, not a rule.
+4. With an operator account, write a reason and approve it, to show that an approval is recorded with who and why.
+   (Setting a baseline and approving need an operator account; the seed script sets the baseline so the demo
+   does not.)
 
 Say: this is plain comparison code. The change in the second file was made by our script; the first file is real.
+
+### Step 4b. Compared with the public archive (works for a fleet of one)
+
+1. Back in fleet `demo`, the vibration table's **Against public PX4 flights** column places each drone among real
+   public flights with the same measurement and kind of vehicle (multirotors with multirotors, fixed wing with fixed
+   wing). PX4-01 shows "no public reference": too few public flights of its kind to compare with, and it says so.
+2. Open a **History**: the grey dotted line is the median of public flights.
+3. Open any flight review: the summary line says where its vibration stands among public flights.
+
+Say: the in-fleet comparison needs four drones of the same kind; a small operator has none. The reference is 292
+public flights of 141 vehicles that never crashed, rated good or great by their pilots, read with the same code as
+an upload (`tools/build_public_reference.py`). It is a description, not a limit, and the screen says so.
 
 ### Step 5. Mission conflict and wind (pre-flight checks)
 
@@ -151,6 +165,12 @@ tool never uses the label.
 **What does "Estimator rejected compass data" mean? Is that a fault?**
 It is the autopilot's own report that a sensor reading disagreed with its estimate for that long. The tool repeats
 it with its time. It does not say why, and it is not counted as a fault.
+
+**Where does the "public PX4 flights" comparison come from? Is it a safety limit?**
+From the study's downloaded public logs: flights their pilots rated good or great, real hardware, vehicles with no
+crash-rated log, at most five per vehicle (292 flights, 141 vehicles). It is not a limit: in the study, vibration was
+not shown to beat random inspection, and settings did not differ between crashed and normal flights. It tells an
+operator what ordinary PX4 flying looks like.
 
 **Is the vibration value comparable between drones?**
 Only between drones whose logs report the same measurement, and only when at least four share it. Units differ
