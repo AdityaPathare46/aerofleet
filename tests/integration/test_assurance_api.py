@@ -375,3 +375,40 @@ def test_troubleshoot_matches_a_description_and_adds_the_drones_vibration(api_cl
     assert body["this_drone_vibration"]["drone_id"] == "D1"
     assert api_client.post("/api/v1/assurance/troubleshoot", json={"description": "x y z"}).status_code == 401
     assert api_client.post("/api/v1/assurance/troubleshoot", headers=auth_headers, json={"description": "ok", "fleet": "../x", "drone_id": "D1"}).status_code in (400, 422)
+
+
+def test_the_tamper_demonstration_catches_every_attack_and_leaves_the_record_intact(api_client, auth_headers, tmp_path):
+    for k in range(3):                                          # a few signed entries to attack
+        assert api_client.post(f"{URL}/drones/T{k}/flights", headers=auth_headers, files=_flight_files(tmp_path)).status_code == 200
+    before = api_client.get("/api/v1/assurance/ledger/verify", headers=auth_headers).json()
+    out = api_client.post("/api/v1/assurance/ledger/tamper-demo", headers=auth_headers).json()
+    names = [a["attack"] for a in out["attacks"]]
+    assert "Delete an entry from the middle" in names and "Rewrite an entry and re-sign it with another key" in names
+    assert out["all_caught"] and all(a["caught"] and a["problem"] for a in out["attacks"])
+    assert any("signature" in a["problem"] for a in out["attacks"] if "another key" in a["attack"])
+    after = api_client.get("/api/v1/assurance/ledger/verify", headers=auth_headers).json()
+    assert before["ok"] == after["ok"] and out["record_untouched"]["entries"] == after["entries"]
+
+
+@pytest.mark.parametrize("name,content,why", [
+    ("empty.ulg", b"", "empty"),
+    ("noise.ulg", bytes(range(256)) * 40, "not a log"),
+    ("text.ulg", b"QGC WPL 110\n0\t1\t0\t16\n", "a mission file renamed"),
+    ("photo.jpg", b"\xff\xd8\xff\xe0" + b"0" * 100, "wrong type"),
+])
+def test_damaged_or_wrong_files_get_a_clear_error_not_a_crash(api_client, auth_headers, name, content, why):
+    r = api_client.post(f"{URL}/drones/BAD/flights", headers=auth_headers, files={"log": (name, content, "application/octet-stream")})
+    assert r.status_code == 422, (why, r.status_code, r.text)
+    assert isinstance(r.json()["detail"], str) and len(r.json()["detail"]) > 10
+
+
+def test_a_log_cut_off_mid_flight_is_still_reviewed_from_what_survives(api_client, auth_headers, tmp_path):
+    """A crash can cut a log short. The part that was written is reviewed; nothing is invented for the rest."""
+    from tests.unit.test_assurance_ulog import TRACK, write_ulog
+
+    full = open(write_ulog(str(tmp_path / "full.ulg"), TRACK, vibration=[(1.0 + i, 5.0) for i in range(60)]), "rb").read()
+    cut = full[: int(len(full) * 0.7)]
+    r = api_client.post(f"{URL}/drones/CUT/flights", headers=auth_headers, files={"log": ("cut.ulg", cut, "application/octet-stream")})
+    assert r.status_code in (200, 422), r.text
+    if r.status_code == 200:
+        assert r.json()["report"]["flight_s"] <= 60 and r.json()["verdict"] == "LOG_ONLY"

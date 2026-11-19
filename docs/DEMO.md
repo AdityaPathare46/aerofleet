@@ -51,6 +51,13 @@ Scroll the Overview from top to bottom; it is written to be read aloud.
 
 Every number on that page is checked against the paper and the result files by `docs/paper/check_numbers.py`.
 
+### Step 0b. Proof (2 minutes)
+
+Open **Proof** and press *Recompute the results*: the paper's four headline results are recomputed from the
+committed data, each with the commit that declared the test and the later one that added its result. Then press
+*Run five attacks on a copy*: every attack on the signed record is caught and the real record is untouched. The hard
+questions and their answers are in `docs/VIVA.md`.
+
 ### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
 
 1. In **Flight reviews**, open the newest flight of `PX4-08` (the one the uploader rated a crash).

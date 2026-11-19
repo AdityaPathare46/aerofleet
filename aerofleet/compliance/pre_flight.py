@@ -27,8 +27,8 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from aerofleet.agents.compliance_report import compute_compliance_report, DomainStatus
-from aerofleet.agents.tools import AgentTools
+from aerofleet.compliance.report import compute_compliance_report, DomainStatus
+from aerofleet.compliance.flight_checks import AgentTools
 from aerofleet.city.airspace import AirspaceModel
 from aerofleet.city.registry import get_city_config
 from aerofleet.city.restricted_sites import PUNE_RESTRICTED_SITES, MUMBAI_RESTRICTED_SITES

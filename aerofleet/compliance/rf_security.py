@@ -21,8 +21,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List
 
-from aerofleet.agents.compliance_report import DomainStatus
-from aerofleet.agents.tools import AgentTools
+from aerofleet.compliance.report import DomainStatus
+from aerofleet.compliance.flight_checks import AgentTools
 from aerofleet.utils.logging import get_logger
 
 logger = get_logger(__name__)

@@ -5,6 +5,8 @@ Reading needs a signed-in user; setting a baseline or approving a change needs a
 """
 from __future__ import annotations
 
+import base64
+
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -581,6 +583,61 @@ async def ledger_head(user: User = Depends(get_current_active_user), db: Session
     return {"seq": last.seq if last else 0, "entry_hash": last.entry_hash if last else ledger.GENESIS,
             "created_at": last.created_at if last else None, "public_key_sha256": ledger.key_fingerprint(pem),
             "heads_file": str(ledger.heads_file())}
+
+
+@router.post("/ledger/tamper-demo")
+async def ledger_tamper_demo(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Show that the signed record catches tampering, without touching it: each attack is made on an in-memory copy of
+    the entries (and of one stored flight review), then checked with the same verifier as GET /ledger/verify."""
+    import copy
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    from aerofleet.data.models.models import AssuranceLedgerEntry
+
+    rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq).all()
+    entries = [ledger.to_dict(r) for r in rows]
+    if len(entries) < 3:
+        raise HTTPException(status_code=409, detail="The record needs at least 3 entries for the demonstration")
+    pem = ledger.public_key_pem()
+    mid = len(entries) // 2
+    review = db.query(FlightReview).order_by(FlightReview.id.desc()).first()
+
+    def attack(name: str, change: str, edit) -> Dict[str, Any]:
+        copy_ = copy.deepcopy(entries)
+        edit(copy_)
+        r = ledger.verify_entries(copy_, pem)
+        return {"attack": name, "change": change, "caught": not r["ok"], "problem": r["problem"]}
+
+    def resign_with_other_key(es):                          # someone rebuilds the chain without this install's key
+        other = Ed25519PrivateKey.generate()
+        e = es[mid]
+        e["created_by"] = "someone-else"
+        e["entry_hash"] = ledger._entry_hash(e["seq"], e["kind"], e["subject"], e["payload_sha256"], e["prev_hash"], e["created_at"], e["created_by"])
+        e["signature"] = base64.b64encode(other.sign(bytes.fromhex(e["entry_hash"]))).decode()
+
+    out = [
+        attack("Change who made a check", f"entry {entries[mid]['seq']}: user changed to 'someone-else'",
+               lambda es: es[mid].__setitem__("created_by", "someone-else")),
+        attack("Swap in a different result", f"entry {entries[mid]['seq']}: result fingerprint replaced",
+               lambda es: es[mid].__setitem__("payload_sha256", "0" * 64)),
+        attack("Delete an entry from the middle", f"entry {entries[mid]['seq']} removed", lambda es: es.pop(mid)),
+        attack("Rewrite an entry and re-sign it with another key", f"entry {entries[mid]['seq']}: changed, rehashed and signed with a new key",
+               resign_with_other_key),
+    ]
+    if review is not None:
+        edited = copy.deepcopy(review.report)
+        edited["flight_s"] = round(float(edited.get("flight_s") or 0) + 60, 1)
+        original_ok = ledger.payload_hash(review.report) in {e["payload_sha256"] for e in entries}
+        out.append({"attack": "Edit a stored flight review", "change": f"review #{review.id}: flight time changed by 60 s",
+                    "caught": original_ok and ledger.payload_hash(edited) not in {e["payload_sha256"] for e in entries},
+                    "problem": "The edited review no longer matches the fingerprint signed into the record "
+                               "(the printable report would say 'does NOT match')."})
+    untouched = ledger.verify_chain(db)
+    return {"attacks": out, "all_caught": all(a["caught"] for a in out), "record_untouched": untouched,
+            "note": "Each attack was made on a copy in memory; the stored record was not changed. What this cannot catch: "
+                    "a file edited before it was uploaded, or someone holding both the private key and the database (the "
+                    "heads file kept elsewhere is the defence against that)."}
 
 
 @router.get("/ledger/verify")

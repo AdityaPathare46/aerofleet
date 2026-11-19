@@ -869,7 +869,7 @@ def _air_hover(f: Facts) -> Outcome:
       "Record the drone's weight in the AeroFleet fleet registry (or enter it for this inspection) and weigh the aircraft ready-to-fly.",
       SRC_DRONE_RULES, "Nano ≤ 250 g, Micro ≤ 2 kg, Small ≤ 25 kg, Medium ≤ 150 kg, Large > 150 kg (AeroFleet compliance_report._airworthiness_domain)")
 def _air_dgca_category(f: Facts) -> Outcome:
-    from aerofleet.agents.compliance_report import _airworthiness_domain
+    from aerofleet.compliance.report import _airworthiness_domain
 
     if f.ctx.weight_kg is None:
         raise _Missing("drone weight not recorded in AeroFleet for this inspection")

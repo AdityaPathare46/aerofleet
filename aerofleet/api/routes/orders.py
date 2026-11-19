@@ -295,7 +295,7 @@ async def dispatch_order(
     # aerofleet/agents/compliance_report.py's own module docstring for why
     # this doesn't conflict with the CBF gate being the only decision
     # path). Every input here is already in memory; this adds no new I/O.
-    from aerofleet.agents.compliance_report import compute_compliance_report
+    from aerofleet.compliance.report import compute_compliance_report
 
     dispatched_drone = fleet.get_drone(candidate.drone_id)
     compliance_report = compute_compliance_report(

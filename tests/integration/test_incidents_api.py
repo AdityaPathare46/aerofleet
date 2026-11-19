@@ -13,6 +13,15 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture(autouse=True)
+def legacy_ai_workers(monkeypatch):
+    """Incident forensics belongs to the earlier prototype, whose background AI workers start only when asked for
+    (AEROFLEET_LEGACY_AI=1); these tests ask for them. Mock agents are used, so no model runs."""
+    import aerofleet.api.app as app_module
+
+    monkeypatch.setattr(app_module, "LEGACY_AI", True)
+
+
 def _create_order(client, headers, city="pune"):
     from aerofleet.fleet.state import get_fleet_state
 

@@ -271,8 +271,8 @@ export default function SettingsPage() {
         <div>
           <div className="page-title">Settings</div>
           <div className="page-subtitle">
-            LLM connection &middot; currently{' '}
-            <span className="text-accent">{current?.mode || llmConnectionMode}</span>
+            {showLegacy ? <>LLM connection (legacy screens only) &middot; currently{' '}
+              <span className="text-accent">{current?.mode || llmConnectionMode}</span></> : 'Screens and accounts'}
           </div>
         </div>
       </div>
@@ -297,7 +297,19 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {!showLegacy && (
+          <div className="card" style={{ padding: 16, display: 'grid', gap: 6 }} id="no-llm-note">
+            <b>Language models: none</b>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              AeroFleet 2.0 makes every check, number and verdict with fixed code, and no language model is configured or called.
+              The study behind it tested language-model review panels and found they added errors (the paper's Section 5.9).
+              Language-model settings from the earlier prototype appear only when legacy screens are switched on, and its
+              background AI workers start only when the server is run with AEROFLEET_LEGACY_AI=1.
+            </span>
+          </div>)}
+
         <div className="tabs">
+          {showLegacy && <>
           <button className={`tab ${activeTab === 'local_ollama' ? 'active' : ''}`} onClick={() => setActiveTab('local_ollama')}>
             Local Ollama
           </button>
@@ -307,6 +319,7 @@ export default function SettingsPage() {
           <button className={`tab ${activeTab === 'openrouter' ? 'active' : ''}`} onClick={() => setActiveTab('openrouter')}>
             API (OpenRouter)
           </button>
+          </>}
           {selfIsAdmin && (
             <button className={`tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
               Admin
@@ -314,7 +327,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {activeTab === 'local_ollama' && (
+        {showLegacy && activeTab === 'local_ollama' && (
           <div className="card">
             <div className="card__header">
               <span className="card__title">Local Ollama</span>
@@ -412,7 +425,7 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {activeTab === 'tailscale_ollama' && (
+        {showLegacy && activeTab === 'tailscale_ollama' && (
           <div className="card">
             <div className="card__header"><span className="card__title">Tailscale</span></div>
             <div className="form-group">
@@ -436,7 +449,7 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {activeTab === 'openrouter' && (
+        {showLegacy && activeTab === 'openrouter' && (
           <div className="card">
             <div className="card__header"><span className="card__title">API (OpenRouter)</span></div>
             <div className="form-group">

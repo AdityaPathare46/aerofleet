@@ -1,4 +1,5 @@
 """FastAPI application for the AeroFleet drone-dispatch REST API."""
+import os
 
 import uvicorn
 from fastapi import FastAPI
@@ -21,6 +22,7 @@ from aerofleet.agents.policy_review_worker import (
 )
 from aerofleet.api.rate_limit import limiter
 from aerofleet.api.routes import (
+    evidence,
     admin,
     agents,
     auth,
@@ -82,6 +84,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 
+LEGACY_AI = os.environ.get("AEROFLEET_LEGACY_AI", "").strip() == "1"
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
@@ -95,12 +100,15 @@ async def startup_event():
     hardware.start_background_redis_listener()
     if hardware.redis_bridge.redis_enabled:
         logger.info("Redis event relay active — telemetry fanout works across multiple workers")
-    start_background_explanation_worker()
-    logger.info("Council explanation worker started (async, never on the dispatch critical path)")
-    start_background_policy_review_worker()
-    logger.info("Policy review worker started (slow-cadence, human-approval-gated)")
-    start_background_incident_forensics_worker()
-    logger.info("Incident forensics worker started (auto-triggered, async, never on the decision path)")
+    # The language-model workers belong to the earlier dispatch prototype. AeroFleet 2.0 uses none, so they start only
+    # when asked for explicitly (AEROFLEET_LEGACY_AI=1), e.g. to rerun the paper's panel experiments.
+    if LEGACY_AI:
+        start_background_explanation_worker()
+        start_background_policy_review_worker()
+        start_background_incident_forensics_worker()
+        logger.info("Legacy AI workers started (AEROFLEET_LEGACY_AI=1): council explanations, policy review, incident forensics")
+    else:
+        logger.info("No language-model workers: AeroFleet 2.0 makes every decision with fixed code (legacy ones need AEROFLEET_LEGACY_AI=1)")
     start_background_fc_inspection_worker()
     logger.info("Flight-controller compliance inspection worker started")
 
@@ -143,6 +151,7 @@ app.include_router(registrations.router, prefix="/api/v1/fleet/registrations", t
 app.include_router(fleet.router, prefix="/api/v1/fleet", tags=["fleet"])
 app.include_router(cities.router, prefix="/api/v1/cities", tags=["cities"])
 app.include_router(geofence.router, prefix="/api/v1/geofence", tags=["geofence"])
+app.include_router(evidence.router, prefix="/api/v1/evidence", tags=["evidence"])
 app.include_router(agents.router, prefix="/api/v1/agents", tags=["agents"])
 # CBF safety gate
 app.include_router(safety.router, prefix="/api/v1/safety", tags=["safety"])

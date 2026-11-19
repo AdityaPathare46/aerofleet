@@ -14,6 +14,7 @@ import KnowledgeBasePage from './pages/KnowledgeBase'
 import HardwarePanelPage from './pages/HardwarePanel'
 import FleetAssurancePage from './pages/FleetAssurance'
 import OverviewPage from './pages/Overview'
+import ProofPage from './pages/Proof'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -42,6 +43,7 @@ const Icons = {
 
 const PAGES = [
   { id: 'overview',    label: 'Overview',           Icon: Icons.Info },
+  { id: 'proof',       label: 'Proof',              Icon: Icons.Policy },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
   { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
   { id: 'mission',     label: 'Dispatch Console',   Icon: Icons.Mission },
@@ -64,6 +66,7 @@ const LEGACY_PAGES = ['dashboard', 'mission', 'council', 'incidents', 'policy', 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,
   overview:   OverviewPage,
+  proof:      ProofPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,
