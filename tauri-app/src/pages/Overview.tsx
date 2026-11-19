@@ -16,6 +16,7 @@ function token(): Record<string, string> {
 function useGoTo() {
   const { setActivePage } = useAppStore()
   return (sectionId?: string) => {
+    if (sectionId?.startsWith('page:')) { setActivePage(sectionId.slice(5)); return }   // another screen, not a section
     try { localStorage.setItem('aerofleet_fleet', DEMO_FLEET) } catch { /* private window */ }
     setActivePage('assurance')
     if (!sectionId) return
@@ -64,7 +65,7 @@ const HOW: { finding: string; does: string; section: string; button: string }[] 
 ]
 
 const FLOW: { when: string; what: string[]; section: string }[] = [
-  { when: 'Before a flight', what: ['Settings against the fleet\'s approved configuration: a disabled failsafe marks the drone Blocked', 'Missions planned for the same time checked for conflicts, with a proposed fix', 'Battery against the forecast wind at cruise height'], section: 'deconflict-card' },
+  { when: 'Before a flight', what: ['Each planned route against red and yellow airspace and the 120 m limit (Route check)', 'Settings against the fleet\'s approved configuration: a disabled failsafe marks the drone Blocked', 'Missions planned for the same time checked for conflicts, with a proposed fix', 'Battery against the forecast wind at cruise height'], section: 'page:routes' },
   { when: 'After a flight', what: ['Upload the log, with the mission file if there is one', 'Events in time order, evidence quality, settings changed in flight', 'A signed, printable review'], section: 'flight-list' },
   { when: 'Over a fleet\'s life', what: ['Each drone\'s vibration against its own history', 'Its position among comparable drones', 'A tamper-evident record for the three-year retention rule'], section: 'vibration-card' },
   { when: 'When something goes wrong', what: ['Describe the problem in words', 'A checklist ordered by how often PX4 experts found each cause', 'The most similar past crash threads to read'], section: 'troubleshoot-card' },
@@ -107,7 +108,7 @@ export default function OverviewPage() {
             onClick={() => document.getElementById('overview-data')?.scrollIntoView({ behavior: 'smooth' })}>What the study found</button>
         </div>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-          <span>Reads files only, never contacts the aircraft</span><span>No AI in any decision</span><span>Open source</span>
+          <span>Never flies or commands a drone</span><span>No AI in any decision</span><span>Open source</span>
           {live && live.flights > 0 && <span style={{ fontWeight: 700, color: '#fff' }}>Live here: {live.drones} drones · {live.flights} real flights reviewed · {live.entries} signed record entries</span>}
         </div>
       </div>

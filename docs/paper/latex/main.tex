@@ -752,7 +752,7 @@ $^\dagger$Because language-model assistants are proposed for this task, we teste
 \section{Design implications for fleet assurance}
 \label{sec:tool}
 
-We built the findings into AeroFleet~2.0 (\url{https://github.com/AdityaPathare46/aerofleet}), an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads the flight logs and configuration files an operator already has, never contacts the aircraft and makes no automatic decisions. Table~\ref{tab:design} links each finding to a design choice.
+We built the findings into AeroFleet~2.0 (\url{https://github.com/AdityaPathare46/aerofleet}), an open-source, ground-side assurance tool for PX4 and ArduPilot fleets. It reads the flight logs and configuration files an operator already has, never contacts the aircraft in flight and makes no automatic decisions. Table~\ref{tab:design} links each finding to a design choice.
 
 Because logs did not separate pilot from aircraft causes (Q1--Q2), the tool lays out the events of a flight in time order, with the quality of each piece of evidence (GPS precision, sensor health, mode changes), and gives no pilot-or-aircraft verdict. Responding to the vibration finding (Q3), the tool shows each airframe's vibration over time and against comparable peers in the same fleet as context for an inspector, without a flag threshold presented as validated (measured against 412 non-crash drones, a top-decile threshold gave a lift of only $1.77\times$ [1.00, 2.60]), and it issues no per-flight crash alarms. Every review, approval and configuration check is added to a tamper-evident record, signed with Ed25519 and tied to SHA-256 digests of the original log files, so the history of each airframe can be checked later.
 

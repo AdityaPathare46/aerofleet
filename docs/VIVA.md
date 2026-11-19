@@ -25,6 +25,7 @@ record, and **never names a cause**.
 3. **Fleet Assurance**, fleet `demo`: a flight review (timeline, evidence quality), a drone's History, the public
    comparison column (3 min).
 4. Fleet `demo-settings`: the blocked failsafe and the public-flights column (1 min).
+4b. **Route check** ▸ *Try 5 demo missions*: one clear, one needing permission, two not permitted, one conflict (1 min).
 5. Settings page: "Language models: none" (30 s).
 
 If the app fails during the viva: the same numbers come from `python -m pytest -q --no-cov tests/unit/test_evidence.py`
@@ -162,9 +163,18 @@ five per vehicle, read with the tool's own code (`tools/build_public_reference.p
 and the screen says so. Its value: a small operator with one to three drones gets a comparison at all.
 
 **Q23. What does "Blocked" mean on the settings screen? Do you stop the drone?**
-No. AeroFleet never talks to an aircraft. "Blocked" is a status: a safety-critical setting (a failsafe, a geofence,
+No. AeroFleet never flies or commands an aircraft (the optional bench inspection on the Drone register page reads a
+flight controller's settings over USB and changes nothing). "Blocked" is a status: a safety-critical setting (a failsafe, a geofence,
 battery limits) differs from the fleet's approved configuration and nobody has approved the change. An operator can
 approve it with a written reason, and the approval is signed into the record.
+
+**Q23b. What is the map for? This used to be a delivery project.**
+The delivery dispatcher was dropped when the project was re-scoped; its screens are hidden as legacy. The map is now a
+pre-flight **Route check**: load the missions planned for a period and each route is checked against red and yellow
+airspace, the 120 m limit, and the other planned routes, then signed into the record. *Honest limit:* the zones are
+our approximations from the Drone Rules 2021 distances around known airports and military sites in Pune and Mumbai,
+not the official Digital Sky map (which cannot be queried automatically), and the screen says so; a route outside
+those cities is reported "not checked", never "clear". *Show:* Route check ▸ *Try 5 demo missions*.
 
 **Q24. How do you know the planned-versus-flown check works?**
 We injected known deviations into 40 real PX4 flights: it found 36 of 40 sideways deviations of 35 m and 39 of 40

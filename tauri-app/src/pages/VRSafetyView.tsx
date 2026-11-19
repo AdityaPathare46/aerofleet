@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei'
 import { createXRStore, useXR, XR } from '@react-three/xr'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
+import { useLegacyVisible } from '../lib/policy'
 import { Diorama, toLocal } from '../components/vr/geo'
 import { AltitudeRuler, Ceilings, Depots, ScaleAndNorth, Streets, Table, Zones } from '../components/vr/Airspace'
 import { Buildings } from '../components/vr/Buildings'
@@ -169,7 +170,9 @@ export default function VRSafetyView() {
   const [needsAuth, setNeedsAuth] = useState(false)
   const [authNonce, setAuthNonce] = useState(0)
 
-  const [mode, setMode] = useState<Mode>(vrRehearsal ? 'rehearsal' : vrFlight ? 'flight' : 'live')
+  // The simulated live swarm belongs to the earlier dispatch prototype: shown only with legacy screens on.
+  const showLegacy = useLegacyVisible()
+  const [mode, setMode] = useState<Mode>(vrRehearsal ? 'rehearsal' : vrFlight ? 'flight' : showLegacy ? 'live' : 'flight')
   const [flight, setFlight] = useState<FlightReplayDto | null>(null)
   const [flightT, setFlightT] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -304,7 +307,7 @@ export default function VRSafetyView() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button className={`btn ${mode === 'live' ? 'btn--primary' : ''}`} onClick={() => setMode('live')}>Live swarm</button>
+            {showLegacy && <button className={`btn ${mode === 'live' ? 'btn--primary' : ''}`} onClick={() => setMode('live')}>Live swarm (legacy)</button>}
             <button className={`btn ${mode === 'flight' ? 'btn--primary' : ''}`} id="btn-flight-replay" disabled={!vrFlight}
               title={vrFlight ? `Flight review #${vrFlight.id} (fleet ${vrFlight.fleet})` : 'Open a flight review in Fleet Assurance and choose "Show on the VR table"'}
               onClick={() => setMode('flight')}>Flight replay</button>
@@ -348,7 +351,17 @@ export default function VRSafetyView() {
               </span>
             </div>
           )}
-          <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+          {mode === 'flight' && !vrFlight && (
+            <div className="card" style={{ margin: '24px', padding: 20, display: 'grid', gap: 8, maxWidth: 720 }} id="vr-empty">
+              <b>Nothing to show on the table yet</b>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                The 3D table replays a reviewed flight (the plan against what was flown, with the log's events where they happened) or
+                rehearses planned missions on one clock before anyone flies. Open a flight review in <b>Fleet Assurance</b> and choose
+                <b> Show on the VR table</b>, or check missions in <b>Fleet Assurance ▸ Will these missions conflict?</b> and choose
+                <b> Rehearse in 3D</b>. On a Quest 3, open this page in the Quest Browser (docs/VR_QUEST3_GUIDE.md).
+              </span>
+            </div>)}
+          <div style={{ flex: 1, minHeight: 0, position: 'relative', display: mode === 'flight' && !vrFlight ? 'none' : undefined }}>
             <Canvas
               camera={{ position: [0, 1.12, 1.55], fov: 42, near: 0.01, far: 60 }}
               gl={{ antialias: true, alpha: true }}

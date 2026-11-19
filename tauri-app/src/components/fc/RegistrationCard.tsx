@@ -17,7 +17,7 @@ interface Registration {
 
 const TONE: Record<Registration['status'], string> = { NONE: 'red', RECORDED: 'yellow', VERIFIED: 'green' }
 const MEANING: Record<Registration['status'], string> = {
-  NONE: 'No UIN on file — dispatch flags this drone and the inspection fails the UIN check.',
+  NONE: 'No UIN on file — the drone cannot fly legally in India, and the inspection fails the UIN check.',
   RECORDED: 'UIN on file but not yet verified on Digital Sky — the inspection shows a warning.',
   VERIFIED: 'Verified on Digital Sky by an operator — the inspection passes the UIN check.',
 }

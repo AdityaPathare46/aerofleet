@@ -412,3 +412,27 @@ def test_a_log_cut_off_mid_flight_is_still_reviewed_from_what_survives(api_clien
     assert r.status_code in (200, 422), r.text
     if r.status_code == 200:
         assert r.json()["report"]["flight_s"] <= 60 and r.json()["verdict"] == "LOG_ONLY"
+
+
+def test_route_check_against_the_real_pune_zones_the_ceiling_and_each_other(api_client, auth_headers):
+    """The five demo missions (tauri-app/public/demo/route_check), one per outcome, plus one outside any supported city."""
+    from pathlib import Path
+
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+
+    demo = Path(__file__).resolve().parents[2] / "tauri-app" / "public" / "demo" / "route_check"
+    files = [("plans", (p.name, p.read_bytes(), "text/plain")) for p in sorted(demo.glob("[A-Z]*.waypoints"))]
+    far = build_waypoint_file({"origin_lat": 28.61, "origin_lon": 77.20, "dest_lat": 28.62, "dest_lon": 77.21, "altitude_m": 60.0})
+    files.append(("plans", ("DELHI-TEST.waypoints", far.encode(), "text/plain")))
+    r = api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers, files=files)
+    assert r.status_code == 200, r.text
+    out = r.json()
+    v = {m["id"]: m["verdict"] for m in out["missions"]}
+    assert v == {"CANTONMENT-LINE": "NOT_PERMITTED", "HILL-PHOTO": "NOT_PERMITTED", "CITY-SURVEY": "NEEDS_PERMISSION",
+                 "FARM-SOUTH": "CLEAR", "FARM-SOUTH-2": "CLEAR", "DELHI-TEST": "UNCHECKED"}
+    cant = next(m for m in out["missions"] if m["id"] == "CANTONMENT-LINE")
+    assert "Pune Cantonment" in cant["summary"] and cant["city"] == "pune"
+    assert {(c["a"], c["b"]) for c in out["conflicts"]} == {("FARM-SOUTH-2", "FARM-SOUTH")}
+    assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 6
+    assert api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers,
+                           files=[("plans", ("bad name!.waypoints", far.encode(), "text/plain"))]).status_code == 422

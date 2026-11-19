@@ -188,7 +188,14 @@ Resolved all Round 11 peer review items: (1) Rewrote Table 6 headline finding ac
 - `.env` points the database at `/tmp`, which macOS wipes; the signed record then reports missing entries. Move it
   before a demonstration.
 
-**Product**: all features work locally and are tested; 660 tests pass; app typechecks. Internal rating 7/10.
+**Product, 19 Nov 2026:** the delivery prototype's visible screens were replaced. *Route check* (new page,
+`aerofleet/assurance/airspace_check.py`, POST `/plans/airspace`) checks planned missions against approximate red/yellow
+zones (Pune, Mumbai), the 120 m limit and each other; the old delivery map is legacy. *VR Safety View* hides the
+simulated live swarm unless legacy screens are on. *Hardware* is now *Drone register* (UIN and airworthiness); live
+MAVLink vehicles and emergency stop are legacy only. The paper's Section 6 wording is "never contacts the aircraft in
+flight" (the bench inspection reads a flight controller, read-only). Proof page, no-AI test, tamper demo: see docs/VIVA.md.
+
+**Product**: all features work locally and are tested; 683 tests pass; app typechecks. Internal rating 7/10.
 Removed on 25 Oct: four old start scripts, and "Incident replay" (the earlier product's AI-council view) from the VR
 view. "Live swarm" in the VR view is still from the earlier dispatch product (simulated drones).
 

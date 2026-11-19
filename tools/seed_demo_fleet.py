@@ -14,7 +14,8 @@ one drone into `<data>/demo_files/`: `<drone>_approved.params` (the settings in 
 what the check reports). It then prepares the fleet `<fleet>-settings` with the first as its approved baseline and the
 second uploaded for that drone, because setting a baseline needs an operator account and the demo should not depend
 on one. The presenter can still repeat it by hand with an operator account.
-It also writes three made-up missions (`SURVEY-A/B/C.waypoints`; A and B cross) for the conflict and wind checks.
+It also writes three made-up missions (`SURVEY-A/B/C.waypoints`; A and B cross) for the conflict and wind checks,
+and five in `route_check/` around Pune for the airspace route check, one per outcome (see ROUTE_CHECK).
 
 What it is not: a test or a result. Nothing here is measured or claimed; it only loads data for a demonstration.
 The logs stay where they are and are not copied into the repository. The uploader's crash rating is NOT given to the
@@ -100,6 +101,26 @@ def demo_missions(folder: str):
     return sorted(legs)
 
 
+# Made-up missions around Pune for the airspace route check, placed so that each outcome appears once.
+ROUTE_CHECK = {
+    "FARM-SOUTH":      ((18.455, 73.795), (18.445, 73.810), 60.0),    # green, under 120 m: clear
+    "FARM-SOUTH-2":    ((18.445, 73.795), (18.455, 73.810), 60.0),    # green, but crosses FARM-SOUTH at the same height
+    "CITY-SURVEY":     ((18.520, 73.850), (18.529, 73.860), 60.0),    # inside the airport's yellow band: needs permission
+    "CANTONMENT-LINE": ((18.500, 73.870), (18.515, 73.895), 60.0),    # through the cantonment's red zone: not permitted
+    "HILL-PHOTO":      ((18.600, 73.750), (18.605, 73.756), 150.0),   # green, but planned at 150 m: above the 120 m limit
+}
+
+
+def route_check_missions(folder: str):
+    from aerofleet.integrations.mission_planner import build_waypoint_file
+
+    os.makedirs(folder, exist_ok=True)
+    for name, ((la0, lo0), (la1, lo1), alt) in ROUTE_CHECK.items():
+        with open(os.path.join(folder, f"{name}.waypoints"), "w") as f:
+            f.write(build_waypoint_file({"origin_lat": la0, "origin_lon": lo0, "dest_lat": la1, "dest_lon": lo1, "altitude_m": alt}))
+    return sorted(ROUTE_CHECK)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fleet", default="demo")
@@ -147,6 +168,7 @@ def main() -> None:
     print(f"Drones whose last flight the uploader rated a crash: {', '.join(crashed) or 'none'}")
     print(f"Presenter's key: {a.key}")
     print(f"Made-up missions for the conflict and wind checks: {', '.join(demo_missions(os.path.join(DATA, 'demo_files')))} (.waypoints)")
+    print(f"Made-up missions for the airspace route check: {', '.join(route_check_missions(os.path.join(DATA, 'demo_files', 'route_check')))}")
     if files:
         print(f"Settings files for the drift check: {files[0]} (approved), {files[1]} (changed: {files[2]})")
         seed_settings_fleet(db, f"{a.fleet}-settings", files)

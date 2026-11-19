@@ -82,7 +82,7 @@ const WIND_VERDICT: Record<WindReport['verdict'], { tone: Verdict; label: string
 interface LedgerEntry { seq: number; kind: string; subject: string; entry_hash: string; created_at: string; created_by: string }
 interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
-const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', wind_check: 'Wind checked' }
+const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', wind_check: 'Wind checked' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 // rounds the total first: 299.9 s is 5:00, not 4:60
 const clock = (s: number) => { const t = Math.max(0, Math.round(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` }

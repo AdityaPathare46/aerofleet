@@ -514,6 +514,76 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
     return result
 
 
+# ── airspace route check ───────────────────────────────────────────────
+
+def _airspace_for(home):
+    """(city slug, zone lookup) for the supported city whose area covers the take-off point, or (None, None)."""
+    from aerofleet.assurance.airspace_check import _metres
+    from aerofleet.city.airspace import ZoneColor
+    from aerofleet.city.registry import CITY_REGISTRY
+    from aerofleet.fleet.state import get_fleet_state
+
+    for slug, cfg in CITY_REGISTRY.items():
+        if _metres(home, cfg.center) <= cfg.bounds_radius_km * 1000:
+            zones = get_fleet_state(slug).airspace.zones
+
+            def zone_at(lat, lon, zones=zones):
+                from aerofleet.assurance.airspace_check import _metres as m
+
+                for color in (ZoneColor.RED, ZoneColor.YELLOW):
+                    for z in zones:
+                        if z.color == color and m((lat, lon), (z.center_lat, z.center_lon)) <= z.radius_m:
+                            return {"id": z.zone_id, "color": color.value, "name": (z.reason or z.zone_id).split(" — ")[0]}
+                return None
+            return slug, zone_at
+    return None, None
+
+
+@router.post("/plans/airspace")
+async def airspace_check(plans: List[UploadFile] = File(...), user: User = Depends(get_current_active_user),
+                         db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Check planned missions (.waypoints) against restricted airspace, the 120 m limit and each other.
+
+    Each file is one mission (id = file name). See aerofleet/assurance/airspace_check.py for what the zones are and are
+    not. Missions are also checked against each other as if launched together. The result is signed."""
+    import os
+
+    from aerofleet.assurance.airspace_check import NOTE, check_route, explain
+    from aerofleet.assurance.deconflict import Mission, find_conflicts
+    from aerofleet.assurance.reconcile import PlanError, parse_waypoints
+
+    if not (1 <= len(plans) <= MAX_PLANS):
+        raise HTTPException(status_code=422, detail=f"Upload between 1 and {MAX_PLANS} mission files")
+    missions, results, fingerprints, cities = [], [], [], set()
+    for f in plans:
+        mid = os.path.splitext(os.path.basename(f.filename or ""))[0]
+        if not _ID.match(mid) or any(m.id == mid for m in missions):
+            raise HTTPException(status_code=422, detail=f"File name '{f.filename}' must give a unique id of letters, digits, '-' or '_'")
+        raw = await f.read(MAX_BYTES + 1)
+        fingerprints.append(ledger.file_fingerprint(f.filename, raw))
+        try:
+            plan = parse_waypoints(raw.decode("utf-8", errors="replace"))
+        except (PlanError, ValueError) as e:
+            raise HTTPException(status_code=422, detail=f"{f.filename}: {e}")
+        missions.append(Mission(mid, plan))
+        city, zone_at = _airspace_for(plan.home)
+        r = check_route(mid, plan.path, zone_at)
+        r["city"] = city
+        r["summary"] = explain(r)
+        cities.add(city)
+        results.append(r)
+    conflicts = find_conflicts(missions) if len(missions) > 1 else []
+    order = {"NOT_PERMITTED": 0, "NEEDS_PERMISSION": 1, "UNCHECKED": 2, "CLEAR": 3}
+    out = {"missions": sorted(results, key=lambda r: (order[r["verdict"]], r["id"])), "conflicts": conflicts,
+           "counts": {v: sum(r["verdict"] == v for r in results) for v in order},
+           "cities": sorted(c for c in cities if c), "note": NOTE,
+           "conflict_note": "Conflicts assume every mission launches at the same time and flies its plan at the planned speeds.",
+           "input_files": fingerprints}
+    out["ledger_seq"] = ledger.append(db, "airspace_check", ",".join(sorted(r["id"] for r in results))[:120], out, user.username).seq
+    db.commit()
+    return out
+
+
 # ── wind at cruise height ──────────────────────────────────────────────
 
 @router.post("/plans/wind-check")

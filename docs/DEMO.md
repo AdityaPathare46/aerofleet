@@ -121,6 +121,17 @@ Say: the in-fleet comparison needs four drones of the same kind; a small operato
 public flights of 141 vehicles that never crashed, rated good or great by their pilots, read with the same code as
 an upload (`tools/build_public_reference.py`). It is a description, not a limit, and the screen says so.
 
+### Step 4c. Route check before flying (Route check page)
+
+1. Open **Route check** and press *Try 5 demo missions* (made-up missions around Pune, one per outcome).
+2. CANTONMENT-LINE: not permitted, inside the red zone of Pune Cantonment. HILL-PHOTO: not permitted, planned at
+   150 m. CITY-SURVEY: needs air traffic control permission (the airport's yellow zone). FARM-SOUTH and FARM-SOUTH-2:
+   clear, but they cross each other at the same height.
+3. Click a mission to zoom to it on the map.
+
+Say: the zones are approximations from the Drone Rules 2021 distances around known sites, not Digital Sky, and the
+screen says so. A route outside Pune or Mumbai is reported "not checked", never "clear". Every check is signed.
+
 ### Step 5. Mission conflict and wind (pre-flight checks)
 
 1. **Will these missions conflict?** Choose `SURVEY-A`, `SURVEY-B` and `SURVEY-C` together, then **Check and fix**.

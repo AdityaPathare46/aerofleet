@@ -15,6 +15,7 @@ import HardwarePanelPage from './pages/HardwarePanel'
 import FleetAssurancePage from './pages/FleetAssurance'
 import OverviewPage from './pages/Overview'
 import ProofPage from './pages/Proof'
+import RouteCheckPage from './pages/RouteCheck'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -50,9 +51,10 @@ const PAGES = [
   { id: 'council',     label: 'Council Room',       Icon: Icons.Council },
   { id: 'incidents',   label: 'Incident Forensics', Icon: Icons.Incident },
   { id: 'policy',      label: 'Fleet Policy',       Icon: Icons.Policy },
-  { id: 'trajectory',  label: 'Airspace Map',       Icon: Icons.Trajectory },
+  { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
+  { id: 'trajectory',  label: 'Delivery map (legacy)', Icon: Icons.Trajectory },
   { id: 'vr',          label: 'VR Safety View',     Icon: Icons.VR },
-  { id: 'hardware',    label: 'Hardware',           Icon: Icons.Hardware },
+  { id: 'hardware',    label: 'Drone register',     Icon: Icons.Hardware },
   { id: 'scenarios',   label: 'Scenario Lab',       Icon: Icons.Scenarios },
   { id: 'knowledge',   label: 'Depot Network',      Icon: Icons.Knowledge },
   { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
@@ -61,12 +63,13 @@ const PAGES = [
 // From the earlier AI-dispatch product (live dispatch, the agent council, policy proposals, dispatch incidents,
 // scenario runs, the depot graph); hidden unless Settings ▸ Show legacy screens is on. The 2.0 screens are
 // Fleet Assurance, the airspace map, VR, Hardware (FC checks and UIN registry) and Settings.
-const LEGACY_PAGES = ['dashboard', 'mission', 'council', 'incidents', 'policy', 'scenarios', 'knowledge']
+const LEGACY_PAGES = ['dashboard', 'mission', 'council', 'incidents', 'policy', 'scenarios', 'knowledge', 'trajectory']
 
 const PAGE_COMPONENTS: Record<string, React.FC> = {
   dashboard:  DashboardPage,
   overview:   OverviewPage,
   proof:      ProofPage,
+  routes:     RouteCheckPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,

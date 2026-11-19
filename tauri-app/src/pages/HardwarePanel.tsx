@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import FcCompliancePanel from '../components/fc/FcCompliancePanel'
-import { useLiveControl } from '../lib/policy'
+import { useLegacyVisible, useLiveControl } from '../lib/policy'
 
 // ── Types (mirrors aerofleet/api/schemas.py + hardware.py responses) ────────
 
@@ -64,7 +64,10 @@ export default function HardwarePanel() {
   const [error, setError] = useState<string | null>(null)
   const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected')
   const [stopArmed, setStopArmed] = useState(false)
-  const [tab, setTab] = useState<'vehicles' | 'compliance'>('vehicles')
+  // AeroFleet 2.0 never connects to an aircraft: live MAVLink vehicles (and their arm / emergency-stop controls) belong
+  // to the earlier dispatch prototype and are shown only with legacy screens on.
+  const showLegacy = useLegacyVisible()
+  const [tab, setTab] = useState<'vehicles' | 'compliance'>('compliance')
   const wsRef = useRef<WebSocket | null>(null)
   const stopArmedTimer = useRef<number | null>(null)
 
@@ -229,10 +232,12 @@ export default function HardwarePanel() {
     <div style={{ overflow: 'auto', flex: 1 }}>
       <div className="page-header">
         <div>
-          <div className="page-title">Hardware</div>
-          <div className="page-subtitle">MAVLink connections to real ArduPilot/PX4 vehicles &middot; {liveDroneCount} LIVE</div>
+          <div className="page-title">Drone register</div>
+          <div className="page-subtitle">{tab === 'compliance'
+            ? <>Each drone's DGCA registration (UIN) and airworthiness checks, from records, or by reading its flight controller on the bench. Read-only: nothing is changed and no motor turns.</>
+            : <>Legacy: MAVLink connections to real ArduPilot/PX4 vehicles &middot; {liveDroneCount} LIVE</>}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {tab === 'vehicles' && <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div className={`status-indicator status-indicator--${wsStatus === 'connected' ? 'online' : wsStatus === 'connecting' ? 'busy' : 'offline'}`}>
             <div className="status-indicator__dot" />
             <span>Telemetry {wsStatus}</span>
@@ -247,16 +252,16 @@ export default function HardwarePanel() {
               ? <><div className="spinner" style={{ width: 14, height: 14 }} /> Stopping...</>
               : stopArmed ? 'Confirm: RTL every LIVE drone now' : 'Emergency Stop All'}
           </button>
-        </div>
+        </div>}
       </div>
 
       <div className="tabs" style={{ padding: '0 24px' }}>
-        <button id="tab-hw-vehicles" className={`tab ${tab === 'vehicles' ? 'active' : ''}`} onClick={() => setTab('vehicles')}>
-          Vehicles
-        </button>
         <button id="tab-hw-compliance" className={`tab ${tab === 'compliance' ? 'active' : ''}`} onClick={() => setTab('compliance')}>
-          Drone compliance
+          Registration and airworthiness
         </button>
+        {showLegacy && <button id="tab-hw-vehicles" className={`tab ${tab === 'vehicles' ? 'active' : ''}`} onClick={() => setTab('vehicles')}>
+          Live vehicles (legacy)
+        </button>}
       </div>
 
       {tab === 'compliance' && (
@@ -265,7 +270,7 @@ export default function HardwarePanel() {
         </div>
       )}
 
-      {tab === 'vehicles' && (
+      {tab === 'vehicles' && showLegacy && (
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {error && (
           <div className="card" style={{ borderColor: 'var(--status-red)' }}>
