@@ -82,6 +82,19 @@ training, the failed calibration test and the declared fix that passed. Then on 
 *Last flight →*: "Compared with healthy flights of similar drones" shows its battery drained 7.5 times faster than
 typical, matching the timeline's "Battery below 10%". Say: context, never a verdict.
 
+### Step 0d. Season view, logbook, evening upload, records (2 minutes)
+
+1. **Fleet trends**: 64 flights, 9 h, 1.3 warnings per flight, 14% of flights outside the learned range (about 10%
+   expected by chance), flights per month, and a per-drone table. Press PX4-06 ▸ *History →*.
+2. In PX4-06's history, the purple line is a **maintenance logbook** entry ("Propellers replaced", a DEMO entry made up
+   between real flights): vibration fell 58% and battery drain vs expected 21%, median of the flights either side,
+   with the caveat that a few flights cannot prove a fix. Add an entry with the form to show it is signed.
+3. Fleet Assurance ▸ *Upload the day's logs*: select several logs at once. Each is matched to its drone by the flight
+   controller's own id (PX4 sys_uuid) or, the first time, by a file name like PX4-07_evening.ulg; unknown logs are not
+   guessed onto a drone.
+4. Fleet trends ▸ *Download CSV*: one row per flight with UIN, minutes, distance, outline area (a field-size estimate),
+   take-off point and the fingerprint of its signed review: the record a spray report is filled from.
+
 ### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
 
 1. In **Flight reviews**, open the newest flight of `PX4-08` (the one the uploader rated a crash).

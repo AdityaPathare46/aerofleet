@@ -17,6 +17,7 @@ import OverviewPage from './pages/Overview'
 import ProofPage from './pages/Proof'
 import RouteCheckPage from './pages/RouteCheck'
 import ReadinessPage from './pages/Readiness'
+import TrendsPage from './pages/Trends'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -46,6 +47,7 @@ const Icons = {
 const PAGES = [
   { id: 'overview',    label: 'Overview',           Icon: Icons.Info },
   { id: 'readiness',   label: "Today's fleet",      Icon: Icons.Dashboard },
+  { id: 'trends',      label: 'Fleet trends',       Icon: Icons.Scenarios },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
   { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
   { id: 'hardware',    label: 'Drone register',     Icon: Icons.Hardware },
@@ -73,6 +75,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
   proof:      ProofPage,
   routes:     RouteCheckPage,
   readiness:  ReadinessPage,
+  trends:     TrendsPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,

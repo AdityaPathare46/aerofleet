@@ -232,6 +232,20 @@ checked, or the last flight's log shows warnings (sensor data rejected, poor GPS
 changed in flight, leaving the plan). Vibration is displayed but never changes the verdict. *Show:* Today's fleet ▸
 PX4-04, whose critical-battery threshold really changed between two of its public flights.
 
+**Q23d. What happens in a real season with this tool?**
+Morning: *Today's fleet* says which drones can fly. Evening: the operator selects all the day's logs at once; each is
+matched to its drone by the flight controller's own id, reviewed, signed, and scored against the learned model. When
+work is done on a drone it goes into the *maintenance logbook*, and AeroFleet shows the flights before vs after
+("vibration fell 58%"), with the caveat that a few flights cannot prove a fix. Weekly: *Fleet trends* shows flying
+hours, warnings per flight and which drones drift from what is expected. For reporting: a CSV operations log, one row
+per flight with the UIN and the fingerprint of its signed review.
+
+**Q23e. How can you be sure a log is matched to the right drone?**
+PX4 logs carry the flight controller's unique id. The first time, the file name tells AeroFleet which drone it is;
+after that the id is recognised. A log with an unknown id and no drone in its name is not reviewed, and the screen
+says why: a log is never guessed onto a drone. If a flight controller is moved to another airframe, the operator
+names the file again. (ArduPilot logs carry no such id, so they are matched by file name only.)
+
 **Q24. How do you know the planned-versus-flown check works?**
 We injected known deviations into 40 real PX4 flights: it found 36 of 40 sideways deviations of 35 m and 39 of 40
 upward deviations of 20 m, with no false alarms on the untouched flights when plans had a waypoint every 5 s (9 of 40

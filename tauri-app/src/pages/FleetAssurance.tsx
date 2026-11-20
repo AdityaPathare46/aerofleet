@@ -54,6 +54,14 @@ interface VibHistory {
   latest_vs_own: { latest_p95: number; earlier_median: number; earlier_flights: number; higher_than: number; times_own_median: number | null } | null
   among_peers: VibrationRow | null
   latest_vs_public?: PublicVib | null
+  maintenance?: MaintenanceItem[]; maintenance_actions?: string[]
+}
+interface BatchRow { file: string; drone_id: string | null; matched_by: string | null; review_id?: number; verdict?: string; flight_s?: number; warnings?: string[]; outside_expected?: string[]; error: string | null }
+interface BatchResult { results: BatchRow[]; reviewed: number; not_reviewed: number }
+interface MaintenanceItem {
+  id: number; done_at: string; action: string; note: string | null; done_by: string
+  effect: { flights_before: number; flights_after: number; summary: string; note: string
+    measures: { label: string; unit: string; before: number; after: number; change_pct: number | null; flights_before: number; flights_after: number }[] }
 }
 interface CheckItem { cause: string; experts_found: string; mentioned: boolean; matched_words: string[]; checks: string[]; fixes: string[]; aerofleet_check: string }
 interface SimilarCase { title: string; url: string; score: number; expert_conclusion: string; cause: string; who_diagnosed: string; poster_confirmed_fix: string; flight_review_logs: string[] }
@@ -83,7 +91,7 @@ const WIND_VERDICT: Record<WindReport['verdict'], { tone: Verdict; label: string
 interface LedgerEntry { seq: number; kind: string; subject: string; entry_hash: string; created_at: string; created_by: string }
 interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
-const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', wind_check: 'Wind checked' }
+const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', maintenance: 'Maintenance recorded', wind_check: 'Wind checked' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 // rounds the total first: 299.9 s is 5:00, not 4:60
 const clock = (s: number) => { const t = Math.max(0, Math.round(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` }
@@ -135,6 +143,9 @@ export default function FleetAssurancePage() {
   const [flights, setFlights] = useState<FlightRow[]>([])
   const [vibration, setVibration] = useState<Vibration | null>(null)
   const [history, setHistory] = useState<VibHistory | null>(null)
+  const batchFile = useRef<HTMLInputElement>(null)
+  const [batch, setBatch] = useState<BatchResult | null>(null)
+  const [mDate, setMDate] = useState(''); const [mAction, setMAction] = useState(''); const [mNote, setMNote] = useState('')
   const [review, setReview] = useState<Review | null>(null)
   const missionFiles = useRef<HTMLInputElement>(null)
   const [missions, setMissions] = useState<File[]>([])
@@ -257,6 +268,18 @@ export default function FleetAssurancePage() {
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
     download(`flight-review-${id}`, await r.text(), '.html')
   })
+  const addMaintenance = () => act(async () => {
+    if (!history || !mDate || !mAction) throw new Error('Choose the date and what was done.')
+    await call(`/drones/${encodeURIComponent(history.drone_id)}/maintenance`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done_at: `${mDate}T12:00:00`, action: mAction, note: mNote.trim() }) })
+    setMDate(''); setMAction(''); setMNote('')
+    setHistory(await call<VibHistory>(`/drones/${encodeURIComponent(history.drone_id)}/vibration`))
+  })
+  const uploadBatch = (files: File[]) => act(async () => {
+    if (!files.length) return
+    const body = new FormData(); files.forEach((f) => body.append('logs', f))
+    setBatch(await call<BatchResult>('/flights/batch', { method: 'POST', body })); await refresh()
+  })
   const openHistory = (id: string) => act(async () => setHistory(await call<VibHistory>(`/drones/${encodeURIComponent(id)}/vibration`)))
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
@@ -265,10 +288,11 @@ export default function FleetAssurancePage() {
     let raw: string | null = null
     try { raw = localStorage.getItem('aerofleet_open'); localStorage.removeItem('aerofleet_open') } catch { return }
     if (!raw) return
-    const req = JSON.parse(raw) as { kind: 'drift' | 'review'; id: string | number }
+    const req = JSON.parse(raw) as { kind: 'drift' | 'review' | 'history'; id: string | number }
     const show = (el: string) => setTimeout(() => document.getElementById(el)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
     ;(async () => {
       if (req.kind === 'drift') { await open(String(req.id)); show('drift-detail') }
+      else if (req.kind === 'history') { setHistory(await call<VibHistory>(`/drones/${encodeURIComponent(String(req.id))}/vibration`)); show('vibration-history') }
       else { setReview(await call<Review>(`/flights/${req.id}`)); show('flight-detail') }
     })().catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -315,11 +339,35 @@ export default function FleetAssurancePage() {
           <b style={{ fontSize: 13 }}>Review a flight</b>
           <input ref={planFile} id="flight-plan-file" type="file" hidden onChange={(e) => { setPlan(e.target.files?.[0] ?? null); e.target.value = '' }} />
           <input ref={logFile} id="flight-log-file" type="file" hidden onChange={(e) => { setFlightLog(e.target.files?.[0] ?? null); e.target.value = '' }} />
+          <input ref={batchFile} id="batch-log-files" type="file" multiple hidden accept=".ulg,.bin,.tlog" onChange={(e) => { uploadBatch(Array.from(e.target.files ?? [])); e.target.value = '' }} />
           <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Mission file (optional)'}</button>
           <button className="btn" disabled={busy} onClick={() => logFile.current?.click()}>{flightLog ? flightLog.name : 'Choose flight log'}</button>
           <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !flightLog} onClick={compare}>{plan ? 'Compare with plan' : 'Review log'}</button>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>A flight log (ArduPilot .tlog or .bin, PX4 .ulg) for the drone id above. Add the .waypoints mission to also check whether it flew the plan.</span>
         </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 12 }}>
+          <b style={{ fontSize: 13 }}>Evening upload</b>
+          <button className="btn btn--primary" id="btn-batch-upload" disabled={busy} onClick={() => batchFile.current?.click()}>Upload the day's logs</button>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Select all of today's logs at once. Each is matched to its drone by the flight controller's own id; the first time, name a file DRONEID_anything.ulg.</span>
+        </div>
+        {batch && (
+          <div id="batch-results" style={{ display: 'grid', gap: 6 }}>
+            <div style={{ fontSize: 13 }}><b>{batch.reviewed} reviewed</b>{batch.not_reviewed > 0 && <span style={{ color: 'var(--status-red)' }}> · {batch.not_reviewed} not reviewed</span>}</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>File</th><th>Drone</th><th>Matched by</th><th>Flight</th><th>Warnings</th><th>Outside expected</th><th /></tr></thead>
+              <tbody>{batch.results.map((r) => (
+                <tr key={r.file} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                  <td style={{ padding: '5px 0', fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>{r.file}</td>
+                  <td style={{ fontWeight: 600 }}>{r.drone_id ?? '—'}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.matched_by ?? ''}</td>
+                  {r.error ? <td colSpan={3} style={{ color: 'var(--status-red)' }}>{r.error}</td> : <>
+                    <td>{r.flight_s != null ? clock(r.flight_s) : '—'}</td>
+                    <td style={{ color: (r.warnings ?? []).length ? '#92400E' : 'var(--text-muted)' }}>{(r.warnings ?? []).length ? (r.warnings ?? []).join('; ') : 'none'}</td>
+                    <td style={{ color: (r.outside_expected ?? []).length ? '#92400E' : 'var(--text-muted)' }}>{(r.outside_expected ?? []).length ? (r.outside_expected ?? []).join(', ') : 'none'}</td></>}
+                  <td>{r.review_id != null && <button className="btn" style={{ padding: '2px 10px', fontSize: 12 }} onClick={() => openReview(r.review_id!)}>View</button>}</td>
+                </tr>))}</tbody>
+            </table>
+          </div>)}
         {error && <div role="alert" style={{ color: 'var(--status-red)', fontSize: 13 }}>{error}</div>}
       </div>
 
@@ -578,6 +626,12 @@ export default function FleetAssurancePage() {
                   <text x={W - 4} y={y(own) - 4} fontSize="10" textAnchor="end" fill="#1baf7a">median of its earlier flights</text></>}
                 {pub != null && <><line x1={L} y1={y(pub)} x2={W} y2={y(pub)} stroke="#94A3B8" strokeDasharray="2 3" />
                   <text x={(L + W) / 2} y={y(pub) - 4} fontSize="10" textAnchor="middle" fill="#64748B">median of public PX4 flights</text></>}
+                {(history.maintenance ?? []).map((m) => {
+                  const k = history.flights.filter((f) => new Date(f.when) < new Date(m.done_at + (m.done_at.endsWith('Z') ? '' : 'Z'))).length
+                  const mx = k === 0 ? L : k >= history.flights.length ? W - 4 : (x(k - 1) + x(k)) / 2
+                  return <g key={m.id}><line x1={mx} x2={mx} y1={8} y2={H - B} stroke="#7C3AED" strokeDasharray="4 3" />
+                    <text x={mx + 3} y={18} fontSize="10" fill="#7C3AED">{m.action}</text></g>
+                })}
                 <polyline fill="none" stroke="#2a78d6" strokeWidth="1.5" points={history.flights.map((f, i) => `${x(i)},${y(f.p95)}`).join(' ')} />
                 {history.flights.map((f, i) => (
                   <circle key={f.review_id} cx={x(i)} cy={y(f.p95)} r={i === history.flights.length - 1 ? 5 : 3.5} fill={i === history.flights.length - 1 ? '#eb6834' : '#2a78d6'}
@@ -601,6 +655,27 @@ export default function FleetAssurancePage() {
           {history.message && <div style={{ fontSize: 13 }}>{history.message}</div>}
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{history.evidence}</div>
           {history.order_note && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{history.order_note}</div>}
+          <div id="maintenance-log" style={{ display: 'grid', gap: 8, borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 10 }}>
+            <b style={{ fontSize: 13 }}>Maintenance logbook: did the fix work?</b>
+            {(history.maintenance ?? []).length === 0 && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Nothing recorded for this drone yet.</span>}
+            {(history.maintenance ?? []).map((m) => (
+              <div key={m.id} style={{ fontSize: 13, padding: '6px 10px', borderLeft: '3px solid #7C3AED', background: 'var(--bg-secondary, #F8FAFC)', display: 'grid', gap: 3 }}>
+                <span><b>{m.action}</b> · {new Date(m.done_at + (m.done_at.endsWith('Z') ? '' : 'Z')).toLocaleDateString([], { dateStyle: 'medium' })} · by {m.done_by}{m.note ? ` · ${m.note}` : ''}</span>
+                <span style={{ fontWeight: 600 }}>{m.effect.summary}</span>
+                {m.effect.measures.map((x) => (
+                  <span key={x.label} style={{ color: 'var(--text-secondary)' }}>{x.label}: {sig3(x.before)} → {sig3(x.after)} ({x.unit}; {x.flights_before} flights before, {x.flights_after} after)</span>))}
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.effect.note}</span>
+              </div>))}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input type="date" className="form-input" value={mDate} onChange={(e) => setMDate(e.target.value)} style={{ width: 150 }} aria-label="Date of the work" />
+              <select className="form-select" value={mAction} onChange={(e) => setMAction(e.target.value)} style={{ width: 'auto' }} aria-label="What was done">
+                <option value="">What was done…</option>
+                {(history.maintenance_actions ?? []).map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <input className="form-input" placeholder="Note (optional)" value={mNote} onChange={(e) => setMNote(e.target.value)} maxLength={1000} style={{ flex: 1, minWidth: 160 }} />
+              <button className="btn btn--primary" id="btn-add-maintenance" disabled={busy || !mDate || !mAction} onClick={addMaintenance}>Add to logbook</button>
+            </div>
+          </div>
         </div>
       )}
 

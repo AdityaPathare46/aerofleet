@@ -68,8 +68,8 @@ const HOW: { finding: string; does: string; section: string; button: string }[] 
 const FLOW: { when: string; what: string[]; section: string }[] = [
   { when: 'Morning, before going out', what: ['Today\'s fleet: every drone ready / check first / do not fly, with the reason', 'Settings against the approved configuration (the cause experts named most)', 'Each spraying route against red and yellow airspace and the 120 m limit'], section: 'page:readiness' },
   { when: 'Planning the day\'s jobs', what: ['Farms near an airport or a cantonment flagged before anyone drives out', 'Jobs that would cross each other in the air found and re-timed', 'Battery against the forecast wind at working height'], section: 'page:routes' },
-  { when: 'Evening, after flying', what: ['Upload each drone\'s log (no mission file needed)', 'Events in time order, evidence quality, settings changed in flight', 'A signed, printable record for the reporting deadline and the insurer'], section: 'flight-list' },
-  { when: 'Across the season', what: ['Each drone against its own earlier flights and against public flights', 'Registration (UIN) and airworthiness checks per drone', 'When something goes wrong: a checklist ordered by what experts found most'], section: 'vibration-card' },
+  { when: 'Evening, after flying', what: ['Upload all the day\'s logs at once; each is matched to its drone automatically', 'Events in time order, evidence quality, and the learned model\'s expected range', 'A signed, printable record, and a CSV operations log for the spray report'], section: 'flight-list' },
+  { when: 'Across the season', what: ['Fleet trends: hours, warnings per flight, drones drifting from expected', 'A maintenance logbook that shows whether each fix worked', 'Registration (UIN) and airworthiness checks per drone'], section: 'page:trends' },
 ]
 
 const WHO: { who: string; gets: string }[] = [

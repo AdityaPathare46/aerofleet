@@ -455,3 +455,38 @@ def test_the_readiness_board_combines_settings_registration_and_the_last_flight(
     assert rows["RB-BAD"]["status"] == "DO_NOT_FLY" and "FS_THR_ENABLE" in rows["RB-BAD"]["reasons"][0]["text"]
     assert board["drones"][0]["status"] == "DO_NOT_FLY"                  # worst first
     assert "never changes the verdict" in board["vibration_note"] and board["counts"]["READY"] >= 1
+
+
+def test_the_maintenance_logbook_is_signed_and_shows_the_effect(api_client, auth_headers, tmp_path):
+    r = api_client.post(f"{URL}/drones/MX/flights", headers=auth_headers, files=_flight_files(tmp_path))
+    assert r.status_code == 200
+    seq_before = api_client.get("/api/v1/assurance/ledger/head", headers=auth_headers).json()["seq"]
+    ok = api_client.post(f"{URL}/drones/MX/maintenance", headers=auth_headers,
+                         json={"done_at": "2026-01-01T09:00:00", "action": "Propellers replaced", "note": "new 10-inch set"})
+    assert ok.status_code == 200, ok.text
+    entry = ok.json()["entries"][0]
+    assert entry["action"] == "Propellers replaced" and entry["done_by"] and "summary" in entry["effect"]
+    assert api_client.get("/api/v1/assurance/ledger/head", headers=auth_headers).json()["seq"] == seq_before + 1
+    assert api_client.post(f"{URL}/drones/MX/maintenance", headers=auth_headers,
+                           json={"done_at": "2099-01-01T00:00:00", "action": "Propellers replaced"}).status_code == 422
+    assert api_client.post(f"{URL}/drones/MX/maintenance", headers=auth_headers,
+                           json={"done_at": "2026-01-01T00:00:00", "action": "Painted it red"}).status_code == 422
+    hist = api_client.get(f"{URL}/drones/MX/vibration", headers=auth_headers).json()
+    assert len(hist["maintenance"]) == 1 and "Propellers replaced" in hist["maintenance_actions"]
+
+
+def test_the_evening_batch_upload_matches_each_log_to_its_drone(api_client, auth_headers, tmp_path, monkeypatch):
+    import aerofleet.api.routes.assurance as routes
+    from tests.unit.test_assurance_ulog import TRACK, write_ulog
+
+    log = open(write_ulog(str(tmp_path / "x.ulg"), TRACK, vibration=[(1.0 + i, 5.0) for i in range(60)]), "rb").read()
+    ids = {"BT-1_morning.ulg": "UUID-1", "renamed-by-pilot.ulg": "UUID-1", "mystery.ulg": "UUID-9", "nameless.tlog": None}
+    monkeypatch.setattr(routes, "_log_uuid", lambda name, data: ids.get(name))
+    files = [("logs", (n, log, "application/octet-stream")) for n in ("BT-1_morning.ulg", "renamed-by-pilot.ulg", "mystery.ulg")]
+    out = api_client.post(f"{URL}/flights/batch", headers=auth_headers, files=files).json()
+    by = {r["file"]: r for r in out["results"]}
+    assert by["BT-1_morning.ulg"]["drone_id"] == "BT-1" and by["BT-1_morning.ulg"]["matched_by"].startswith("file name")
+    assert by["renamed-by-pilot.ulg"]["drone_id"] == "BT-1" and by["renamed-by-pilot.ulg"]["matched_by"] == "flight-controller id seen before"
+    assert by["mystery.ulg"]["drone_id"] is None and "Unknown drone" in by["mystery.ulg"]["error"]
+    assert out["reviewed"] == 2 and out["not_reviewed"] == 1 and by["BT-1_morning.ulg"]["verdict"] == "LOG_ONLY"
+    assert api_client.post(f"{URL}/flights/batch", headers=auth_headers, files=[]).status_code == 422

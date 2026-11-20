@@ -6,9 +6,10 @@ Reading needs a signed-in user; setting a baseline or approving a change needs a
 from __future__ import annotations
 
 import base64
+import os
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -173,6 +174,44 @@ async def fleet_drift(fleet: str, user: User = Depends(get_current_active_user),
     verdicts = [r["verdict"] for r in rows]
     return {"fleet": fleet, "has_baseline": db.get(FleetBaseline, fleet) is not None, "drones": rows,
             "summary": {v: verdicts.count(v) for v in ("BLOCK", "REVIEW", "OK", "NO_REFERENCE")}}
+
+
+@router.get("/fleets/{fleet}/trends")
+async def fleet_trends(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The season view: flights and hours per week or month, warnings per 10 flight hours, and per-drone trends
+    (aerofleet/assurance/trends.py)."""
+    from aerofleet.assurance.trends import fleet_trends as trends
+
+    _check_id(fleet, "Fleet")
+    return trends(_vibration_rows(db, fleet))
+
+
+@router.get("/fleets/{fleet}/operations-log")
+async def operations_log(fleet: str, start: Optional[str] = Query(None, description="YYYY-MM-DD, inclusive (date flown)"),
+                         end: Optional[str] = Query(None, description="YYYY-MM-DD, inclusive"),
+                         user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    """One CSV row per reviewed flight, oldest first (aerofleet/assurance/operations_log.py). Each row carries the
+    fingerprint of its signed review, so it can be checked against the record."""
+    from fastapi.responses import Response
+
+    from aerofleet.assurance.operations_log import row, to_csv
+    from aerofleet.data.models.models import DroneRegistration
+
+    _check_id(fleet, "Fleet")
+    for d in (start, end):
+        if d and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", d):
+            raise HTTPException(status_code=422, detail="Dates must be YYYY-MM-DD")
+    uins = {r.drone_id: r.uin for r in db.query(DroneRegistration).all()}
+    rows = []
+    for r in db.query(FlightReview).filter(FlightReview.fleet == fleet).all():
+        rv = {"id": r.id, "drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report, "log_name": r.log_name}
+        out = row(rv, uins.get(r.drone_id), ledger.payload_hash(r.report))
+        if (start and out["date_utc"][:10] < start) or (end and out["date_utc"][:10] > end):
+            continue
+        rows.append(out)
+    rows.sort(key=lambda x: (x["date_utc"], x["drone_id"]))
+    return Response(to_csv(rows), media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="aerofleet-{fleet}-operations.csv"', "Cache-Control": "no-store"})
 
 
 @router.get("/fleets/{fleet}/readiness")
@@ -415,6 +454,81 @@ def _vibration_rows(db: Session, fleet: str) -> List[Dict[str, Any]]:
             for r in rows]
 
 
+MAX_BATCH = 60
+
+
+def _log_uuid(name: str, data: bytes) -> Optional[str]:
+    """The flight controller's unique id from a PX4 log header (no full parse); None for other logs."""
+    import os
+    import tempfile
+
+    if not (name or "").lower().endswith(".ulg"):
+        return None
+    from pyulog import ULog
+
+    fd, tmp = tempfile.mkstemp(suffix=".ulg")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        return ULog(tmp, parse_header_only=True).msg_info_dict.get("sys_uuid") or None
+    except Exception:  # noqa: BLE001 - an unreadable header simply has no id
+        return None
+    finally:
+        os.unlink(tmp)
+
+
+@router.post("/fleets/{fleet}/flights/batch")
+async def upload_flights_batch(fleet: str, logs: List[UploadFile] = File(...), user: User = Depends(get_current_active_user),
+                               db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """The evening upload: many logs at once, each matched to its drone and reviewed (no mission files).
+
+    Matching, in order: (1) the log's flight-controller id (PX4 sys_uuid) was seen before in this fleet; (2) the file
+    name starts with a drone id followed by "_" (e.g. PX4-07_evening.ulg), and the id is then remembered for that
+    drone; otherwise the log is not reviewed and the reason is returned. A log is never guessed onto a drone."""
+    import re as _re
+
+    from aerofleet.assurance.flightlog import MAX_BYTES as LOG_MAX
+
+    _check_id(fleet, "Fleet")
+    if not (1 <= len(logs) <= MAX_BATCH):
+        raise HTTPException(status_code=422, detail=f"Upload between 1 and {MAX_BATCH} logs at once")
+    known: Dict[str, str] = {}
+    for r in db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.id).all():
+        u = ((r.report or {}).get("log") or {}).get("vehicle_uuid")
+        if u:
+            known[u] = r.drone_id
+    results = []
+    for f in logs:
+        name = os.path.basename(f.filename or "")
+        data = await f.read(LOG_MAX + 1)
+        uid = _log_uuid(name, data)
+        m = _re.match(r"^([A-Za-z0-9][A-Za-z0-9\-]{0,49})_", name)
+        if uid and uid in known:
+            drone, how = known[uid], "flight-controller id seen before"
+        elif m and _ID.match(m.group(1)):
+            drone, how = m.group(1), "file name" + (" (flight-controller id remembered)" if uid else "")
+        else:
+            results.append({"file": name, "drone_id": None, "matched_by": None,
+                            "error": "Unknown drone: name the file DRONEID_something.ulg once; after that its flight-controller id is recognised."
+                                     if uid else "Unknown drone: name the file DRONEID_something (this log carries no flight-controller id)."})
+            continue
+        try:
+            out = review_flight(db, user, fleet, drone, None, "", data, name)
+        except HTTPException as e:
+            db.rollback()
+            results.append({"file": name, "drone_id": drone, "matched_by": how, "error": str(e.detail)})
+            continue
+        if uid:
+            known[uid] = drone
+        rep = out["report"]
+        warnings = [e["text"] for e in rep.get("evidence_timeline") or [] if e.get("level") == "warning" and e.get("kind") != "plan"]
+        outside = [t["label"] for t in ((rep.get("normal_flight") or {}).get("targets") or {}).values() if t["position"] != "inside"]
+        results.append({"file": name, "drone_id": drone, "matched_by": how, "review_id": out["id"], "verdict": out["verdict"],
+                        "flight_s": rep.get("flight_s"), "warnings": warnings[:5], "outside_expected": outside, "error": None})
+    return {"fleet": fleet, "results": results, "reviewed": sum(1 for r in results if r["error"] is None),
+            "not_reviewed": sum(1 for r in results if r["error"] is not None)}
+
+
 @router.get("/fleets/{fleet}/vibration")
 async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Each drone's vibration over its recent reviewed flights and its place among comparable drones. Nothing is flagged
@@ -423,6 +537,55 @@ async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_us
 
     _check_id(fleet, "Fleet")
     return fleet_ranking(_vibration_rows(db, fleet))
+
+
+class MaintenanceIn(BaseModel):
+    done_at: datetime                                           # when the work was done
+    action: str = Field(..., max_length=40)
+    note: str = Field("", max_length=1000)
+
+
+def _maintenance(db: Session, fleet: str, drone_id: str) -> List[Dict[str, Any]]:
+    from aerofleet.assurance.maintenance import effect, flight_points
+    from aerofleet.data.models.models import MaintenanceEntry
+
+    points = flight_points(_vibration_rows(db, fleet), drone_id)
+    rows = (db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet, MaintenanceEntry.drone_id == drone_id)
+            .order_by(MaintenanceEntry.done_at.desc()).all())
+    return [{"id": m.id, "done_at": m.done_at.isoformat(), "action": m.action, "note": m.note, "done_by": m.done_by,
+             "effect": effect(points, m.done_at.isoformat())} for m in rows]
+
+
+@router.post("/fleets/{fleet}/drones/{drone_id}/maintenance")
+async def add_maintenance(fleet: str, drone_id: str, body: MaintenanceIn, user: User = Depends(get_current_active_user),
+                          db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Record work done on a drone; signed into the record. Returns the drone's logbook with each entry's before/after."""
+    from aerofleet.assurance.maintenance import ACTIONS
+    from aerofleet.data.models.models import MaintenanceEntry
+
+    _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
+    if body.action not in ACTIONS:
+        raise HTTPException(status_code=422, detail=f"Action must be one of: {', '.join(ACTIONS)}")
+    done = body.done_at.replace(tzinfo=None) if body.done_at.tzinfo is None else body.done_at.astimezone(timezone.utc).replace(tzinfo=None)
+    if done > datetime.utcnow():
+        raise HTTPException(status_code=422, detail="The work cannot be in the future")
+    row = MaintenanceEntry(fleet=fleet, drone_id=drone_id, done_at=done, action=body.action, note=body.note.strip()[:1000],
+                           done_by=user.username)
+    db.add(row)
+    db.flush()
+    ledger.append(db, "maintenance", f"{fleet}/{drone_id}", {"done_at": done.isoformat(), "action": row.action,
+                                                             "note": row.note}, user.username)
+    db.commit()
+    return {"drone_id": drone_id, "entries": _maintenance(db, fleet, drone_id)}
+
+
+@router.get("/fleets/{fleet}/drones/{drone_id}/maintenance")
+async def get_maintenance(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
+                          db: Session = Depends(get_db)) -> Dict[str, Any]:
+    from aerofleet.assurance.maintenance import ACTIONS
+
+    _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
+    return {"drone_id": drone_id, "actions": ACTIONS, "entries": _maintenance(db, fleet, drone_id)}
 
 
 @router.get("/fleets/{fleet}/drones/{drone_id}/vibration")
@@ -436,6 +599,10 @@ async def drone_vibration(fleet: str, drone_id: str, user: User = Depends(get_cu
     rows = _vibration_rows(db, fleet)
     out = drone_history(rows, drone_id)
     out["among_peers"] = next((d for d in fleet_ranking(rows)["drones"] if d["drone_id"] == drone_id), None)
+    out["maintenance"] = _maintenance(db, fleet, drone_id)        # drawn as markers on the history chart
+    from aerofleet.assurance.maintenance import ACTIONS
+
+    out["maintenance_actions"] = ACTIONS
     return out
 
 

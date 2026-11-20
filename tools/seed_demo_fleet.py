@@ -130,6 +130,25 @@ def seed_registrations(db, drones) -> None:
     db.commit()
 
 
+# A made-up maintenance entry placed between real flights of PX4-06, so the logbook has a before/after to show. The
+# flights on either side are real; the work itself is invented for the demo and the note says so.
+DEMO_MAINTENANCE = [("PX4-06", "2017-10-15T09:00:00", "Propellers replaced",
+                     "DEMO entry, made up to show the logbook: the flights before and after it are real public flights.")]
+
+
+def seed_maintenance(db, fleet: str) -> None:
+    from aerofleet.assurance import ledger
+    from aerofleet.data.models.models import MaintenanceEntry
+
+    db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet).delete()
+    for drone, when, action, note in DEMO_MAINTENANCE:
+        done = datetime.fromisoformat(when)
+        db.add(MaintenanceEntry(fleet=fleet, drone_id=drone, done_at=done, action=action, note=note, done_by=SEEDER.username))
+        ledger.append(db, "maintenance", f"{fleet}/{drone}", {"done_at": done.isoformat(), "action": action, "note": note},
+                      SEEDER.username)
+    db.commit()
+
+
 def route_check_missions(folder: str):
     from aerofleet.integrations.mission_planner import build_waypoint_file
 
@@ -183,6 +202,7 @@ def main() -> None:
     json.dump({"fleet": a.fleet, "made": datetime.utcnow().isoformat(), "note": "Uploader ratings are labels from the public "
                "archive, not findings. The tool is never given them.", "flights": key}, open(a.key, "w"), indent=1)
     seed_registrations(db, sorted({k["drone"] for k in key}))
+    seed_maintenance(db, a.fleet)
     crashed = sorted({k["drone"] for k in key if k["role"] == "crash"})
     print(f"\n{len(key)} flights of {len({k['drone'] for k in key})} drones loaded into fleet '{a.fleet}'.")
     print(f"Drones whose last flight the uploader rated a crash: {', '.join(crashed) or 'none'}")

@@ -449,6 +449,21 @@ class ParamSnapshot(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class MaintenanceEntry(Base):
+    """What was done to a drone and when (propellers, motor, battery, ...): signed into the record, and compared with
+    the drone's flights before and after (aerofleet/assurance/maintenance.py)."""
+    __tablename__ = "maintenance_entries"
+
+    id = Column(Integer, primary_key=True)
+    fleet = Column(String(50), nullable=False, index=True)
+    drone_id = Column(String(50), nullable=False, index=True)
+    done_at = Column(DateTime, nullable=False)                # when the work was done (UTC)
+    action = Column(String(40), nullable=False)
+    note = Column(Text, nullable=True)
+    done_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class FlightReview(Base):
     """One planned-versus-flown reconciliation: a mission file and a flight log for one drone."""
 
