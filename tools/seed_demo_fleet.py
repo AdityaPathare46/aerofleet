@@ -101,14 +101,33 @@ def demo_missions(folder: str):
     return sorted(legs)
 
 
-# Made-up missions around Pune for the airspace route check, placed so that each outcome appears once.
-ROUTE_CHECK = {
-    "FARM-SOUTH":      ((18.455, 73.795), (18.445, 73.810), 60.0),    # green, under 120 m: clear
-    "FARM-SOUTH-2":    ((18.445, 73.795), (18.455, 73.810), 60.0),    # green, but crosses FARM-SOUTH at the same height
-    "CITY-SURVEY":     ((18.520, 73.850), (18.529, 73.860), 60.0),    # inside the airport's yellow band: needs permission
-    "CANTONMENT-LINE": ((18.500, 73.870), (18.515, 73.895), 60.0),    # through the cantonment's red zone: not permitted
-    "HILL-PHOTO":      ((18.600, 73.750), (18.605, 73.756), 150.0),   # green, but planned at 150 m: above the 120 m limit
+# Made-up spraying and mapping jobs around Pune for the airspace route check, one per outcome.
+ROUTE_CHECK = {   # spraying is flown a few metres above the crop; mapping flights higher
+    "SPRAY-FIELD-A": ((18.455, 73.795), (18.445, 73.810), 5.0),    # green, low: clear
+    "SPRAY-FIELD-B": ((18.445, 73.795), (18.455, 73.810), 5.0),    # green, but crosses job A at the same height and time
+    "SPRAY-NEAR-AIRPORT": ((18.520, 73.850), (18.529, 73.860), 5.0),   # inside the airport's yellow zone: needs ATC permission
+    "SPRAY-NEAR-CANTONMENT": ((18.500, 73.870), (18.515, 73.895), 5.0), # inside the cantonment's red zone: not permitted
+    "CROP-MAP-150M": ((18.600, 73.750), (18.605, 73.756), 150.0),       # crop-health mapping planned at 150 m: above the limit
 }
+
+
+# Demo registrations, so the readiness board shows each registration rule once. The UINs are labelled DEMO and are not
+# real Digital Sky numbers: PX4-05 has none (do not fly), PX4-07's is recorded but not verified (check first).
+DEMO_UIN = {f"PX4-{i:02d}": ("VERIFIED" if i != 7 else "RECORDED") for i in range(1, 9) if i != 5}
+
+
+def seed_registrations(db, drones) -> None:
+    from aerofleet.data.models.models import DroneRegistration
+
+    for d in drones:
+        db.query(DroneRegistration).filter(DroneRegistration.drone_id == d).delete()
+        if d in DEMO_UIN:
+            status = DEMO_UIN[d]
+            db.add(DroneRegistration(drone_id=d, uin=f"DEMO-UIN-{d}", status=status, recorded_by=SEEDER.username,
+                                     verified_by=SEEDER.username if status == "VERIFIED" else None,
+                                     verified_at=datetime.utcnow() if status == "VERIFIED" else None,
+                                     verification_note="demo registration, not a real Digital Sky UIN"))
+    db.commit()
 
 
 def route_check_missions(folder: str):
@@ -163,6 +182,7 @@ def main() -> None:
                 files = demo_param_files(drone, snap.params, os.path.join(DATA, "demo_files"))
     json.dump({"fleet": a.fleet, "made": datetime.utcnow().isoformat(), "note": "Uploader ratings are labels from the public "
                "archive, not findings. The tool is never given them.", "flights": key}, open(a.key, "w"), indent=1)
+    seed_registrations(db, sorted({k["drone"] for k in key}))
     crashed = sorted({k["drone"] for k in key if k["role"] == "crash"})
     print(f"\n{len(key)} flights of {len({k['drone'] for k in key})} drones loaded into fleet '{a.fleet}'.")
     print(f"Drones whose last flight the uploader rated a crash: {', '.join(crashed) or 'none'}")

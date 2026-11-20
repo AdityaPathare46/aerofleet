@@ -16,6 +16,7 @@ import FleetAssurancePage from './pages/FleetAssurance'
 import OverviewPage from './pages/Overview'
 import ProofPage from './pages/Proof'
 import RouteCheckPage from './pages/RouteCheck'
+import ReadinessPage from './pages/Readiness'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -44,20 +45,21 @@ const Icons = {
 
 const PAGES = [
   { id: 'overview',    label: 'Overview',           Icon: Icons.Info },
-  { id: 'proof',       label: 'Proof',              Icon: Icons.Policy },
+  { id: 'readiness',   label: "Today's fleet",      Icon: Icons.Dashboard },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
+  { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
+  { id: 'hardware',    label: 'Drone register',     Icon: Icons.Hardware },
+  { id: 'vr',          label: 'VR Safety View',     Icon: Icons.VR },
+  { id: 'proof',       label: 'Proof',              Icon: Icons.Policy },
+  { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
   { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
   { id: 'mission',     label: 'Dispatch Console',   Icon: Icons.Mission },
   { id: 'council',     label: 'Council Room',       Icon: Icons.Council },
   { id: 'incidents',   label: 'Incident Forensics', Icon: Icons.Incident },
   { id: 'policy',      label: 'Fleet Policy',       Icon: Icons.Policy },
-  { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
   { id: 'trajectory',  label: 'Delivery map (legacy)', Icon: Icons.Trajectory },
-  { id: 'vr',          label: 'VR Safety View',     Icon: Icons.VR },
-  { id: 'hardware',    label: 'Drone register',     Icon: Icons.Hardware },
   { id: 'scenarios',   label: 'Scenario Lab',       Icon: Icons.Scenarios },
   { id: 'knowledge',   label: 'Depot Network',      Icon: Icons.Knowledge },
-  { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
 ]
 
 // From the earlier AI-dispatch product (live dispatch, the agent council, policy proposals, dispatch incidents,
@@ -70,6 +72,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
   overview:   OverviewPage,
   proof:      ProofPage,
   routes:     RouteCheckPage,
+  readiness:  ReadinessPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,

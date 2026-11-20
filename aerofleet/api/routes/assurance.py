@@ -175,6 +175,49 @@ async def fleet_drift(fleet: str, user: User = Depends(get_current_active_user),
             "summary": {v: verdicts.count(v) for v in ("BLOCK", "REVIEW", "OK", "NO_REFERENCE")}}
 
 
+@router.get("/fleets/{fleet}/readiness")
+async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Morning readiness board: for every drone in the fleet, ready / check first / do not fly, and why
+    (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
+    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, last_flight_summary
+    from aerofleet.assurance.vibration import drone_history
+    from aerofleet.data.models.models import DroneRegistration
+
+    _check_id(fleet, "Fleet")
+    snap_ids = {r[0] for r in db.query(ParamSnapshot.drone_id).filter(ParamSnapshot.fleet == fleet).distinct().all()}
+    reviews = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
+    latest: Dict[str, FlightReview] = {}
+    for r in reviews:
+        cur = latest.get(r.drone_id)
+        when = lambda x: ((x.report or {}).get("vibration") or {}).get("flown_at") or x.created_at.isoformat()  # noqa: E731
+        if cur is None or when(r) > when(cur):
+            latest[r.drone_id] = r
+    vib_rows = [{"id": r.id, "drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report, "log_name": r.log_name}
+                for r in reviews]
+    out = []
+    for drone_id in sorted(snap_ids | set(latest)):
+        settings = None
+        if drone_id in snap_ids:
+            d = _drift(db, fleet, drone_id)
+            side = d[d["decided_by"]] if d.get("decided_by") else None
+            open_ = [c for c in (side or {}).get("changes", []) if not c["approved"]]
+            settings = {"verdict": d["verdict"], "critical": [c["name"] for c in open_ if c["severity"] == "CRITICAL"],
+                        "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by")}
+        reg = db.get(DroneRegistration, drone_id)
+        last = latest.get(drone_id)
+        hist = drone_history(vib_rows, drone_id)
+        vib = {"latest_vs_own": hist.get("latest_vs_own"), "public": hist.get("latest_vs_public")} if hist.get("flights") else None
+        row = assess(drone_id, settings, {"uin": reg.uin, "status": reg.status} if reg else None,
+                     last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None, vib)
+        row["settings_compared_with"] = settings and settings["compared_with"]
+        out.append(row)
+    out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
+    return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
+            "vibration_note": VIBRATION_NOTE,
+            "rules": "Do not fly: an unapproved safety-critical setting change, or no UIN on record. Check first: a flight-limit "
+                     "change, an unverified UIN, settings never checked, or warnings in the last flight's log. Ready: none of these."}
+
+
 @router.get("/policy")
 async def policy(user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
     """What this install will and will not do with a real aircraft."""

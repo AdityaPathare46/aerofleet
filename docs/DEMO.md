@@ -51,6 +51,23 @@ Scroll the Overview from top to bottom; it is written to be read aloud.
 
 Every number on that page is checked against the paper and the result files by `docs/paper/check_numbers.py`.
 
+### Step 0a. The use case and Today's fleet (2 minutes)
+
+The use case: **the safety and records back office for agricultural drone service providers in India.** Under Namo
+Drone Didi (approved November 2023, Rs 1,261 crore) 15,000 women self-help groups receive drones and rent spraying
+flights to farmers; pilots get 5 days of flying training plus 10 for agriculture. They need checks that do not depend
+on expertise, and records that protect the pilot (third-party insurance is mandatory; spray data must be reported
+within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
+(26 of 94), which is exactly what the settings check covers.
+
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 4 check first, 1 ready, each with its reason, all from real
+public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed, PX4-03's
+autopilot rejected compass data, PX4-01 ended below 10% battery. PX4-05 has no UIN on record and PX4-07's is not
+verified (demo registrations, labelled DEMO). Press a reason's button to open its evidence.
+
+Say: the verdict comes only from fixed rules and recorded facts. Vibration is shown but never changes the verdict,
+because the study found it is not a validated warning.
+
 ### Step 0b. Proof (2 minutes)
 
 Open **Proof** and press *Recompute the results*: the paper's four headline results are recomputed from the
@@ -123,10 +140,11 @@ an upload (`tools/build_public_reference.py`). It is a description, not a limit,
 
 ### Step 4c. Route check before flying (Route check page)
 
-1. Open **Route check** and press *Try 5 demo missions* (made-up missions around Pune, one per outcome).
-2. CANTONMENT-LINE: not permitted, inside the red zone of Pune Cantonment. HILL-PHOTO: not permitted, planned at
-   150 m. CITY-SURVEY: needs air traffic control permission (the airport's yellow zone). FARM-SOUTH and FARM-SOUTH-2:
-   clear, but they cross each other at the same height.
+1. Open **Route check** and press *Try 5 demo jobs* (made-up spraying and mapping jobs around Pune, one per outcome).
+2. SPRAY-NEAR-CANTONMENT: not permitted, inside the red zone of Pune Cantonment. CROP-MAP-150M: not permitted,
+   planned at 150 m. SPRAY-NEAR-AIRPORT: needs air traffic control permission (the airport's yellow zone).
+   SPRAY-FIELD-A and SPRAY-FIELD-B: clear, but they cross each other at the same height and time. Spraying jobs are
+   planned at 5 m above the take-off point, as crop spraying is flown just above the crop.
 3. Click a mission to zoom to it on the map.
 
 Say: the zones are approximations from the Drone Rules 2021 distances around known sites, not Digital Sky, and the

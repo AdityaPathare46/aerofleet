@@ -9,17 +9,20 @@ checks the key ones. Read `docs/DEMO.md` for the walk-through itself.
 
 ## The 60-second answer: "What is your project?"
 
-Drone operators are told flight logs can say why a drone crashed and which drone will fail next. We tested that on
-the largest public archive of real autopilot logs (479,547 PX4 logs, 590 crash-rated), declaring every test before
-running it. Logs could not tell pilot error from aircraft fault (0.47 balanced accuracy on held-out crashes; chance is
-0.50), much of the "accuracy" in the literature comes from how models are tested, and even the crash labels are
-shaky. So we built AeroFleet the other way round: a ground-side tool that checks settings, plans and logs, puts
-the evidence in order, compares each drone with its own history and with public flights, keeps a tamper-evident
-record, and **never names a cause**.
+AeroFleet is the safety and records back office for agricultural drone service providers in India. Under Namo Drone
+Didi alone, 15,000 women self-help groups are receiving spraying drones, flown by pilots with 5 + 10 days of training,
+who rent flights to farmers. Every morning AeroFleet tells them which drones can fly and why; before a job it checks
+the route against restricted airspace; after flying it turns each log into a signed, time-ordered record for the
+insurer and the 7-day spray report. What makes it more than a dashboard is the evidence behind each design choice:
+we tested what flight logs can and cannot show on 590 crash logs from a 479,547-log public archive, declaring every
+test first. Logs cannot assign blame (0.47 balanced accuracy, chance is 0.50), so AeroFleet never does; the cause
+experts named most was configuration (26 of 94), so settings are checked first; vibration is not a validated warning,
+so it is shown as context only.
 
 ## The live demonstration order (10 minutes)
 
-1. **Overview** page: problem, data, six findings, how each design choice follows (3 min).
+1. **Overview** page: the use case and its numbers, the data, six findings, how each design choice follows (3 min).
+1b. **Today's fleet**: the morning go / no-go board, every reason linked to its evidence (1 min).
 2. **Proof** page: press *Recompute the results*, then *Run five attacks on a copy* (2 min). This answers most
    "how do we know" questions before they are asked.
 3. **Fleet Assurance**, fleet `demo`: a flight review (timeline, evidence quality), a drone's History, the public
@@ -46,6 +49,23 @@ to 0.63 when whole days were held out); (3) a ten-item reporting checklist and a
 No. A negative result that is declared in advance and adequately tested is a finding: it stops people trusting
 verdicts the data cannot support. In a safety context, "this cannot be done from logs" is exactly what an
 investigator or insurer needs to know. The tool is the positive output: it does what the data *can* support.
+
+**Q2b. Your earlier version was a delivery project and was called weak. Why is this different?**
+The delivery dispatcher answered a question nobody had measured. This version starts from a real, funded user group
+(agricultural drone service providers; Namo Drone Didi alone is 15,000 drones) and from measured facts: what crash logs
+can and cannot show, which cause experts find most often, how well each check performs on real logs. Every design
+choice traces to a number, and the Proof page recomputes those numbers live.
+
+**Q2c. Couldn't an AI have generated this app?**
+An AI can write a screen. It cannot produce the evidence: the 479,547-log archive index, 590 crash logs downloaded and
+analysed, tests declared and committed before they ran, an independent blind reviewer, a reference of 292 public
+flights read with our own code, injected-deviation tests on 40 real flights. Those took the study; the app is how
+an operator uses its results. We used an AI assistant for code and drafting and declared it.
+
+**Q2d. Why agriculture?**
+It is where the drones are going in India now (government-funded, at scale), its operators are the least
+experienced, it flies near people and crops with chemicals, and it has hard reporting and insurance obligations. The
+checks themselves are general: any PX4 or ArduPilot fleet can use them.
 
 **Q3. Who would use this?**
 Fleet operators (settings, flight reviews, records), maintenance engineers (which drone to look at first),
@@ -175,6 +195,13 @@ airspace, the 120 m limit, and the other planned routes, then signed into the re
 our approximations from the Drone Rules 2021 distances around known airports and military sites in Pune and Mumbai,
 not the official Digital Sky map (which cannot be queried automatically), and the screen says so; a route outside
 those cities is reported "not checked", never "clear". *Show:* Route check ▸ *Try 5 demo missions*.
+
+**Q23c. How does "Today's fleet" decide, and why trust it?**
+Fixed rules only, each shown with its reason: do not fly if a safety-critical setting changed without approval or
+there is no UIN on record; check first if a flight-limit setting changed, the UIN is unverified, settings were never
+checked, or the last flight's log shows warnings (sensor data rejected, poor GPS, critical battery, a safety setting
+changed in flight, leaving the plan). Vibration is displayed but never changes the verdict. *Show:* Today's fleet ▸
+PX4-04, whose critical-battery threshold really changed between two of its public flights.
 
 **Q24. How do you know the planned-versus-flown check works?**
 We injected known deviations into 40 real PX4 flights: it found 36 of 40 sideways deviations of 35 m and 39 of 40

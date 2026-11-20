@@ -65,6 +65,28 @@ export const BASE_RATE = {
   from: { file: 'supp', text: 'empirical vehicle crash base rate of 0.741\\% (284/38,320)' } as Source,
 }
 
+// The use case: agricultural drone service providers in India. Public facts, each with the page it comes from.
+export interface WebSource { name: string; url: string }
+export const USE_CASE: { big: string; label: string; text: string; source: WebSource }[] = [
+  { big: '15,000', label: 'drones for women self-help groups',
+    text: 'Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore) gives drones to 15,000 women self-help groups, which rent crop-spraying and nano-fertiliser flights to farmers.',
+    source: { name: 'PIB, Ministry of Agriculture & Farmers Welfare', url: 'https://pib.gov.in/PressReleasePage.aspx?PRID=1980683' } },
+  { big: '5 + 10 days', label: 'of training for each pilot',
+    text: 'Pilots are trained for 5 days to fly, plus 10 days for applying nutrients and pesticides: new operators, not career pilots.',
+    source: { name: 'PIB, Ministry of Agriculture & Farmers Welfare', url: 'https://pib.gov.in/PressReleasePage.aspx?PRID=1980683' } },
+  { big: '7 days', label: 'to report spraying data',
+    text: 'Under the crop-protection drone SOP, operators submit spray monitoring data to the Central Insecticide Board within seven days of spraying.',
+    source: { name: 'Ministry of Agriculture SOP for drone pesticide application (2021)', url: 'https://pib.gov.in/PressReleasePage.aspx?PRID=1783937' } },
+  { big: 'Mandatory', label: 'third-party insurance',
+    text: 'The Drone Rules 2021 require third-party insurance for every drone above nano class, so after an accident someone will ask whose fault it was.',
+    source: { name: 'Drone Rules 2021 (Digital Sky)', url: 'https://digitalsky.dgca.gov.in/assets/files/UasRules.pdf' } },
+]
+export const TOP_CAUSE = {
+  big: '26 of 94',
+  text: 'In our study, tuning or configuration was the cause PX4 experts named most often for aircraft-caused crashes, ahead of GPS, compass or estimator problems. Settings are the first thing AeroFleet checks.',
+  from: [{ file: 'main', text: 'Tuning or configuration was the cause named most often (26 of 94' }] as Source[],
+}
+
 export const REGULATION: { where: string; rule: string; from: Source }[] = [
   { where: 'EU and UK', rule: 'Operators in the specific category keep records of operations, maintenance and personnel for at least three years.',
     from: { file: 'main', text: 'for at least three years' } },

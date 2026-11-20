@@ -258,6 +258,19 @@ export default function FleetAssurancePage() {
   const openHistory = (id: string) => act(async () => setHistory(await call<VibHistory>(`/drones/${encodeURIComponent(id)}/vibration`)))
   const openReview = (id: number) => act(async () => setReview(await call<Review>(`/flights/${id}`)))
 
+  // Arriving from the readiness board with "open this drone's settings / this flight": open it and scroll to it once.
+  useEffect(() => {
+    let raw: string | null = null
+    try { raw = localStorage.getItem('aerofleet_open'); localStorage.removeItem('aerofleet_open') } catch { return }
+    if (!raw) return
+    const req = JSON.parse(raw) as { kind: 'drift' | 'review'; id: string | number }
+    const show = (el: string) => setTimeout(() => document.getElementById(el)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
+    ;(async () => {
+      if (req.kind === 'drift') { await open(String(req.id)); show('drift-detail') }
+      else { setReview(await call<Review>(`/flights/${req.id}`)); show('flight-detail') }
+    })().catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const side = drift ? (drift.vs_baseline ?? drift.vs_previous) : null
   const newSince = drift?.vs_baseline && drift.vs_previous ? new Set(drift.vs_previous.changes.map((c) => c.name)) : null
   const failed = checks?.evaluated.filter((c) => c.status !== 'PASS') ?? []
@@ -340,7 +353,7 @@ export default function FleetAssurancePage() {
           {side && side.changes.length > 0 && (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Setting</th><th>Kind</th><th>Approved value</th><th>On this drone</th><th title="How public PX4 flights rated good or great set this value">Public PX4 flights</th><th /></tr></thead>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Setting</th><th>Kind</th><th>{drift.vs_baseline ? 'Approved value' : 'Previous upload'}</th><th>On this drone</th><th title="How public PX4 flights rated good or great set this value">Public PX4 flights</th><th /></tr></thead>
                 <tbody>{side.changes.map((c) => (
                   <tr key={c.name} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
                     <td style={{ padding: '6px 0', fontFamily: 'var(--font-mono, monospace)', fontWeight: 600 }}>

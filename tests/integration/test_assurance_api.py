@@ -428,11 +428,30 @@ def test_route_check_against_the_real_pune_zones_the_ceiling_and_each_other(api_
     assert r.status_code == 200, r.text
     out = r.json()
     v = {m["id"]: m["verdict"] for m in out["missions"]}
-    assert v == {"CANTONMENT-LINE": "NOT_PERMITTED", "HILL-PHOTO": "NOT_PERMITTED", "CITY-SURVEY": "NEEDS_PERMISSION",
-                 "FARM-SOUTH": "CLEAR", "FARM-SOUTH-2": "CLEAR", "DELHI-TEST": "UNCHECKED"}
-    cant = next(m for m in out["missions"] if m["id"] == "CANTONMENT-LINE")
+    assert v == {"SPRAY-NEAR-CANTONMENT": "NOT_PERMITTED", "CROP-MAP-150M": "NOT_PERMITTED", "SPRAY-NEAR-AIRPORT": "NEEDS_PERMISSION",
+                 "SPRAY-FIELD-A": "CLEAR", "SPRAY-FIELD-B": "CLEAR", "DELHI-TEST": "UNCHECKED"}
+    cant = next(m for m in out["missions"] if m["id"] == "SPRAY-NEAR-CANTONMENT")
     assert "Pune Cantonment" in cant["summary"] and cant["city"] == "pune"
-    assert {(c["a"], c["b"]) for c in out["conflicts"]} == {("FARM-SOUTH-2", "FARM-SOUTH")}
+    assert {frozenset((c["a"], c["b"])) for c in out["conflicts"]} == {frozenset(("SPRAY-FIELD-A", "SPRAY-FIELD-B"))}
     assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 6
     assert api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers,
                            files=[("plans", ("bad name!.waypoints", far.encode(), "text/plain"))]).status_code == 422
+
+
+def test_the_readiness_board_combines_settings_registration_and_the_last_flight(api_client, auth_headers, operator_headers, tmp_path):
+    from aerofleet.data.database import get_session
+    from aerofleet.data.models.models import DroneRegistration
+
+    api_client.post(f"{URL}/baseline", headers=operator_headers, files=_file(BASE))
+    api_client.post(f"{URL}/drones/RB-OK/params", headers=auth_headers, files=_file(BASE))
+    api_client.post(f"{URL}/drones/RB-BAD/params", headers=auth_headers, files=_file(BASE.replace("FS_THR_ENABLE,1", "FS_THR_ENABLE,0")))
+    db = get_session()
+    for d in ("RB-OK", "RB-BAD"):
+        db.merge(DroneRegistration(drone_id=d, uin=f"UA-{d}", status="VERIFIED"))
+    db.commit()
+    board = api_client.get(f"{URL}/readiness", headers=auth_headers).json()
+    rows = {r["drone_id"]: r for r in board["drones"]}
+    assert rows["RB-OK"]["status"] == "READY"
+    assert rows["RB-BAD"]["status"] == "DO_NOT_FLY" and "FS_THR_ENABLE" in rows["RB-BAD"]["reasons"][0]["text"]
+    assert board["drones"][0]["status"] == "DO_NOT_FLY"                  # worst first
+    assert "never changes the verdict" in board["vibration_note"] and board["counts"]["READY"] >= 1

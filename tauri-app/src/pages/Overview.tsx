@@ -3,7 +3,7 @@
 // docs/paper/check_numbers.py checks against the paper and the result files.
 import { useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { ARCHIVE, BASE_RATE, FINDINGS, NOT_YET, REGULATION, STUDY, TOOL_TESTS, type Finding } from '../lib/studyFacts'
+import { ARCHIVE, BASE_RATE, FINDINGS, NOT_YET, REGULATION, STUDY, TOP_CAUSE, TOOL_TESTS, USE_CASE, type Finding } from '../lib/studyFacts'
 
 const BLUE = '#2a78d6', ORANGE = '#eb6834', GREEN = '#1baf7a'
 const DEMO_FLEET = 'demo'
@@ -65,13 +65,14 @@ const HOW: { finding: string; does: string; section: string; button: string }[] 
 ]
 
 const FLOW: { when: string; what: string[]; section: string }[] = [
-  { when: 'Before a flight', what: ['Each planned route against red and yellow airspace and the 120 m limit (Route check)', 'Settings against the fleet\'s approved configuration: a disabled failsafe marks the drone Blocked', 'Missions planned for the same time checked for conflicts, with a proposed fix', 'Battery against the forecast wind at cruise height'], section: 'page:routes' },
-  { when: 'After a flight', what: ['Upload the log, with the mission file if there is one', 'Events in time order, evidence quality, settings changed in flight', 'A signed, printable review'], section: 'flight-list' },
-  { when: 'Over a fleet\'s life', what: ['Each drone\'s vibration against its own history', 'Its position among comparable drones', 'A tamper-evident record for the three-year retention rule'], section: 'vibration-card' },
-  { when: 'When something goes wrong', what: ['Describe the problem in words', 'A checklist ordered by how often PX4 experts found each cause', 'The most similar past crash threads to read'], section: 'troubleshoot-card' },
+  { when: 'Morning, before going out', what: ['Today\'s fleet: every drone ready / check first / do not fly, with the reason', 'Settings against the approved configuration (the cause experts named most)', 'Each spraying route against red and yellow airspace and the 120 m limit'], section: 'page:readiness' },
+  { when: 'Planning the day\'s jobs', what: ['Farms near an airport or a cantonment flagged before anyone drives out', 'Jobs that would cross each other in the air found and re-timed', 'Battery against the forecast wind at working height'], section: 'page:routes' },
+  { when: 'Evening, after flying', what: ['Upload each drone\'s log (no mission file needed)', 'Events in time order, evidence quality, settings changed in flight', 'A signed, printable record for the reporting deadline and the insurer'], section: 'flight-list' },
+  { when: 'Across the season', what: ['Each drone against its own earlier flights and against public flights', 'Registration (UIN) and airworthiness checks per drone', 'When something goes wrong: a checklist ordered by what experts found most'], section: 'vibration-card' },
 ]
 
 const WHO: { who: string; gets: string }[] = [
+  { who: 'Drone service providers and self-help groups', gets: 'A morning go / no-go for every drone, written so a pilot with weeks of training can act on it, and records that protect the pilot when something goes wrong.' },
   { who: 'Fleet operators', gets: 'One place for settings, flight reviews and records, without trusting an unproven verdict.' },
   { who: 'Maintenance engineers', gets: 'Which drone to look at first, with its own history beside the fleet\'s.' },
   { who: 'Investigators and insurers', gets: 'A time-ordered, signed account of what the log shows, and a clear statement of what it cannot show.' },
@@ -96,14 +97,14 @@ export default function OverviewPage() {
       {/* 1. What it is */}
       <div className="card" style={{ ...card, padding: 28, background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: '#fff', border: 'none' }}>
         <div style={{ ...kicker, color: 'rgba(255,255,255,0.75)' }}>AeroFleet 2.0 · open source · COEP Technological University</div>
-        <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>Evidence, not verdicts.</h1>
-        <div style={{ fontSize: 16, maxWidth: 780, lineHeight: 1.5 }}>
-          A ground-side assurance tool for PX4 and ArduPilot drone fleets. It checks settings, plans and flight logs an operator
-          already has, keeps a signed record of every check, and shows what a log can support, built on a study of
-          {' '}{STUDY.crashLogs} crash logs from a {STUDY.logs}-log public archive.
+        <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>The safety and records back office for agricultural drone fleets.</h1>
+        <div style={{ fontSize: 16, maxWidth: 820, lineHeight: 1.5 }}>
+          Each morning AeroFleet tells a drone service provider which drones can fly today and why; before a job it checks the route
+          against restricted airspace; after flying it turns each log into a signed, time-ordered record. It is built on what
+          {' '}{STUDY.crashLogs} real crash logs from a {STUDY.logs}-log public archive can and cannot show: evidence, not verdicts.
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-          <button className="btn" style={{ background: '#fff', color: 'var(--accent)', fontWeight: 700 }} onClick={() => goTo()}>Open the demo fleet</button>
+          <button className="btn" style={{ background: '#fff', color: 'var(--accent)', fontWeight: 700 }} onClick={() => goTo('page:readiness')}>See today's fleet</button>
           <button className="btn" style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.6)' }}
             onClick={() => document.getElementById('overview-data')?.scrollIntoView({ behavior: 'smooth' })}>What the study found</button>
         </div>
@@ -113,21 +114,34 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 2. The problem */}
-      <div className="card" style={card}>
-        <div style={kicker}>The problem</div>
-        <h2 style={h2}>Rules demand records, and tools promise verdicts that logs may not support</h2>
-        <div style={grid(220)}>
-          {REGULATION.map((r) => (
-            <div key={r.where} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)' }}>
-              <div style={{ fontWeight: 700 }}>{r.where}</div><div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{r.rule}</div>
+      {/* 2. Who it is for, and why now */}
+      <div className="card" style={card} id="overview-usecase">
+        <div style={kicker}>Who it is for, and why now</div>
+        <h2 style={h2}>India is putting thousands of spraying drones in the hands of new operators</h2>
+        <div style={grid(230)}>
+          {USE_CASE.map((u) => (
+            <div key={u.label} style={{ padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', display: 'grid', gap: 4, alignContent: 'start' }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{u.big}</div>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{u.label}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{u.text}</div>
+              <a href={u.source.url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{u.source.name}</a>
             </div>))}
         </div>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: 24, fontWeight: 700, color: ORANGE, whiteSpace: 'nowrap' }}>{TOP_CAUSE.big}</span>
+          <span style={{ fontSize: 13, lineHeight: 1.5 }}>{TOP_CAUSE.text}</span>
+        </div>
         <div style={{ fontSize: 14, lineHeight: 1.55 }}>
-          When a drone crashes, the flight log is the richest record there is. Log viewers, fleet platforms and machine-learning and
-          language-model prototypes promise to turn it into an answer: what failed, and whether the pilot or the aircraft was to
-          blame. That answer can decide a warranty claim, an insurance payout or who is held responsible. <b>We tested whether
-          real logs can carry that weight.</b>
+          <b>The gap.</b> A self-help group with one or two drones has no maintenance engineer and no fleet software. Commercial fleet
+          tools and new AI products promise to read a log and say what failed and who was to blame, and that answer can decide an
+          insurance claim or who is held responsible. <b>We tested whether real logs can carry that weight; they cannot.</b> So
+          AeroFleet checks what can be checked by rule, shows the rest as evidence, and never names a cause.
+        </div>
+        <div style={grid(220)}>
+          {REGULATION.map((r) => (
+            <div key={r.where} style={{ padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', fontSize: 12 }}>
+              <b>{r.where}:</b> <span style={{ color: 'var(--text-secondary)' }}>{r.rule}</span>
+            </div>))}
         </div>
       </div>
 
@@ -194,7 +208,7 @@ export default function OverviewPage() {
       {/* 6. How an operator uses it */}
       <div className="card" style={card}>
         <div style={kicker}>How it is used</div>
-        <h2 style={h2}>One workflow, before and after every flight</h2>
+        <h2 style={h2}>A day with AeroFleet, for a spraying service provider</h2>
         <div style={grid(220)}>
           {FLOW.map((s, i) => (
             <button key={s.when} onClick={() => goTo(s.section)} className="card"

@@ -24,7 +24,7 @@ const VERDICT: Record<Verdict, { label: string; color: string; bg: string }> = {
 }
 const ZONE_COLORS: Record<string, string> = { RED: '#DC2626', YELLOW: '#EAB308', GREEN: '#16A34A' }
 const ESRI = 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
-const DEMO = ['FARM-SOUTH', 'FARM-SOUTH-2', 'CITY-SURVEY', 'CANTONMENT-LINE', 'HILL-PHOTO']
+const DEMO = ['SPRAY-FIELD-A', 'SPRAY-FIELD-B', 'SPRAY-NEAR-AIRPORT', 'SPRAY-NEAR-CANTONMENT', 'CROP-MAP-150M']
 
 function circle(lat: number, lon: number, r: number, n = 64): GeoJSON.Position[] {
   const out: GeoJSON.Position[] = []
@@ -156,7 +156,7 @@ export default function RouteCheckPage() {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input ref={fileRef} type="file" accept=".waypoints,.txt" multiple hidden onChange={(e) => { run(Array.from(e.target.files ?? [])); e.target.value = '' }} />
           <button className="btn btn--primary" id="btn-route-files" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? 'Checking…' : 'Choose mission files'}</button>
-          <button className="btn" id="btn-route-demo" disabled={busy} onClick={demo}>Try 5 demo missions</button>
+          <button className="btn" id="btn-route-demo" disabled={busy} onClick={demo}>Try 5 demo jobs</button>
           <select className="form-select" value={city} onChange={(e) => setCity(e.target.value)} style={{ width: 110 }} title="Airspace shown on the map">
             {(cities.length ? cities : [{ slug: 'pune', name: 'Pune' } as CityDto]).map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
           </select>

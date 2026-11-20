@@ -1,5 +1,8 @@
 # AeroFleet 2.0
 
+**The safety and records back office for agricultural drone fleets** (for example the 15,000 women self-help groups
+receiving spraying drones under India's Namo Drone Didi scheme): each morning, which drones can fly and why; before a
+job, its route against restricted airspace; after flying, a signed, time-ordered record of each log.
 **A ground-side assurance tool for drone fleets.** It checks a fleet's settings, plans and flight logs
 before and after flying, lays out what a flight log shows for the person reviewing it, and keeps a
 signed record of every result. It never controls a drone in flight, needs no drone hardware (it works
