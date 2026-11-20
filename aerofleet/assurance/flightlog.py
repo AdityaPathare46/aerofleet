@@ -40,6 +40,8 @@ class FlightLog:
     notes: List[str] = field(default_factory=list)
     start_utc: Optional[float] = None                        # GPS time (Unix s) at the first fix: when the flight was flown
     health: List[Tuple[float, float, str]] = field(default_factory=list)   # (start_s, end_s, what) the autopilot itself reported
+    hardware: Optional[str] = None                           # flight-controller board, e.g. PX4_FMU_V5 (PX4 logs)
+    firmware: Optional[str] = None                           # autopilot release, e.g. "1.14" (PX4 logs)
 
     @property
     def duration_s(self) -> float:
@@ -92,6 +94,10 @@ def _read_ulog(path: str) -> FlightLog:
         if d.name not in data or d.multi_id == 0:
             data[d.name] = d.data
     log = FlightLog(format="ulg")
+    log.hardware = u.msg_info_dict.get("ver_hw") or None
+    rel = u.msg_info_dict.get("ver_sw_release")              # packed 0xMMmmpp..: major, minor, patch, release type
+    if isinstance(rel, int) and rel > 0:
+        log.firmware = f"{(rel >> 24) & 0xFF}.{(rel >> 16) & 0xFF}"
     log.params = {k.upper(): float(v) for k, v in u.initial_parameters.items()}
     for ts, name, value in u.changed_parameters:
         if ts > t0:
