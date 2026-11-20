@@ -1,0 +1,31 @@
+{
+ "vibration": {
+  "flights": 1104,
+  "coverage_before": 0.7273550724637681,
+  "coverage_after": 0.9039855072463768,
+  "coverage_after_by_kind": {
+   "fixed wing": 0.8480392156862745,
+   "multirotor": 0.9182209469153515,
+   "other": 0.9113300492610837
+  },
+  "median_width_before": 2.7887891920467234,
+  "median_width_after": 4.187615830117597,
+  "H4_supported": true,
+  "widen_all_rows": 0.6471560735392794
+ },
+ "battery_drop_pct_per_min": {
+  "flights": 1056,
+  "coverage_before": 0.7329545454545454,
+  "coverage_after": 0.9081439393939394,
+  "coverage_after_by_kind": {
+   "fixed wing": 0.900497512437811,
+   "multirotor": 0.9079754601226994,
+   "other": 0.916256157635468
+  },
+  "median_width_before": 1.7244974097675372,
+  "median_width_after": 2.5928944053670997,
+  "H4_supported": true,
+  "widen_all_rows": 0.39795858577621757
+ },
+ "written_to_model": true
+}
