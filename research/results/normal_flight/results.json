@@ -1,0 +1,92 @@
+{
+ "local_logs": 3279,
+ "chosen": 2216,
+ "kept": 1121,
+ "excluded": {
+  "crash or unsatisfactory rating": 589,
+  "demo fleet vehicle": 154,
+  "over 10 per vehicle": 320,
+  "unreadable, not PX4 or under 60 s": 1071,
+  "cut short (truncated download)": 24
+ },
+ "evaluation": {
+  "vibration": {
+   "flights": 1104,
+   "vehicles": 396,
+   "coverage_5_95": 0.7273550724637681,
+   "coverage_by_kind": {
+    "fixed wing": 0.7058823529411765,
+    "multirotor": 0.7345767575322812,
+    "other": 0.7241379310344828
+   },
+   "mae_model": 0.9678916905566771,
+   "mae_baseline": 1.846992817110477,
+   "mae_reduction": 0.4759634788017786,
+   "H1_supported": false,
+   "H2_supported": true
+  },
+  "battery_drop_pct_per_min": {
+   "flights": 1056,
+   "vehicles": 379,
+   "coverage_5_95": 0.7329545454545454,
+   "coverage_by_kind": {
+    "fixed wing": 0.7114427860696517,
+    "multirotor": 0.7515337423312883,
+    "other": 0.6945812807881774
+   },
+   "mae_model": 0.8263180053876238,
+   "mae_baseline": 0.9765546885347829,
+   "mae_reduction": 0.15384359412842852,
+   "H1_supported": false,
+   "H2_supported": true
+  }
+ },
+ "export_max_abs_error": {
+  "vibration": 2.5757174171303632e-14,
+  "battery_drop_pct_per_min": 1.4210854715202004e-14
+ },
+ "export_exact": true,
+ "rflymad": {
+  "skipped": {
+   "motor: unreadable": 3,
+   "motor: no fault code": 2,
+   "no_fault: unreadable": 1,
+   "motor: window too sparse": 20,
+   "no_fault: window too sparse": 1,
+   "sensors: window too sparse": 16
+  },
+  "pseudo_onset_s": 37.49935,
+  "motor": {
+   "flights": 220,
+   "median_pre": -0.10601965013072415,
+   "median_post": -0.059620744536272884,
+   "share_post_higher": 0.6045454545454545,
+   "p": 0.0005253728381512798,
+   "alternative": "greater",
+   "share_above_range_pre": 0.0,
+   "share_above_range_post": 0.0
+  },
+  "sensors": {
+   "flights": 181,
+   "median_pre": -0.13448626559955193,
+   "median_post": -0.052614886191004226,
+   "share_post_higher": 0.6132596685082873,
+   "p": 0.0046775781399898,
+   "alternative": "two-sided",
+   "share_above_range_pre": 0.0,
+   "share_above_range_post": 0.0
+  },
+  "no_fault": {
+   "flights": 49,
+   "median_pre": -0.07694657695109637,
+   "median_post": -0.21012965425748634,
+   "share_post_higher": 0.3469387755102041,
+   "p": 0.016027738565448146,
+   "alternative": "two-sided",
+   "share_above_range_pre": 0.0,
+   "share_above_range_post": 0.0
+  },
+  "H3_supported": true
+ },
+ "seconds": 1855
+}
