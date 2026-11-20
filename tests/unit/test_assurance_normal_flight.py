@@ -72,3 +72,13 @@ def test_the_calibrated_widening_is_applied_on_the_model_scale(monkeypatch):
     e = nf.expected("vibration", {"speed_ms": 3.0, "kind": "multirotor"})
     assert e["low"] == pytest.approx(1.0 * math.exp(-0.5)) and e["high"] == pytest.approx(4.0 * math.exp(0.5))
     assert e["mid"] == pytest.approx(2.0)                                                  # the middle does not move
+
+
+def test_no_ratio_is_shown_when_the_observed_value_is_not_positive():
+    f = _flight(3.0)
+    f.battery = [(float(t), 12.0 + 0.002 * t, None) for t in range(200)]            # voltage rose during the flight
+    widened = {"targets": {"battery_drop_pct_per_min": {"numeric": ["speed_ms"], "categories": {}, "transform": None,
+               "quantiles": {k: {"init": v, "learning_rate": 1.0, "trees": []} for k, v in (("q05", 0.1), ("q50", 0.5), ("q95", 1.0))}}}, "card": {}}
+    nf.model = lambda: widened  # restored by the autouse fixture's monkeypatch on the next test
+    t = nf.assess(f)["targets"]["battery_drop_pct_per_min"]
+    assert t["position"] == "below" and t["observed"] < 0 and t["times_mid"] is None

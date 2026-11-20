@@ -34,6 +34,7 @@ interface Review {
     horizontal_m: { max: number; p95: number; median: number } | null; vertical_m: { max: number } | null
     max_height_m: { flown: number; planned: number | null }; time_off_route_s: number | null; flight_s: number
     vibration?: { p95: number; median: number; p95_whole_flight?: number; end_margin_s?: number; source: string; flown_at?: string } | null
+    normal_flight?: { note: string; model?: string; targets: Record<string, { label: string; unit: string; observed: number; low: number; mid: number; high: number; position: 'below' | 'inside' | 'above'; times_mid: number | null }> } | null
     episodes: Episode[]; manual_control: { mode: string; start_s: number; duration_s: number }[]; notes: string[]
     log: { points: number; param_count: number; notes: string[] }
     settings_changed_in_flight?: { count: number; safety_critical: number; flight_limit: number; changes: { t_s: number; name: string; old: number; new: number; severity: Severity }[] }
@@ -108,6 +109,7 @@ function Pill({ verdict, label }: { verdict: Verdict; label?: string }) {
 
 const fmt = (x: number | null) => (x === null ? '—' : String(Number(x.toFixed(6))))
 // The backend stores UTC without a zone suffix; show it in the viewer's local time.
+const sig3 = (x: number) => (Math.abs(x) >= 1000 ? Math.round(x).toString() : Number(x.toPrecision(3)).toString())   // 3 significant figures
 const when = (iso: string) => new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function FleetAssurancePage() {
@@ -432,6 +434,23 @@ export default function FleetAssurancePage() {
               {review.report.vibration.p95_whole_flight != null && review.report.vibration.p95_whole_flight !== review.report.vibration.p95 ? ` (whole flight ${fmt(review.report.vibration.p95_whole_flight)})` : ''}
               {review.public_vibration && <span title={review.public_vibration.note}>, <b>higher than {review.public_vibration.higher_than_pct}%</b> of {review.public_vibration.flights} public PX4 flights rated good or great</span>}</>}
           </div>
+          {review.report.normal_flight && (
+            <div id="normal-flight" style={{ display: 'grid', gap: 6, padding: 10, borderRadius: 8, background: 'var(--bg-secondary, #F8FAFC)' }}>
+              <div style={{ fontSize: 13 }}><b>Compared with healthy flights of similar drones</b>
+                <span style={{ color: 'var(--text-secondary)' }}> (learned model{review.report.normal_flight.model ? `: ${review.report.normal_flight.model}` : ''})</span></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Measure</th><th>This flight</th><th title="In testing on drones the model had never seen, this range held about 90% of flights">Expected range (~90% of healthy flights)</th><th>Typical</th><th /></tr></thead>
+                <tbody>{Object.entries(review.report.normal_flight.targets).map(([k, t]) => (
+                  <tr key={k} style={{ borderTop: '1px solid var(--border, #E2E8F0)' }}>
+                    <td style={{ padding: '5px 0' }}>{t.label} <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>({t.unit})</span></td>
+                    <td style={{ fontWeight: 700 }}>{sig3(t.observed)}</td>
+                    <td>{sig3(k === 'battery_drop_pct_per_min' ? Math.max(0, t.low) : t.low)} to {sig3(t.high)}</td><td>{sig3(t.mid)}</td>
+                    <td style={{ fontWeight: 600, color: t.position === 'inside' ? 'var(--status-green)' : '#92400E' }}>
+                      {t.position === 'inside' ? 'within range' : `${t.position} range${t.times_mid != null ? ` (${t.times_mid}x typical)` : ''}`}</td>
+                  </tr>))}</tbody>
+              </table>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{review.report.normal_flight.note}</div>
+            </div>)}
           {review.report.episodes.length === 0 && review.report.manual_control.length === 0
             ? <div style={{ fontSize: 13 }}>{review.verdict === 'LOG_ONLY' ? 'No pilot-flown modes in the log.' : 'No excursions and no manual takeovers.'}</div>
             : (

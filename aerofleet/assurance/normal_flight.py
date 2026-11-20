@@ -163,5 +163,5 @@ def assess(flight) -> Optional[Dict[str, Any]]:
         where = "above" if obs > exp["high"] else "below" if obs < exp["low"] else "inside"
         out["targets"][target] = {"label": label, "unit": unit, "observed": round(obs, 6), "low": round(exp["low"], 6),
                                   "mid": round(exp["mid"], 6), "high": round(exp["high"], 6), "position": where,
-                                  "times_mid": round(obs / exp["mid"], 2) if exp["mid"] > 0 else None}
+                                  "times_mid": round(obs / exp["mid"], 2) if exp["mid"] > 0 and obs > 0 else None}
     return out if out["targets"] else None

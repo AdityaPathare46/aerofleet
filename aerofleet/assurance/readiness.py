@@ -73,6 +73,9 @@ def last_flight_summary(review_id: int, report: Dict[str, Any], uploaded_at: str
             if key not in seen:
                 seen.add(key)
                 warnings.append(e["text"])
+    outside = [f"{t['label'].lower()} {t['position']} the expected range" + (f" ({t['times_mid']}x typical)" if t.get("times_mid") else "")
+               for t in ((report.get("normal_flight") or {}).get("targets") or {}).values() if t["position"] != "inside"]
     return {"review_id": review_id, "flown_at": (report.get("vibration") or {}).get("flown_at") or uploaded_at,
+            "normal_flight": outside,                          # context only: never a reason, never changes the verdict
             "warnings": warnings, "critical_in_flight": (report.get("settings_changed_in_flight") or {}).get("safety_critical", 0),
             "deviated": report.get("verdict") == "DEVIATED", "flight_s": report.get("flight_s")}

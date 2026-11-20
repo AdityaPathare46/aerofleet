@@ -12,6 +12,14 @@ interface Claim {
   declared_before_result: boolean; script: string; data: string; pass_mark: string
 }
 interface Attack { attack: string; change: string; caught: boolean; problem: string }
+interface ModelEval { flights: number; vehicles: number; coverage_5_95: number; mae_model: number; mae_baseline: number; mae_reduction: number | null; H1_supported: boolean; H2_supported: boolean }
+interface ModelInfo {
+  card: { name: string; trained: string; flights: number; vehicles: number }
+  kept: number; excluded: Record<string, number>; evaluation: Record<string, ModelEval>; export_exact: boolean
+  calibration: Record<string, { coverage_before: number; coverage_after: number; H4_supported: boolean } | boolean> | null; calibration_declared: Commit
+  rflymad: { H3_supported: boolean; motor?: { flights: number; median_pre: number; median_post: number; share_post_higher: number; p: number | null; share_above_range_pre: number; share_above_range_post: number }; skipped: Record<string, number> }
+  declared: Commit; script: string
+}
 interface TamperResult { attacks: Attack[]; all_caught: boolean; record_untouched: { ok: boolean; entries: number }; note: string }
 
 const GREEN = '#16A34A', RED = '#DC2626'
@@ -33,6 +41,7 @@ const TESTS: { name: string; what: string }[] = [
   { name: 'No AI in the decision path', what: 'Follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (tests/unit/test_no_ai_in_decision_path.py).' },
   { name: 'Paper numbers stay true', what: 'docs/paper/check_numbers.py checks 29 key numbers across the paper, supplement, cover letter and highlights against the result files, and every number on the Overview page against its source.' },
   { name: 'Results recompute', what: 'The four claims above are recomputed in a test, compared with the paper\'s text, and the declaration is checked to predate the result (tests/unit/test_evidence.py).' },
+  { name: 'Learned model exported exactly', what: 'The app evaluates the trained trees in plain Python; they reproduce scikit-learn to within 3e-14, and a test checks the evaluator (tests/unit/test_assurance_normal_flight.py).' },
   { name: 'Damaged files', what: 'Empty files, random bytes, a mission file renamed as a log and a log cut off mid-flight all get a clear message, never a crash.' },
   { name: 'Tampering', what: 'Every attack on this page is also an automated test.' },
 ]
@@ -50,6 +59,7 @@ export default function ProofPage() {
   const [error, setError] = useState<string | null>(null)
   const [took, setTook] = useState<number | null>(null)
   const [needsAuth, setNeedsAuth] = useState(false)
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null | 'none'>(null)
 
   const recompute = async () => {
     setBusy('claims'); setError(null)
@@ -141,9 +151,43 @@ export default function ProofPage() {
         </>}
       </div>
 
+      {/* 2b. The learned model */}
+      <div className="card" style={card} id="proof-model">
+        <div style={kicker}>3 · The learned normal-flight model: how it was trained and tested</div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn--primary" id="btn-model" disabled={busy !== null} onClick={async () => {
+            const r = await fetch(`${apiUrl}/api/v1/evidence/normal-flight-model`).catch(() => null)
+            setModelInfo(r && r.ok ? ((await r.json()) ?? 'none') : 'none')
+          }}>Show the model and its tests</button>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Gradient-boosted trees trained on ordinary public PX4 flights (no crash labels) to give each flight an expected range. Tests declared before training.</span>
+        </div>
+        {modelInfo === 'none' && <div style={{ fontSize: 13 }}>No trained model found on this install.</div>}
+        {modelInfo && modelInfo !== 'none' && <>
+          <div style={{ fontSize: 13 }}><b>{modelInfo.card.name}</b>, trained {modelInfo.card.trained} on <b>{modelInfo.card.flights.toLocaleString()} flights of {modelInfo.card.vehicles} vehicles</b>.
+            {' '}Declared <span style={mono}>{modelInfo.declared.commit}</span> {day(modelInfo.declared.date)} · script <span style={mono}>{modelInfo.script}</span></div>
+          {Object.entries(modelInfo.evaluation).map(([k, e]) => (
+            <div key={k} style={{ fontSize: 13, display: 'grid', gap: 2, padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+              <b>{k === 'vibration' ? 'Vibration' : 'Battery voltage drop'} ({e.flights.toLocaleString()} flights, held-out vehicles)</b>
+              <span style={{ color: e.H1_supported ? GREEN : RED }}>{e.H1_supported ? '✓' : '✗'} H1 calibration: {(100 * e.coverage_5_95).toFixed(1)}% of unseen flights inside the 5-95% range (pass: 85-95%)</span>
+              {modelInfo.calibration && typeof modelInfo.calibration[k] === 'object' && (() => {
+                const c = modelInfo.calibration![k] as { coverage_before: number; coverage_after: number; H4_supported: boolean }
+                return <span style={{ color: c.H4_supported ? GREEN : RED }}>{c.H4_supported ? '✓' : '✗'} H4† conformal calibration (declared after H1 failed, <span style={mono}>{modelInfo.calibration_declared.commit}</span>): {(100 * c.coverage_before).toFixed(1)}% → {(100 * c.coverage_after).toFixed(1)}% of unseen flights inside the widened range (pass: 85-95%). The app uses the widened range.</span>
+              })()}
+              <span style={{ color: e.H2_supported ? GREEN : RED }}>{e.H2_supported ? '✓' : '✗'} H2 skill: typical error {e.mae_reduction != null ? `${(100 * e.mae_reduction).toFixed(0)}% lower` : 'not comparable'} than always guessing the median (pass: 10% lower)</span>
+            </div>))}
+          {modelInfo.rflymad.motor && (
+            <div style={{ fontSize: 13, display: 'grid', gap: 2, padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+              <b>Injected motor faults (RflyMAD real flights, {modelInfo.rflymad.motor.flights} flights)</b>
+              <span style={{ color: modelInfo.rflymad.H3_supported ? GREEN : RED }}>{modelInfo.rflymad.H3_supported ? '✓' : '✗'} H3: vibration score rose after the fault in {(100 * modelInfo.rflymad.motor.share_post_higher).toFixed(0)}% of flights (p = {modelInfo.rflymad.motor.p != null ? modelInfo.rflymad.motor.p.toPrecision(2) : '?'}; pass: p &lt; 0.025); above the expected range {(100 * modelInfo.rflymad.motor.share_above_range_pre).toFixed(0)}% before vs {(100 * modelInfo.rflymad.motor.share_above_range_post).toFixed(0)}% after</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Read with care: the shift is small (no flight crossed its range), sensor faults raised the score too, and fault-free flights fell at the same point in the flight, so part of the effect is the phase of flight. It shows the model responds to faults; it is not a fault detector.</span>
+            </div>)}
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Exported trees reproduce the trained model {modelInfo.export_exact ? 'exactly' : 'with differences'}; the app runs them without any machine-learning library. Context for an inspector only: the model never changes a verdict.</div>
+        </>}
+      </div>
+
       {/* 3. Measured */}
       <div className="card" style={card}>
-        <div style={kicker}>3 · What the tool was measured to do</div>
+        <div style={kicker}>4 · What the tool was measured to do</div>
         {MEASURED.map((m) => (
           <div key={m.what} style={{ fontSize: 13, display: 'grid', gap: 2 }}>
             <b>{m.what}</b><span>{m.value}</span><span style={{ ...mono, fontSize: 11, color: 'var(--text-muted)' }}>{m.source}</span>
@@ -152,7 +196,7 @@ export default function ProofPage() {
 
       {/* 4. Automated checks */}
       <div className="card" style={card}>
-        <div style={kicker}>4 · Checked automatically on every change</div>
+        <div style={kicker}>5 · Checked automatically on every change</div>
         {TESTS.map((t) => <div key={t.name} style={{ fontSize: 13 }}><b>{t.name}.</b> <span style={{ color: 'var(--text-secondary)' }}>{t.what}</span></div>)}
         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Run them all: <span style={mono}>python -m pytest -q --no-cov tests/unit tests/integration</span></div>
         <div><button className="btn" onClick={() => setActivePage('overview')}>Back to the Overview</button></div>

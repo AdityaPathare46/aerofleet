@@ -75,6 +75,13 @@ committed data, each with the commit that declared the test and the later one th
 *Run five attacks on a copy*: every attack on the signed record is caught and the real record is untouched. The hard
 questions and their answers are in `docs/VIVA.md`.
 
+### Step 0c. The learned model (1 minute)
+
+On **Proof**, press *Show the model and its tests*: 1,121 ordinary flights of 401 vehicles, tests declared before
+training, the failed calibration test and the declared fix that passed. Then on **Today's fleet**, PX4-01 ▸
+*Last flight →*: "Compared with healthy flights of similar drones" shows its battery drained 7.5 times faster than
+typical, matching the timeline's "Battery below 10%". Say: context, never a verdict.
+
 ### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
 
 1. In **Flight reviews**, open the newest flight of `PX4-08` (the one the uploader rated a crash).

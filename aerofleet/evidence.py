@@ -166,3 +166,20 @@ def claims() -> List[Dict[str, Any]]:
             "declared": dec or {"commit": c["declared"]}, "result_commit": res or {"commit": c["result"]},
             "declared_before_result": bool(dec and res and dec["date"] < res["date"])})
     return out
+
+
+def normal_flight_model() -> Optional[Dict[str, Any]]:
+    """The learned normal-flight model's card and its declared test results (research/normal_flight/), for the Proof page."""
+    try:
+        results = json.loads((ROOT / "research" / "results" / "normal_flight" / "results.json").read_text())
+        card = json.loads((ROOT / "aerofleet" / "assurance" / "data" / "normal_flight_model.json").read_text())["card"]
+    except (OSError, ValueError, KeyError):
+        return None
+    try:
+        calibration = json.loads((ROOT / "research" / "results" / "normal_flight" / "calibration.json").read_text())
+    except (OSError, ValueError):
+        calibration = None
+    return {"card": card, "calibration": calibration, "calibration_declared": _commit("76db013") or {"commit": "76db013"},
+            "kept": results.get("kept"), "excluded": results.get("excluded"), "evaluation": results.get("evaluation"),
+            "rflymad": results.get("rflymad"), "export_exact": results.get("export_exact"),
+            "declared": _commit("de4382a") or {"commit": "de4382a"}, "script": "research/normal_flight/train_eval.py"}

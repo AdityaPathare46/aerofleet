@@ -12,3 +12,11 @@ async def evidence_claims() -> List[Dict[str, Any]]:
     from aerofleet.evidence import claims
 
     return claims()
+
+
+@router.get("/normal-flight-model")
+async def normal_flight_model():
+    """The learned normal-flight model: what it was trained on and how its declared tests came out."""
+    from aerofleet.evidence import normal_flight_model as card
+
+    return card()

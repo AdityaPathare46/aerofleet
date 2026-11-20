@@ -9,7 +9,7 @@ interface Reason { level: Status; text: string; where: 'settings' | 'flight' | '
 interface Row {
   drone_id: string; status: Status; reasons: Reason[]; settings_verdict: string | null; settings_compared_with: string | null
   registration: { uin: string; status: string } | null
-  last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number } | null
+  last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[] } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
 }
 interface Board { fleet: string; drones: Row[]; counts: Record<Status, number>; vibration_note: string; rules: string }
@@ -101,6 +101,8 @@ export default function ReadinessPage() {
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'grid', gap: 4, alignContent: 'start' }}>
               <span>Last flight: <b>{day(d.last_flight?.flown_at)}</b>{d.last_flight?.flight_s ? ` · ${Math.round(d.last_flight.flight_s / 60)} min` : ''}</span>
               <span>Settings: {d.settings_verdict ? `${d.settings_verdict.replace('_', ' ').toLowerCase()} (vs ${d.settings_compared_with === 'vs_baseline' ? 'approved baseline' : 'previous upload'})` : 'not checked'}</span>
+              {d.last_flight?.normal_flight && d.last_flight.normal_flight.length > 0 && (
+                <span title="From the learned normal-flight model: context, never part of the verdict">Learned model (context): {d.last_flight.normal_flight.join('; ')}</span>)}
               {d.vibration && <span title={board.vibration_note}>Vibration (context): {d.vibration.latest_vs_own ? `above ${d.vibration.latest_vs_own.higher_than} of its ${d.vibration.latest_vs_own.earlier_flights} earlier flights` : 'too few flights'}{d.vibration.public ? `; above ${d.vibration.public.higher_than_pct}% of public flights` : ''}</span>}
             </div>
           </div>))}

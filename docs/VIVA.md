@@ -39,10 +39,11 @@ and the figures are in the paper. Have the paper PDF open in a second window.
 ## A. The problem and the contribution
 
 **Q1. What is new here? People have analysed drone logs before.**
-Three things, all measured: (1) the first test, declared in advance, of whether public flight logs can attribute
+Four things, all measured: (1) the first test, declared in advance, of whether public flight logs can attribute
 crashes to pilot or aircraft, and they cannot; (2) an audit showing how much of the apparent crash-detection skill
 comes from evaluation choices (AUC fell by 0.21 [0.06, 0.34] across 32 settings; a published detector fell from 0.94
-to 0.63 when whole days were held out); (3) a ten-item reporting checklist and a tool designed from those limits.
+to 0.63 when whole days were held out); (3) a ten-item reporting checklist and a tool designed from those limits; (4) a normal-flight model trained on
+1,121 public flights of 401 vehicles, tested on unseen drones and on real injected faults, used as context only.
 *Show:* Overview ▸ findings; paper Table 1 (related work) and Section 6.
 
 **Q2. Isn't a negative result a failed project?**
@@ -137,9 +138,37 @@ no normality. The p-value comes from the exact null (each drone's rank uniform o
 100,000 times. *Show:* Proof ▸ the between-drone p = 0.0023 is recomputed from that exact null.
 
 **Q15. Did you try machine learning? Deep learning?**
-Yes: logistic models, boosted stumps and depth-3 trees for attribution (all near chance on held-out crashes), and a
-re-implementation of a published convolutional fault detector (LeNet-5 style), which fell from AUC 0.94 to 0.63 once
-whole days were held out. Machine learning was the thing under test, not the tool's engine.
+Yes, twice, for two different jobs. (1) As the object of the study: logistic models, boosted stumps, depth-3 trees and a
+re-implemented convolutional fault detector all failed to tell pilot from aircraft or held up only under weak testing
+(the detector fell from AUC 0.94 to 0.63 with days held out). So no crash predictor is in the tool. (2) As a tool
+feature: the **normal-flight model**, gradient-boosted trees trained on **1,121 ordinary public PX4 flights of 401
+vehicles**, which learns the expected range of vibration and battery voltage drop for a drone like this one flown like
+this. It uses no crash labels, so it avoids exactly what the study found unreliable. *Show:* Proof ▸ *Show the model
+and its tests*; any flight review ▸ "Compared with healthy flights of similar drones".
+
+**Q15b. How was the model trained and tested?**
+Data rules, model settings and three pass/fail tests were committed before any training log was read (`de4382a`).
+Vehicles were held out (GroupKFold by vehicle), our own checklist item 2. Results: the middle estimate beat always
+guessing the median (error 48% lower for vibration, 15% for battery); on 220 real flights with injected motor faults
+(RflyMAD) the score rose after the fault (p = 0.0005); and the first calibration test **failed**: the "5-95%" range
+held only 73% of unseen drones' flights.
+
+**Q15c. One of your tests failed. Isn't that bad?**
+It is the most useful result. It showed the ranges were too narrow for drones the model had never seen. We declared a
+fix before running it (conformal calibration, `76db013`), marked it as added after the failure, and it passed: the
+widened range holds 90.4% and 90.8% of unseen flights. The app uses the widened range and the Proof page shows both
+the failure and the fix. A model reported only with its successes would be the thing to distrust.
+
+**Q15d. Does the model detect faults?**
+No, and we say so. The score rose after injected motor faults, but the shift was small (no flight crossed its range),
+sensor faults raised it too and fault-free flights fell at the same point in the flight, so part of it is the phase of
+flight. It is context for an inspector ("this battery drained 7.5 times faster than similar flights") and never changes
+a readiness verdict.
+
+**Q15e. Is that not "AI in the decision path"?**
+No decision uses it: it is shown as context, and the readiness verdict comes only from fixed rules. It is also not a
+black box in the product: the trees are exported to a file and evaluated in plain Python, reproducing scikit-learn to
+3e-14, so the no-AI test still passes (no ML library is reachable from the product code).
 
 ## D. The results
 

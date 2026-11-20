@@ -373,6 +373,9 @@ def review_flight(db: Session, user: User, fleet: str, drone_id: str, plan_text:
     from aerofleet.assurance.vibration import flight_vibration
 
     report["vibration"] = flight_vibration(flight)
+    from aerofleet.assurance.normal_flight import assess as normal_flight
+
+    report["normal_flight"] = normal_flight(flight)          # expected ranges from the learned model: context, never a verdict
     events = timeline(report, flight.track, flight.modes, flight.battery, flight.gps, flight.param_changes, flight.health)
     report["evidence_timeline"] = events
     report["around_episodes"] = around_episodes(report, events)
