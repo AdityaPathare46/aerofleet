@@ -140,6 +140,8 @@ def expected(target: str, f: Dict[str, Any]) -> Optional[Dict[str, float]]:
         return None
     x = encode(f, spec)
     raw = {name: _predict(q, x) for name, q in spec["quantiles"].items()}
+    w = float(spec.get("widen") or 0.0)                       # conformal widening, when calibration passed its test
+    raw["q05"], raw["q95"] = min(raw["q05"], raw["q95"]) - w, max(raw["q05"], raw["q95"]) + w
     back = (lambda v: math.exp(v)) if spec.get("transform") == "log" else (lambda v: v)   # noqa: E731
     lo, mid, hi = sorted(back(raw[k]) for k in ("q05", "q50", "q95"))
     return {"low": lo, "mid": mid, "high": hi}
