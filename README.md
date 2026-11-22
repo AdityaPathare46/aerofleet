@@ -1,171 +1,269 @@
 # AeroFleet 2.0
 
-**The safety and records back office for agricultural drone fleets** (for example the 15,000 women self-help groups
-receiving spraying drones under India's Namo Drone Didi scheme): each morning, which drones can fly and why; before a
-job, its route against restricted airspace; after flying, a signed, time-ordered record of each log.
-**A ground-side assurance tool for drone fleets.** It checks a fleet's settings, plans and flight logs
-before and after flying, lays out what a flight log shows for the person reviewing it, and keeps a
-signed record of every result. It never controls a drone in flight, needs no drone hardware (it works
-from uploaded files), and contains no language model: every check, number and verdict comes from
-ordinary deterministic code.
+**The safety and records back office for agricultural drone fleets.**
 
-> **Status, November 2026.** Demonstration guide: [`docs/DEMO.md`](docs/DEMO.md); defence guide: [`docs/VIVA.md`](docs/VIVA.md).
->
-> **Earlier status, October 2026.** A student project re-scoped after an outside review. The features below are
-> built and tested in software and have been run on real ArduPilot and PX4 logs. No drone operator has
-> yet confirmed they need it. The plan and its open items are in
-> [`docs/aerofleet2/MASTER_PLAN.md`](docs/aerofleet2/MASTER_PLAN.md); whoever continues should read
-> [`docs/aerofleet2/CONTEXT.md`](docs/aerofleet2/CONTEXT.md) first.
+Each morning AeroFleet tells a drone service provider which drones can fly today and why. Before a job it checks the
+route against restricted airspace and the other planned flights. After flying it turns each drone's log into a signed,
+time-ordered record, compares the flight with what a healthy flight of a similar drone looks like, and keeps the
+history that maintenance, insurers and reporting need.
 
-## What it does
+It is built on a study of **590 real crash logs from a 479,547-log public archive** (PX4 Flight Review), which tested
+what flight logs can and cannot show. The answer shaped every design choice: logs cannot tell pilot error from an
+aircraft fault, so AeroFleet **never names a cause**; it checks what can be checked by rule and shows the rest as
+evidence. **Evidence, not verdicts.**
 
-| Feature | The problem | What AeroFleet does |
+> **Status, November 2026.** A final-year BTech project (Department of Mechanical Engineering, COEP Technological
+> University). Built and tested in software and run on real public PX4 and ArduPilot logs. No operator has used it on
+> their own fleet yet. Walk-through: [`docs/DEMO.md`](docs/DEMO.md). Hard questions and answers:
+> [`docs/VIVA.md`](docs/VIVA.md). Handover for whoever continues: [`docs/HANDOFF.md`](docs/HANDOFF.md).
+
+---
+
+## Who it is for, and why now
+
+| | |
+|---|---|
+| **15,000 drones** | Under Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore), 15,000 women self-help groups receive drones and rent crop-spraying and nano-fertiliser flights to farmers. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1980683) |
+| **5 + 10 days of training** | Pilots are trained for 5 days to fly plus 10 days for applying nutrients and pesticides: new operators, not career pilots. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1980683) |
+| **7 days to report** | The crop-protection drone SOP asks operators to submit spray monitoring data within seven days. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1783937) |
+| **Mandatory insurance** | The Drone Rules 2021 require third-party insurance for every drone above nano class, so after an accident someone asks whose fault it was. [Drone Rules 2021](https://digitalsky.dgca.gov.in/assets/files/UasRules.pdf) |
+| **26 of 94** | In our study, tuning or configuration was the cause PX4 experts named most often for aircraft-caused crashes. Settings are the first thing AeroFleet checks. |
+
+A self-help group with one or two drones has no maintenance engineer and no fleet software, while new tools promise
+to read a log and say who was to blame. AeroFleet gives them checks that need no expertise, and records that protect
+the pilot. The checks themselves are general: any PX4 or ArduPilot fleet can use them.
+
+## A day with AeroFleet
+
+| When | Screen | What happens |
 |---|---|---|
-| **Settings drift** | A failsafe or limit is changed in the field and forgotten | Compares a drone's settings with the fleet's approved baseline and its own last upload. Safety-critical changes block; flight-limit changes need review; an operator can approve an exact value with a reason |
-| **Did it fly the plan?** | A compliant plan proves nothing if something else was flown | Compares a flight log (ArduPilot `.tlog` / `.bin`, PX4 `.ulg`) with the approved mission file: how far off route and off height, for how long, where; manual takeovers; time in a no-fly zone; settings changed during the flight |
-| **Evidence timeline** | Finding out what happened means opening many plots | Puts the log's events in time order — mode changes (the pilot taking over from an automatic mode is flagged), safety settings changed in flight, low battery and voltage drops, poor GPS, the plan deviations — and lists what happened around each deviation. **It does not name a cause** (see below) |
-| **Vibration across the fleet** | Problem airframes look normal flight by flight | Each drone's vibration (last 10 s of every flight left out) flight by flight against its own history in the order flown, its position among drones of the same kind with the same measurement, and its position among public PX4 flights rated good or great (works for a fleet of one). Nothing is flagged: the study found no validated threshold (screening lift 1.77 [1.00, 2.60]). |
-| **Something wrong? Describe it** | Operators repeat problems others have already solved | Type what the drone did ("circles in position mode", "wobbles after new props"). You get a checklist of checks and usual fixes in the order PX4 experts most often found each cause in 96 diagnosed crashes, the causes your words mention marked, the most similar past forum threads with links and the expert's cause, and the drone's place in the fleet vibration ranking. Word matching (BM25), no model. **Measured:** held out one case at a time, the cause best matched by the words was the expert's in 22% of cases, below the 27% of always answering the most frequent cause ([`troubleshoot_loo_settled.md`](research/results/px4_log_study/troubleshoot_loo_settled.md); first recording 20% vs 32%), so the list follows expert frequency, not the words. Knowledge base: `aerofleet/assurance/data/fault_cases.json` (titles, links, labels, key terms; no forum text) |
-| **Replay on the VR table** | A table of numbers is hard to picture | Shows a reviewed flight in 3D: the plan dashed, the flown track green within tolerance and red where it deviated, the events pinned where they happened, a playhead. In the app's VR view (desktop or Quest browser) and in the Quest app |
-| **Will these missions conflict?** | Drones planned separately can cross at the same place and time | Checks mission files against each other and fixes conflicts with a launch delay or, if allowed, a different cruise height. **Rehearse in 3D** flies all the missions on one clock on the VR table, as planned and as rescheduled, with each loss of separation marked where and when it happens (straight legs at planned speeds, no wind: the plan, not a prediction) |
-| **Battery for the wind aloft** | Wind at 100 m is often much stronger than at ground level | Fetches the forecast wind at cruise height and recomputes the mission's energy leg by leg |
-| **Pre-flight check and mission file** | Paperwork and planning checks are scattered | DGCA zone, document and link checks for a planned route; a mission file is generated only if they pass. The UIN status comes from the drone registry; everything else the operator types is marked as operator-declared |
-| **Signed record** | Reports can be edited afterwards | Every result gets an Ed25519-signed entry linked to the one before, carrying the SHA-256 of the exact files it came from. Each new head is also written to a separate heads file to copy off the machine. An auditor checks an export with `tools/verify_ledger.py`, which needs only Python and the `cryptography` package |
+| Morning | **Today's fleet** | Every drone: *ready*, *check first* or *do not fly*, each reason written out with a button to its evidence |
+| Planning | **Route check** | Each spraying route against red and yellow airspace, the 120 m limit and the other jobs |
+| Evening | **Fleet Assurance ▸ Upload the day's logs** | All logs at once, each matched to its drone, reviewed, signed and compared with healthy flights |
+| After work on a drone | **Maintenance logbook** | Record the fix; AeroFleet compares the flights before and after |
+| Weekly | **Fleet trends** | Flying hours, warnings per flight, drones drifting from what is expected; CSV operations log for reporting |
+| In the viva | **Proof** | The study's results recomputed live, the learned model's tests, and a tamper demonstration |
 
-## What has been measured
+## What it does, screen by screen
 
-Every number links to the script and the results file that produced it. Tests that decide something were
-declared (rule, thresholds and pass mark committed) before they were run.
+### Today's fleet: the morning go / no-go
 
-- **Can a log tell pilot error from an aircraft fault?** On public PX4 crash logs labelled by their
-  uploaders, a fixed rule scored a balanced accuracy of 0.57 on 93 crashes and **0.47 on 112 held-out
-  crashes** (0.50 is guessing), and flagged 39% of normal flights. Two signals seen in the first run did not
-  hold up on the held-out set. This is why the product shows evidence and names no cause.
-  [`research/results/px4_log_study/`](research/results/px4_log_study/)
-- **Does the planned-versus-flown check catch what it should?** Known deviations were injected into 40 real PX4
-  flights. After switching to whole-flight ordered alignment (the first version matched each position to the
-  nearest leg anywhere and missed half of 35–50 m deviations on looping routes), it catches 90% of 35 m and 95% of
-  50 m sideways deviations and 92–98% of 20 m height deviations, with 0 false alarms in 40 untouched flights when the
-  plan has a waypoint every 5 s (22% with one every 10 s, from fast flights cutting long legs).
-  [`injection_reconcile.md`](research/results/px4_log_study/injection_reconcile.md)
-- **Which drones crash: the one useful signal.** Against matched drones with no recorded crash (same flight
-  controller, firmware and vehicle type), drones that later crashed were already vibrating more on their ordinary
-  flights (60 matched sets, mean rank 0.67, p = 0.002). But the flight that crashed was no rougher than the same
-  drone's earlier flights (61 drones, 0.48, p = 0.67). Logs show which drones are at risk, not which flight will
-  crash; that is what the fleet vibration ranking uses. The effect comes mostly from the older vibration
-  estimate: a declared replication on the newer accelerometer metric (19 sets) was inconclusive (0.58, p = 0.25,
-  [`rough_drone_newer.md`](research/results/px4_log_study/rough_drone_newer.md)). [`rough_drone.md`](research/results/px4_log_study/rough_drone.md),
-  [`within_drone.md`](research/results/px4_log_study/within_drone.md), [`leak_curve.md`](research/results/px4_log_study/leak_curve.md)
-- **Do crashed drones fly with different settings?** No: a protection was switched off (versus the firmware
-  default) in 51% of crash logs and 46% of good ones (p = 0.63), and 0 of 100 crash logs changed a safety
-  setting in flight. [`summary.md`](research/results/px4_log_study/summary.md)
-- **What do experts say caused crashes?** In 148 PX4 forum crash threads with a reply from PX4 staff or an
-  experienced member, the expert blamed the aircraft in 64%, the pilot in 6%, and was unclear or gave no diagnosis in
-  29%; tuning/configuration was named most often. (First recorded with AI assistance; a blind second coding agreed
-  with kappa 0.81 for the conclusion and 0.73 for the cause; the 45 disagreements were settled by the two coders.)
-  [`forum_expert_labels.md`](research/results/px4_log_study/forum_expert_labels.md)
-- **Do simple log checks find the fault the expert named?** Not reliably: once the last 10 s before the crash
-  are excluded, a tuning check found 1 of 9 tuning-diagnosed crashes (10 of 12 with the crash included); only a
-  vibration check stood out (3 of 5, too few to rely on). Settled labels:
-  [`test_flight_check_minus10s_settled.md`](research/results/px4_log_study/test_flight_check_minus10s_settled.md)
-  (first recording: 2 of 10, [`test_flight_check_minus10s.md`](research/results/px4_log_study/test_flight_check_minus10s.md))
-- **Small language models as reviewers.** On 60 generated cases, a plain no-AI rule was right 45 times and
-  wrong 0 times. Four small local models (3–4B, the size an ordinary laptop runs) all lost to it as a
-  five-reviewer panel; one compromised reviewer could change the panel's answer in 45 to 56 of the 60 cases.
-  [`docs/aerofleet2/PANEL_EVAL_RUNBOOK.md`](docs/aerofleet2/PANEL_EVAL_RUNBOOK.md)
-- **Wind aloft, Pune.** 720 hourly forecast values: median wind 2.2 m/s at 10 m and 3.5 m/s at 100 m. For a
-  3 km out-and-back at 100 m with a 20% battery margin, 11.9% of flight-hours pass on the ground wind but
-  fail on the wind aloft. [`research/results/wind_altitude_study.md`](research/results/wind_altitude_study.md)
-- **Conflicts at scale.** Synthetic plans from six depots over ten minutes: delays alone clear every conflict
-  at 10 missions; with 20 m of height separation, every conflict up to 50 and all but 0.3 of 100.
-  [`research/results/deconflict_scale.md`](research/results/deconflict_scale.md)
-- **Which settings are safety-critical.** The list was checked against the ArduPilot (5,799 settings) and
-  PX4 (3,111) references. [`research/results/drift_catalogue_check.md`](research/results/drift_catalogue_check.md)
-- **Need and competitors.** No accident dataset counts misconfiguration as a cause; the clearest written need
-  is UK/EU record-keeping (a technical log per aircraft, kept 3 years, protected from alteration).
-  [`docs/background/Drone fleet needs evidence.md`](docs/background/Drone%20fleet%20needs%20evidence.md),
-  [`docs/aerofleet2/COMPETITOR_CHECK.md`](docs/aerofleet2/COMPETITOR_CHECK.md)
+One row per drone. The verdict comes **only from fixed rules and recorded facts**:
+
+- **Do not fly**: a safety-critical setting (failsafe, geofence, battery limit, ...) differs from the approved
+  configuration and nobody approved it; or the drone has no UIN on record (the Drone Rules require one).
+- **Check first**: a flight-limit setting changed; the UIN is not verified; the settings were never checked; or the
+  last flight's log shows warnings (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
+  setting changed in flight, leaving the plan).
+- **Ready**: none of these.
+
+Vibration and the learned model are shown as **context and never change the verdict**: the study found vibration is
+not a validated warning. Module: `aerofleet/assurance/readiness.py`.
+
+### Fleet Assurance: the records
+
+| Feature | What AeroFleet does |
+|---|---|
+| **Settings drift** | Compares a drone's settings with the fleet's approved baseline and its own last upload. Safety-critical changes block, flight-limit changes need review; an operator approves an exact value with a written reason. Each safety-critical value also shows how often public PX4 flights use it ("8% use this value; most use 2") |
+| **Flight review** | A log (PX4 `.ulg`, ArduPilot `.tlog` / `.bin`), with or without a mission file: events in time order (mode changes, the pilot taking over, battery, poor GPS, what the autopilot itself reported about its sensors, settings changed in flight), the quality of the evidence, and, with a plan, how far and how long it left the route. **No cause is named.** Printable report |
+| **Compared with healthy flights** | The learned normal-flight model's expected range for vibration and battery drain, for a drone like this one flown like this, and whether the flight was below, inside or above it (see below) |
+| **Evening batch upload** | Up to 60 logs at once. Each is matched to its drone by the flight controller's own id (PX4 `sys_uuid`) or, the first time, by a file name like `PX4-07_evening.ulg`. A log it cannot identify is never guessed onto a drone |
+| **Vibration and history** | Each drone flight by flight, in the order flown (GPS time, not upload date), against its own earlier flights, against drones of the same kind in the fleet, and against 292 public PX4 flights of 141 vehicles that never crashed (works for a fleet of one). The last 10 s of each flight are left out so an impact cannot inflate it. Nothing is flagged |
+| **Maintenance logbook** | Record work on a drone (propellers, motor, battery, calibration, ...), signed. AeroFleet compares the flights before and after: vibration and battery drain relative to what the model expects, with the caveat that a few flights cannot prove a fix |
+| **Something wrong? Describe it** | A checklist ordered by how often PX4 experts found each cause in 96 diagnosed crashes, the causes your words mention, and the most similar past forum threads. Word matching (BM25), no model. Measured: its best guess matched the expert in 22% of cases, below the 27% of always guessing the most common cause, so it is not used as a diagnosis |
+| **Will these missions conflict?** | Checks mission files against each other and fixes conflicts with a launch delay or a different height; *Rehearse in 3D* flies them on one clock |
+| **Battery for the wind aloft** | Recomputes a mission's energy leg by leg with the forecast wind at cruise height |
+| **Signed record** | Every baseline, approval, check, review and maintenance entry gets an Ed25519-signed entry linked to the one before, with the SHA-256 of the exact file it came from. *Export for an auditor*; `tools/verify_ledger.py` checks it with only Python and the `cryptography` package |
+
+### Fleet trends: the season view
+
+Flights and hours per week or month (months with warnings highlighted), warnings per flight, the share of flights
+outside the learned range (about 10% are expected by chance), and a per-drone table. **Download CSV** gives one row
+per flight (date, drone, UIN, minutes, distance, area of the outline flown, take-off point, warnings and the
+fingerprint of its signed review): the record a spray report is filled from, not the official form.
+
+### Route check: before the day's jobs
+
+Planned missions (`.waypoints`) drawn over the airspace and checked: **clear**, **needs ATC permission** (yellow
+zone), **not permitted** (red zone or above 120 m), or **not checked** (outside the supported cities), with the
+planned flights that would cross each other. The zones are approximations from the Drone Rules 2021 distances
+around known airports and military sites in Pune and Mumbai, **not the official Digital Sky map**, and the screen says
+so. Five demo jobs show each outcome. Module: `aerofleet/assurance/airspace_check.py`.
+
+### Drone register
+
+Each drone's DGCA registration (UIN) and airworthiness checks. The optional bench inspection reads a flight
+controller's settings over USB and runs its own pre-arm checks; it changes nothing, and the bench motor test is
+blocked unless live control is switched on.
+
+### VR Safety View
+
+A reviewed flight replayed on a 3D table (plan against flown track, events where they happened) and planned
+missions rehearsed on one clock, on the desktop or in a Quest 3 browser (WebXR). A paired Quest app is in
+`unity/AeroFleetVR`. Not yet tested on a headset.
+
+### Proof
+
+Answers "how do we know?" live, on this computer:
+
+1. **The study's results recomputed** from the committed data, each with the git commit that declared the test and
+   the later commit that added its result (for example declared 17:28, result 17:40 on 20 October 2026).
+2. **The learned model**: what it was trained on and every declared test, failures included.
+3. **Five attacks on a copy of the signed record** (change a user, swap a result, delete an entry, re-sign with
+   another key, edit a stored review): all caught, the real record untouched.
+4. What the tool was measured to do, and what is checked automatically on every change.
+
+## The learned normal-flight model
+
+For an operator with one or two drones, "is this flight normal?" has no answer without something to compare with.
+AeroFleet ships a model trained on **1,121 ordinary public PX4 flights of 401 vehicles** that gives the range of
+vibration and battery voltage drain expected for a drone like this one (vehicle kind, flight controller, firmware)
+flown like this (speed, height, manual flying, flight length, battery cells).
+
+- **No crash labels.** It is trained on ordinary flights only, avoiding exactly what the study found unreliable.
+- **Model:** scikit-learn `HistGradientBoostingRegressor`, quantile loss (5%, 50%, 95%), settings fixed in advance.
+  Exported as trees and evaluated in plain Python in the app (matching scikit-learn to within 3e-14), so no
+  machine-learning library is part of the product.
+- **Context only.** It never changes a readiness verdict.
+
+All tests were declared and pushed before training (`de4382a`); vehicles were held out (GroupKFold by vehicle):
+
+| Test | Result | Pass mark | Outcome |
+|---|---|---|---|
+| Error of the middle estimate vs always guessing the median | 48% lower (vibration), 15% lower (battery) | at least 10% lower | Passed |
+| Vibration score after injected motor faults (220 real RflyMAD flights) | rose in 60% of flights, p = 0.0005 | p < 0.025 | Passed, with caveats |
+| Raw 5-95% range on unseen drones | held 72.7% and 73.3% of flights | 85-95% | **Failed** |
+| Conformal calibration, declared after that failure (`76db013`) | 90.4% and 90.8% | 85-95% | Passed |
+
+Caveats on the fault test: the shift is small (no flight crossed its range), sensor faults raised the score too and
+fault-free flights fell at the same point in the flight, so part of the effect is the phase of flight. The model
+responds to faults; it is not a fault detector. Model card:
+[`research/results/normal_flight/model_card.md`](research/results/normal_flight/model_card.md). Scripts:
+`research/normal_flight/train_eval.py`, `research/normal_flight/calibrate.py`.
+
+## The study behind it
+
+Every test that decides something was declared (rule, data, pass mark committed and pushed) before it ran. Scripts
+and results: [`research/px4_log_study/`](research/px4_log_study/),
+[`research/results/px4_log_study/`](research/results/px4_log_study/). Paper: [`docs/paper/`](docs/paper/).
+
+- **Can a log tell pilot error from an aircraft fault?** No. A fixed rule declared in advance reached **0.47 balanced
+  accuracy on 112 held-out crashes** (pass mark 0.70; chance is 0.50); trained models and a published log checker did
+  no better. A blind independent relabelling agreed with the uploaders no better than chance.
+- **Much apparent crash-detection skill came from how models were tested.** Across 32 evaluation settings, AUC fell
+  by 0.21 [0.06, 0.34]; a re-implemented published fault detector fell from AUC 0.94 to 0.63 once whole days were
+  held out.
+- **Crash labels are shaky.** The usual tilt rule misses roughly 7-50% of crashes, depending on the rater, and
+  pilot-rated logs show a crash-like tilt half as often as aircraft-rated ones.
+- **No warning within a drone.** The flight that crashed vibrated no more than the same drone's earlier flights
+  (mean rank 0.48, p = 0.67, 61 drones).
+- **Rougher drones crashed more often, but not enough to screen on.** Later-crashed drones vibrated more than
+  matched drones (mean rank 0.67, p = 0.0023 as declared; weaker under stricter tests), but a top-decile screen
+  against 412 non-crash drones gave a lift of only 1.77 [1.00, 2.60].
+- **Language-model review panels added errors.** On 97 real crash cases no panel beat a plain rule, and one
+  compromised reviewer moved most verdicts.
+- **What experts found.** In 148 PX4 forum crash threads, tuning or configuration was the cause named most often
+  (26 of 94 aircraft-caused); a blind second coding agreed with kappa 0.81.
+
+## How the tool itself was checked
+
+| Check | Result |
+|---|---|
+| Automated tests | **702 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
+| Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
+| Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |
+| Planned-versus-flown check | Deviations injected into 40 real PX4 flights: 36/40 sideways (35 m) and 39/40 upward (20 m) found; 0/40 false alarms with a waypoint every 5 s ([`injection_reconcile.md`](research/results/px4_log_study/injection_reconcile.md)) |
+| Speed | 36 real PX4 logs of 0.9 to 92.8 MB: median 0.23 s per review; the 92.8 MB, 28-minute flight in 2.44 s ([`docs/measurements/review_speed.md`](docs/measurements/review_speed.md)) |
+| Damaged files | Empty files, random bytes, a renamed mission file and a log cut off mid-flight get a clear message, never a crash |
+| Tampering | Every attack on the Proof page is also an automated test |
 
 ## Where AI is and is not used
 
-Nowhere in the product. An AI "review panel" that would have suggested a likely cause was built and tested
-(above); it lost to a plain rule and is kept only as research code (`aerofleet/assurance/review_panel.py`,
-`research/panel_eval/`). The plain rule itself is not used either, because on real crash logs it could not
-tell pilot from aircraft.
+- **No language model, anywhere in the product.** The study tested language-model review panels and they added
+  errors; they are kept only as research code (`aerofleet/assurance/review_panel.py`, `research/panel_eval/`), and the
+  earlier prototype's AI workers start only if the server is run with `AEROFLEET_LEGACY_AI=1`.
+- **One trained statistical model**, the normal-flight model above, gives context and never a decision.
+- **Every verdict comes from fixed rules.**
+- An AI assistant was used to write code and draft text; this is declared in the paper.
 
 ## What it does not do
 
-- **It does not fly drones.** Commands from the earlier product are refused unless an administrator sets
-  `AEROFLEET_LIVE_CONTROL=on`. Disarm and emergency stop always work.
+- **It does not fly or command drones.** It reads files. Commands from the earlier product are refused unless
+  `AEROFLEET_LIVE_CONTROL=on`; disarm and emergency stop always work.
 - **It does not say why something went wrong.** It shows what the log recorded and when.
-- **It does not guarantee separation or endurance.** The conflict fix holds only if drones launch on schedule
-  and fly their plans; the wind check assumes constant airspeed and ignores climb, hover and gusts.
-- **The signed record is tamper-evident, not tamper-proof.** See the threat model below.
-- **Positions are only as good as the GPS.** Each review states its sample rate, GPS quality, height reference
-  and clock; deviations under the fleet's tolerances (default 30 m sideways, 15 m height, operating choices rather
-  than regulatory limits) are not reported.
-- **The DGCA checklist citations are not verified** (each item says so), and a UIN in the registry is
-  operator-entered: Digital Sky has no public lookup.
+- **It does not predict crashes.** Neither vibration nor the learned model is a validated warning.
+- **The airspace zones are not Digital Sky.** Check every route on Digital Sky before flight.
+- **The signed record is tamper-evident, not tamper-proof** (below).
+- **Positions are only as good as the GPS.** Each review states its sample rate, GPS quality, height reference and
+  clock.
+- **Not yet shown:** that operators find it useful, that it reduces crashes, or the false-alarm rate on real
+  missions (the public archive holds only 6 distinct missions with their plans).
 
 ## Threat model for the signed record
 
 | Who | Can they cheat? | What stops them |
 |---|---|---|
-| Someone editing a stored record later | No | Signatures and the hash chain; `tools/verify_ledger.py` names the entry |
-| Someone swapping an uploaded file after the fact | No | Each record carries the file's SHA-256; compare with the original |
-| A pilot editing a log **before** upload | **Yes** | Nothing in software can. Prefer logs taken straight from the aircraft; a log's own embedded settings are used where present |
-| The operator, who holds the key and the database | **Yes, they can rebuild the whole chain** | Only a copy of the heads file (or the head hash and key fingerprint from `GET /ledger/head`) kept by someone else: a rebuilt chain no longer contains the old heads |
+| Someone editing a stored record later | No | Signatures and the hash chain; the check names the entry |
+| Someone swapping an uploaded file after the fact | No | Each record carries the file's SHA-256 |
+| A pilot editing a log **before** upload | **Yes** | Nothing in software can. Prefer logs taken straight from the aircraft |
+| The operator, who holds the key and the database | **Yes, they can rebuild the whole chain** | A copy of the heads file (or the head hash from `GET /ledger/head`) kept by someone else |
 | Anyone, on timestamps | **Yes** | Times come from the server's clock; no trusted timestamping |
-| A regulator or insurer | Unknown | No authority has endorsed this format; it is evidence support, not certification |
+| A regulator or insurer | Unknown | No authority has endorsed this format: evidence support, not certification |
 
 ## Run it
 
-```bash
-./start.sh
-```
-
-That is all: it creates `.venv` and installs the Python packages the first time (a few minutes), starts the API,
-installs and starts the app, and opens http://localhost:1420. Ctrl-C stops both; logs are in `logs/`.
-`./start.sh api` starts only the API. Needs Python 3.10+ and Node 18+.
-
-Open the app, sign in, and go to **Fleet Assurance**. Setting a baseline or approving a change needs an
-operator account. API reference: `http://localhost:8000/docs` (`/api/v1/assurance`, `/api/v1/compliance`,
-`/api/v1/missions`).
+Needs Python 3.10+ and Node 18+.
 
 ```bash
-python -m pytest tests/unit/test_assurance_*.py tests/integration/test_assurance_*.py tests/integration/test_missions_compliance_api.py -q --no-cov
+AEROFLEET_VENV=~/.venvs/aerofleet ./start.sh
 ```
 
-## VR
+It creates the Python environment and installs packages the first time, starts the API (http://localhost:8000,
+reference at `/docs`) and the app, and opens http://localhost:1420. Ctrl-C stops both; logs are in `logs/`. Sign in
+(or create a local account) and the app opens on **Overview**. Setting a baseline or approving a change needs an
+operator account.
 
-The app's **VR Safety View** runs on the desktop and in a Quest 3 browser (WebXR). From a flight review,
-**Show on the VR table** opens the flight replay there, and **Rehearse in 3D** (after a conflict check) flies the planned missions on one clock before anyone takes off; a paired Quest app (`unity/AeroFleetVR`, project at
-`/Volumes/UnityWork/UnityProjects/Aerofleet`) follows and shows the same replay. The flight replay in the
-Quest app compiles but has not yet been run on a headset. The live-swarm view is from the
-earlier product. Guide: [`docs/VR_QUEST3_GUIDE.md`](docs/VR_QUEST3_GUIDE.md).
+Load the demo fleet (64 real public PX4 flights of 8 drones, demo registrations, a demo maintenance entry, a
+`demo-settings` fleet and the route-check jobs):
+
+```bash
+AEROFLEET_PX4_DATA="/path/to/AeroFleet_px4_data" python tools/seed_demo_fleet.py --reset
+```
+
+Run the tests:
+
+```bash
+python -m pytest -q --no-cov tests/unit tests/integration
+```
+
+Retrain the normal-flight model (needs the downloaded public logs; about 30 minutes, mostly reading logs):
+
+```bash
+AEROFLEET_PX4_DATA="/path/to/AeroFleet_px4_data" python research/normal_flight/train_eval.py
+python research/normal_flight/calibrate.py
+```
 
 ## Repository
 
-Start with [`docs/HANDOFF.md`](docs/HANDOFF.md) (any assistant: `AGENTS.md` points there).
-
 | Path | What is there |
 |---|---|
-| `aerofleet/assurance/` | **The product's logic**: `params`, `drift`, `static_checks`, `flightlog` (ArduPilot and PX4), `reconcile`, `evidence`, `vibration`, `deconflict` (+ 3D rehearsal), `wind`, `ledger`, `report_html`, `troubleshoot` + `data/fault_cases.json`; `review_panel` is research only |
-| `aerofleet/api/routes/assurance.py` | Its HTTP endpoints (plus `compliance.py`, `fc_compliance.py`, `missions.py`, `vr.py`, `auth.py`) |
-| `tauri-app/src/pages/FleetAssurance.tsx`, `VRSafetyView.tsx`, `src/components/vr/` | The app screens and the 3D tabletop |
-| `unity/AeroFleetVR/` | Mirror of the Quest app's scripts |
-| `research/px4_log_study/`, `research/results/px4_log_study/` | The study behind the paper: every declared test and its result |
+| `aerofleet/assurance/` | **The product's logic**: `flightlog` (PX4 and ArduPilot readers), `params`, `drift`, `static_checks`, `reconcile`, `evidence` (timeline), `vibration`, `public_reference`, `normal_flight` (learned model evaluator), `readiness`, `maintenance`, `trends`, `operations_log`, `airspace_check`, `deconflict`, `wind`, `ledger`, `report_html`, `troubleshoot`; `data/` holds the model, the public reference and the forum knowledge base. `review_panel` is research only |
+| `aerofleet/api/routes/assurance.py` | The product's HTTP endpoints (plus `evidence.py`, `compliance.py`, `fc_compliance.py`, `missions.py`, `vr.py`, `auth.py`) |
+| `aerofleet/evidence.py` | The live recomputation behind the Proof page |
+| `tauri-app/src/pages/` | The screens: `Overview`, `Readiness` (Today's fleet), `Trends`, `FleetAssurance`, `RouteCheck`, `HardwarePanel` (Drone register), `VRSafetyView`, `Proof`, `Settings`; numbers shown on the Overview live in `src/lib/studyFacts.ts` |
+| `research/normal_flight/`, `research/results/normal_flight/` | Training, calibration, results and model card of the normal-flight model |
+| `research/px4_log_study/`, `research/results/px4_log_study/` | The study: every declared test and its result |
 | `research/panel_eval/`, `research/protocols/` | The language-model panel test; declared future studies |
-| `docs/paper/` | The paper (LaTeX master, PDF, Word, submission files, review log) |
-| `docs/aerofleet2/`, `docs/background/` | Product plan and context; the operator and regulation research behind the use case |
-| `tests/` | `test_assurance_*`, `test_missions_compliance_api.py`, `test_vr_pairing_api.py` cover the product; the rest covers legacy code |
-| `start.sh` | One command to run everything |
+| `tools/` | `seed_demo_fleet.py`, `build_public_reference.py`, `benchmark_review.py`, `verify_ledger.py` |
+| `docs/` | `DEMO.md`, `VIVA.md`, `HANDOFF.md`, `measurements/`, `paper/` |
+| `unity/AeroFleetVR/` | The Quest app's scripts |
+| `tests/` | Unit and integration tests; `test_assurance_*`, `test_no_ai_in_decision_path.py`, `test_evidence.py` cover the product |
 
-**Legacy code (the earlier AI dispatch product), kept because the app still imports parts of it:** everything in
-`aerofleet/` outside `assurance/`, `api/`, `data/` and `utils/` (agents, council, dispatch, safety, swarm, hardware, city,
-fleet, ...), `scenario_engine/`, `agent_memory/`, and the app pages other than Fleet Assurance and VR. It is hidden in
-the app behind **Settings ▸ Show legacy screens**. Do not build on it; the earlier product's README is in git history
-(tag `pre-cleanup-2026-10-25`, `docs/LEGACY_AI_DISPATCH_README.md`).
+**Legacy code (the earlier AI dispatch prototype), kept because parts are still imported:** `aerofleet/` outside
+`assurance/`, `api/`, `data/` and `utils/` (agents, council, dispatch, safety, swarm, city, fleet, ...),
+`scenario_engine/`, `agent_memory/`, and the screens hidden behind **Settings ▸ Show legacy screens**. Do not build
+on it.
 
 ## Licence
 
