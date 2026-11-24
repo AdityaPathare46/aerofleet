@@ -208,3 +208,45 @@ def matches(db: Session, seq: int, payload: Any) -> bool:
     """Is `payload` exactly what entry `seq` recorded?"""
     row = db.get(AssuranceLedgerEntry, seq)
     return row is not None and row.payload_sha256 == payload_hash(payload)
+
+
+# ── receipts for someone else to keep ────────────────────────────────────────
+# The heads file sits on the operator's own machine, so an operator holding the key and the database could rebuild the
+# chain and the heads file together. A receipt closes that gap only if someone else keeps it: for example the lead
+# fertiliser company or service aggregator that oversees the drones, or an insurer. It names the newest entry and is
+# signed with this install's key, so the holder can later show that this exact entry was in the record on that day.
+# It proves the record held at least this much by `issued_at`; it does not prove the machine's clock was right.
+RECEIPT_FIELDS = ("aerofleet_receipt", "seq", "entry_hash", "entry_created_at", "issued_at", "key_sha256")
+
+
+def make_receipt(db: Session) -> Dict[str, Any]:
+    last = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq.desc()).first()
+    body = {"aerofleet_receipt": 1, "seq": last.seq if last else 0, "entry_hash": last.entry_hash if last else GENESIS,
+            "entry_created_at": last.created_at if last else None, "issued_at": datetime.utcnow().isoformat(timespec="seconds"),
+            "key_sha256": key_fingerprint(public_key_pem())}
+    return {**body, "signature": base64.b64encode(_private_key().sign(hashlib.sha256(canonical(body)).digest())).decode()}
+
+
+def check_receipt(entries: List[Dict[str, Any]], public_pem: str, receipt: Dict[str, Any]) -> Dict[str, Any]:
+    """Does the record still contain the entry this receipt names, and was the receipt issued by this install?"""
+    if not isinstance(receipt, dict) or receipt.get("aerofleet_receipt") != 1 or any(k not in receipt for k in RECEIPT_FIELDS + ("signature",)):
+        return {"ok": False, "problem": "This is not an AeroFleet receipt (fields are missing)."}
+    if receipt["key_sha256"] != key_fingerprint(public_pem):
+        return {"ok": False, "problem": "The receipt was issued with a different key: the record was re-signed, or it is another install's receipt."}
+    public: Ed25519PublicKey = serialization.load_pem_public_key(public_pem.encode())
+    body = {k: receipt[k] for k in RECEIPT_FIELDS}
+    try:
+        public.verify(base64.b64decode(receipt["signature"]), hashlib.sha256(canonical(body)).digest())
+    except (InvalidSignature, ValueError, TypeError):
+        return {"ok": False, "problem": "The receipt's signature is not valid: the receipt itself was edited."}
+    chain = verify_entries(entries, public_pem)
+    if not chain["ok"]:
+        return {"ok": False, "problem": f"The record itself fails its check: {chain['problem']}"}
+    heads = check_heads(entries, [{"seq": receipt["seq"], "entry_hash": receipt["entry_hash"]}])
+    if not heads["ok"]:
+        return {"ok": False, "problem": heads["problem"].replace("Recorded head", "The entry named on the receipt,")}
+    newest = entries[-1]["seq"] if entries else 0
+    return {"ok": True, "problem": None, "seq": receipt["seq"], "issued_at": receipt["issued_at"],
+            "entries_since": newest - receipt["seq"],
+            "meaning": f"Entry {receipt['seq']} and everything before it are unchanged since {receipt['issued_at']} UTC; "
+                       f"{newest - receipt['seq']} entries were added after it."}

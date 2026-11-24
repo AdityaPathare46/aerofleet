@@ -923,6 +923,26 @@ async def ledger_tamper_demo(user: User = Depends(get_current_active_user), db: 
                     "heads file kept elsewhere is the defence against that)."}
 
 
+@router.get("/ledger/receipt")
+async def ledger_receipt(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """A signed receipt for the newest entry, for someone outside the operator's control to keep (the company that
+    oversees the drones, an insurer). Checking it later shows whether the record was rebuilt or cut short since."""
+    return ledger.make_receipt(db)
+
+
+class ReceiptIn(BaseModel):
+    receipt: Dict[str, Any]
+
+
+@router.post("/ledger/check-receipt")
+async def ledger_check_receipt(body: ReceiptIn, user: User = Depends(get_current_active_user),
+                               db: Session = Depends(get_db)) -> Dict[str, Any]:
+    from aerofleet.data.models.models import AssuranceLedgerEntry
+
+    rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq).all()
+    return ledger.check_receipt([ledger.to_dict(r) for r in rows], ledger.public_key_pem(), body.receipt)
+
+
 @router.get("/ledger/verify")
 async def verify_ledger(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Re-check every link and signature, and that every head recorded in the heads file is still in the chain.

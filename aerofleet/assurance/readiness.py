@@ -26,8 +26,9 @@ VIBRATION_NOTE = ("Context only: in the study behind AeroFleet, vibration did no
                   "shown to beat random inspection, so it never changes the verdict.")
 
 
-def _reason(level: str, text: str, where: str) -> Dict[str, str]:
-    return {"level": level, "text": text, "where": where}
+def _reason(level: str, text: str, where: str, code: str, **args: Any) -> Dict[str, Any]:
+    """`code` and `args` let the screen show the same reason in Hindi or Marathi; `text` is the English original."""
+    return {"level": level, "text": text, "where": where, "code": code, "args": args}
 
 
 def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Optional[Dict[str, Any]],
@@ -35,28 +36,33 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
     """`settings`: {"verdict", "critical": [names], "limits": [names]} from the drift check, or None if never uploaded.
     `registration`: {"uin", "status"} or None. `last_flight`: {"review_id", "flown_at", "warnings": [texts],
     "critical_in_flight": int, "deviated": bool} or None. `vibration`: shown, not judged."""
-    reasons: List[Dict[str, str]] = []
+    reasons: List[Dict[str, Any]] = []
     if registration is None:
-        reasons.append(_reason(DO_NOT_FLY, "No UIN on record: the Drone Rules 2021 require one before the drone is operated.", "register"))
+        reasons.append(_reason(DO_NOT_FLY, "No UIN on record: the Drone Rules 2021 require one before the drone is operated.", "register", "no_uin"))
     elif registration.get("status") != "VERIFIED":
-        reasons.append(_reason(CHECK_FIRST, f"UIN {registration['uin']} is recorded but not yet verified on Digital Sky.", "register"))
+        reasons.append(_reason(CHECK_FIRST, f"UIN {registration['uin']} is recorded but not yet verified on Digital Sky.", "register",
+                               "uin_unverified", uin=registration["uin"]))
 
     if settings is None:
-        reasons.append(_reason(CHECK_FIRST, "Settings never checked: upload its parameter file or a flight log.", "settings"))
+        reasons.append(_reason(CHECK_FIRST, "Settings never checked: upload its parameter file or a flight log.", "settings", "settings_never"))
     elif settings["verdict"] == "BLOCK":
-        reasons.append(_reason(DO_NOT_FLY, "Safety-critical setting changed and not approved: " + ", ".join(settings["critical"][:4]) + ".", "settings"))
+        reasons.append(_reason(DO_NOT_FLY, "Safety-critical setting changed and not approved: " + ", ".join(settings["critical"][:4]) + ".", "settings",
+                               "critical_changed", names=", ".join(settings["critical"][:4])))
     elif settings["verdict"] == "REVIEW":
-        reasons.append(_reason(CHECK_FIRST, "Flight-limit setting changed and not approved: " + ", ".join(settings["limits"][:4]) + ".", "settings"))
+        reasons.append(_reason(CHECK_FIRST, "Flight-limit setting changed and not approved: " + ", ".join(settings["limits"][:4]) + ".", "settings",
+                               "limit_changed", names=", ".join(settings["limits"][:4])))
 
     if last_flight is not None:
         if last_flight.get("critical_in_flight"):
-            reasons.append(_reason(CHECK_FIRST, f"{last_flight['critical_in_flight']} safety-critical setting(s) were changed during the last flight.", "flight"))
+            reasons.append(_reason(CHECK_FIRST, f"{last_flight['critical_in_flight']} safety-critical setting(s) were changed during the last flight.", "flight",
+                                   "critical_in_flight", n=last_flight["critical_in_flight"]))
         if last_flight.get("deviated"):
-            reasons.append(_reason(CHECK_FIRST, "The last flight left its planned route.", "flight"))
+            reasons.append(_reason(CHECK_FIRST, "The last flight left its planned route.", "flight", "deviated"))
         for w in last_flight.get("warnings", [])[:3]:
-            reasons.append(_reason(CHECK_FIRST, f"Last flight: {w}.", "flight"))
+            reasons.append(_reason(CHECK_FIRST, f"Last flight: {w}.", "flight", "warning", warning=w))
         if len(last_flight.get("warnings", [])) > 3:
-            reasons.append(_reason(CHECK_FIRST, f"Last flight: {len(last_flight['warnings']) - 3} more warnings in its timeline.", "flight"))
+            reasons.append(_reason(CHECK_FIRST, f"Last flight: {len(last_flight['warnings']) - 3} more warnings in its timeline.", "flight",
+                                   "more_warnings", n=len(last_flight["warnings"]) - 3))
 
     status = min((r["level"] for r in reasons), key=ORDER.get, default=READY)
     return {"drone_id": drone_id, "status": status, "reasons": sorted(reasons, key=lambda r: ORDER[r["level"]]),

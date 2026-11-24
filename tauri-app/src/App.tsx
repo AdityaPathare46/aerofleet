@@ -18,6 +18,7 @@ import ProofPage from './pages/Proof'
 import RouteCheckPage from './pages/RouteCheck'
 import ReadinessPage from './pages/Readiness'
 import TrendsPage from './pages/Trends'
+import SprayRegisterPage from './pages/SprayRegister'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
 import PolicyProposalsPage from './pages/PolicyProposals'
@@ -47,6 +48,7 @@ const Icons = {
 const PAGES = [
   { id: 'overview',    label: 'Overview',           Icon: Icons.Info },
   { id: 'readiness',   label: "Today's fleet",      Icon: Icons.Dashboard },
+  { id: 'spray',       label: 'Spray register',     Icon: Icons.Knowledge },
   { id: 'trends',      label: 'Fleet trends',       Icon: Icons.Scenarios },
   { id: 'assurance',   label: 'Fleet Assurance',    Icon: Icons.Policy },
   { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
@@ -76,6 +78,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
   routes:     RouteCheckPage,
   readiness:  ReadinessPage,
   trends:     TrendsPage,
+  spray:      SprayRegisterPage,
   assurance:  FleetAssurancePage,
   mission:    DispatchDesignerPage,
   council:    CouncilViewerPage,

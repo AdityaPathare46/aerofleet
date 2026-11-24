@@ -23,7 +23,7 @@ evidence. **Evidence, not verdicts.**
 
 | | |
 |---|---|
-| **15,000 drones** | Under Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore), 15,000 women self-help groups receive drones and rent crop-spraying and nano-fertiliser flights to farmers. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1980683) |
+| **15,000 approved, about 500 delivered** | Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore for 2023-24 to 2025-26) set a target of 15,000 drones for women self-help groups, who rent crop-spraying and nano-fertiliser flights to farmers ([PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1980683)). By March 2026 the government reported 500 drones delivered under the scheme itself, and 1,094 given to women SHGs by lead fertiliser companies in all ([Ministry of Rural Development reply, March 2026](https://www.dord.gov.in/static/uploads/2026/03/9560d26d651fff5e66666c6a88a7aef7.pdf)). |
 | **5 + 10 days of training** | Pilots are trained for 5 days to fly plus 10 days for applying nutrients and pesticides: new operators, not career pilots. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1980683) |
 | **7 days to report** | The crop-protection drone SOP asks operators to submit spray monitoring data within seven days. [PIB](https://pib.gov.in/PressReleasePage.aspx?PRID=1783937) |
 | **Mandatory insurance** | The Drone Rules 2021 require third-party insurance for every drone above nano class, so after an accident someone asks whose fault it was. [Drone Rules 2021](https://digitalsky.dgca.gov.in/assets/files/UasRules.pdf) |
@@ -40,8 +40,10 @@ the pilot. The checks themselves are general: any PX4 or ArduPilot fleet can use
 | Morning | **Today's fleet** | Every drone: *ready*, *check first* or *do not fly*, each reason written out with a button to its evidence |
 | Planning | **Route check** | Each spraying route against red and yellow airspace, the 120 m limit and the other jobs |
 | Evening | **Fleet Assurance ▸ Upload the day's logs** | All logs at once, each matched to its drone, reviewed, signed and compared with healthy flights |
+| Within 7 days | **Spray register** | Each spraying flight's SOP Spray Monitoring Form, part-filled from its log, with the days left to submit it |
 | After work on a drone | **Maintenance logbook** | Record the fix; AeroFleet compares the flights before and after |
 | Weekly | **Fleet trends** | Flying hours, warnings per flight, drones drifting from what is expected; CSV operations log for reporting |
+| Weekly | **Fleet Assurance ▸ Signed record** | Save a signed receipt and send it to someone outside your control |
 | In the viva | **Proof** | The study's results recomputed live, the learned model's tests, and a tamper demonstration |
 
 ## What it does, screen by screen
@@ -60,6 +62,33 @@ One row per drone. The verdict comes **only from fixed rules and recorded facts*
 Vibration and the learned model are shown as **context and never change the verdict**: the study found vibration is
 not a validated warning. Module: `aerofleet/assurance/readiness.py`.
 
+The screen is in **English, Hindi and Marathi** (buttons at the top). Each reason comes from the API with a code, so the
+wording changes and the rule does not; log warnings and setting names stay in English, as the autopilot writes them.
+The translations have not yet been checked by native speakers, and the screen says so until they are
+(`tauri-app/src/lib/readinessText.ts`, `REVIEWED`). A test checks that every reason the rules can give has all three.
+
+### Spray register: the seven-day report
+
+The crop-protection SOP (CIB&RC, 434th Registration Committee meeting, 30 November 2021, section 7) asks the operator
+to submit its **Spray Monitoring Form** (Annexure-I) within **seven days** of spraying pesticide by drone. Every reviewed
+flight gets that form, field for field (1-1 Date ... 7-3 Who was informed), plus two items from the SOP's pre-spray list
+(the written notice to the Gram Panchayat and Agriculture Officer at least 24 h ahead, and no water source within 100 m).
+
+- **Filled from the log**, and labelled so: date, start and end time, height above take-off, ground speed and, when
+  most of the distance runs along one axis, the spray direction. The log does not know the crop, so the height is
+  above take-off, not the canopy; the operator can correct any value and the form keeps both.
+- **Copied** from the drone's previous form (sprayer type, maker, model, nozzles) and from the maintenance logbook
+  (the date of last calibration).
+- **Fixed checks that quote the SOP**: product past its expiry date, notice sent less than 24 h ahead, no protective
+  clothing, water within 100 m, no UIN. The SOP says "appropriate" wind, temperature and height without numbers, so
+  AeroFleet invents no threshold for them.
+- **Deadline**: due = spraying date + 7 days; overdue, due soon, incomplete, complete, submitted. A test or survey
+  flight can be set aside as *not a spray flight*. Every save, set-aside and submission is signed; once recorded as
+  submitted the form is frozen. **Print** gives the Annexure-I layout, up to six flights side by side as on the
+  paper form. AeroFleet does not send the form; it records when and how it was sent.
+
+Module: `aerofleet/assurance/spray_form.py`; API `aerofleet/api/routes/spray.py`.
+
 ### Fleet Assurance: the records
 
 | Feature | What AeroFleet does |
@@ -73,7 +102,7 @@ not a validated warning. Module: `aerofleet/assurance/readiness.py`.
 | **Something wrong? Describe it** | A checklist ordered by how often PX4 experts found each cause in 96 diagnosed crashes, the causes your words mention, and the most similar past forum threads. Word matching (BM25), no model. Measured: its best guess matched the expert in 22% of cases, below the 27% of always guessing the most common cause, so it is not used as a diagnosis |
 | **Will these missions conflict?** | Checks mission files against each other and fixes conflicts with a launch delay or a different height; *Rehearse in 3D* flies them on one clock |
 | **Battery for the wind aloft** | Recomputes a mission's energy leg by leg with the forecast wind at cruise height |
-| **Signed record** | Every baseline, approval, check, review and maintenance entry gets an Ed25519-signed entry linked to the one before, with the SHA-256 of the exact file it came from. *Export for an auditor*; `tools/verify_ledger.py` checks it with only Python and the `cryptography` package |
+| **Signed record** | Every baseline, approval, check, review and maintenance entry gets an Ed25519-signed entry linked to the one before, with the SHA-256 of the exact file it came from. *Export for an auditor*; `tools/verify_ledger.py` checks it with only Python and the `cryptography` package. *Save a receipt* gives a signed note of the newest entry for someone else to keep; *Check a receipt* (or `verify_ledger.py --receipt`) later shows whether the record was rebuilt since |
 
 ### Fleet trends: the season view
 
@@ -169,7 +198,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 
 | Check | Result |
 |---|---|
-| Automated tests | **702 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| Automated tests | **715 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
 | No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
 | Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
 | Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |
@@ -207,7 +236,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 | Someone editing a stored record later | No | Signatures and the hash chain; the check names the entry |
 | Someone swapping an uploaded file after the fact | No | Each record carries the file's SHA-256 |
 | A pilot editing a log **before** upload | **Yes** | Nothing in software can. Prefer logs taken straight from the aircraft |
-| The operator, who holds the key and the database | **Yes, they can rebuild the whole chain** | A copy of the heads file (or the head hash from `GET /ledger/head`) kept by someone else |
+| The operator, who holds the key and the database | **Yes, they can rebuild the whole chain** | A signed receipt (*Save a receipt*) or a copy of the heads file kept by someone else: a rebuilt chain no longer contains the entry it names. Only as strong as how often receipts go out |
 | Anyone, on timestamps | **Yes** | Times come from the server's clock; no trusted timestamping |
 | A regulator or insurer | Unknown | No authority has endorsed this format: evidence support, not certification |
 

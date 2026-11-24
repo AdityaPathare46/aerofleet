@@ -199,6 +199,21 @@ flight" (the bench inspection reads a flight controller, read-only). Proof page,
 Removed on 25 Oct: four old start scripts, and "Incident replay" (the earlier product's AI-council view) from the VR
 view. "Live swarm" in the VR view is still from the earlier dispatch product (simulated drones).
 
+**Product, 24 Nov 2026 (from a teammate's industry review and report blueprint):**
+- *Spray register* (new page; `aerofleet/assurance/spray_form.py`, `aerofleet/api/routes/spray.py`, table
+  `spray_forms`): the SOP's Annexure-I Spray Monitoring Form per reviewed flight, part-filled from the log, the drone's
+  previous form and the logbook (new action "Spray system calibrated (nozzle output)"); fixed checks quoting the SOP;
+  due = spraying date + 7 days; printable Annexure-I, CSV; every save signed; a submitted form is frozen.
+  `tools/seed_demo_fleet.py --spray-only` remakes the four DEMO forms. Source PDF: CropLife India copy of the
+  434th RC minutes (30 Nov 2021) annexure; keep it out of the repository.
+- *Today's fleet* in English, Hindi and Marathi (`tauri-app/src/lib/readinessText.ts`); readiness reasons now carry
+  `code` and `args`. Translations unchecked by native speakers: set `REVIEWED` only after someone has read them.
+- Signed receipts (`GET /ledger/receipt`, `POST /ledger/check-receipt`, `verify_ledger.py --receipt`) for someone
+  outside the operator's control to keep; closes the "operator rebuilds the chain" gap only as often as receipts go out.
+- Scheme numbers corrected everywhere: 15,000 approved, about 500 delivered under the scheme (1,094 to SHGs in all) by
+  March 2026. VIVA Q37-Q47 cover competitors, who pays, 96 vs 94, the 0/40 caveat and the draft Drone Bill (still a draft).
+- 715 tests pass.
+
 ---
 
 ## 7. Open work, in priority order

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check an AeroFleet signed record without AeroFleet: needs only Python 3 and the `cryptography` package.
 
-    python verify_ledger.py aerofleet-signed-record.json [--heads ledger_heads.log] [--key-sha256 HEX]
+    python verify_ledger.py aerofleet-signed-record.json [--heads ledger_heads.log] [--key-sha256 HEX] [--receipt R.json ...]
 
 The JSON file is what "Export for an auditor" saves: {"public_key_pem": ..., "entries": [oldest first]}.
 Checks, in order: entries are numbered 1, 2, 3 ... with none missing; each links to the one before; each entry's
@@ -9,6 +9,8 @@ hash matches its contents; each signature is valid for the public key. Then, opt
   --key-sha256  the key fingerprint you were given earlier. A chain re-signed with a new key fails here.
   --heads       a copy of the heads file kept outside the operator's control. A rebuilt or truncated chain fails
                 here, because heads recorded earlier are no longer in it.
+  --receipt     a receipt the operator handed over earlier (AeroFleet ▸ Fleet Assurance ▸ Receipt for someone else to
+                keep). Its signature must be valid for the key, and the entry it names must still be in the chain.
 What it cannot show: that the files uploaded were genuine (each record carries their SHA-256, so you can compare
 with the originals), or that the machine's clock was right.
 Exit code 0 if everything checked passes, 1 otherwise.
@@ -34,7 +36,10 @@ def entry_hash(e):
     return hashlib.sha256(canonical(body)).hexdigest()
 
 
-def verify(export, heads=None, key_sha256=None):
+RECEIPT_FIELDS = ("aerofleet_receipt", "seq", "entry_hash", "entry_created_at", "issued_at", "key_sha256")
+
+
+def verify(export, heads=None, key_sha256=None, receipts=()):
     pem = export["public_key_pem"]
     problems = []
     fingerprint = hashlib.sha256(pem.strip().encode()).hexdigest()
@@ -58,6 +63,17 @@ def verify(export, heads=None, key_sha256=None):
             problems.append(f"Entry {e['seq']}: signature not valid for this key")
             break
         prev, expected = e["entry_hash"], expected + 1
+    for r in receipts:
+        body = {k: r.get(k) for k in RECEIPT_FIELDS}
+        if r.get("key_sha256") != fingerprint:
+            problems.append(f"Receipt for entry {r.get('seq')}: issued with a different key")
+            continue
+        try:
+            public.verify(base64.b64decode(r["signature"]), hashlib.sha256(canonical(body)).digest())
+        except (InvalidSignature, ValueError, KeyError, TypeError):
+            problems.append(f"Receipt for entry {r.get('seq')}: its signature is not valid (the receipt was edited)")
+            continue
+        heads = (heads or []) + [{"seq": r["seq"], "entry_hash": r["entry_hash"]}]
     if heads is not None:
         by_seq = {e["seq"]: e["entry_hash"] for e in export["entries"]}
         for h in heads:
@@ -73,12 +89,14 @@ def main(argv=None):
     ap.add_argument("export")
     ap.add_argument("--heads")
     ap.add_argument("--key-sha256")
+    ap.add_argument("--receipt", action="append", default=[])
     a = ap.parse_args(argv)
     export = json.load(open(a.export, encoding="utf-8"))
     heads = None
     if a.heads:
         heads = [json.loads(l) for l in open(a.heads, encoding="utf-8") if l.strip()]
-    r = verify(export, heads, a.key_sha256)
+    receipts = [json.load(open(p, encoding="utf-8")) for p in a.receipt]
+    r = verify(export, heads, a.key_sha256, receipts)
     print(f"{r['entries']} entries · key fingerprint {r['key_sha256']} · head {r['head']}")
     print("OK: the record is intact" if r["ok"] else "FAILED:\n  " + "\n  ".join(r["problems"]))
     return 0 if r["ok"] else 1

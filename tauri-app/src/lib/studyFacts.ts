@@ -68,9 +68,12 @@ export const BASE_RATE = {
 // The use case: agricultural drone service providers in India. Public facts, each with the page it comes from.
 export interface WebSource { name: string; url: string }
 export const USE_CASE: { big: string; label: string; text: string; source: WebSource }[] = [
-  { big: '15,000', label: 'drones for women self-help groups',
-    text: 'Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore) gives drones to 15,000 women self-help groups, which rent crop-spraying and nano-fertiliser flights to farmers.',
+  { big: '15,000', label: 'drones approved for women self-help groups',
+    text: 'Namo Drone Didi (approved 29 November 2023, outlay Rs 1,261 crore for 2023-24 to 2025-26) set a target of 15,000 drones for women self-help groups, which rent crop-spraying and nano-fertiliser flights to farmers.',
     source: { name: 'PIB, Ministry of Agriculture & Farmers Welfare', url: 'https://pib.gov.in/PressReleasePage.aspx?PRID=1980683' } },
+  { big: 'About 500', label: 'delivered under the scheme so far',
+    text: 'By March 2026 the government reported 500 drones delivered under the scheme itself (in 2023-24), and 1,094 given to women SHGs by lead fertiliser companies in all. The target is far from met, so the fleets are small and new.',
+    source: { name: 'Ministry of Rural Development, reply of March 2026', url: 'https://www.dord.gov.in/static/uploads/2026/03/9560d26d651fff5e66666c6a88a7aef7.pdf' } },
   { big: '5 + 10 days', label: 'of training for each pilot',
     text: 'Pilots are trained for 5 days to fly, plus 10 days for applying nutrients and pesticides: new operators, not career pilots.',
     source: { name: 'PIB, Ministry of Agriculture & Farmers Welfare', url: 'https://pib.gov.in/PressReleasePage.aspx?PRID=1980683' } },

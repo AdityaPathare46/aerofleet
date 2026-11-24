@@ -9,8 +9,9 @@ checks the key ones. Read `docs/DEMO.md` for the walk-through itself.
 
 ## The 60-second answer: "What is your project?"
 
-AeroFleet is the safety and records back office for agricultural drone service providers in India. Under Namo Drone
-Didi alone, 15,000 women self-help groups are receiving spraying drones, flown by pilots with 5 + 10 days of training,
+AeroFleet is the safety and records back office for agricultural drone service providers in India. Namo Drone
+Didi alone approved 15,000 spraying drones for women self-help groups (about 500 delivered under the scheme by March
+2026, 1,094 to SHGs in all), flown by pilots with 5 + 10 days of training,
 who rent flights to farmers. Every morning AeroFleet tells them which drones can fly and why; before a job it checks
 the route against restricted airspace; after flying it turns each log into a signed, time-ordered record for the
 insurer and the 7-day spray report. What makes it more than a dashboard is the evidence behind each design choice:
@@ -53,7 +54,7 @@ investigator or insurer needs to know. The tool is the positive output: it does 
 
 **Q2b. Your earlier version was a delivery project and was called weak. Why is this different?**
 The delivery dispatcher answered a question nobody had measured. This version starts from a real, funded user group
-(agricultural drone service providers; Namo Drone Didi alone is 15,000 drones) and from measured facts: what crash logs
+(agricultural drone service providers; Namo Drone Didi alone approved 15,000 drones, about 500 delivered by March 2026) and from measured facts: what crash logs
 can and cannot show, which cause experts find most often, how well each check performs on real logs. Every design
 choice traces to a number, and the Proof page recomputes those numbers live.
 
@@ -315,6 +316,67 @@ reviewer's workbooks are not released.
 **Q36. What would you do with six more months?**
 Run the declared prospective study with a partner fleet (8+ drones, 6 months), a user study with 12 to 16 operators
 under ethics approval, real-mission false-alarm rates from a fleet's own plans, and a headset test of the VR replay.
+
+## I. Market, competitors and the latest features
+
+**Q37. How many Drone Didi drones are actually flying? Is 15,000 real?**
+15,000 is the approved target (2023-24 to 2025-26, Rs 1,261 crore), not delivery. By March 2026 the government reported
+500 delivered under the scheme itself and 1,094 given to women SHGs by lead fertiliser companies in all. DGCA had
+41,196 drones of all kinds registered by July 2026. So the fleets are small and new, which is the point: a fleet of one
+needs the public reference and the learned model, not its own history.
+
+**Q38. Why not Airdata, DJI FlightHub or AeroGCS?**
+Airdata is a mature global logbook, but has no India UIN or SOP logic and no signed record we could verify offline.
+FlightHub serves DJI hardware only, and DJI logs are closed. AeroGCS is the closest Indian rival and ships with many
+spraying drones, but it is the manufacturer's own system, not an independent record. FlightMD (open source) is closest
+in spirit; AeroFleet adds approvals, a go / no-go, the spray form, the signed record and a pre-registered study. The
+honest weak points: we read only PX4 and ArduPilot logs, have no mobile app, and no operator has used it.
+
+**Q39. Who would pay?**
+Probably not the self-help group. Lead fertiliser companies, which the scheme asks to help with repair and
+maintenance of many SHG drones, and service aggregators are the natural buyers of a fleet-wide view. Insurers are a
+later conversation. Willingness to pay is unproven.
+
+**Q40. What does the spray register actually save the operator?**
+The SOP asks for its Annexure-I form within seven days of each spraying. A log already knows the date, start and end
+time, height and speed, and often the spray direction; the drone's previous form knows the sprayer; the logbook knows
+the last calibration. So the operator types only what a log cannot know (field, crop, product, weather, PPE), sees
+the days left, and gets a printable form in the official layout. *Show:* Spray register ▸ As of the last spraying
+flight ▸ open the form with three problems.
+
+**Q41. Why are there no wind or height limits in the spray checks?**
+Because the SOP gives none: it says "appropriate" wind speed, temperature, humidity and height. Inventing a number
+would be the kind of overclaim the study argues against. The checks that exist quote a sentence with a number or a
+fact in it: 24 h notice, 100 m from water, PPE, expiry date, UIN.
+
+**Q42. The height in the form says 3 m. Above what?**
+Above the take-off point, from the log. The log cannot see the crop canopy, so the form labels it and lets the
+operator correct it; if the entered value differs from the log by more than 1 m, the form keeps both and says so.
+
+**Q43. Why Hindi and Marathi, and are the translations right?**
+The pilots are new operators, many more comfortable in Hindi or Marathi, and the friend's industry review named
+"English only" as a weakness against Skylark. Only *Today's fleet* is translated, because it is the screen a pilot
+reads. The verdicts come with a code, so the rule never changes with the language. The translations were drafted with
+an AI assistant and the screen says they are unchecked until a native speaker has read them.
+
+**Q44. You said the operator can rebuild the whole chain. What did you do about it?**
+A signed receipt. Each week the operator saves a receipt of the newest entry and sends it to someone outside their
+control, such as the fertiliser company. Later, *Check a receipt* (or `verify_ledger.py --receipt`) shows whether that
+exact entry is still in the record. A test rebuilds the chain with the operator's own key: the chain passes its own
+check and fails the receipt. It is only as strong as how often receipts are sent, and the clock is still the
+machine's.
+
+**Q45. The forum numbers say 96 in one place and 94 in another.**
+94 threads blamed the aircraft alone, 2 blamed both pilot and aircraft. The configuration count (26 of 94) is over the
+94; the troubleshooter test uses all 96 that named an aircraft cause, aircraft alone or both.
+
+**Q46. Is "0 of 40 false alarms" true in general?**
+Only with a waypoint every 5 s. With 10 s spacing the same check gave 9 of 40 false alarms, from fast flights cutting
+corners of plans built from the track. Quote the spacing with the number.
+
+**Q47. Is the draft Civil Drone Bill law?**
+No. It was released for comment on 16 September 2025 (comments to 15 October 2025); we found no record of it being
+introduced in Parliament. The Drone Rules 2021 apply. Check again before the review.
 
 ## Questions to answer with "we did not test that"
 

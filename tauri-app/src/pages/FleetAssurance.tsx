@@ -91,7 +91,7 @@ const WIND_VERDICT: Record<WindReport['verdict'], { tone: Verdict; label: string
 interface LedgerEntry { seq: number; kind: string; subject: string; entry_hash: string; created_at: string; created_by: string }
 interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
-const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', maintenance: 'Maintenance recorded', wind_check: 'Wind checked' }
+const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', maintenance: 'Maintenance recorded', wind_check: 'Wind checked', spray_form: 'Spray form saved' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
 // rounds the total first: 299.9 s is 5:00, not 4:60
 const clock = (s: number) => { const t = Math.max(0, Math.round(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` }
@@ -161,6 +161,7 @@ export default function FleetAssurancePage() {
   const [symptom, setSymptom] = useState('')
   const [help, setHelp] = useState<Troubleshoot | null>(null)
   const [ledgerCheck, setLedgerCheck] = useState<LedgerCheck | null>(null)
+  const [receiptCheck, setReceiptCheck] = useState<{ ok: boolean; problem: string | null; meaning?: string } | null>(null)
   const [needsAuth, setNeedsAuth] = useState(false)      // the API answered 401: show the sign-in card instead of an empty page
   const base = `${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet.trim() || 'default')}`
   useEffect(() => { try { localStorage.setItem('aerofleet_fleet', fleet.trim() || 'default') } catch { /* private window */ } }, [fleet])
@@ -259,6 +260,16 @@ export default function FleetAssurancePage() {
   }, [apiUrl])
   useEffect(() => { loadLedger() }, [loadLedger, rows, flights])
   const verifyLedger = () => act(async () => { setLedgerCheck(await plain<LedgerCheck>('/ledger/verify')); await loadLedger() })
+  const getReceipt = () => act(async () => {
+    const r = await plain<{ seq: number }>('/ledger/receipt')
+    download(`aerofleet-receipt-entry-${r.seq}`, JSON.stringify(r, null, 1), '.json')
+  })
+  const checkReceipt = (file: File | undefined) => act(async () => {
+    if (!file) return
+    let receipt: unknown
+    try { receipt = JSON.parse(await file.text()) } catch { throw new Error('That file is not a receipt (not JSON).') }
+    setReceiptCheck(await plain('/ledger/check-receipt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ receipt }) }))
+  })
   const exportLedger = () => act(async () => {
     const all = await plain<Ledger>('/ledger?limit=1000')
     download('aerofleet-signed-record.json', JSON.stringify({ public_key_pem: all.public_key_pem, entries: [...all.entries].reverse() }, null, 2), '')
@@ -821,6 +832,19 @@ export default function FleetAssurancePage() {
           <button className="btn" id="btn-ledger-verify" disabled={busy} onClick={verifyLedger}>Check the record</button>
           <button className="btn" id="btn-ledger-export" disabled={busy || !ledger?.entries.length} onClick={exportLedger}>Export for an auditor</button>
         </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, padding: 10, borderRadius: 8, background: 'var(--bg-elevated, #F8FAFC)' }} id="ledger-receipt">
+          <div style={{ flex: 1, minWidth: 260, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <b>Receipt for someone else to keep.</b> You hold the key and the database, so on your machine alone the record
+            could be rebuilt. Send a receipt each week to someone outside your control (the company that oversees your
+            drones, or your insurer). Later, a rebuilt or shortened record no longer contains the entry the receipt names.
+          </div>
+          <button className="btn" id="btn-receipt" disabled={busy || !ledger?.entries.length} onClick={getReceipt}>Save a receipt</button>
+          <label className="btn" style={{ cursor: 'pointer' }}>Check a receipt
+            <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={(e) => { checkReceipt(e.target.files?.[0]); e.target.value = '' }} /></label>
+        </div>
+        {receiptCheck && <div id="receipt-check" style={{ fontSize: 13, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Pill verdict={receiptCheck.ok ? 'OK' : 'BLOCK'} label={receiptCheck.ok ? 'Receipt matches' : 'Receipt does not match'} />
+          <span>{receiptCheck.ok ? receiptCheck.meaning : receiptCheck.problem}</span></div>}
         {ledgerCheck && (
           <div id="ledger-check" style={{ fontSize: 13, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <Pill verdict={ledgerCheck.ok ? 'OK' : 'BLOCK'} label={ledgerCheck.ok ? 'Record intact' : 'Record has been changed'} />

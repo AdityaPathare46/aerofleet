@@ -149,6 +149,63 @@ def seed_maintenance(db, fleet: str) -> None:
     db.commit()
 
 
+# Demo spray forms on the last four flights of the drone that flew most recently, so the spray register shows each state once. The public logs are not spraying
+# flights: every value typed here is made up and labelled DEMO; only the dates, times, height and speed come from the logs.
+DEMO_SPRAY = {"1-2": "DEMO field, village not real", "2-1": "Crop", "2-2": 0.9, "2-3": "DEMO: paddy, brown planthopper 15%",
+              "3-1": "DEMO product / common name", "3-2": "DEMO 20% SC", "3-3": "Other", "3-5": "Yes", "3-6": "Water, DEMO ratio",
+              "4-2": 27, "4-3": 62, "4-4": 2.0, "4-5": 270, "4-6": 0, "5-1": "Hydraulic", "5-2": "Pilot", "5-3": "DEMO maker",
+              "5-4": "DEMO model", "5-10": "DEMO flat-fan nozzles", "5-11": 1.2, "5-12": 4, "5-13": 4.0,
+              "5-16": ["Ground party available", "Radio communication with aircraft"], "5-17": ["GPS"],
+              "7-1": ["Goggles", "Mask", "Gloves", "Overalls"], "7-2": "Yes", "7-3": ["Farmers", "Villagers", "Officials"], "sop-water": "Yes"}
+
+
+def seed_spray_forms(db, fleet: str, drone: str = "") -> None:
+    from datetime import timedelta
+
+    from aerofleet.assurance import ledger
+    from aerofleet.assurance import spray_form as sf
+    from aerofleet.data.models.models import FlightReview, MaintenanceEntry, SprayForm
+
+    db.query(SprayForm).filter(SprayForm.fleet == fleet).delete()
+    every = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.id).all()
+    if not every:
+        return
+    when = {r.id: sf.log_values(r.report or {}, r.created_at.isoformat())["4-1s"] or "" for r in every}
+    drone = drone or max(every, key=lambda r: when[r.id]).drone_id     # so "as of the last flight" shows days left
+    reviews = [r for r in every if r.drone_id == drone]
+    dated = sorted(((sf.log_values(r.report or {}, r.created_at.isoformat()), r) for r in reviews), key=lambda x: x[0]["4-1s"] or "")
+    if len(dated) < 4:
+        return
+    first_day = datetime.fromisoformat(dated[-4][0]["1-1"])
+    note = "DEMO entry, made up to fill the spray form's date of last calibration."
+    db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet, MaintenanceEntry.drone_id == drone,
+                                      MaintenanceEntry.action.in_(sf.CALIBRATION_ACTIONS)).delete()
+    done = first_day - timedelta(days=12)
+    db.add(MaintenanceEntry(fleet=fleet, drone_id=drone, done_at=done, action=sf.CALIBRATION_ACTIONS[0], note=note, done_by=SEEDER.username))
+    ledger.append(db, "maintenance", f"{fleet}/{drone}", {"done_at": done.isoformat(), "action": sf.CALIBRATION_ACTIONS[0], "note": note}, SEEDER.username)
+    plans = [("submitted", {}), ("ready", {}), ("problems", {"3-4": None, "sop-notice": None, "7-1": ["None"]}), ("not_spray", {})]
+    for (log, r), (kind, over) in zip(dated[-4:], plans):
+        start = datetime.fromisoformat(log["4-1s"])
+        v = {**DEMO_SPRAY, "3-4": (start + timedelta(days=400)).date().isoformat(),
+             "sop-notice": (start - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M"), **over}
+        if kind == "problems":
+            v["3-4"] = (start - timedelta(days=30)).date().isoformat()          # expired product
+            v["sop-notice"] = (start - timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M")   # under 24 h notice
+        row = SprayForm(review_id=r.id, fleet=fleet, drone_id=drone, values={} if kind == "not_spray" else v,
+                        not_spray=kind == "not_spray", updated_by=SEEDER.username)
+        if kind == "submitted":
+            row.values = {**v, **{k: x for k, x in log.items() if k in sf.FROM_LOG and x is not None}, "5-5": "Aerial",
+                          "5-6": done.date().isoformat()}
+            row.submitted_on = (start + timedelta(days=5)).date().isoformat()
+            row.submitted_via = "DEMO: email to the address in the CIB&RC guidelines"
+        db.add(row)
+        db.flush()
+        ledger.append(db, "spray_form", f"{fleet}/review/{r.id}", {"review_id": r.id, "review_sha256": ledger.payload_hash(r.report),
+                      "values": row.values, "not_spray": row.not_spray, "submitted_on": row.submitted_on,
+                      "submitted_via": row.submitted_via}, SEEDER.username)
+    db.commit()
+
+
 def route_check_missions(folder: str):
     from aerofleet.integrations.mission_planner import build_waypoint_file
 
@@ -165,6 +222,7 @@ def main() -> None:
     ap.add_argument("--drones", type=int, default=8)
     ap.add_argument("--flights", type=int, default=8)
     ap.add_argument("--reset", action="store_true")
+    ap.add_argument("--spray-only", action="store_true", help="only (re)make the demo spray forms on an existing demo fleet")
     ap.add_argument("--key", default=os.path.join(DATA, "demo_fleet_key.json"), help="presenter's key (kept outside the repository)")
     a = ap.parse_args()
 
@@ -176,6 +234,10 @@ def main() -> None:
 
     init_db()
     db = get_session()
+    if a.spray_only:
+        seed_spray_forms(db, a.fleet)
+        print(f"Demo spray forms made for fleet '{a.fleet}' (the last four flights of the most recently flown drone).")
+        return
     if a.reset:
         for model in (FlightReview, ParamSnapshot):
             db.query(model).filter(model.fleet == a.fleet).delete()
@@ -203,6 +265,7 @@ def main() -> None:
                "archive, not findings. The tool is never given them.", "flights": key}, open(a.key, "w"), indent=1)
     seed_registrations(db, sorted({k["drone"] for k in key}))
     seed_maintenance(db, a.fleet)
+    seed_spray_forms(db, a.fleet)
     crashed = sorted({k["drone"] for k in key if k["role"] == "crash"})
     print(f"\n{len(key)} flights of {len({k['drone'] for k in key})} drones loaded into fleet '{a.fleet}'.")
     print(f"Drones whose last flight the uploader rated a crash: {', '.join(crashed) or 'none'}")

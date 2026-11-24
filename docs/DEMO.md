@@ -54,7 +54,8 @@ Every number on that page is checked against the paper and the result files by `
 ### Step 0a. The use case and Today's fleet (2 minutes)
 
 The use case: **the safety and records back office for agricultural drone service providers in India.** Under Namo
-Drone Didi (approved November 2023, Rs 1,261 crore) 15,000 women self-help groups receive drones and rent spraying
+Drone Didi (approved November 2023, Rs 1,261 crore) 15,000 drones were approved for women self-help groups, about 500
+delivered under the scheme by March 2026; the groups rent spraying
 flights to farmers; pilots get 5 days of flying training plus 10 for agriculture. They need checks that do not depend
 on expertise, and records that protect the pilot (third-party insurance is mandatory; spray data must be reported
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
@@ -67,6 +68,10 @@ verified (demo registrations, labelled DEMO). Press a reason's button to open it
 
 Say: the verdict comes only from fixed rules and recorded facts. Vibration is shown but never changes the verdict,
 because the study found it is not a validated warning.
+
+Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
+not change with the language, log messages stay in English, and the note under the buttons says the translation is
+not yet checked by a native speaker (remove it only after one of the team has read every line).
 
 ### Step 0b. Proof (2 minutes)
 
@@ -94,6 +99,14 @@ typical, matching the timeline's "Battery below 10%". Say: context, never a verd
    guessed onto a drone.
 4. Fleet trends ▸ *Download CSV*: one row per flight with UIN, minutes, distance, outline area (a field-size estimate),
    take-off point and the fingerprint of its signed review: the record a spray report is filled from.
+5. **Spray register**: press *As of the last spraying flight* (the demo logs are years old, so counted from today
+   every form is overdue). PX4-08's last four flights carry DEMO forms, labelled DEMO, one per state: submitted,
+   complete but not sent, one with three problems (product expired, notice sent 6 h ahead, no protective clothing),
+   and one set aside as not a spray flight. Open the problem form: each problem quotes its SOP clause; fields marked
+   *from the log* came from the flight. Tick three flights and *Print form*: the Annexure-I layout, six columns.
+6. Fleet Assurance ▸ Signed record ▸ *Save a receipt*, then *Check a receipt* with the saved file: "Receipt matches".
+   Say who should keep it (the fertiliser company or insurer) and why: on the operator's machine alone the record
+   could be rebuilt; a test shows a rebuilt chain fails the receipt.
 
 ### Step 1. Events in time order, no verdict (attribution finding, Q1 and Q2)
 

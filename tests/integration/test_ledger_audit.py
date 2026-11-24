@@ -153,3 +153,36 @@ def test_concurrent_writers_get_distinct_numbers_and_one_valid_chain():
     with get_db_session() as db:
         result = ledger.verify_chain(db)
     assert result["ok"] is True and result["entries"] == 12
+
+
+def test_a_receipt_kept_by_someone_else_catches_a_chain_rebuilt_with_the_same_key(api_client, auth_headers, operator_headers):
+    from aerofleet.assurance import ledger
+
+    _make_three(api_client, auth_headers, operator_headers)
+    receipt = api_client.get(f"{URL}/ledger/receipt", headers=auth_headers).json()
+    assert receipt["seq"] == 3 and receipt["key_sha256"] and receipt["signature"]
+    ok = api_client.post(f"{URL}/ledger/check-receipt", headers=auth_headers, json={"receipt": receipt}).json()
+    assert ok["ok"] is True and ok["entries_since"] == 0
+
+    edited = dict(receipt, seq=2)
+    bad = api_client.post(f"{URL}/ledger/check-receipt", headers=auth_headers, json={"receipt": edited}).json()
+    assert bad["ok"] is False and "edited" in bad["problem"]
+
+    # The operator holds the key, so they can rewrite entry 2 and re-sign everything after it. The chain then passes
+    # its own check, but no longer contains the entry the receipt names.
+    export = _export(api_client, auth_headers)
+    tool = _tool()
+    rebuilt = copy.deepcopy(export)
+    prev = rebuilt["entries"][0]["entry_hash"]
+    for e in rebuilt["entries"][1:]:
+        if e["seq"] == 2:
+            e["subject"] = "aud/D9"
+        e["prev_hash"] = prev
+        e["entry_hash"] = tool.entry_hash(e)
+        e["signature"] = base64.b64encode(ledger._private_key().sign(bytes.fromhex(e["entry_hash"]))).decode()
+        prev = e["entry_hash"]
+    assert ledger.verify_entries(rebuilt["entries"], export["public_key_pem"])["ok"] is True
+    caught = ledger.check_receipt(rebuilt["entries"], export["public_key_pem"], receipt)
+    assert caught["ok"] is False and "rebuilt" in caught["problem"]
+    assert tool.verify(export, receipts=[receipt])["ok"] is True
+    assert tool.verify(rebuilt, receipts=[receipt])["ok"] is False

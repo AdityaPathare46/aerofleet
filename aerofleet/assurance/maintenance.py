@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 ACTIONS = ["Propellers replaced", "Motor replaced", "Motor mounts / arms tightened or replaced", "Battery replaced",
            "Flight controller re-mounted or vibration damping changed", "Sensors calibrated (compass, accelerometer)",
-           "Firmware updated", "Spray system serviced", "Other"]
+           "Firmware updated", "Spray system serviced", "Spray system calibrated (nozzle output)", "Other"]
 N_SIDE = 3                     # flights compared on each side of the work
 NOTE = ("Median of up to 3 flights before and 3 after the work. A few flights cannot prove a fix worked: read it as a "
         "description, and watch the next flights.")

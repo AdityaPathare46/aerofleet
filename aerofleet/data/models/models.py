@@ -464,6 +464,22 @@ class MaintenanceEntry(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class SprayForm(Base):
+    """The SOP Spray Monitoring Form (Annexure-I) for one reviewed flight (aerofleet/assurance/spray_form.py).
+    Every save and the submission are signed into the record."""
+    __tablename__ = "spray_forms"
+
+    review_id = Column(Integer, primary_key=True)             # flight_reviews.id
+    fleet = Column(String(50), nullable=False, index=True)
+    drone_id = Column(String(50), nullable=False, index=True)
+    values = Column(JSON, nullable=False, default=dict)
+    not_spray = Column(Boolean, nullable=False, default=False)  # a test, survey or training flight: no form needed
+    submitted_on = Column(String(10), nullable=True)          # YYYY-MM-DD the operator sent it
+    submitted_via = Column(String(100), nullable=True)
+    updated_by = Column(String(100), nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class FlightReview(Base):
     """One planned-versus-flown reconciliation: a mission file and a flight log for one drone."""
 
