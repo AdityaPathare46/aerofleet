@@ -208,14 +208,19 @@ def _px4_health(log: FlightLog, est, sec) -> None:
 
 def read_flight_log(path: str) -> FlightLog:
     ext = os.path.splitext(path)[1].lower()
-    if ext not in (".tlog", ".bin", ".ulg"):
-        raise FlightLogError("Unsupported log type — upload an ArduPilot .tlog or .bin file, or a PX4 .ulg file")
+    if ext not in (".tlog", ".bin", ".ulg", ".csv", ".gpx"):
+        raise FlightLogError("Unsupported log type — upload a PX4 .ulg, an ArduPilot .tlog or .bin, or for other "
+                             "controllers a .csv export or a .gpx track")
     if not os.path.isfile(path) or os.path.getsize(path) == 0:
         raise FlightLogError("The log file is empty")
     if os.path.getsize(path) > MAX_BYTES:
         raise FlightLogError("The log file is larger than 200 MB")
     if ext == ".ulg":
         return _read_ulog(path)
+    if ext in (".csv", ".gpx"):
+        from aerofleet.assurance.flightlog_text import read_csv_log, read_gpx_log
+
+        return read_csv_log(path) if ext == ".csv" else read_gpx_log(path)
     from pymavlink import mavutil
 
     try:

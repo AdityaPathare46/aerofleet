@@ -213,6 +213,11 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
 - Scheme numbers corrected everywhere: 15,000 approved, about 500 delivered under the scheme (1,094 to SHGs in all) by
   March 2026. VIVA Q37-Q47 cover competitors, who pays, 96 vs 94, the 0/40 caveat and the draft Drone Bill (still a draft).
 - 715 tests pass.
+- Later on 24 Nov: *Search the public log archive* (`aerofleet/assurance/archive_search.py`, `log_signs.py`,
+  `POST /archive/search`): words against uploaders' own descriptions (BM25), and local public logs with the same log
+  signs. Index built per computer by `tools/build_archive_index.py` into the app data folder (other people's text,
+  never commit it). New log formats: `.csv` exports and `.gpx` tracks (`aerofleet/assurance/flightlog_text.py`);
+  DJI flight-record CSVs tested on 3 real public exports (external/dji_samples on the data drive); Airdata layout untested. 736 tests pass.
 
 ---
 

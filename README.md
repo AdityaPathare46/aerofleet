@@ -94,15 +94,34 @@ Module: `aerofleet/assurance/spray_form.py`; API `aerofleet/api/routes/spray.py`
 | Feature | What AeroFleet does |
 |---|---|
 | **Settings drift** | Compares a drone's settings with the fleet's approved baseline and its own last upload. Safety-critical changes block, flight-limit changes need review; an operator approves an exact value with a written reason. Each safety-critical value also shows how often public PX4 flights use it ("8% use this value; most use 2") |
-| **Flight review** | A log (PX4 `.ulg`, ArduPilot `.tlog` / `.bin`), with or without a mission file: events in time order (mode changes, the pilot taking over, battery, poor GPS, what the autopilot itself reported about its sensors, settings changed in flight), the quality of the evidence, and, with a plan, how far and how long it left the route. **No cause is named.** Printable report |
+| **Flight review** | A log (PX4 `.ulg`, ArduPilot `.tlog` / `.bin`, or for other controllers a `.csv` export or `.gpx` track, see below), with or without a mission file: events in time order (mode changes, the pilot taking over, battery, poor GPS, what the autopilot itself reported about its sensors, settings changed in flight), the quality of the evidence, and, with a plan, how far and how long it left the route. **No cause is named.** Printable report |
 | **Compared with healthy flights** | The learned normal-flight model's expected range for vibration and battery drain, for a drone like this one flown like this, and whether the flight was below, inside or above it (see below) |
 | **Evening batch upload** | Up to 60 logs at once. Each is matched to its drone by the flight controller's own id (PX4 `sys_uuid`) or, the first time, by a file name like `PX4-07_evening.ulg`. A log it cannot identify is never guessed onto a drone |
 | **Vibration and history** | Each drone flight by flight, in the order flown (GPS time, not upload date), against its own earlier flights, against drones of the same kind in the fleet, and against 292 public PX4 flights of 141 vehicles that never crashed (works for a fleet of one). The last 10 s of each flight are left out so an impact cannot inflate it. Nothing is flagged |
 | **Maintenance logbook** | Record work on a drone (propellers, motor, battery, calibration, ...), signed. AeroFleet compares the flights before and after: vibration and battery drain relative to what the model expects, with the caveat that a few flights cannot prove a fix |
 | **Something wrong? Describe it** | A checklist ordered by how often PX4 experts found each cause in 96 diagnosed crashes, the causes your words mention, and the most similar past forum threads. Word matching (BM25), no model. Measured: its best guess matched the expert in 22% of cases, below the 27% of always guessing the most common cause, so it is not used as a diagnosis |
+| **Search the public log archive** | From the same box: the description, or one of your own reviewed flights, matched against the public PX4 archive in two ways. *What other pilots wrote*: word matching (BM25) against what uploaders wrote about their own flights, with each flight's rating as the uploader gave it. *What logs showed*: public logs on this computer whose logs show the same signs (poor GPS, compass or position data rejected by the autopilot, critical battery, voltage sag, pilot taking over, settings changed in flight, high vibration for the kind of drone), found by the same rules as your own review. Every match links to the log in PX4 Flight Review. Places to look, not a diagnosis: flights that look alike can have different causes. The index holds other people's text, so it is built on each computer (`python tools/build_archive_index.py`) and is not in the repository |
 | **Will these missions conflict?** | Checks mission files against each other and fixes conflicts with a launch delay or a different height; *Rehearse in 3D* flies them on one clock |
 | **Battery for the wind aloft** | Recomputes a mission's energy leg by leg with the forecast wind at cruise height |
 | **Signed record** | Every baseline, approval, check, review and maintenance entry gets an Ed25519-signed entry linked to the one before, with the SHA-256 of the exact file it came from. *Export for an auditor*; `tools/verify_ledger.py` checks it with only Python and the `cryptography` package. *Save a receipt* gives a signed note of the newest entry for someone else to keep; *Check a receipt* (or `verify_ledger.py --receipt`) later shows whether the record was rebuilt since |
+
+### Logs from other flight controllers
+
+| Log | Read | What the review has |
+|---|---|---|
+| PX4 `.ulg` | In full | Everything: settings, modes, battery, GPS, vibration, the autopilot's own sensor checks |
+| ArduPilot `.bin` (on the SD card) and `.tlog` (from the ground station) | In full | Everything except the PX4 estimator lines |
+| Any MAVLink autopilot's `.tlog` | Through the same reader | Position, modes, battery, GPS, settings sent over the link |
+| `.csv` export (DJI through Airdata UAV or a flight-record converter, or any app, or the [AeroFleet template](tauri-app/public/templates/aerofleet_flight_template.csv)) | Columns found by name, feet converted to metres | Position, time, battery, GPS satellites, mode. No settings, vibration or sensor checks, and the review says so |
+| `.gpx` track | Track points | Position and time only |
+
+**Tested on real DJI files:** three public DJI Mini 4 Pro flight-record CSVs (Hugging Face dataset
+`nominal-io/dji-drone-telemetry`, MIT licence) are reviewed end to end in `tests/integration/test_real_dji_exports.py`:
+the heights match each file's own maximum-height column, and DJI's modes (auto take-off, go home, auto landing), battery
+and satellites come through. The first run on them found four reader faults (DJI's `timestamps` date column, a text
+fly-time column read instead of the numeric one, older battery column names, an idle battery read as empty), all fixed
+and tested. The **Airdata** export layout is still tested only on files built to its published column names. DJI's own `.DAT`/`.txt` records and closed agricultural controllers are
+not read directly. Betaflight and INAV blackbox logs are not read (racing and hobby controllers, not spraying drones).
 
 ### Fleet trends: the season view
 
@@ -198,7 +217,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 
 | Check | Result |
 |---|---|
-| Automated tests | **715 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| Automated tests | **736 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
 | No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
 | Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
 | Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |

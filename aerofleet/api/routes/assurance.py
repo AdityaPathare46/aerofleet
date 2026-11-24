@@ -632,6 +632,45 @@ async def troubleshoot(body: TroubleshootQuery, user: User = Depends(get_current
     return search(body.description, body.limit, vibration)
 
 
+class ArchiveQuery(BaseModel):
+    description: str = Field("", max_length=4000)
+    fleet: Optional[str] = None
+    review_id: Optional[int] = None                 # one of the user's reviewed flights: match the signs its log shows
+    same_kind: bool = True                          # only flights of the same kind of vehicle as that flight
+    limit: int = Field(10, ge=1, le=30)
+
+
+@router.get("/archive/status")
+async def archive_status(user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    from aerofleet.assurance.archive_search import status
+
+    return status()
+
+
+@router.post("/archive/search")
+async def archive_search(body: ArchiveQuery, user: User = Depends(get_current_active_user),
+                         db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Public flights like the described problem: what uploaders wrote, and logs that show the same signs
+    (aerofleet/assurance/archive_search.py). Places to look, never a diagnosis."""
+    from aerofleet.assurance.archive_search import search
+    from aerofleet.assurance.log_signs import SIGNS, signs_from_report
+
+    signs, vehicle, mine, exclude = None, None, None, set()
+    if body.review_id is not None:
+        r = db.get(FlightReview, body.review_id)
+        if r is None or (body.fleet and r.fleet != body.fleet):
+            raise HTTPException(status_code=404, detail=f"No reviewed flight #{body.review_id}")
+        signs = signs_from_report(r.report or {})
+        vehicle = ((r.report or {}).get("log") or {}).get("vehicle") if body.same_kind else None
+        mine = {"review_id": r.id, "drone_id": r.drone_id, "signs": [SIGNS[x] for x in sorted(signs)]}
+        exclude = {os.path.splitext(r.log_name or "")[0]}            # a demo flight is itself a public log: never match itself
+    if len(body.description.strip()) < 3 and body.review_id is None:
+        raise HTTPException(status_code=422, detail="Describe the problem, or choose one of your flights")
+    out = search(body.description, signs, vehicle, body.limit, exclude)
+    out["your_flight"] = mine
+    return out
+
+
 @router.get("/fleets/{fleet}/flights")
 async def list_flights(fleet: str, drone_id: Optional[str] = None, limit: int = Query(50, ge=1, le=200),
                        user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> List[Dict[str, Any]]:

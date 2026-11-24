@@ -26,6 +26,10 @@ interface Baseline { param_count: number; source: string | null; set_by: string;
 interface Check { id: string; title: string; status: string; detail: string; fix: string }
 interface Episode { kind: 'off_route' | 'off_altitude' | 'in_no_fly_zone'; start_s: number; duration_s: number; max_m: number; lat: number; lon: number }
 type FlightVerdict = 'CONFORMED' | 'DEVIATED' | 'LOG_ONLY'   // LOG_ONLY: a log reviewed with no mission file
+interface ArchiveHit { id: string; date: string | null; text: string | null; rating: string; vehicle: string; airframe: string; minutes: number | null; url: string; same_text?: number; signs?: string[]; shared?: string[]; similarity?: number }
+interface ArchiveResult { ready: boolean; message?: string; query_signs?: string[]; signs_from?: string; text_matches: ArchiveHit[]; log_matches: ArchiveHit[]
+  words_summary?: { rated: number; crash: number; base_crash_share: number | null } | null; logs_summary?: { with_shared_sign: number; of: number; crash: number; rated: number; note: string } | null
+  reports?: number; logs?: number; note: string; your_flight?: { review_id: number; drone_id: string; signs: string[] } | null }
 interface FlightRow { id: number; drone_id: string; verdict: FlightVerdict; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number | null; episodes: number; manual_control: number; settings_changed_critical?: number }
 interface Review {
   id: number; drone_id: string; verdict: FlightVerdict; plan_name: string | null; log_name: string | null
@@ -93,6 +97,7 @@ interface Ledger { public_key_pem: string; entries: LedgerEntry[] }
 interface LedgerCheck { ok: boolean; entries: number; head: string | null; first_bad_seq: number | null; problem: string | null }
 const KIND_LABEL: Record<string, string> = { baseline: 'Baseline set', approval: 'Change approved', drift: 'Settings checked', flight_review: 'Flight reviewed', deconflict: 'Missions checked for conflicts', airspace_check: 'Routes checked against airspace', maintenance: 'Maintenance recorded', wind_check: 'Wind checked', spray_form: 'Spray form saved' }
 const EPISODE_LABEL: Record<Episode['kind'], string> = { off_route: 'Off the planned route', off_altitude: 'Off the planned height', in_no_fly_zone: 'Inside a no-fly zone' }
+const short = (t: string | null) => !t ? '—' : t.length > 220 ? t.slice(0, 220) + '…' : t
 // rounds the total first: 299.9 s is 5:00, not 4:60
 const clock = (s: number) => { const t = Math.max(0, Math.round(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` }
 interface Checks { verdict: string; counts: { total: number; evaluated: number; needs_live: number; manual: number; PASS: number; WARN: number; FAIL: number }; evaluated: Check[] }
@@ -160,6 +165,8 @@ export default function FleetAssurancePage() {
   const [ledger, setLedger] = useState<Ledger | null>(null)
   const [symptom, setSymptom] = useState('')
   const [help, setHelp] = useState<Troubleshoot | null>(null)
+  const [archive, setArchive] = useState<ArchiveResult | null>(null)
+  const [archiveFlight, setArchiveFlight] = useState('')
   const [ledgerCheck, setLedgerCheck] = useState<LedgerCheck | null>(null)
   const [receiptCheck, setReceiptCheck] = useState<{ ok: boolean; problem: string | null; meaning?: string } | null>(null)
   const [needsAuth, setNeedsAuth] = useState(false)      // the API answered 401: show the sign-in card instead of an empty page
@@ -232,9 +239,12 @@ export default function FleetAssurancePage() {
   }
   const root = `${apiUrl}/api/v1/assurance`
   const plain = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-    const r = await fetch(root + path, { ...init, headers: token() })
+    const r = await fetch(root + path, { ...init, headers: { ...token(), ...((init?.headers as Record<string, string>) || {}) } })
     if (r.status === 401) throw new Error('Sign in to use fleet assurance.')
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+    if (!r.ok) {
+      const detail = (await r.json().catch(() => ({}))).detail
+      throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((d: { msg?: string }) => d.msg).join('; ') : `HTTP ${r.status}`)
+    }
     return r.json()
   }
   const checkWind = () => act(async () => {
@@ -252,6 +262,11 @@ export default function FleetAssurancePage() {
     if (r.status === 401) throw new Error('Sign in to use fleet assurance.')
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
     setHelp(await r.json())
+  })
+  const searchArchive = () => act(async () => {
+    if (symptom.trim().length < 3 && !archiveFlight) throw new Error('Describe the problem, or choose one of your flights.')
+    setArchive(await plain<ArchiveResult>('/archive/search', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: symptom.trim(), fleet: fleet.trim() || 'default', ...(archiveFlight ? { review_id: Number(archiveFlight) } : {}) }) }))
   })
   const loadLedger = useCallback(async () => {
     const t = localStorage.getItem('aerofleet_token') || ''
@@ -350,11 +365,11 @@ export default function FleetAssurancePage() {
           <b style={{ fontSize: 13 }}>Review a flight</b>
           <input ref={planFile} id="flight-plan-file" type="file" hidden onChange={(e) => { setPlan(e.target.files?.[0] ?? null); e.target.value = '' }} />
           <input ref={logFile} id="flight-log-file" type="file" hidden onChange={(e) => { setFlightLog(e.target.files?.[0] ?? null); e.target.value = '' }} />
-          <input ref={batchFile} id="batch-log-files" type="file" multiple hidden accept=".ulg,.bin,.tlog" onChange={(e) => { uploadBatch(Array.from(e.target.files ?? [])); e.target.value = '' }} />
+          <input ref={batchFile} id="batch-log-files" type="file" multiple hidden accept=".ulg,.bin,.tlog,.csv,.gpx" onChange={(e) => { uploadBatch(Array.from(e.target.files ?? [])); e.target.value = '' }} />
           <button className="btn" disabled={busy} onClick={() => planFile.current?.click()}>{plan ? plan.name : 'Mission file (optional)'}</button>
           <button className="btn" disabled={busy} onClick={() => logFile.current?.click()}>{flightLog ? flightLog.name : 'Choose flight log'}</button>
           <button className="btn btn--primary" id="btn-compare-flight" disabled={busy || !flightLog} onClick={compare}>{plan ? 'Compare with plan' : 'Review log'}</button>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>A flight log (ArduPilot .tlog or .bin, PX4 .ulg) for the drone id above. Add the .waypoints mission to also check whether it flew the plan.</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>A flight log for the drone id above: PX4 .ulg or ArduPilot .tlog / .bin read in full; for other controllers a .csv export (DJI via Airdata, or the AeroFleet template) or a .gpx track, which give position, time and, in a CSV, battery and GPS only. <a href="/templates/aerofleet_flight_template.csv" download>CSV template</a>. Add the .waypoints mission to also check whether it flew the plan.</span>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 12 }}>
           <b style={{ fontSize: 13 }}>Evening upload</b>
@@ -701,7 +716,54 @@ export default function FleetAssurancePage() {
         <textarea id="troubleshoot-text" rows={3} value={symptom} onChange={(e) => setSymptom(e.target.value)} maxLength={4000}
           placeholder="e.g. circles in position mode and drifts away; wobbles in hover after new propellers; flipped on take-off"
           style={{ width: '100%', fontFamily: 'inherit', fontSize: 13, padding: 8, borderRadius: 6, border: '1px solid var(--border, #E2E8F0)', background: 'transparent', color: 'inherit' }} />
-        <div><button className="btn btn--primary" id="btn-troubleshoot" disabled={busy || symptom.trim().length < 3} onClick={askHelp}>Find similar cases</button></div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button className="btn btn--primary" id="btn-troubleshoot" disabled={busy || symptom.trim().length < 3} onClick={askHelp}>Find similar cases</button>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or</span>
+          <select className="form-input" value={archiveFlight} onChange={(e) => setArchiveFlight(e.target.value)} aria-label="Compare with one of your flights" style={{ maxWidth: 260 }}>
+            <option value="">Compare with one of my flights (optional)</option>
+            {flights.map((f) => <option key={f.id} value={f.id}>#{f.id} {f.drone_id} · {f.log_name || 'log'}</option>)}
+          </select>
+          <button className="btn" id="btn-archive" disabled={busy || (symptom.trim().length < 3 && !archiveFlight)} onClick={searchArchive}>Search the public log archive</button>
+        </div>
+        {archive && (
+          <div id="archive-result" style={{ display: 'grid', gap: 10, borderTop: '1px solid var(--border, #E2E8F0)', paddingTop: 10 }}>
+            {!archive.ready ? <div style={{ fontSize: 13 }}>{archive.message}</div> : <>
+              <div style={{ fontSize: 13 }}>
+                Searched what uploaders wrote about <b>{archive.reports?.toLocaleString()}</b> public PX4 flights, and the logs of <b>{archive.logs?.toLocaleString()}</b> public flights on this computer.
+                {archive.your_flight && <> Flight #{archive.your_flight.review_id} ({archive.your_flight.drone_id}) shows: {archive.your_flight.signs.join('; ') || 'no warning signs'}.</>}
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Logs that show the same signs {archive.query_signs?.length ? <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({archive.query_signs.join('; ')}, from {archive.signs_from})</span> : null}</div>
+              {archive.logs_summary && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {archive.logs_summary.with_shared_sign} of {archive.logs_summary.of} public logs share at least one sign; {archive.logs_summary.crash} of the {archive.logs_summary.rated} rated ones were rated a crash by their uploader. {archive.logs_summary.note}</div>}
+              {archive.log_matches.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{archive.query_signs?.length ? 'No public log on this computer shows these signs.' : 'Your words do not name a sign a log can show (GPS, compass, battery, vibration, height, manual take-over, ...).'}</div> :
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Public flight</th><th>Signs in common</th><th>Its log also shows</th><th>Uploader's rating</th><th>What the uploader wrote</th></tr></thead>
+                  <tbody>{archive.log_matches.map((m) => (
+                    <tr key={m.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)', verticalAlign: 'top' }}>
+                      <td style={{ padding: '5px 8px 5px 0', whiteSpace: 'nowrap' }}><a href={m.url} target="_blank" rel="noreferrer">{m.id.slice(0, 8)}…</a><div style={{ color: 'var(--text-muted)' }}>{m.vehicle} · {m.minutes} min · {m.date}</div></td>
+                      <td style={{ paddingRight: 8 }}>{(m.shared || []).join('; ')}</td>
+                      <td style={{ paddingRight: 8, color: 'var(--text-secondary)' }}>{(m.signs || []).filter((x) => !(m.shared || []).includes(x)).join('; ') || '—'}</td>
+                      <td style={{ paddingRight: 8 }}>{m.rating}</td><td style={{ color: 'var(--text-secondary)' }} title={m.text || undefined}>{short(m.text)}</td>
+                    </tr>))}</tbody>
+                </table>}
+              <div style={{ fontWeight: 600, fontSize: 13 }}>What other pilots wrote about flights like this</div>
+              {archive.words_summary && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                Of the {archive.words_summary.rated} rated flights among the 50 closest descriptions, {archive.words_summary.crash} were rated a crash
+                {archive.words_summary.base_crash_share != null ? ` (across all rated reports: ${(100 * archive.words_summary.base_crash_share).toFixed(0)}%)` : ''}.</div>}
+              {archive.text_matches.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No description in the archive uses these words.</div> :
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Public flight</th><th>What the uploader wrote</th><th>Rating</th></tr></thead>
+                  <tbody>{archive.text_matches.map((m) => (
+                    <tr key={m.id} style={{ borderTop: '1px solid var(--border, #E2E8F0)', verticalAlign: 'top' }}>
+                      <td style={{ padding: '5px 8px 5px 0', whiteSpace: 'nowrap' }}><a href={m.url} target="_blank" rel="noreferrer">{m.id.slice(0, 8)}…</a><div style={{ color: 'var(--text-muted)' }}>{m.vehicle} · {m.minutes} min · {m.date}</div></td>
+                      <td style={{ paddingRight: 8 }} title={m.text || undefined}>{short(m.text)}{m.same_text && m.same_text > 1 ? <span style={{ color: 'var(--text-muted)' }}> (same text on {m.same_text} uploads)</span> : null}</td>
+                      <td>{m.rating}</td>
+                    </tr>))}</tbody>
+                </table>}
+            </>}
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{archive.note} Links open the public log in PX4 Flight Review.</div>
+          </div>
+        )}
         {help && (
           <div style={{ display: 'grid', gap: 10 }}>
             {help.message && <div style={{ fontSize: 13 }}>{help.message}</div>}

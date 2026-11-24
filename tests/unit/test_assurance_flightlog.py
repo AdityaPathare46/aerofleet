@@ -82,7 +82,7 @@ def test_points_without_a_position_are_dropped(tmp_path):
 
 def test_clear_errors_for_unusable_files(tmp_path):
     with pytest.raises(FlightLogError, match="Unsupported log type"):
-        read_flight_log(str(tmp_path / "flight.csv"))
+        read_flight_log(str(tmp_path / "flight.kml"))
     empty = tmp_path / "empty.tlog"
     empty.write_bytes(b"")
     with pytest.raises(FlightLogError, match="empty"):

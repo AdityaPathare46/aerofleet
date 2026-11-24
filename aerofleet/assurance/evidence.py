@@ -68,7 +68,7 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
     for threshold, level in ((LOW_BATTERY_PCT, "notice"), (CRITICAL_BATTERY_PCT, "warning")):
         hit = next(((t, v, r) for t, v, r in battery if r is not None and r < threshold), None)
         if hit:
-            ev.append(_event(hit[0] - t0, "battery", level, f"Battery below {threshold:g}% ({hit[2]:.0f}%, {hit[1]:.1f} V)",
+            ev.append(_event(hit[0] - t0, "battery", level, f"Battery below {threshold:g}% ({hit[2]:.0f}%" + (f", {hit[1]:.1f} V)" if hit[1] > 0 else ")"),
                              percent=hit[2], volts=hit[1]))
     if battery:
         v_start = max(v for t, v, _ in battery[: max(1, len(battery) // 20)])

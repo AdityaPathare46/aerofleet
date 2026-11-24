@@ -378,6 +378,22 @@ corners of plans built from the track. Quote the spacing with the number.
 No. It was released for comment on 16 September 2025 (comments to 15 October 2025); we found no record of it being
 introduced in Parliament. The Drone Rules 2021 apply. Check again before the review.
 
+**Q48. A pilot describes a problem. How do you find similar flights, and is that a diagnosis?**
+Two ways, both shown as places to look. Words: BM25 against what uploaders wrote about their own flights in the public
+PX4 archive, with the uploader's rating. Logs: the public logs on this computer whose logs show the same signs as the
+pilot's flight (or as the signs the words name, by a fixed word list), computed by the same rules as the pilot's own
+review. Not a diagnosis: our troubleshooter test showed words guess the expert's cause less often than always naming
+the commonest cause, and two flights with the same signs can have different causes. *Show:* Fleet Assurance ▸
+Something wrong? ▸ type "compass error, it circles" ▸ Search the public log archive.
+
+**Q49. Which flight controllers can it read?**
+PX4 and ArduPilot logs in full, and any MAVLink autopilot through its ground station's .tlog. For other controllers
+(DJI Agras, closed agricultural controllers) a CSV export or a GPX track, which give position, time and, in a CSV,
+battery, GPS and mode: enough for the timeline, the spray form and the operations log, not for settings or vibration.
+DJI flight-record CSVs are tested on three real public DJI Mini 4 Pro flights: heights match the files' own maximum
+column, and modes, battery and satellites come through. Testing on real files found four faults that our made-up test
+files had missed; that is why we tested. Airdata's export layout is still untested on a real file.
+
 ## Questions to answer with "we did not test that"
 
 - "Does AeroFleet reduce crashes?" Not tested; that needs the prospective study.

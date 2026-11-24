@@ -88,3 +88,9 @@ def test_the_deadline_is_seven_days_after_spraying():
 def test_the_printed_form_escapes_entered_text():
     page = sf.print_html([{"review_id": 1, "drone_id": "D1", "values": {"1-2": "<script>x</script>"}, "sources": {}}], "f")
     assert "<script>x" not in page and "&lt;script&gt;" in page and "SPRAY MONITORING FORM" in page
+
+
+def test_a_csv_or_gpx_log_without_vibration_still_gives_its_own_date():
+    rep = {"flight_s": 60.0, "log": {"start_utc": 1794292200.0}, "replay": {"flown": [[0, 18.5, 73.8, 0.0], [60, 18.5, 73.81, 3.0]]}}
+    log = sf.log_values(rep, "2030-01-01T00:00:00")
+    assert log["1-1"] == "2026-11-10" and log["time_source"].startswith("log")

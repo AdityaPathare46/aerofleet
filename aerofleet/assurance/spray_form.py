@@ -101,10 +101,12 @@ def log_values(report: Dict[str, Any], uploaded_at: str) -> Dict[str, Any]:
     """What the reviewed log can tell, in the form's units. Each value is None when the log cannot give it."""
     flown = ((report.get("replay") or {}).get("flown") or [])
     start_iso = (report.get("vibration") or {}).get("flown_at")
-    start = datetime.fromisoformat(start_iso) if start_iso else None
+    start_unix = (report.get("log") or {}).get("start_utc")       # CSV and GPX logs have a date but no vibration
+    start = (datetime.fromisoformat(start_iso) if start_iso
+             else datetime.fromtimestamp(float(start_unix), timezone.utc) if start_unix else None)
     out: Dict[str, Any] = {"1-1": None, "4-1s": None, "4-1e": None, "4-6": None, "5-7": None, "5-15": None,
                            "take_off": [round(flown[0][1], 5), round(flown[0][2], 5)] if flown else None,
-                           "time_source": "log GPS time" if start else "upload time (the log has no GPS time)"}
+                           "time_source": "log time" if start else "upload time (the log has no GPS time)"}
     if start is None:
         start = datetime.fromisoformat(uploaded_at).replace(tzinfo=timezone.utc) if uploaded_at else None
     if start is not None:
