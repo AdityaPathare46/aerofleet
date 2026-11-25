@@ -4,7 +4,12 @@ Two kinds of match, both shown as things to read, never as an answer:
   * What people wrote: BM25 word matching of the user's description against what uploaders wrote about their own
     flights in the public archive (description and feedback), with each flight's rating as the uploader gave it.
   * What logs showed: the public logs on this computer whose logs show the same signs (aerofleet/assurance/log_signs.py)
-    as the user's flight, or as the signs the description's words point to.
+    as one of the user's own reviewed flights.
+
+Matching logs from a description's words alone was tested and did not work (declared test A1, commit ac57848; results
+in research/results/archive_search/summary.md): the signs the words point to appeared in the same flight's log no more
+often than with descriptions shuffled (15.8% against 18.0%). So words search only what other pilots wrote, and logs are
+matched only from a real flight's log.
 
 The index is built by tools/build_archive_index.py into this install's data folder (it holds other people's text, so
 it is not in the repository). Without it the search says so and returns nothing. No model is called.
@@ -27,6 +32,9 @@ REVIEW_URL = "https://review.px4.io/plot_app?log={id}"
 CRASH = {"crash_sw_hw", "crash_pilot"}
 RATING = {"good": "good", "great": "great", "BRAVO!": "great", "unsatisfactory": "unsatisfactory",
           "crash_sw_hw": "crash (hardware/software)", "crash_pilot": "crash (pilot)", "": "not rated", "none": "not rated"}
+WORDS_TESTED = ("Finding logs from your words alone was tested on 514 public flights and did not work: the signs a "
+                "description names were in that flight's own log no more often than chance (15.8% against 18.0%). "
+                "Choose one of your reviewed flights to find logs that show the same signs.")
 LOGS_NOTE = ("The public logs on this computer were downloaded for the crash study, so crashed flights are far more "
              "common among them than among flights in general: the crash count beside them is not a risk.")
 NOTE = ("These are other people's flights. Ratings and descriptions are the uploaders' own, not findings, and flights "
@@ -112,8 +120,8 @@ def search(description: str, signs: Optional[Set[str]] = None, vehicle: Optional
     ix = index()
     if ix is None:
         return {**status(), "text_matches": [], "log_matches": [], "note": NOTE}
-    word_signs = signs_from_words(description)
-    want = set(signs or ()) or word_signs
+    word_signs = signs_from_words(description)          # shown only, never used to match logs (test A1 failed)
+    want = set(signs or ())
     exclude = exclude or set()
     q = tokens(description)
 
@@ -153,6 +161,7 @@ def search(description: str, signs: Optional[Set[str]] = None, vehicle: Optional
                         "note": LOGS_NOTE}
     else:
         logs_summary = None
-    return {"ready": True, "query_signs": [SIGNS[s] for s in sorted(want)], "signs_from": "your flight" if signs else "your words",
+    return {"ready": True, "query_signs": [SIGNS[s] for s in sorted(want)], "signs_from": "your flight" if signs else None,
+            "words_name": [SIGNS[s] for s in sorted(word_signs)], "words_tested": WORDS_TESTED,
             "text_matches": text, "words_summary": words_summary, "log_matches": logs, "logs_summary": logs_summary,
             "reports": len(ix.reports), "logs": len(ix.logs), "note": NOTE}

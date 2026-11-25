@@ -97,7 +97,7 @@ export default function OverviewPage() {
     <div style={{ display: 'grid', gap: 16, maxWidth: 1100 }} id="overview">
       {/* 1. What it is */}
       <div className="card" style={{ ...card, padding: 28, background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: '#fff', border: 'none' }}>
-        <div style={{ ...kicker, color: 'rgba(255,255,255,0.75)' }}>AeroFleet 2.0 · open source · COEP Technological University</div>
+        <div style={{ ...kicker, color: 'rgba(255,255,255,0.75)' }}>AeroFleet 2.0 · COEP Technological University</div>
         <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>The safety and records back office for agricultural drone fleets.</h1>
         <div style={{ fontSize: 16, maxWidth: 820, lineHeight: 1.5 }}>
           Each morning AeroFleet tells a drone service provider which drones can fly today and why; before a job it checks the route
@@ -110,7 +110,7 @@ export default function OverviewPage() {
             onClick={() => document.getElementById('overview-data')?.scrollIntoView({ behavior: 'smooth' })}>What the study found</button>
         </div>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-          <span>Never flies or commands a drone</span><span>No AI in any decision</span><span>Open source</span>
+          <span>Never flies or commands a drone</span><span>No AI in any decision</span><span>Runs on your own computer</span>
           {live && live.flights > 0 && <span style={{ fontWeight: 700, color: '#fff' }}>Live here: {live.drones} drones · {live.flights} real flights reviewed · {live.entries} signed record entries</span>}
         </div>
       </div>

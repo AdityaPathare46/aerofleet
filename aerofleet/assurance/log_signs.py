@@ -6,9 +6,10 @@ flight. Vibration is added only as "high for this kind of drone" (above 90% of t
 The same function runs on the user's own reviewed flight and on the public logs on this computer, so "flights that
 show the same signs" means exactly the same rules applied to both.
 
-Words a person types are mapped to signs by a fixed list (SIGN_WORDS), so a description such as "compass error and
-it drifted" also finds logs that show those signs. Nothing is learned and no cause is named: two flights with the
-same signs can have different causes.
+Words a person types are mapped to signs by a fixed list (SIGN_WORDS). That mapping was tested (declared test A1,
+research/results/archive_search/summary.md) and did not connect descriptions with what the same flights' logs showed,
+so the product shows which signs the words name but never matches logs from words. Nothing is learned and no cause is
+named: two flights with the same signs can have different causes.
 """
 from __future__ import annotations
 

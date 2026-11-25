@@ -9,7 +9,7 @@ background, but where they disagree with this file, this file is right.
 
 ## 1. What this project is, in one paragraph
 
-**AeroFleet** is an open-source, ground-side assurance tool for PX4 and ArduPilot drone fleets, plus a research paper
+**AeroFleet** is a ground-side assurance tool (no licence file yet, so not open source until one is added) for PX4 and ArduPilot drone fleets, plus a research paper
 built on a study of 479,547 public PX4 flight logs. The tool reads files an operator already has (parameter files,
 mission files, flight logs); it contacts no aircraft and **calls no AI model in any decision**. The study found that
 flight logs **cannot** tell whether a crash was the pilot's or the aircraft's fault, but drones that later crashed
@@ -217,6 +217,8 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
   `POST /archive/search`): words against uploaders' own descriptions (BM25), and local public logs with the same log
   signs. Index built per computer by `tools/build_archive_index.py` into the app data folder (other people's text,
   never commit it). New log formats: `.csv` exports and `.gpx` tracks (`aerofleet/assurance/flightlog_text.py`);
+  Declared test of the search (ac57848, results f3917cd): matching logs from words FAILED (15.8% vs 18.0% chance), so
+  logs are matched only from a user's own flight; words search only uploaders' text.
   DJI flight-record CSVs tested on 3 real public exports (external/dji_samples on the data drive); Airdata layout untested. 736 tests pass.
 
 ---

@@ -169,6 +169,9 @@ export const TOOL_TESTS: { what: string; result: string; from: Source }[] = [
   { what: 'Describe-a-problem search, 96 expert-diagnosed crashes, each held out in turn',
     result: 'Its best guess matched the expert in 22% of cases, below the 27% of always guessing the most common cause. So the screen orders its checklist by how often experts found each cause, and says so.',
     from: { file: 'research/results/px4_log_study/troubleshoot_loo_settled.md', text: '| Top-1 baseline (most frequent cause) | 26 of 96 | 27% | 19-37% |' } },
+  { what: 'Public-archive search, 514 public flights: do the signs a description names show up in that flight\'s own log?',
+    result: 'Failed its declared test: 15.8% of flights, against 18.0% with descriptions shuffled. So the search never finds logs from words alone; it matches logs only from one of your own flights.',
+    from: { file: 'research/results/archive_search/summary.md', text: '15.8% of flights, against 18.0% with descriptions shuffled (lift 0.88, p = 0.98)' } },
 ]
 
 export const NOT_YET: string[] = [

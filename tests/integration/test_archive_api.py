@@ -25,7 +25,7 @@ def test_a_csv_export_is_reviewed_like_any_log_and_says_what_it_lacks(api_client
 def test_the_archive_search_takes_words_or_one_of_my_flights(api_client, auth_headers, index):  # noqa: F811
     assert api_client.get(f"{URL}/archive/status", headers=auth_headers).json()["ready"] is True
     out = api_client.post(f"{URL}/archive/search", headers=auth_headers, json={"description": "compass interference, toilet bowl"}).json()
-    assert out["text_matches"][0]["id"] == "r1" and out["log_matches"][0]["id"] == "l1"
+    assert out["text_matches"][0]["id"] == "r1" and out["log_matches"] == []          # words never match logs (test A1)
     rid = api_client.post(f"{URL}/fleets/other-fc/drones/AG-2/flights", headers=auth_headers,
                           files={"log": ("agri.csv", TEMPLATE.read_bytes(), "text/csv")}).json()["id"]
     mine = api_client.post(f"{URL}/archive/search", headers=auth_headers, json={"review_id": rid, "fleet": "other-fc"}).json()

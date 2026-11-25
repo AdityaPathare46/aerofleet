@@ -380,9 +380,13 @@ introduced in Parliament. The Drone Rules 2021 apply. Check again before the rev
 
 **Q48. A pilot describes a problem. How do you find similar flights, and is that a diagnosis?**
 Two ways, both shown as places to look. Words: BM25 against what uploaders wrote about their own flights in the public
-PX4 archive, with the uploader's rating. Logs: the public logs on this computer whose logs show the same signs as the
-pilot's flight (or as the signs the words name, by a fixed word list), computed by the same rules as the pilot's own
-review. Not a diagnosis: our troubleshooter test showed words guess the expert's cause less often than always naming
+PX4 archive, with the uploader's rating. Logs: once the pilot picks one of their reviewed flights, the public logs on
+this computer whose logs show the same signs, computed by the same rules as the pilot's own review. We first also
+matched logs from the words (a fixed word list mapping "compass", "GPS", ... to signs) and tested it, declared before
+running: on 514 public flights the signs a description named were in that flight's own log 15.8% of the time, against
+18.0% with descriptions shuffled. It failed, so we removed it. Only battery words pointed the right way (about 3x), seen
+after the test, so not used. Flights with similar log signs did share outcomes a little (47.9% against 40.2% crashes
+among look-alikes, p = 0.0005), in a crash-heavy sample, so it is not a risk score. Not a diagnosis: our troubleshooter test showed words guess the expert's cause less often than always naming
 the commonest cause, and two flights with the same signs can have different causes. *Show:* Fleet Assurance ▸
 Something wrong? ▸ type "compass error, it circles" ▸ Search the public log archive.
 

@@ -27,7 +27,7 @@ interface Check { id: string; title: string; status: string; detail: string; fix
 interface Episode { kind: 'off_route' | 'off_altitude' | 'in_no_fly_zone'; start_s: number; duration_s: number; max_m: number; lat: number; lon: number }
 type FlightVerdict = 'CONFORMED' | 'DEVIATED' | 'LOG_ONLY'   // LOG_ONLY: a log reviewed with no mission file
 interface ArchiveHit { id: string; date: string | null; text: string | null; rating: string; vehicle: string; airframe: string; minutes: number | null; url: string; same_text?: number; signs?: string[]; shared?: string[]; similarity?: number }
-interface ArchiveResult { ready: boolean; message?: string; query_signs?: string[]; signs_from?: string; text_matches: ArchiveHit[]; log_matches: ArchiveHit[]
+interface ArchiveResult { ready: boolean; message?: string; query_signs?: string[]; signs_from?: string | null; words_name?: string[]; words_tested?: string; text_matches: ArchiveHit[]; log_matches: ArchiveHit[]
   words_summary?: { rated: number; crash: number; base_crash_share: number | null } | null; logs_summary?: { with_shared_sign: number; of: number; crash: number; rated: number; note: string } | null
   reports?: number; logs?: number; note: string; your_flight?: { review_id: number; drone_id: string; signs: string[] } | null }
 interface FlightRow { id: number; drone_id: string; verdict: FlightVerdict; log_name: string | null; uploaded_at: string; flight_s: number; max_off_route_m: number | null; episodes: number; manual_control: number; settings_changed_critical?: number }
@@ -732,10 +732,11 @@ export default function FleetAssurancePage() {
                 Searched what uploaders wrote about <b>{archive.reports?.toLocaleString()}</b> public PX4 flights, and the logs of <b>{archive.logs?.toLocaleString()}</b> public flights on this computer.
                 {archive.your_flight && <> Flight #{archive.your_flight.review_id} ({archive.your_flight.drone_id}) shows: {archive.your_flight.signs.join('; ') || 'no warning signs'}.</>}
               </div>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>Logs that show the same signs {archive.query_signs?.length ? <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({archive.query_signs.join('; ')}, from {archive.signs_from})</span> : null}</div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Logs that show the same signs {archive.query_signs?.length ? <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({archive.query_signs.join('; ')}, from your flight's log)</span> : null}</div>
+              {!archive.your_flight && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{archive.words_tested}</div>}
               {archive.logs_summary && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 {archive.logs_summary.with_shared_sign} of {archive.logs_summary.of} public logs share at least one sign; {archive.logs_summary.crash} of the {archive.logs_summary.rated} rated ones were rated a crash by their uploader. {archive.logs_summary.note}</div>}
-              {archive.log_matches.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{archive.query_signs?.length ? 'No public log on this computer shows these signs.' : 'Your words do not name a sign a log can show (GPS, compass, battery, vibration, height, manual take-over, ...).'}</div> :
+              {archive.log_matches.length === 0 ? (archive.your_flight ? <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{archive.query_signs?.length ? 'No public log on this computer shows these signs.' : 'Your flight\'s log shows none of the warning signs, so there is nothing to match.'}</div> : null) :
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}><th>Public flight</th><th>Signs in common</th><th>Its log also shows</th><th>Uploader's rating</th><th>What the uploader wrote</th></tr></thead>
                   <tbody>{archive.log_matches.map((m) => (

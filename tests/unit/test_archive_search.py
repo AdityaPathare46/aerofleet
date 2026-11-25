@@ -40,11 +40,13 @@ def index(tmp_path, monkeypatch):
     return p
 
 
-def test_words_find_what_uploaders_wrote_and_logs_with_the_same_signs(index):
+def test_words_find_what_uploaders_wrote_but_never_match_logs(index):
+    # Matching logs from words failed its declared test (A1), so words only search what other pilots wrote.
     out = arch.search("compass interference, it circles like a toilet bowl")
     assert out["ready"] and out["text_matches"][0]["id"] == "r1"
     assert out["text_matches"][0]["url"].endswith("log=r1") and "crash" in out["text_matches"][0]["rating"]
-    assert [m["id"] for m in out["log_matches"]] == ["l1"] and out["signs_from"] == "your words"
+    assert out["log_matches"] == [] and out["signs_from"] is None
+    assert "Autopilot rejected compass data" in out["words_name"] and "did not work" in out["words_tested"]
     assert "not findings" in out["note"]
 
 
