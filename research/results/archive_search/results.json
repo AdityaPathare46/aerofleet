@@ -1,0 +1,115 @@
+{
+ "declared": "research/archive_search/eval_archive_search.py",
+ "index_logs": 2521,
+ "logs_with_text": 1010,
+ "coverage_text_names_a_sign": 0.625,
+ "A1": {
+  "eligible_flights": 514,
+  "hit_rate": 0.1576,
+  "permuted_mean": 0.1799,
+  "lift": 0.88,
+  "p_one_sided": 0.97651,
+  "useful": false
+ },
+ "A2": [
+  {
+   "sign": "gps_poor",
+   "texts_naming_it": 42,
+   "shown_when_named": 0.0,
+   "shown_overall": 0.014,
+   "ratio": 0.0
+  },
+  {
+   "sign": "est_compass",
+   "texts_naming_it": 32,
+   "shown_when_named": 0.125,
+   "shown_overall": 0.123,
+   "ratio": 1.02
+  },
+  {
+   "sign": "est_velocity",
+   "texts_naming_it": 29,
+   "shown_when_named": 0.207,
+   "shown_overall": 0.144,
+   "ratio": 1.44
+  },
+  {
+   "sign": "est_position",
+   "texts_naming_it": 205,
+   "shown_when_named": 0.073,
+   "shown_overall": 0.091,
+   "ratio": 0.8
+  },
+  {
+   "sign": "est_height",
+   "texts_naming_it": 201,
+   "shown_when_named": 0.04,
+   "shown_overall": 0.041,
+   "ratio": 0.97
+  },
+  {
+   "sign": "est_fault",
+   "texts_naming_it": 7,
+   "shown_when_named": 0.0,
+   "shown_overall": 0.045,
+   "ratio": 0.0
+  },
+  {
+   "sign": "battery_critical",
+   "texts_naming_it": 35,
+   "shown_when_named": 0.229,
+   "shown_overall": 0.076,
+   "ratio": 3.01
+  },
+  {
+   "sign": "battery_low",
+   "texts_naming_it": 26,
+   "shown_when_named": 0.308,
+   "shown_overall": 0.105,
+   "ratio": 2.93
+  },
+  {
+   "sign": "voltage_sag",
+   "texts_naming_it": 15,
+   "shown_when_named": 0.0,
+   "shown_overall": 0.084,
+   "ratio": 0.0
+  },
+  {
+   "sign": "pilot_took_control",
+   "texts_naming_it": 201,
+   "shown_when_named": 0.259,
+   "shown_overall": 0.321,
+   "ratio": 0.81
+  },
+  {
+   "sign": "setting_in_flight",
+   "texts_naming_it": 19,
+   "shown_when_named": 0.0,
+   "shown_overall": 0.0,
+   "ratio": null
+  },
+  {
+   "sign": "off_plan",
+   "texts_naming_it": 234,
+   "shown_when_named": 0.0,
+   "shown_overall": 0.0,
+   "ratio": null
+  },
+  {
+   "sign": "vibration_high",
+   "texts_naming_it": 11,
+   "shown_when_named": 0.182,
+   "shown_overall": 0.088,
+   "ratio": 2.08
+  }
+ ],
+ "A3": {
+  "crash_queries": 263,
+  "good_queries": 449,
+  "mean_crash_share_crash_queries": 0.479,
+  "mean_crash_share_good_queries": 0.402,
+  "difference": 0.077,
+  "p_two_sided": 0.0005
+ }
+}
