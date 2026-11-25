@@ -148,7 +148,14 @@ blocked unless live control is switched on.
 
 A reviewed flight replayed on a 3D table (plan against flown track, events where they happened) and planned
 missions rehearsed on one clock, on the desktop or in a Quest 3 browser (WebXR). A paired Quest app is in
-`unity/AeroFleetVR`. Not yet tested on a headset.
+`unity/AeroFleetVR`. Its one job is a **flight debrief**: a trainer shows a pilot where and how high the drone went
+against its plan ([`docs/VR_PURPOSE.md`](docs/VR_PURPOSE.md)).
+
+**Being tested, not assumed.** A declared study ([`research/vr_study/PROTOCOL.md`](research/vr_study/PROTOCOL.md))
+compares the 3D table in a Meta Quest 3 with a 2D map and height profile: 12 students, 15 real flights each way with
+known injected deviations (or none), counterbalanced, the right answers fixed before anyone takes part. The **VR
+study** screen runs it and stores only participant codes and answers. Results will be reported whatever they show;
+until then, no claim is made that 3D is better.
 
 ### Proof
 
@@ -217,7 +224,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 
 | Check | Result |
 |---|---|
-| Automated tests | **736 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| Automated tests | **738 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
 | No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
 | Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
 | Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |

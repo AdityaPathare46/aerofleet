@@ -21,6 +21,7 @@ import TrendsPage from './pages/Trends'
 import SprayRegisterPage from './pages/SprayRegister'
 import SettingsPage from './pages/Settings'
 import VRSafetyViewPage from './pages/VRSafetyView'
+import VrStudyPage from './pages/VrStudy'
 import PolicyProposalsPage from './pages/PolicyProposals'
 import IncidentForensicsPage from './pages/IncidentForensics'
 
@@ -54,6 +55,7 @@ const PAGES = [
   { id: 'routes',      label: 'Route check',        Icon: Icons.Trajectory },
   { id: 'hardware',    label: 'Drone register',     Icon: Icons.Hardware },
   { id: 'vr',          label: 'VR Safety View',     Icon: Icons.VR },
+  { id: 'vrstudy',     label: 'VR study',           Icon: Icons.VR },
   { id: 'proof',       label: 'Proof',              Icon: Icons.Policy },
   { id: 'settings',    label: 'Settings',           Icon: Icons.Settings },
   { id: 'dashboard',   label: 'Ops Center',         Icon: Icons.Dashboard },
@@ -86,6 +88,7 @@ const PAGE_COMPONENTS: Record<string, React.FC> = {
   policy:     PolicyProposalsPage,
   trajectory: FleetMapPage,
   vr:         VRSafetyViewPage,
+  vrstudy:    VrStudyPage,
   hardware:   HardwarePanelPage,
   scenarios:  ScenarioRunnerPage,
   knowledge:  KnowledgeBasePage,

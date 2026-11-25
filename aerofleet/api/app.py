@@ -30,6 +30,7 @@ from aerofleet.api.routes import (
     compliance,
     assurance,
     spray,
+    vr_study,
     fc_compliance,
     fleet,
     geofence,
@@ -164,6 +165,7 @@ app.include_router(hardware.router, prefix="/api/v1/hardware", tags=["hardware"]
 app.include_router(fc_compliance.router, prefix="/api/v1/hardware/fc", tags=["hardware", "compliance"])
 app.include_router(assurance.router, prefix="/api/v1/assurance", tags=["assurance"])
 app.include_router(spray.router, prefix="/api/v1/assurance", tags=["assurance", "spray"])
+app.include_router(vr_study.router, prefix="/api/v1/vr-study", tags=["vr", "study"])
 # LLM connection settings — local/Tailscale/OpenRouter mode switch
 app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
 # Fleet-level CBF threshold policy proposals — council-drafted, operator-approved

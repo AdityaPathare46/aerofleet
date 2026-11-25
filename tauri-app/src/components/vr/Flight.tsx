@@ -43,7 +43,9 @@ function inEpisode(f: FlightReplayDto, t: number): boolean {
   return f.episodes.some((e) => t >= e.start_s && t <= e.start_s + e.duration_s)
 }
 
-export function FlightGeometry({ f, d, center, t }: { f: FlightReplayDto; d: Diorama; center: [number, number]; t: number }) {
+// `neutral`: for the debrief study (pages/VrStudy.tsx): no judgement in the legend and no playhead, so the view gives no
+// hint beyond the plan and the track themselves.
+export function FlightGeometry({ f, d, center, t, neutral = false }: { f: FlightReplayDto; d: Diorama; center: [number, number]; t: number; neutral?: boolean }) {
   const pt = (lat: number, lon: number, h: number) => { const [e, n] = toLocal(lat, lon, center); return d.point(e, n, Math.max(0, h)) }
   const planned = useMemo(() => f.replay.planned.map((p) => pt(p[0], p[1], p[2])), [f, d])  // eslint-disable-line react-hooks/exhaustive-deps
   const runs = useMemo(() => {
@@ -79,12 +81,12 @@ export function FlightGeometry({ f, d, center, t }: { f: FlightReplayDto; d: Dio
       ))}
       <mesh position={homePt}><cylinderGeometry args={[0.01, 0.01, 0.002, 24]} /><meshStandardMaterial color={C.accent} /></mesh>
       <Label position={[homePt[0], homePt[1] + 0.014, homePt[2]]} text="HOME" color={C.accent} size={0.0072} font={FONT.mono} />
-      <group position={head}>
+      {!neutral && <group position={head}>
         <mesh><sphereGeometry args={[0.009, 16, 16]} /><meshStandardMaterial color={C.text} emissive={inEpisode(f, now[0]) ? C.bad : C.ok} emissiveIntensity={0.8} /></mesh>
         <Label position={[0, 0.022, 0]} text={`${clock(now[0])} · ${Math.round(now[3])} m`} color={C.text} size={0.0085} font={FONT.mono} />
-      </group>
+      </group>}
       <Label position={[-d.tableHalf + 0.02, 0.004, d.tableHalf - 0.03]} anchorX="left" size={0.0068}
-        text={`dashed = approved plan · green = flown within tolerance · red = deviation · table ${fmtDistance(2 * d.extentM)} across`} color={C.textDim} />
+        text={neutral ? `dashed = plan · green = flown · table ${fmtDistance(2 * d.extentM)} across` : `dashed = approved plan · green = flown within tolerance · red = deviation · table ${fmtDistance(2 * d.extentM)} across`} color={C.textDim} />
     </group>
   )
 }

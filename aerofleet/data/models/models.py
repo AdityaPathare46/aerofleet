@@ -480,6 +480,21 @@ class SprayForm(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class VrStudyResponse(Base):
+    """One answer in the VR debrief study (research/vr_study/PROTOCOL.md). Participants are codes (P01...), never names."""
+    __tablename__ = "vr_study_responses"
+
+    id = Column(Integer, primary_key=True)
+    participant = Column(String(8), nullable=False, index=True)
+    condition = Column(String(10), nullable=False)          # 2d | headset | practice-2d | practice-headset
+    trial_id = Column(String(8), nullable=False)
+    position = Column(Integer, nullable=False)              # 1-based position of the trial in its block
+    answer = Column(String(10), nullable=False)             # none | sideways | height | preference answers
+    ms = Column(Integer, nullable=True)                     # time from the trial appearing to the answer
+    recorded_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class FlightReview(Base):
     """One planned-versus-flown reconciliation: a mission file and a flight log for one drone."""
 

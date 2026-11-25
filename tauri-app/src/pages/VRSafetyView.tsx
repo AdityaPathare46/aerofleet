@@ -23,7 +23,8 @@ import type {
 /*
  * VR Safety View — a world-in-miniature supervision table for the drone fleet.
  *
- * Why VR at all (docs/VR_RESEARCH_REFERENCES.md):
+ * What it is for in AeroFleet 2.0 (docs/VR_PURPOSE.md): a flight debrief and mission rehearsal on a table, being
+ * tested in a declared study (research/vr_study/PROTOCOL.md). The older reasons below date from the dispatch product:
  *  1. Swarm separation is a 3D judgment. Two drones over the same street at different altitude
  *     bands are one dot on a 2D map; stereo depth + head parallax separates them.
  *  2. A reviewed flight or a set of planned missions is spatial too: deviations and losses of

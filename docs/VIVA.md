@@ -398,6 +398,19 @@ DJI flight-record CSVs are tested on three real public DJI Mini 4 Pro flights: h
 column, and modes, battery and satellites come through. Testing on real files found four faults that our made-up test
 files had missed; that is why we tested. Airdata's export layout is still untested on a real file.
 
+**Q50. What does VR add to a spraying-drone tool?**
+One job: a flight debrief. A trainer puts a reviewed flight on a 3D table and shows the pilot where and how high it went
+against its plan. Whether 3D actually helps is tested, not assumed: a declared study (research/vr_study/PROTOCOL.md)
+has 12 students judge real flights with known injected deviations on a 2D map and height profile and on the table in a
+Quest 3, counterbalanced, with the answers fixed in advance. *Then give the result, whatever it is.* If 3D was no
+better, VR is a presentation and training aid and we say so.
+
+**Q51. Is that study fair to the 2D view?**
+Same flights drawn the same way, no warnings or colours in either; the 2D height profile is the one mission planners
+show (height against the share of the route covered). Each participant sees different flights in each view, and half
+start with the headset. The trials, the key, the counterbalancing and the analysis were committed before the first
+participant.
+
 ## Questions to answer with "we did not test that"
 
 - "Does AeroFleet reduce crashes?" Not tested; that needs the prospective study.

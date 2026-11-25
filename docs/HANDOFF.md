@@ -219,6 +219,10 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
   never commit it). New log formats: `.csv` exports and `.gpx` tracks (`aerofleet/assurance/flightlog_text.py`);
   Declared test of the search (ac57848, results f3917cd): matching logs from words FAILED (15.8% vs 18.0% chance), so
   logs are matched only from a user's own flight; words search only uploaders' text.
+  VR debrief study (25 Nov): research/vr_study/ (PROTOCOL.md, CONSENT.md, make_trials.py, analyse.py), trials in
+  aerofleet/assurance/data/vr_study_trials.json (answers only in research/vr_study/trials_key.json), API /api/v1/vr-study,
+  screen "VR study" (pages/VrStudy.tsx). Not yet run: needs the guide's OK, a pilot (P00) on the Quest 3, then P01-P12.
+  Run analyse.py once after the last participant and commit its outputs whatever they show.
   DJI flight-record CSVs tested on 3 real public exports (external/dji_samples on the data drive); Airdata layout untested. 736 tests pass.
 
 ---

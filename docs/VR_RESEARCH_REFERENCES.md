@@ -1,5 +1,9 @@
 # Research References — VR Incident Replay & Related Design Choices
 
+> **Superseded for AeroFleet 2.0.** This list was written for the earlier AI-dispatch product. Sections 1, 5 and 6
+> (AI-council verification, the CBF gate, multi-agent LLM debate) do not apply to 2.0, which has no AI in any decision.
+> What the VR view is for now, and the declared study that tests it: `docs/VR_PURPOSE.md`.
+
 Collected while finalizing the VR Safety View's Incident Replay mode (see `docs/PATENT_NOVELTY.md`
 Claim 4 and `README.md`'s VR Safety View section). Organized by the specific design claim each
 group of papers supports, so each can slot into a related-work section directly. Every entry below

@@ -1,0 +1,332 @@
+{
+ "A01": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   90.6,
+   120.6
+  ],
+  "log_id": "01e21bbe-492a-4ec1-8d0f-e43b918043c1"
+ },
+ "A02": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   66.9,
+   96.9
+  ],
+  "log_id": "0444d554-8057-4802-b13f-36705dd44a3c"
+ },
+ "A03": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "right",
+  "window_s": [
+   60.1,
+   90.1
+  ],
+  "log_id": "0c8bbe75-7522-4ee6-a6bc-7ff9f2d1643d"
+ },
+ "B01": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   66.5,
+   96.5
+  ],
+  "log_id": "10740757-a71d-4590-b0d0-2b3b312d7330"
+ },
+ "B02": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "right",
+  "window_s": [
+   153.5,
+   183.5
+  ],
+  "log_id": "161c9a50-d7e2-4284-93fb-2d7b4eb59963"
+ },
+ "A04": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   84.4,
+   114.4
+  ],
+  "log_id": "1b6b987b-0847-459f-bf2c-1fdcb5974027"
+ },
+ "A05": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "left",
+  "window_s": [
+   19.6,
+   49.6
+  ],
+  "log_id": "2134bbee-9fa4-4b1d-8628-af04c3262b0e"
+ },
+ "B03": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   74.6,
+   104.6
+  ],
+  "log_id": "294b2c72-b579-45a2-94e3-2bc717fff369"
+ },
+ "A06": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   24.4,
+   54.4
+  ],
+  "log_id": "2a34575b-a2ca-4171-9047-0089bfbc4932"
+ },
+ "A07": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   126.9,
+   156.9
+  ],
+  "log_id": "2af078ce-e720-4804-9789-84011e37dc87"
+ },
+ "B04": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "left",
+  "window_s": [
+   159.6,
+   189.6
+  ],
+  "log_id": "2f5469ab-ab04-4d7e-896e-11808f94a2df"
+ },
+ "A08": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "left",
+  "window_s": [
+   213.4,
+   243.4
+  ],
+  "log_id": "2f8438e5-ccda-4e18-9b3e-eb90a3eaaff8"
+ },
+ "B05": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   67.4,
+   97.4
+  ],
+  "log_id": "35ee921f-3551-4800-8286-609596d783e2"
+ },
+ "B06": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   148.5,
+   178.5
+  ],
+  "log_id": "36d6ce67-8fbd-42cb-b982-6e778edec15b"
+ },
+ "A09": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   75.3,
+   105.3
+  ],
+  "log_id": "3a7d1e70-4f9c-4739-be06-600321084648"
+ },
+ "B07": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   89.0,
+   119.0
+  ],
+  "log_id": "3acb0c55-98fa-45cf-9ecd-7fbab50c6f07"
+ },
+ "A10": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   121.1,
+   151.1
+  ],
+  "log_id": "3c889bca-9c95-4d78-9ee4-702d74a79329"
+ },
+ "B08": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   82.2,
+   112.2
+  ],
+  "log_id": "3dba6410-f4d7-4ea8-b422-b872ca4e71a6"
+ },
+ "B09": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   215.3,
+   245.3
+  ],
+  "log_id": "4181263d-d2ff-4cf0-8d5f-f20b95884afe"
+ },
+ "A11": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   635.8,
+   665.8
+  ],
+  "log_id": "4183aeff-4fa0-4170-85d2-b298ef37cfaf"
+ },
+ "A12": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   114.3,
+   144.3
+  ],
+  "log_id": "43659326-5a6d-45ca-8dff-f73b1951c31c"
+ },
+ "B10": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   117.0,
+   147.0
+  ],
+  "log_id": "4621e90d-6903-46e2-8def-ba8f8d3f06c0"
+ },
+ "A13": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   144.0,
+   174.0
+  ],
+  "log_id": "4a649842-0062-4c1e-bece-7a7527490641"
+ },
+ "A14": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   82.9,
+   112.9
+  ],
+  "log_id": "4f6e02da-8d8d-40c6-b3ae-a6ad5de4d1dc"
+ },
+ "B11": {
+  "answer": "height",
+  "size_m": 20.0,
+  "side": null,
+  "window_s": [
+   89.2,
+   119.2
+  ],
+  "log_id": "4fdb4181-2794-49cb-9736-f682ad00feac"
+ },
+ "A15": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   96.3,
+   126.3
+  ],
+  "log_id": "52c62a5a-4223-4978-9ec4-5a1cf149be8b"
+ },
+ "B12": {
+  "answer": "sideways",
+  "size_m": 35.0,
+  "side": "left",
+  "window_s": [
+   51.2,
+   81.2
+  ],
+  "log_id": "533e3823-11d2-4610-a0b4-b2343a64b5c2"
+ },
+ "B13": {
+  "answer": "sideways",
+  "size_m": 15.0,
+  "side": "left",
+  "window_s": [
+   194.7,
+   224.7
+  ],
+  "log_id": "540791da-2ad6-4eb1-acc1-5f776440677a"
+ },
+ "B14": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   40.5,
+   70.5
+  ],
+  "log_id": "54ed05aa-aa70-45a3-8eda-9f38df25e859"
+ },
+ "B15": {
+  "answer": "height",
+  "size_m": 8.0,
+  "side": null,
+  "window_s": [
+   65.0,
+   95.0
+  ],
+  "log_id": "574ff5fa-6e61-452b-a9b0-feb3068a746c"
+ },
+ "P01": {
+  "answer": "none",
+  "size_m": 0.0,
+  "side": null,
+  "window_s": [
+   47.9,
+   77.9
+  ],
+  "log_id": "5e62c44a-2fbf-4b7b-a295-2c249e5f3abc"
+ },
+ "P02": {
+  "answer": "sideways",
+  "size_m": 50.0,
+  "side": "right",
+  "window_s": [
+   301.3,
+   331.3
+  ],
+  "log_id": "5fc23265-bbfb-4d4a-8716-c828b50b116d"
+ },
+ "P03": {
+  "answer": "height",
+  "size_m": 30.0,
+  "side": null,
+  "window_s": [
+   233.4,
+   263.4
+  ],
+  "log_id": "64bdf5b5-3675-4c7a-b21d-1413d2eecfac"
+ }
+}
