@@ -222,7 +222,9 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
   SITL check (26 Nov): ArduPilot built for SITL in ~/aerofleet_sitl (internal disk; exFAT breaks the build; link
   flag -Wl,-no_fixup_chains needed on this macOS). research/sitl_check/ (PROTOCOL, run_scenarios, evaluate), logs in
   AeroFleet_px4_data/sitl/. Declared 6e59379, results 3f0327e: S0, S2-S5 met 3/3; S1 not met (BATT_FS_LOW_ACT is 0 by
-  default); S6, S7 not shown (as declared). Next: read ArduPilot EKF innovation ratios (XKF4) for compass checks.
+  default); S6, S7 not shown (as declared). Retest v2 after fixes (declared 6f55575, results d4b8dc5): failsafe-off rule in readiness
+  (readiness.failsafes_off), ArduPilot ERR/MAG/XKF4/ATT/RCOU readings (flightlog._ApHealth); all 8 scenarios met 3/3 on
+  fresh flights. Not done: the same tilt and motor readings for PX4 and for ArduPilot .tlog files.
   VR debrief study (25 Nov): research/vr_study/ (PROTOCOL.md, CONSENT.md, make_trials.py, analyse.py), trials in
   aerofleet/assurance/data/vr_study_trials.json (answers only in research/vr_study/trials_key.json), API /api/v1/vr-study,
   screen "VR study" (pages/VrStudy.tsx). Not yet run: needs the guide's OK, a pilot (P00) on the Quest 3, then P01-P12.

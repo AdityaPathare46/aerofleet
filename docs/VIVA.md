@@ -421,6 +421,14 @@ failsafe changed; it was caught and the drone was blocked every time. Not shown:
 detection and name no cause) and a compass failure (we read estimator checks only from PX4 logs; ArduPilot logs have
 them too, which is the next step). What SITL cannot give: real sensor noise and real frame vibration.
 
+**Q52b. And after that? You fixed things after seeing the results. Isn't that cheating?**
+The first results stand as recorded. We then changed the product (failsafes switched off are flagged whatever the
+baseline says; the ArduPilot reader now reads the autopilot's own error reports, compass health, estimator test ratios,
+tilt and motor saturation), declared a retest with new expectations, and flew fresh flights over fields never flown
+before. All 8 scenarios met in every run, and normal and windy flights stayed clean. The first logs were development
+data; the retest logs were not seen before the declaration. "Motor held at maximum output" also appears when a battery
+runs flat, so it marks a drone at its power limit, not a failed motor: we still name no cause.
+
 **Q53. Why not a real Pixhawk on the bench?**
 Time. SITL runs the same flight code and lets us put faults in on purpose with a known right answer, which a bench or
 field flight cannot. It is the standard step before real flights; a bench session is in future work.

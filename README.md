@@ -54,8 +54,9 @@ One row per drone. The verdict comes **only from fixed rules and recorded facts*
 
 - **Do not fly**: a safety-critical setting (failsafe, geofence, battery limit, ...) differs from the approved
   configuration and nobody approved it; or the drone has no UIN on record (the Drone Rules require one).
-- **Check first**: a flight-limit setting changed; the UIN is not verified; the settings were never checked; or the
-  last flight's log shows warnings (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
+- **Check first**: a flight-limit setting changed; a failsafe is switched off in the drone's settings (even if the
+  approved baseline has it off: ArduPilot ships with its battery failsafe off); the UIN is not verified; the settings
+  were never checked; or the last flight's log shows warnings (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
   setting changed in flight, leaving the plan).
 - **Ready**: none of these.
 
@@ -235,6 +236,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 | Damaged files | Empty files, random bytes, a renamed mission file and a log cut off mid-flight get a clear message, never a crash |
 | Tampering | Every attack on the Proof page is also an automated test |
 | Real autopilot firmware (SITL) | The real ArduCopter flight code flew a spraying mission at 4 m near Pune, 8 scenarios x 3 runs, faults put in on purpose ([`PROTOCOL.md`](research/sitl_check/PROTOCOL.md), [`summary.md`](research/results/sitl_check/summary.md)). Met in 3 of 3 runs: normal flight (no false alarm), GPS lost 20 s, low battery, geofence switched off in flight, 8 m/s wind. Not met: failsafes switched off (the declared expectation named a battery failsafe that is already off in ArduPilot's defaults; the throttle failsafe was caught and the drone blocked every time). Not shown, as expected: a motor failure, and a compass failure (estimator checks are read only from PX4 logs) |
+| SITL retest after the fixes | AeroFleet now flags a failsafe switched off whatever the baseline says, and reads ArduPilot's own error reports, compass health, estimator test ratios, tilt and motor saturation. Declared retest on fresh flights over new fields ([`PROTOCOL_v2.md`](research/sitl_check/PROTOCOL_v2.md), [`summary.md`](research/results/sitl_check_v2/summary.md)): **all 8 scenarios met in 3 of 3 runs**, including failsafes off, motor failure and compass failure; normal and windy flights stayed clean. The first check's results stand as recorded |
 | Public-archive search | Declared test on 514 public flights: the signs a description's words name were in that flight's own log 15.8% of the time, against 18.0% by chance. **Failed**, so logs are matched only from a real flight's log ([`summary.md`](research/results/archive_search/summary.md)) |
 
 ## Where AI is and is not used
