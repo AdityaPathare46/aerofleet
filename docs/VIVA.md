@@ -411,6 +411,20 @@ show (height against the share of the route covered). Each participant sees diff
 start with the headset. The trials, the key, the counterbalancing and the analysis were committed before the first
 participant.
 
+**Q52. Did you ever run it on a real autopilot?**
+On the real ArduCopter flight code, yes: ArduPilot SITL runs the same firmware that flies on a Pixhawk, with a
+simulated drone, and writes the same .bin log. We flew a spraying mission at 4 m near Pune, 8 scenarios, 3 runs each,
+declared first (research/sitl_check/PROTOCOL.md). Caught every time: GPS lost for 20 s, low battery, geofence
+switched off in flight, and no false alarm on normal flights or in 8 m/s wind. One declared expectation failed: we
+expected two failsafes to be named, but ArduPilot ships with the battery failsafe already off, so only the throttle
+failsafe changed; it was caught and the drone was blocked every time. Not shown: a motor failure (we have no crash
+detection and name no cause) and a compass failure (we read estimator checks only from PX4 logs; ArduPilot logs have
+them too, which is the next step). What SITL cannot give: real sensor noise and real frame vibration.
+
+**Q53. Why not a real Pixhawk on the bench?**
+Time. SITL runs the same flight code and lets us put faults in on purpose with a known right answer, which a bench or
+field flight cannot. It is the standard step before real flights; a bench session is in future work.
+
 ## Questions to answer with "we did not test that"
 
 - "Does AeroFleet reduce crashes?" Not tested; that needs the prospective study.

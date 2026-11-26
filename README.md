@@ -170,6 +170,8 @@ Answers "how do we know?" live, on this computer:
 
 ## The learned normal-flight model
 
+Full write-up: [`research/normal_flight/README.md`](research/normal_flight/README.md).
+
 For an operator with one or two drones, "is this flight normal?" has no answer without something to compare with.
 AeroFleet ships a model trained on **1,121 ordinary public PX4 flights of 401 vehicles** that gives the range of
 vibration and battery voltage drain expected for a drone like this one (vehicle kind, flight controller, firmware)
@@ -232,6 +234,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 | Speed | 36 real PX4 logs of 0.9 to 92.8 MB: median 0.23 s per review; the 92.8 MB, 28-minute flight in 2.44 s ([`docs/measurements/review_speed.md`](docs/measurements/review_speed.md)) |
 | Damaged files | Empty files, random bytes, a renamed mission file and a log cut off mid-flight get a clear message, never a crash |
 | Tampering | Every attack on the Proof page is also an automated test |
+| Real autopilot firmware (SITL) | The real ArduCopter flight code flew a spraying mission at 4 m near Pune, 8 scenarios x 3 runs, faults put in on purpose ([`PROTOCOL.md`](research/sitl_check/PROTOCOL.md), [`summary.md`](research/results/sitl_check/summary.md)). Met in 3 of 3 runs: normal flight (no false alarm), GPS lost 20 s, low battery, geofence switched off in flight, 8 m/s wind. Not met: failsafes switched off (the declared expectation named a battery failsafe that is already off in ArduPilot's defaults; the throttle failsafe was caught and the drone blocked every time). Not shown, as expected: a motor failure, and a compass failure (estimator checks are read only from PX4 logs) |
 | Public-archive search | Declared test on 514 public flights: the signs a description's words name were in that flight's own log 15.8% of the time, against 18.0% by chance. **Failed**, so logs are matched only from a real flight's log ([`summary.md`](research/results/archive_search/summary.md)) |
 
 ## Where AI is and is not used
