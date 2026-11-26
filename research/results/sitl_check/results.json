@@ -1,0 +1,678 @@
+{
+ "baseline": "settings in the log of S0 run 1",
+ "outcome": {
+  "S0_normal": "met (3 of 3 runs)",
+  "S1_failsafe_off": "not met (0 of 3 runs)",
+  "S2_gps_lost": "met (3 of 3 runs)",
+  "S3_battery_low": "met (3 of 3 runs)",
+  "S4_fence_off_in_flight": "met (3 of 3 runs)",
+  "S5_wind": "met (3 of 3 runs)",
+  "S6_motor_failure": "descriptive",
+  "S7_compass_failure": "descriptive"
+ },
+ "runs": [
+  {
+   "points": 1925,
+   "flight_s": 192.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.5,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S0_normal",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 2135,
+   "flight_s": 213.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S0_normal",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 2475,
+   "flight_s": 247.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S0_normal",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1926,
+   "flight_s": 192.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.6,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FS_THR_ENABLE."
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 1,
+   "met": false
+  },
+  {
+   "points": 2135,
+   "flight_s": 213.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FS_THR_ENABLE."
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 2,
+   "met": false
+  },
+  {
+   "points": 2475,
+   "flight_s": 247.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FS_THR_ENABLE."
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 3,
+   "met": false
+  },
+  {
+   "points": 933,
+   "flight_s": 106.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 12.7,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)."
+   ],
+   "scenario": "S2_gps_lost",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 933,
+   "flight_s": 106.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)."
+   ],
+   "scenario": "S2_gps_lost",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 933,
+   "flight_s": 106.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 4.3,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)."
+   ],
+   "scenario": "S2_gps_lost",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 18480,
+   "flight_s": 1847.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.7,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Battery below 10% (9%, 9.2 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, BATT_LOW_MAH.",
+    "Last flight: Battery below 10% (9%, 9.2 V)."
+   ],
+   "scenario": "S3_battery_low",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 18470,
+   "flight_s": 1846.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.6,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Battery below 10% (9%, 9.2 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, BATT_LOW_MAH.",
+    "Last flight: Battery below 10% (9%, 9.2 V)."
+   ],
+   "scenario": "S3_battery_low",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 18466,
+   "flight_s": 1846.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.0,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Battery below 10% (9%, 9.2 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, BATT_LOW_MAH.",
+    "Last flight: Battery below 10% (9%, 9.2 V)."
+   ],
+   "scenario": "S3_battery_low",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1925,
+   "flight_s": 192.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.6,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ALT_MAX",
+    "FENCE_TYPE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ALT_MAX, FENCE_TYPE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 2136,
+   "flight_s": 213.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ALT_MAX",
+    "FENCE_TYPE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ALT_MAX, FENCE_TYPE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 2476,
+   "flight_s": 247.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ALT_MAX",
+    "FENCE_TYPE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ALT_MAX, FENCE_TYPE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1966,
+   "flight_s": 196.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.5,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S5_wind",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 2145,
+   "flight_s": 214.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S5_wind",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 2515,
+   "flight_s": 251.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S5_wind",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 18482,
+   "flight_s": 1848.1,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.8,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "Battery below 10% (9%, 12.3 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "scenario": "S6_motor_failure",
+   "run": 1,
+   "met": null
+  },
+  {
+   "points": 18483,
+   "flight_s": 1848.2,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.1,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "Battery below 10% (9%, 12.3 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "scenario": "S6_motor_failure",
+   "run": 2,
+   "met": null
+  },
+  {
+   "points": 18483,
+   "flight_s": 1848.2,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.1,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "Battery below 10% (9%, 12.3 V)"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "scenario": "S6_motor_failure",
+   "run": 3,
+   "met": null
+  },
+  {
+   "points": 1926,
+   "flight_s": 192.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.6,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S7_compass_failure",
+   "run": 1,
+   "met": null
+  },
+  {
+   "points": 2135,
+   "flight_s": 213.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S7_compass_failure",
+   "run": 2,
+   "met": null
+  },
+  {
+   "points": 2476,
+   "flight_s": 247.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "READY",
+   "reasons": [],
+   "scenario": "S7_compass_failure",
+   "run": 3,
+   "met": null
+  }
+ ]
+}
