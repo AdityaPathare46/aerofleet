@@ -1,0 +1,806 @@
+{
+ "baseline": "settings in the log of v2 S0 run 1",
+ "outcome": {
+  "S0_normal": "met (3 of 3 runs)",
+  "S1_failsafe_off": "met (3 of 3 runs)",
+  "S2_gps_lost": "met (3 of 3 runs)",
+  "S3_battery_low": "met (3 of 3 runs)",
+  "S4_fence_off_in_flight": "met (3 of 3 runs)",
+  "S5_wind": "met (3 of 3 runs)",
+  "S6_motor_failure": "met (3 of 3 runs)",
+  "S7_compass_failure": "met (3 of 3 runs)"
+ },
+ "runs": [
+  {
+   "points": 1886,
+   "flight_s": 188.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S0_normal",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 1895,
+   "flight_s": 189.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S0_normal",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 1886,
+   "flight_s": 188.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S0_normal",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1885,
+   "flight_s": 188.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, FS_THR_ENABLE."
+   ],
+   "failsafes_off": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 1895,
+   "flight_s": 189.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, FS_THR_ENABLE."
+   ],
+   "failsafes_off": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 1885,
+   "flight_s": 188.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_FS_LOW_ACT, FS_THR_ENABLE."
+   ],
+   "failsafes_off": [
+    "BATT_FS_LOW_ACT",
+    "FS_THR_ENABLE"
+   ],
+   "scenario": "S1_failsafe_off",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 924,
+   "flight_s": 105.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 7.9,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)",
+    "Autopilot reported: EKF check, bad variance",
+    "Autopilot reported: EKF failsafe, triggered"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5).",
+    "Last flight: Autopilot reported: EKF check, bad variance.",
+    "Last flight: Autopilot reported: EKF failsafe, triggered."
+   ],
+   "failsafes_off": [],
+   "scenario": "S2_gps_lost",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 923,
+   "flight_s": 105.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 7.0,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)",
+    "Autopilot reported: EKF check, bad variance",
+    "Autopilot reported: EKF failsafe, triggered"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5).",
+    "Last flight: Autopilot reported: EKF check, bad variance.",
+    "Last flight: Autopilot reported: EKF failsafe, triggered."
+   ],
+   "failsafes_off": [],
+   "scenario": "S2_gps_lost",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 923,
+   "flight_s": 105.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 7.9,
+   "max_height_dev_m": 4.0,
+   "warnings": [
+    "Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5)",
+    "Autopilot reported: EKF check, bad variance",
+    "Autopilot reported: EKF failsafe, triggered"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "LAND"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_GPS1_ENABLE 1 -> 0 (INFO)",
+    "SIM_GPS1_ENABLE 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Poor GPS for 20 s (fewer than 6 satellites, no 3D fix, or HDOP above 2.5).",
+    "Last flight: Autopilot reported: EKF check, bad variance.",
+    "Last flight: Autopilot reported: EKF failsafe, triggered."
+   ],
+   "failsafes_off": [],
+   "scenario": "S2_gps_lost",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 18480,
+   "flight_s": 1847.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: battery failsafe, triggered",
+    "Battery below 10% (9%, 9.2 V)",
+    "A motor held at its maximum output (saturated) for 2 s",
+    "A motor held at its maximum output (saturated) for 8 s",
+    "Autopilot reported: battery failsafe, triggered",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL",
+    "LAND"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_LOW_MAH.",
+    "Last flight: Autopilot reported: battery failsafe, triggered.",
+    "Last flight: Battery below 10% (9%, 9.2 V).",
+    "Last flight: A motor held at its maximum output (saturated) for 2 s.",
+    "Last flight: 1 more warnings in its timeline."
+   ],
+   "failsafes_off": [],
+   "scenario": "S3_battery_low",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 18480,
+   "flight_s": 1847.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.5,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: battery failsafe, triggered",
+    "Battery below 10% (9%, 9.2 V)",
+    "A motor held at its maximum output (saturated) for 2 s",
+    "A motor held at its maximum output (saturated) for 9 s",
+    "Autopilot reported: battery failsafe, triggered",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL",
+    "LAND"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_LOW_MAH.",
+    "Last flight: Autopilot reported: battery failsafe, triggered.",
+    "Last flight: Battery below 10% (9%, 9.2 V).",
+    "Last flight: A motor held at its maximum output (saturated) for 2 s.",
+    "Last flight: 1 more warnings in its timeline."
+   ],
+   "failsafes_off": [],
+   "scenario": "S3_battery_low",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 18473,
+   "flight_s": 1847.2,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: battery failsafe, triggered",
+    "Battery below 10% (9%, 9.2 V)",
+    "A motor held at its maximum output (saturated) for 2 s",
+    "A motor held at its maximum output (saturated) for 8 s",
+    "Autopilot reported: battery failsafe, triggered",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 9.8 V)",
+    "Battery voltage fell 90% (12.6 \u2192 1.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO",
+    "RTL",
+    "LAND"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "BATT_LOW_MAH"
+   ],
+   "in_flight": [],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: BATT_LOW_MAH.",
+    "Last flight: Autopilot reported: battery failsafe, triggered.",
+    "Last flight: Battery below 10% (9%, 9.2 V).",
+    "Last flight: A motor held at its maximum output (saturated) for 2 s.",
+    "Last flight: 1 more warnings in its timeline."
+   ],
+   "failsafes_off": [],
+   "scenario": "S3_battery_low",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1885,
+   "flight_s": 188.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ENABLE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ENABLE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "failsafes_off": [
+    "FENCE_ENABLE"
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 1896,
+   "flight_s": 189.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ENABLE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ENABLE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "failsafes_off": [
+    "FENCE_ENABLE"
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 1885,
+   "flight_s": 188.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "BLOCK",
+   "settings_critical": [
+    "FENCE_ENABLE"
+   ],
+   "in_flight": [
+    "FENCE_ENABLE 1 -> 0 (CRITICAL)"
+   ],
+   "readiness": "DO_NOT_FLY",
+   "reasons": [
+    "Safety-critical setting changed and not approved: FENCE_ENABLE.",
+    "1 safety-critical setting(s) were changed during the last flight.",
+    "Last flight: Setting FENCE_ENABLE changed 1 \u2192 0 in flight (safety-critical)."
+   ],
+   "failsafes_off": [
+    "FENCE_ENABLE"
+   ],
+   "scenario": "S4_fence_off_in_flight",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1896,
+   "flight_s": 189.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S5_wind",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 1935,
+   "flight_s": 193.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.9,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S5_wind",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 1895,
+   "flight_s": 189.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [],
+   "readiness": "READY",
+   "reasons": [],
+   "failsafes_off": [],
+   "scenario": "S5_wind",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 18480,
+   "flight_s": 1847.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.2,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "A motor held at its maximum output (saturated) for 787 s",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Battery below 10% (9%, 12.3 V)",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "A motor held at its maximum output (saturated) for 981 s",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: A motor held at its maximum output (saturated) for 787 s.",
+    "Last flight: Autopilot reported: thrust loss check, thrust loss detected.",
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "failsafes_off": [],
+   "scenario": "S6_motor_failure",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 18475,
+   "flight_s": 1847.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.0,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "A motor held at its maximum output (saturated) for 1768 s",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Battery below 10% (9%, 12.3 V)",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: A motor held at its maximum output (saturated) for 1768 s.",
+    "Last flight: Autopilot reported: thrust loss check, thrust loss detected.",
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "failsafes_off": [],
+   "scenario": "S6_motor_failure",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 18480,
+   "flight_s": 1847.9,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 1.2,
+   "max_height_dev_m": 4.4,
+   "warnings": [
+    "A motor held at its maximum output (saturated) for 1769 s",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Battery below 10% (9%, 12.3 V)",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected",
+    "Autopilot reported: thrust loss check, thrust loss detected"
+   ],
+   "notices": [
+    "Battery below 20% (19%, 12.3 V)"
+   ],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_ENGINE_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: A motor held at its maximum output (saturated) for 1769 s.",
+    "Last flight: Autopilot reported: thrust loss check, thrust loss detected.",
+    "Last flight: Battery below 10% (9%, 12.3 V)."
+   ],
+   "failsafes_off": [],
+   "scenario": "S6_motor_failure",
+   "run": 3,
+   "met": true
+  },
+  {
+   "points": 1886,
+   "flight_s": 188.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: compass, unhealthy",
+    "Compass 1 reported unhealthy for 110 s"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Autopilot reported: compass, unhealthy.",
+    "Last flight: Compass 1 reported unhealthy for 110 s."
+   ],
+   "failsafes_off": [],
+   "scenario": "S7_compass_failure",
+   "run": 1,
+   "met": true
+  },
+  {
+   "points": 1895,
+   "flight_s": 189.4,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: compass, unhealthy",
+    "Compass 1 reported unhealthy for 111 s"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Autopilot reported: compass, unhealthy.",
+    "Last flight: Compass 1 reported unhealthy for 111 s."
+   ],
+   "failsafes_off": [],
+   "scenario": "S7_compass_failure",
+   "run": 2,
+   "met": true
+  },
+  {
+   "points": 1886,
+   "flight_s": 188.5,
+   "plan_verdict": "CONFORMED",
+   "episodes": [],
+   "max_sideways_m": 0.8,
+   "max_height_dev_m": 11.0,
+   "warnings": [
+    "Autopilot reported: compass, unhealthy",
+    "Compass 1 reported unhealthy for 110 s"
+   ],
+   "notices": [],
+   "modes": [
+    "GUIDED",
+    "AUTO"
+   ],
+   "settings_verdict": "OK",
+   "settings_critical": [],
+   "in_flight": [
+    "SIM_MAG1_FAIL 0 -> 1 (INFO)"
+   ],
+   "readiness": "CHECK_FIRST",
+   "reasons": [
+    "Last flight: Autopilot reported: compass, unhealthy.",
+    "Last flight: Compass 1 reported unhealthy for 110 s."
+   ],
+   "failsafes_off": [],
+   "scenario": "S7_compass_failure",
+   "run": 3,
+   "met": true
+  }
+ ]
+}
