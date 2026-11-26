@@ -9,7 +9,8 @@ The verdict comes only from fixed rules and recorded facts, never from a predict
 - DO NOT FLY: a safety-critical setting (failsafe, geofence, battery limit, ...) differs from the approved configuration
   and nobody has approved it; or the drone has no UIN on record (the Drone Rules 2021 require one before operating).
 - CHECK FIRST: a flight-limit setting changed; the UIN is recorded but not verified; the settings were never checked;
-  or the last reviewed flight's log shows warnings (the autopilot rejected sensor data, poor GPS, critical battery, a
+  a failsafe is switched off in the drone's settings (whatever the approved baseline says: an approved configuration can
+  have one off, and ArduPilot ships with its battery failsafe off); or the last reviewed flight's log shows warnings (the autopilot rejected sensor data, poor GPS, critical battery, a
   safety-critical setting changed in flight, the drone left its plan).
 - READY: none of the above.
 
@@ -21,6 +22,27 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 READY, CHECK_FIRST, DO_NOT_FLY = "READY", "CHECK_FIRST", "DO_NOT_FLY"
+# ArduPilot: the compliance rules (aerofleet/hardware/compliance_rules.py, each with its ArduPilot source) that a
+# failsafe is configured. PX4: the value PX4's parameter reference documents as "off" for each failsafe.
+AP_FAILSAFE_RULES = {"batt.fs_low_action": "Low-battery failsafe", "batt.fs_critical_action": "Critical-battery failsafe",
+                     "fs.rc_loss": "RC-loss (throttle) failsafe", "fs.ekf": "EKF failsafe", "fs.fence_enabled": "Geofence"}
+PX4_FAILSAFES = {"NAV_RCL_ACT": (0, "RC-loss failsafe"), "COM_LOW_BAT_ACT": (0, "Low-battery failsafe (warning only)"),
+                 "GF_ACTION": (0, "Geofence breach action")}
+
+
+def failsafes_off(params) -> List[Dict[str, str]]:
+    """Failsafes switched off in a drone's settings: [{"name", "title"}]. Empty when none, or when unknown."""
+    if not params:
+        return []
+    out = [{"name": n, "title": t} for n, (off, t) in PX4_FAILSAFES.items() if n in params and int(params[n]) == off]
+    if "FS_THR_ENABLE" in params or "BATT_FS_LOW_ACT" in params:        # ArduPilot settings
+        from aerofleet.assurance.static_checks import checks_from_params
+
+        for c in checks_from_params(params)["evaluated"]:
+            if c["id"] in AP_FAILSAFE_RULES and c["status"] == "FAIL":
+                names = [k for k in (c.get("evidence") or {}) if k.isupper()]       # the settings the rule read
+                out.append({"name": names[0] if names else c["id"], "title": AP_FAILSAFE_RULES[c["id"]]})
+    return out
 ORDER = {DO_NOT_FLY: 0, CHECK_FIRST: 1, READY: 2}
 VIBRATION_NOTE = ("Context only: in the study behind AeroFleet, vibration did not warn of a crash within a drone and was not "
                   "shown to beat random inspection, so it never changes the verdict.")
@@ -51,6 +73,9 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
     elif settings["verdict"] == "REVIEW":
         reasons.append(_reason(CHECK_FIRST, "Flight-limit setting changed and not approved: " + ", ".join(settings["limits"][:4]) + ".", "settings",
                                "limit_changed", names=", ".join(settings["limits"][:4])))
+    for fs in (settings or {}).get("failsafes_off", [])[:4]:
+        reasons.append(_reason(CHECK_FIRST, f"Failsafe switched off: {fs['title']} ({fs['name']}).", "settings",
+                               "failsafe_off", title=fs["title"], name=fs["name"]))
 
     if last_flight is not None:
         if last_flight.get("critical_in_flight"):

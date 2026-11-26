@@ -206,6 +206,71 @@ def _px4_health(log: FlightLog, est, sec) -> None:
             log.health += _runs(ts, [float(r) > 1.0 for r in est[field_name]], sec, f"Estimator rejected {label} data")
 
 
+# ── ArduPilot .bin: what the autopilot itself recorded about its health ─────────────────────────────────────
+# Read from structured records only (never the free-text messages): ERR (the autopilot's own error reports, subsystem and
+# code as documented in ArduPilot's AP_Logger.h), MAG (each compass's health flag), XKF4 (EKF3 core 0 test ratios, the
+# same quantity as PX4's estimator test ratios: above 1 means the estimator rejected that sensor's data), ATT (tilt) and
+# RCOU (motor outputs). Each becomes a (start, end, what) entry; an error report is a single moment (start == end).
+AP_HEALTH_MESSAGES = ["ERR", "MAG", "XKF4", "ATT", "RCOU"]
+AP_SUBSYSTEM = {1: "main loop", 2: "radio", 3: "compass", 5: "radio failsafe", 6: "battery failsafe", 7: "GPS failsafe",
+                8: "ground-station failsafe", 9: "fence failsafe", 10: "flight mode", 11: "GPS", 12: "crash check",
+                13: "flip", 15: "parachute", 16: "EKF check", 17: "EKF failsafe", 18: "barometer", 19: "CPU",
+                20: "ADS-B failsafe", 21: "terrain", 22: "navigation", 23: "terrain failsafe", 24: "EKF primary core",
+                25: "thrust loss check", 26: "sensor failsafe", 27: "leak failsafe", 28: "pilot input",
+                29: "vibration failsafe", 30: "internal error", 31: "dead-reckoning failsafe"}
+AP_CODE = {(12, 1): "crash detected", (12, 2): "loss of control", (16, 2): "bad variance", (18, 2): "glitch",
+           (11, 2): "glitch", (25, 1): "thrust loss detected", (3, 4): "unhealthy", (3, 1): "failed to start"}
+TILT_DEG = 60.0             # the crash-moment tilt rule used in the study behind AeroFleet
+MOTOR_EDGE = 0.02           # within 2% of the range below the autopilot's own ceiling (MOT_SPIN_MAX) counts as "at maximum"
+
+
+class _ApHealth:
+    def __init__(self) -> None:
+        self.err: List[Tuple[float, int, int]] = []
+        self.mag: Dict[int, List[Tuple[float, bool]]] = {}
+        self.xkf4: List[Tuple[float, float, float, float, float]] = []
+        self.att: List[Tuple[float, bool]] = []
+        self.rcou: List[Tuple[float, List[float]]] = []
+
+    def add(self, kind: str, t: float, m) -> None:
+        if kind == "ERR":
+            self.err.append((t, int(m.Subsys), int(m.ECode)))
+        elif kind == "MAG" and len(self.mag.get(int(getattr(m, "I", 0)), [])) < MAX_POINTS:
+            self.mag.setdefault(int(getattr(m, "I", 0)), []).append((t, not bool(getattr(m, "Health", 1))))
+        elif kind == "XKF4" and int(getattr(m, "C", 0)) == 0 and len(self.xkf4) < MAX_POINTS:
+            self.xkf4.append((t, float(m.SV), float(m.SP), float(m.SH), float(m.SM)))
+        elif kind == "ATT" and len(self.att) < MAX_POINTS:
+            self.att.append((t, max(abs(float(m.Roll)), abs(float(m.Pitch))) > TILT_DEG))
+        elif kind == "RCOU" and len(self.rcou) < MAX_POINTS:
+            self.rcou.append((t, [float(getattr(m, f"C{i}", 0) or 0) for i in range(1, 15)]))
+
+    def runs(self, params: Dict[str, float]) -> List[Tuple[float, float, str]]:
+        same = lambda x: x  # noqa: E731
+        out: List[Tuple[float, float, str]] = []
+        for t, sub, code in self.err:
+            if code == 0 or sub == 24:          # 0 = resolved; 24 = the EKF changed core, not an error
+                continue
+            what = AP_CODE.get((sub, code)) or ("triggered" if code == 1 and "failsafe" in AP_SUBSYSTEM.get(sub, "") else f"code {code}")
+            out.append((t, t, f"Autopilot reported: {AP_SUBSYSTEM.get(sub, f'subsystem {sub}')}, {what}"))
+        for i, rows in sorted(self.mag.items()):
+            out += _runs([r[0] for r in rows], [r[1] for r in rows], same, f"Compass {i + 1} reported unhealthy")
+        if self.xkf4:
+            ts = [r[0] for r in self.xkf4]
+            for k, label in ((1, "velocity"), (2, "position"), (3, "height"), (4, "compass")):
+                out += _runs(ts, [r[k] > 1.0 for r in self.xkf4], same, f"Estimator rejected {label} data")
+        if self.att:
+            out += _runs([r[0] for r in self.att], [r[1] for r in self.att], same, f"Tilt above {TILT_DEG:g}°")
+        motors = [n for n in range(1, 15) if 33 <= int(params.get(f"SERVO{n}_FUNCTION", 0)) <= 40]
+        if self.rcou and len(motors) >= 3:
+            lo = params.get("MOT_PWM_MIN") or 1000.0
+            hi = params.get("MOT_PWM_MAX") or 2000.0
+            ceiling = lo + (params.get("MOT_SPIN_MAX") or 0.95) * max(1.0, hi - lo)    # the most the autopilot will ask of a motor
+            limit = ceiling - MOTOR_EDGE * max(1.0, hi - lo)
+            flags = [max(ch[n - 1] for n in motors) >= limit for _, ch in self.rcou]
+            out += _runs([r[0] for r in self.rcou], flags, same, "A motor held at its maximum output (saturated)")
+        return out[:MAX_HEALTH * 4]
+
+
 def read_flight_log(path: str) -> FlightLog:
     ext = os.path.splitext(path)[1].lower()
     if ext not in (".tlog", ".bin", ".ulg", ".csv", ".gpx"):
@@ -231,7 +296,8 @@ def read_flight_log(path: str) -> FlightLog:
     log = FlightLog(format=ext[1:])
     tracks: Dict[str, List[Tuple[float, float, float, float]]] = {}
     wanted = (["GLOBAL_POSITION_INT", "PARAM_VALUE", "HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT", "VIBRATION"] if ext == ".tlog"
-              else ["POS", "GPS", "PARM", "MODE", "BAT", "VIBE"])
+              else ["POS", "GPS", "PARM", "MODE", "BAT", "VIBE"] + AP_HEALTH_MESSAGES)
+    ap = _ApHealth() if ext == ".bin" else None
     last_mode = None
     # Telemetry logs are stamped by the recording computer; a replayed or sped-up recording (and any
     # link delay) distorts that clock. The vehicle's own clock (time since boot) is used instead, made
@@ -260,6 +326,9 @@ def read_flight_log(path: str) -> FlightLog:
                 last_boot, vehicle_t = boot, boot + offset
             t = vehicle_t
         # numbers only are taken from the log; free text (STATUSTEXT, MSG) is never read
+        if ap is not None and kind in AP_HEALTH_MESSAGES:
+            ap.add(kind, t, m)
+            continue
         if kind == "SYS_STATUS":
             if m.voltage_battery not in (0, 65535) and len(log.battery) < MAX_POINTS:
                 log.battery.append((t, m.voltage_battery / 1000.0, float(m.battery_remaining) if m.battery_remaining >= 0 else None))
@@ -328,4 +397,6 @@ def read_flight_log(path: str) -> FlightLog:
         log.notes.append(f"The flight controller restarted {boots - 1} time(s) in this log; times run on across the restarts")
     if not log.track:
         raise FlightLogError("No position records found in the log — nothing to compare with a plan")
+    if ap is not None:
+        log.health = sorted(log.health + ap.runs(log.params))
     return log

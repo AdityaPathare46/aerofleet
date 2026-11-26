@@ -19,7 +19,8 @@ def _keys():
 def _all_codes():
     codes = set()
     for reg in (None, {"uin": "U", "status": "RECORDED"}):
-        for settings in (None, {"verdict": "BLOCK", "critical": ["A"], "limits": []}, {"verdict": "REVIEW", "critical": [], "limits": ["B"]}):
+        for settings in (None, {"verdict": "BLOCK", "critical": ["A"], "limits": []}, {"verdict": "REVIEW", "critical": [], "limits": ["B"]},
+                         {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": [{"name": "NAV_RCL_ACT", "title": "t"}]}):
             last = {"warnings": ["w1", "w2", "w3", "w4"], "critical_in_flight": 1, "deviated": True}
             codes |= {r["code"] for r in assess("D", settings, reg, last)["reasons"]}
     return codes
@@ -34,5 +35,5 @@ def test_every_reason_code_and_place_is_translated():
     k = _keys()["en"]
     codes = _all_codes()
     assert codes == {"no_uin", "uin_unverified", "settings_never", "critical_changed", "limit_changed",
-                     "critical_in_flight", "deviated", "warning", "more_warnings"}
+                     "critical_in_flight", "deviated", "warning", "more_warnings", "failsafe_off"}
     assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY"} <= k

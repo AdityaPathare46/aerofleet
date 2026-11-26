@@ -84,7 +84,9 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
                              f"or HDOP above {MAX_HDOP:g})", end_s=round(b, 1)))
 
     for a, b, what in health:                 # the autopilot's own reports, repeated with their times
-        if b - a >= MIN_HEALTH_S and b >= t0:
+        if a == b and a >= t0:                # a single report (an ArduPilot error record): a moment, not a span
+            ev.append(_event(a - t0, "sensor", "warning", what))
+        elif b - a >= MIN_HEALTH_S and b >= t0:
             ev.append(_event(max(a - t0, 0.0), "sensor", "warning", f"{what} for {b - a:.0f} s", end_s=round(b - t0, 1)))
 
     labels = {"off_route": "Off the planned route", "off_altitude": "Off the planned height", "in_no_fly_zone": "Inside a no-fly zone"}

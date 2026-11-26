@@ -218,7 +218,7 @@ async def operations_log(fleet: str, start: Optional[str] = Query(None, descript
 async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Morning readiness board: for every drone in the fleet, ready / check first / do not fly, and why
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
-    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, last_flight_summary
+    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary
     from aerofleet.assurance.vibration import drone_history
     from aerofleet.data.models.models import DroneRegistration
 
@@ -241,7 +241,8 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
             side = d[d["decided_by"]] if d.get("decided_by") else None
             open_ = [c for c in (side or {}).get("changes", []) if not c["approved"]]
             settings = {"verdict": d["verdict"], "critical": [c["name"] for c in open_ if c["severity"] == "CRITICAL"],
-                        "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by")}
+                        "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by"),
+                        "failsafes_off": failsafes_off(_snapshots(db, fleet, drone_id, 1)[0].params)}
         reg = db.get(DroneRegistration, drone_id)
         last = latest.get(drone_id)
         hist = drone_history(vib_rows, drone_id)
@@ -254,7 +255,8 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
             "rules": "Do not fly: an unapproved safety-critical setting change, or no UIN on record. Check first: a flight-limit "
-                     "change, an unverified UIN, settings never checked, or warnings in the last flight's log. Ready: none of these."}
+                     "change, a failsafe switched off, an unverified UIN, settings never checked, or warnings in the last flight's log. "
+                     "Ready: none of these."}
 
 
 @router.get("/policy")
