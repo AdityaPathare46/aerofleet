@@ -19,6 +19,11 @@ AUTO_MODES = {"AUTO", "MISSION", "RTL", "SMART_RTL", "LAND", "GUIDED", "HOLD", "
 LOW_BATTERY_PCT, CRITICAL_BATTERY_PCT = 20.0, 10.0
 MIN_SATS, MAX_HDOP = 6, 2.5
 MIN_HEALTH_S = 1.0         # shorter estimator complaints are common on healthy flights and are not listed
+# A GPS or autopilot-health complaint is a WARNING (and so a "Check first" reason on Today's fleet) only for the part
+# that happened in the air (track above AIRBORNE_M) and only if that part lasts SUSTAINED_S; otherwise it is listed as
+# a NOTICE. Chosen after the declared false-alarm measurement FA1 failed (28.8% of healthy flights flagged), on the
+# development half of the vehicles only, and tested on the held-out half in FA2 (research/false_alarms/).
+AIRBORNE_M, SUSTAINED_S = 2.0, 3.0
 LOOKBACK_S = 30.0          # events this long before an episode count as "around it"
 
 
@@ -77,17 +82,27 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
             ev.append(_event(t_min - t0, "battery", "notice", f"Battery voltage fell {100 * (v_start - v_min) / v_start:.0f}% "
                              f"({v_start:.1f} → {v_min:.1f} V)", volts=v_min))
 
+    air = [p[0] - t0 for p in track if p[3] > AIRBORNE_M]
+    window = (min(air), max(air)) if air else None
+
+    def level(a: float, b: float) -> str:     # a, b in seconds from the first track point
+        if window is None:
+            return "notice"
+        if a == b:
+            return "warning" if window[0] <= a <= window[1] else "notice"
+        return "warning" if min(b, window[1]) - max(a, window[0]) >= SUSTAINED_S else "notice"
+
     poor = [(t, fix < 3 or sats < MIN_SATS or (hdop is not None and hdop > MAX_HDOP)) for t, sats, hdop, fix in gps]
     for a, b in _spans(poor, t0):
         if b - a >= 2.0 and b >= 0:
-            ev.append(_event(a, "gps", "warning", f"Poor GPS for {b - a:.0f} s (fewer than {MIN_SATS} satellites, no 3D fix, "
+            ev.append(_event(a, "gps", level(a, b), f"Poor GPS for {b - a:.0f} s (fewer than {MIN_SATS} satellites, no 3D fix, "
                              f"or HDOP above {MAX_HDOP:g})", end_s=round(b, 1)))
 
     for a, b, what in health:                 # the autopilot's own reports, repeated with their times
         if a == b and a >= t0:                # a single report (an ArduPilot error record): a moment, not a span
-            ev.append(_event(a - t0, "sensor", "warning", what))
+            ev.append(_event(a - t0, "sensor", level(a - t0, a - t0), what))
         elif b - a >= MIN_HEALTH_S and b >= t0:
-            ev.append(_event(max(a - t0, 0.0), "sensor", "warning", f"{what} for {b - a:.0f} s", end_s=round(b - t0, 1)))
+            ev.append(_event(max(a - t0, 0.0), "sensor", level(a - t0, b - t0), f"{what} for {b - a:.0f} s", end_s=round(b - t0, 1)))
 
     labels = {"off_route": "Off the planned route", "off_altitude": "Off the planned height", "in_no_fly_zone": "Inside a no-fly zone"}
     for i, e in enumerate(report.get("episodes", [])):

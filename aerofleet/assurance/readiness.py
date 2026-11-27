@@ -10,7 +10,9 @@ The verdict comes only from fixed rules and recorded facts, never from a predict
   and nobody has approved it; or the drone has no UIN on record (the Drone Rules 2021 require one before operating).
 - CHECK FIRST: a flight-limit setting changed; the UIN is recorded but not verified; the settings were never checked;
   a failsafe is switched off in the drone's settings (whatever the approved baseline says: an approved configuration can
-  have one off, and ArduPilot ships with its battery failsafe off); or the last reviewed flight's log shows warnings (the autopilot rejected sensor data, poor GPS, critical battery, a
+  have one off, and ArduPilot ships with its battery failsafe off); or the last reviewed flight's log shows warnings in
+  the air (evidence.py: a GPS or autopilot-health complaint lasting 3 s or more while airborne, an autopilot error
+  report while airborne). Landing below 10% battery is shown as a pilot note, not a reason (FA1, research/false_alarms) (the autopilot rejected sensor data, poor GPS, critical battery, a
   safety-critical setting changed in flight, the drone left its plan).
 - READY: none of the above.
 
@@ -97,8 +99,11 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
 
 def last_flight_summary(review_id: int, report: Dict[str, Any], uploaded_at: str) -> Dict[str, Any]:
     """The facts readiness needs from a stored flight review: its warnings, in-flight setting changes, deviation."""
-    seen, warnings = set(), []
+    seen, warnings, pilot = set(), [], []
     for e in report.get("evidence_timeline") or []:
+        if e.get("kind") == "battery" and e.get("level") == "warning":
+            pilot.append(e["text"])               # how the last flight was flown, not whether the drone is fit today (FA1)
+            continue
         if e.get("level") == "warning" and e.get("kind") != "plan":
             key = e["text"].split(" for ")[0]                     # one line per kind of warning, not per occurrence
             if key not in seen:
@@ -108,5 +113,6 @@ def last_flight_summary(review_id: int, report: Dict[str, Any], uploaded_at: str
                for t in ((report.get("normal_flight") or {}).get("targets") or {}).values() if t["position"] != "inside"]
     return {"review_id": review_id, "flown_at": (report.get("vibration") or {}).get("flown_at") or uploaded_at,
             "normal_flight": outside,                          # context only: never a reason, never changes the verdict
+            "pilot_notes": pilot,                              # e.g. landed below 10% battery: shown, never a reason
             "warnings": warnings, "critical_in_flight": (report.get("settings_changed_in_flight") or {}).get("safety_critical", 0),
             "deviated": report.get("verdict") == "DEVIATED", "flight_s": report.get("flight_s")}

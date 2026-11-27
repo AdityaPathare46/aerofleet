@@ -255,7 +255,9 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
             "rules": "Do not fly: an unapproved safety-critical setting change, or no UIN on record. Check first: a flight-limit "
-                     "change, a failsafe switched off, an unverified UIN, settings never checked, or warnings in the last flight's log. "
+                     "change, a failsafe switched off, an unverified UIN, settings never checked, or warnings in the air during the last flight "
+                     "(a sensor or GPS complaint lasting 3 s or more, or an autopilot error report; a landing below 10% battery is a "
+                     "pilot note, not a reason). "
                      "Ready: none of these."}
 
 

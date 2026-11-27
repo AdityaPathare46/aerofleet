@@ -10,7 +10,7 @@ interface Reason { level: Status; text: string; where: 'settings' | 'flight' | '
 interface Row {
   drone_id: string; status: Status; reasons: Reason[]; settings_verdict: string | null; settings_compared_with: string | null
   registration: { uin: string; status: string } | null
-  last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[] } | null
+  last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[]; pilot_notes?: string[] } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
 }
 interface Board { fleet: string; drones: Row[]; counts: Record<Status, number>; vibration_note: string; rules: string }
@@ -108,8 +108,10 @@ export default function ReadinessPage() {
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'grid', gap: 4, alignContent: 'start' }}>
               <span>{tr('lastFlight')}: <b>{day(d.last_flight?.flown_at, lang)}</b>{d.last_flight?.flight_s ? ` · ${Math.round(d.last_flight.flight_s / 60)} ${tr('min')}` : ''}</span>
               <span>{tr('settingsLine')}: {d.settings_verdict ? `${tr(d.settings_verdict)} (${tr(d.settings_compared_with === 'vs_baseline' ? 'vsBaseline' : 'vsPrevious')})` : tr('notChecked')}</span>
+              {d.last_flight?.pilot_notes && d.last_flight.pilot_notes.length > 0 && (
+                <span title="How the last flight was flown: shown for the pilot, never a reason on its own">{tr('pilotNote')}: {d.last_flight.pilot_notes.join('; ')}</span>)}
               {d.last_flight?.normal_flight && d.last_flight.normal_flight.length > 0 && (
-                <span title="From the learned normal-flight model: context, never part of the verdict">{tr('model')}: {d.last_flight.normal_flight.join('; ')}</span>)}
+                <span title="From the learned normal-flight model: context, never part of the verdict. Not trained on spraying drones (payload is not an input).">{tr('model')}: {d.last_flight.normal_flight.join('; ')}</span>)}
               {d.vibration && <span title={tr('vibNote')}>{tr('vibration')}: {d.vibration.latest_vs_own ? tr('vibOwn', { x: d.vibration.latest_vs_own.higher_than, y: d.vibration.latest_vs_own.earlier_flights }) : tr('fewFlights')}{d.vibration.public ? tr('vibPublic', { p: d.vibration.public.higher_than_pct }) : ''}</span>}
             </div>
           </div>))}
