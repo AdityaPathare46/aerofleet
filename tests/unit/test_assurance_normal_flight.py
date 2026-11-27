@@ -82,3 +82,16 @@ def test_no_ratio_is_shown_when_the_observed_value_is_not_positive():
     nf.model = lambda: widened  # restored by the autouse fixture's monkeypatch on the next test
     t = nf.assess(f)["targets"]["battery_drop_pct_per_min"]
     assert t["position"] == "below" and t["observed"] < 0 and t["times_mid"] is None
+
+
+def test_loading_is_measured_from_the_commanded_thrust():
+    from aerofleet.assurance.flightlog import FlightLog
+    from aerofleet.assurance.normal_flight import features
+
+    track = [(float(t), 18.5, 73.8 + t * 1e-5, 10.0) for t in range(200)]
+    # a tank emptying: thrust 0.60 in the first quarter, falling to 0.45 at the end; idle (below 5%) samples ignored
+    thrust = [(float(t), 0.02 if t < 5 else 0.60 - 0.15 * t / 190) for t in range(190)]
+    f = FlightLog(format="ulg", track=track, thrust=thrust)
+    out = features(f)
+    assert 0.50 < out["thrust"] < 0.55 and -0.13 < out["thrust_change"] < -0.09
+    assert features(FlightLog(format="ulg", track=track))["thrust"] is None          # no thrust topic: left missing

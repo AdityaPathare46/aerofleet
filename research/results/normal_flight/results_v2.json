@@ -1,0 +1,44 @@
+{
+ "kept": 1121,
+ "vehicles": 401,
+ "v1_kept": 1121,
+ "excluded": {
+  "crash or unsatisfactory rating": 589,
+  "demo fleet vehicle": 154,
+  "over 10 per vehicle": 320,
+  "unreadable, not PX4 or under 60 s": 1071,
+  "cut short (truncated download)": 24
+ },
+ "comparison": {
+  "vibration": {
+   "flights": 1104,
+   "vehicles": 396,
+   "with_thrust": 1035,
+   "mae_v1": 0.9678916905566771,
+   "mae_v2": 0.9705498253657743,
+   "reduction": -0.0027463143190828987,
+   "coverage_v2_calibrated": 0.9085144927536232,
+   "H6_supported": true,
+   "H5v_supported": false,
+   "ship_v2": false
+  },
+  "battery_drop_pct_per_min": {
+   "flights": 1056,
+   "vehicles": 379,
+   "with_thrust": 995,
+   "mae_v1": 0.8263180053876238,
+   "mae_v2": 0.7748291858142473,
+   "reduction": 0.06231114321322717,
+   "coverage_v2_calibrated": 0.9138257575757576,
+   "H6_supported": true,
+   "H5_supported": false,
+   "ship_v2": false
+  }
+ },
+ "export_max_abs_error": {},
+ "shipped": {
+  "vibration": false,
+  "battery_drop_pct_per_min": false
+ },
+ "seconds": 1138
+}
