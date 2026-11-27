@@ -12,6 +12,7 @@ interface Row {
   registration: { uin: string; status: string } | null
   last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[]; pilot_notes?: string[] } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
+  overdue_spray_forms?: number
 }
 interface Board { fleet: string; drones: Row[]; counts: Record<Status, number>; vibration_note: string; rules: string }
 
@@ -113,6 +114,11 @@ export default function ReadinessPage() {
               {d.last_flight?.normal_flight && d.last_flight.normal_flight.length > 0 && (
                 <span title="From the learned normal-flight model: context, never part of the verdict. Not trained on spraying drones (payload is not an input).">{tr('model')}: {d.last_flight.normal_flight.join('; ')}</span>)}
               {d.vibration && <span title={tr('vibNote')}>{tr('vibration')}: {d.vibration.latest_vs_own ? tr('vibOwn', { x: d.vibration.latest_vs_own.higher_than, y: d.vibration.latest_vs_own.earlier_flights }) : tr('fewFlights')}{d.vibration.public ? tr('vibPublic', { p: d.vibration.public.higher_than_pct }) : ''}</span>}
+              {(d.overdue_spray_forms ?? 0) > 0 && (
+                <button className="btn" style={{ justifySelf: 'start', padding: '2px 8px', fontSize: 11, color: '#B45309', borderColor: '#F59E0B' }}
+                  onClick={() => setActivePage('spray')}>
+                  {d.overdue_spray_forms} overdue 7-day spray form{d.overdue_spray_forms === 1 ? '' : 's'} →
+                </button>)}
             </div>
           </div>))}
         <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}><b>{tr('rulesTitle')}</b> {lang === 'en' ? board.rules : tr('rules')} {lang === 'en' ? board.vibration_note : tr('vibNote')}</div>

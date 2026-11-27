@@ -134,7 +134,7 @@ export default function RouteCheckPage() {
       const out: CheckResult = await r.json()
       setResult(out); setSelected(null)
       const c = out.missions.find((m) => m.city)?.city
-      if (c) setCity(c)
+      if (c && cities.some((x) => x.slug === c)) setCity(c)
       fit(out.missions)
     } catch (e) { setError((e as Error).message) } finally { setBusy(false) }
   }
@@ -194,9 +194,9 @@ export default function RouteCheckPage() {
         {!result && (
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             <b>Legend.</b> <span style={{ color: '#DC2626' }}>Red zone</span>: no flying without central government permission.{' '}
-            <span style={{ color: '#B45309' }}>Yellow zone</span>: air traffic control permission needed. Elsewhere (green) no permission is needed up to
-            120 m. Zones shown are AeroFleet's approximations around known airports and military sites (Drone Rules 2021 distances), not the
-            official Digital Sky map.
+            <span style={{ color: '#B45309' }}>Yellow zone</span>: air traffic control permission needed. Full local zones are
+            loaded for Pune and Mumbai; across the rest of India, 36 major civil airport perimeters (Drone Rules 2021 5 km / 12 km
+            circles) are checked automatically and routes outside them return <i>Not checked</i> until verified on the official Digital Sky map.
           </div>)}
       </div>
       <div style={{ position: 'relative', background: 'var(--bg-void)' }}>

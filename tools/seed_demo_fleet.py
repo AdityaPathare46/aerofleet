@@ -223,6 +223,7 @@ def main() -> None:
     ap.add_argument("--flights", type=int, default=8)
     ap.add_argument("--reset", action="store_true")
     ap.add_argument("--spray-only", action="store_true", help="only (re)make the demo spray forms on an existing demo fleet")
+    ap.add_argument("--agri-only", action="store_true", help="only seed the realistic ArduCopter spraying fleet 'pune-agri' from sitl_v2")
     ap.add_argument("--key", default=os.path.join(DATA, "demo_fleet_key.json"), help="presenter's key (kept outside the repository)")
     a = ap.parse_args()
 
@@ -234,6 +235,9 @@ def main() -> None:
 
     init_db()
     db = get_session()
+    if a.agri_only:
+        seed_agri_fleet(db, "pune-agri")
+        return
     if a.spray_only:
         seed_spray_forms(db, a.fleet)
         print(f"Demo spray forms made for fleet '{a.fleet}' (the last four flights of the most recently flown drone).")
@@ -275,6 +279,122 @@ def main() -> None:
     if files:
         print(f"Settings files for the drift check: {files[0]} (approved), {files[1]} (changed: {files[2]})")
         seed_settings_fleet(db, f"{a.fleet}-settings", files)
+    seed_agri_fleet(db, "pune-agri")
+
+
+def seed_agri_fleet(db, fleet: str = "pune-agri") -> None:
+    """Seed a cohesive 6-drone ArduCopter spraying fleet from real SITL v2 Pune spraying flights (.bin + .waypoints).
+
+    Gives the live demonstration a true Indian agricultural fleet with:
+      * a shared approved ArduCopter fleet baseline (from S0_normal_1),
+      * real 4 m back-and-forth spraying missions reconciled against their .waypoints plans (and playable in 3D/VR),
+      * active November 2026 Spray Register forms with auto-extracted height, speed, spray axis and estimated acres,
+      * every readiness outcome: Ready, Check first (GPS/compass/fence-in-flight), Do not fly (failsafe off & grounded incident).
+    """
+    from datetime import timedelta
+
+    from aerofleet.api.routes.assurance import review_flight
+    from aerofleet.assurance import ledger
+    from aerofleet.assurance import maintenance as maint
+    from aerofleet.assurance import spray_form as sf
+    from aerofleet.data.models.models import DroneRegistration, FleetBaseline, FlightReview, MaintenanceEntry, ParamSnapshot, SprayForm
+
+    sitl_dir = os.path.join(DATA, "sitl_v2")
+    if not os.path.isdir(sitl_dir):
+        print(f"Skipping '{fleet}': {sitl_dir} not found.")
+        return
+
+    scenarios = [
+        ("AGRI-01", "S0_normal_1", "VERIFIED", "submitted"),
+        ("AGRI-02", "S5_wind_1", "VERIFIED", "ready"),
+        ("AGRI-03", "S1_failsafe_off_1", "VERIFIED", "problems"),
+        ("AGRI-04", "S4_fence_off_in_flight_1", "VERIFIED", "draft"),
+        ("AGRI-05", "S6_motor_failure_1", "VERIFIED", "not_spray"),
+        ("AGRI-06", "S7_compass_failure_1", "RECORDED", "draft"),
+    ]
+    for model in (SprayForm, MaintenanceEntry, FlightReview, ParamSnapshot):
+        db.query(model).filter(model.fleet == fleet).delete()
+    db.query(FleetBaseline).filter(FleetBaseline.fleet == fleet).delete()
+    db.commit()
+
+    baseline_set = False
+    seeded_reviews = []
+    for drone, stem, uin_status, form_kind in scenarios:
+        bin_path = os.path.join(sitl_dir, f"{stem}.bin")
+        wp_path = os.path.join(sitl_dir, f"{stem}.waypoints")
+        if not (os.path.isfile(bin_path) and os.path.isfile(wp_path)):
+            continue
+        plan_bytes = open(wp_path, "rb").read()
+        out = review_flight(
+            db, SEEDER, fleet, drone, plan_bytes.decode("utf-8", errors="replace"),
+            f"{stem}.waypoints", open(bin_path, "rb").read(), f"{stem}.bin", city="pune", plan_bytes=plan_bytes,
+        )
+        if not baseline_set:
+            snap = (db.query(ParamSnapshot).filter(ParamSnapshot.fleet == fleet, ParamSnapshot.drone_id == drone)
+                    .order_by(ParamSnapshot.id.desc()).first())
+            if snap:
+                db.add(FleetBaseline(fleet=fleet, params=snap.params, approved={}, source=f"{stem}.bin (approved ArduCopter baseline)",
+                                     set_by=SEEDER.username, set_at=datetime.utcnow()))
+                ledger.append(db, "baseline", fleet, {"params": snap.params, "source": f"{stem}.bin"}, SEEDER.username)
+                db.commit()
+                baseline_set = True
+        db.query(DroneRegistration).filter(DroneRegistration.drone_id == drone).delete()
+        db.add(DroneRegistration(
+            drone_id=drone, uin=f"UA00DEMO{drone[-2:]}", status=uin_status, recorded_by=SEEDER.username,
+            verified_by=SEEDER.username if uin_status == "VERIFIED" else None,
+            verified_at=datetime.utcnow() if uin_status == "VERIFIED" else None,
+            verification_note="DEMO UIN for ArduCopter SITL spraying fleet",
+        ))
+        seeded_reviews.append((drone, out["id"], form_kind))
+
+    # Ground AGRI-05 after its motor-failure flight in the maintenance logbook
+    now = datetime.utcnow().replace(microsecond=0)
+    db.add(MaintenanceEntry(
+        fleet=fleet, drone_id="AGRI-05", done_at=now - timedelta(hours=2),
+        action=maint.GROUNDING_ACTION,
+        note="Motor 1 thrust loss in SITL v2 S6; grounded pending motor/ESC bench check.",
+        done_by=SEEDER.username,
+    ))
+    ledger.append(db, "maintenance", f"{fleet}/AGRI-05",
+                  {"done_at": (now - timedelta(hours=2)).isoformat(), "action": maint.GROUNDING_ACTION,
+                   "note": "Motor 1 thrust loss in SITL v2 S6; grounded pending motor/ESC bench check."}, SEEDER.username)
+
+    # Calibration record + live November 2026 spray forms using 8 m swath spacing matching the SITL mission
+    for drone, rev_id, kind in seeded_reviews:
+        r = db.get(FlightReview, rev_id)
+        log = sf.log_values(r.report or {}, r.created_at.isoformat())
+        start_iso = log.get("4-1s") or now.strftime("%Y-%m-%dT%H:%M")
+        start = datetime.fromisoformat(start_iso)
+        cal_day = (start - timedelta(days=5)).replace(hour=9, minute=0)
+        db.add(MaintenanceEntry(fleet=fleet, drone_id=drone, done_at=cal_day, action=sf.CALIBRATION_ACTIONS[0],
+                                note="Pre-week nozzle flow calibration (DEMO).", done_by=SEEDER.username))
+        if kind == "not_spray":
+            row = SprayForm(review_id=rev_id, fleet=fleet, drone_id=drone, values={}, not_spray=True, updated_by=SEEDER.username)
+        elif kind == "draft":
+            row = SprayForm(review_id=rev_id, fleet=fleet, drone_id=drone,
+                            values={"1-2": "Mulshi Block, Pune (SITL demo)", "5-13": 8.0}, not_spray=False, updated_by=SEEDER.username)
+        else:
+            v = {**DEMO_SPRAY, "1-2": "Mulshi Block, Pune (SITL demo)", "5-13": 8.0,
+                 "3-4": (start + timedelta(days=365)).date().isoformat(),
+                 "sop-notice": (start - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M")}
+            if kind == "problems":
+                v["3-4"] = (start - timedelta(days=15)).date().isoformat()
+                v["sop-notice"] = (start - timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M")
+                v["7-1"] = ["None"]
+            row = SprayForm(review_id=rev_id, fleet=fleet, drone_id=drone, values=v, not_spray=False, updated_by=SEEDER.username)
+            if kind == "submitted":
+                row.values = {**v, **{k: x for k, x in log.items() if k in sf.FROM_LOG and x is not None},
+                              "5-5": "Aerial", "5-6": cal_day.date().isoformat()}
+                row.submitted_on = min(now.date(), (start + timedelta(days=1)).date()).isoformat()
+                row.submitted_via = "DEMO: CIB&RC Annexure-I email submission"
+        db.add(row)
+        db.flush()
+        ledger.append(db, "spray_form", f"{fleet}/review/{rev_id}",
+                      {"review_id": rev_id, "review_sha256": ledger.payload_hash(r.report),
+                       "values": row.values, "not_spray": row.not_spray,
+                       "submitted_on": row.submitted_on, "submitted_via": row.submitted_via}, SEEDER.username)
+    db.commit()
+    print(f"Fleet '{fleet}': {len(seeded_reviews)} ArduCopter 4 m Pune spraying flights seeded with baseline, plans, spray forms & maintenance.")
 
 
 def seed_settings_fleet(db, fleet: str, files) -> None:

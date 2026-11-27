@@ -5,15 +5,16 @@ import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
 
 type State = 'OVERDUE' | 'DUE_SOON' | 'DRAFT' | 'READY' | 'SUBMITTED'
+interface AreaEst { moved_m: number; spacing_m: number; hectares: number; acres: number; note: string }
 interface Row { review_id: number; drone_id: string; uin: string | null; log_name: string | null; date: string | null; location: string | null
-  product: string | null; state: State; due: string | null; days_left: number | null; missing: number; problems: number
+  product: string | null; area?: AreaEst | null; state: State; due: string | null; days_left: number | null; missing: number; problems: number
   submitted_on: string | null; submitted_late_by: number | null; not_spray: boolean }
-interface Register { fleet: string; as_of: string; deadline_days: number; source: string; counts: Record<State, number>; rows: Row[]; not_spray: Row[]; latest_flight: string | null }
+interface Register { fleet: string; as_of: string; deadline_days: number; source: string; counts: Record<State, number>; total_acres?: number; total_hectares?: number; rows: Row[]; not_spray: Row[]; latest_flight: string | null }
 interface Field { code: string; label: string; section: string; kind: 'text' | 'number' | 'date' | 'datetime' | 'choice' | 'multi' | 'yesno'; options: string[] | null; required: boolean }
 interface Check { level: 'missing' | 'problem' | 'note'; code: string; text: string; rule: string }
 type Val = string | number | string[] | null
 interface Form { review_id: number; drone_id: string; uin: string | null; log_name: string | null; values: Record<string, Val>; sources: Record<string, string>
-  log: Record<string, unknown>; checks: Check[]; status: Row & { state: State }; submitted_on: string | null; submitted_via: string | null; updated_by: string | null; updated_at: string | null }
+  log: Record<string, unknown>; area?: AreaEst | null; checks: Check[]; status: Row & { state: State }; submitted_on: string | null; submitted_via: string | null; updated_by: string | null; updated_at: string | null }
 
 const LOOK: Record<State, { label: string; color: string; bg: string }> = {
   OVERDUE: { label: 'Overdue', color: '#DC2626', bg: 'var(--status-red-subtle)' },
@@ -142,12 +143,17 @@ export default function SprayRegisterPage() {
           {stale && reg.latest_flight && <button className="btn" onClick={() => setAsOf(reg.latest_flight!)}>As of the last spraying flight ({show(reg.latest_flight)})</button>}
           {stale && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>The demo flights are from public logs flown years ago, so counted from today every form is overdue.</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
           {(Object.keys(LOOK) as State[]).map((s) => (
             <div key={s} className="card" style={{ padding: 12, borderLeft: `4px solid ${LOOK[s].color}` }}>
               <div style={{ fontSize: 24, fontWeight: 700, color: LOOK[s].color }}>{reg.counts[s] ?? 0}</div>
               <div style={{ fontSize: 12, fontWeight: 600 }}>{LOOK[s].label}</div>
             </div>))}
+          {(reg.total_acres ?? 0) > 0 && (
+            <div className="card" style={{ padding: 12, borderLeft: '4px solid var(--accent)' }} title="Geometric estimate from moving airborne distance × track spacing (5-13); no flow sensor">
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{reg.total_acres} ac</div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Est. swath ({reg.total_hectares} ha)</div>
+            </div>)}
         </div>
 
         <div className="card" style={{ padding: 16, display: 'grid', gap: 8 }}>
@@ -159,13 +165,15 @@ export default function SprayRegisterPage() {
           {reg.rows.length === 0 && <div style={{ fontSize: 13 }}>No reviewed flights yet. Upload flight logs in Fleet Assurance; each appears here.</div>}
           <style>{'#spray td, #spray th { padding: 6px 10px 6px 0; vertical-align: top; text-align: left }'}</style>
           {reg.rows.length > 0 && <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead><tr style={{ color: 'var(--text-secondary)' }}><th /><th>Sprayed</th><th>Drone</th><th>Location</th><th>Product</th><th>Status</th><th>Due</th><th>Empty fields</th><th>Problems</th><th /></tr></thead>
+            <thead><tr style={{ color: 'var(--text-secondary)' }}><th /><th>Sprayed</th><th>Drone</th><th>Location</th><th>Product</th><th>Est. area</th><th>Status</th><th>Due</th><th>Empty fields</th><th>Problems</th><th /></tr></thead>
             <tbody>{reg.rows.map((r) => (
               <tr key={r.review_id} style={{ borderTop: '1px solid var(--border)', background: form?.review_id === r.review_id ? 'var(--bg-elevated, #F8FAFC)' : undefined }}>
                 <td><input type="checkbox" aria-label={`Select flight ${r.review_id}`} checked={picked.includes(r.review_id)}
                   onChange={(e) => setPicked(e.target.checked ? [...picked, r.review_id].slice(-6) : picked.filter((x) => x !== r.review_id))} /></td>
                 <td style={{ whiteSpace: 'nowrap' }}>{show(r.date)}</td><td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{r.drone_id}</td>
-                <td>{r.location || '—'}</td><td>{r.product || '—'}</td><td><Badge s={r.state} /></td>
+                <td>{r.location || '—'}</td><td>{r.product || '—'}</td>
+                <td style={{ whiteSpace: 'nowrap' }} title={r.area?.note}>{r.area ? `${r.area.acres} ac (${r.area.hectares} ha)` : '—'}</td>
+                <td><Badge s={r.state} /></td>
                 <td style={{ whiteSpace: 'nowrap' }}>{show(r.due)}<div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   {r.state === 'SUBMITTED' ? `sent ${show(r.submitted_on)}${r.submitted_late_by ? `, ${r.submitted_late_by} d late` : ''}`
                     : r.days_left == null ? '' : r.days_left < 0 ? `${-r.days_left} days overdue` : `${r.days_left} days left`}</div></td>
@@ -192,6 +200,7 @@ export default function SprayRegisterPage() {
           UIN {form.uin || <b style={{ color: '#DC2626' }}>none on record</b>} · due {show(form.status.due)}
           {form.updated_by && <> · last saved by {form.updated_by}, signed into the record</>}
           {typeof form.log.direction_strength === 'number' && <> · {Math.round(100 * (form.log.direction_strength as number))}% of the distance flown lies along one axis</>}
+          {form.area && <> · <span title={form.area.note}>est. swath area <b>{form.area.acres} acres ({form.area.hectares} ha)</b> from {form.area.moved_m} m × {form.area.spacing_m} m</span></>}
         </div>
         {form.checks.filter((c) => c.level !== 'missing').length > 0 && <div style={{ display: 'grid', gap: 4 }}>
           {form.checks.filter((c) => c.level !== 'missing').map((c, i) => (

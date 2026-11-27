@@ -3,7 +3,11 @@
 A walk-through that shows each claim the paper makes about the tool (Section 6, Table 12), on real public PX4
 flights, with the questions an examiner is likely to ask. About 10 minutes.
 
-Last checked 18 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
+Last checked 27 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
+
+> **Two seeded demo fleets:**
+> - **`pune-agri` (start here for the Indian operator workflow):** 6 real ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05`, active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres estimated swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
+> - **`demo` & `demo-settings` (empirical study evidence):** 64 real public PX4 flights of 8 unrelated airframes showing the within-drone vibration null, public reference comparison, maintenance logbook before/after, and settings drift.
 
 ## 1. Set up (once)
 
@@ -189,8 +193,7 @@ an upload (`tools/build_public_reference.py`). It is a description, not a limit,
    planned at 5 m above the take-off point, as crop spraying is flown just above the crop.
 3. Click a mission to zoom to it on the map.
 
-Say: the zones are approximations from the Drone Rules 2021 distances around known sites, not Digital Sky, and the
-screen says so. A route outside Pune or Mumbai is reported "not checked", never "clear". Every check is signed.
+Say: full local zones are loaded for Pune and Mumbai, and 36 major Indian civil airport perimeters (Drone Rules 2021 5 km RED / 12 km YELLOW) are checked nationwide; routes outside mapped zones return "not checked", never "clear". Every check is signed.
 
 ### Step 5. Mission conflict and wind (pre-flight checks)
 
@@ -260,7 +263,7 @@ database could rebuild the whole chain; a copy of the heads file kept by someone
 come from this computer's clock, and no trusted hardware is involved.
 
 **Has it been tested with real operators?**
-No. 660 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+No. 765 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
 has been done. The paper says so.
 
 **Does it work with ArduPilot?**

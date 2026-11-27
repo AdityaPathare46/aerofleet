@@ -38,14 +38,16 @@ function gap(a?: string, b?: string) {
 }
 
 const TESTS: { name: string; what: string }[] = [
-  { name: 'No AI in the decision path', what: 'Follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (tests/unit/test_no_ai_in_decision_path.py).' },
-  { name: 'Paper numbers stay true', what: 'docs/paper/check_numbers.py checks 29 key numbers across the paper, supplement, cover letter and highlights against the result files, and every number on the Overview page against its source.' },
+  { name: 'No AI in the decision path', what: 'Follows every import from all 2.0 product routes (including spray & VR study) and assurance modules and fails if it can reach an AI agent, the language-model panel or any ML library (tests/unit/test_no_ai_in_decision_path.py).' },
+  { name: 'Paper numbers stay true', what: 'docs/paper/check_numbers.py checks 30 items across the paper, supplement, cover letter, highlights and Overview page against the committed result files.' },
   { name: 'Results recompute', what: 'The four claims above are recomputed in a test, compared with the paper\'s text, and the declaration is checked to predate the result (tests/unit/test_evidence.py).' },
   { name: 'Learned model exported exactly', what: 'The app evaluates the trained trees in plain Python; they reproduce scikit-learn to within 3e-14, and a test checks the evaluator (tests/unit/test_assurance_normal_flight.py).' },
-  { name: 'Damaged files', what: 'Empty files, random bytes, a mission file renamed as a log and a log cut off mid-flight all get a clear message, never a crash.' },
-  { name: 'Tampering', what: 'Every attack on this page is also an automated test.' },
+  { name: 'RFC 3161 trusted timestamping & DB cross-check', what: 'Receipts optionally attach an RFC 3161 TSA token (sending only the 32-byte SHA-256 hash; verified live against DigiCert & FreeTSA and offline in test_assurance_tsa.py), and GET /ledger/verify cross-checks stored FlightReview & SprayForm SQLite rows.' },
+  { name: 'Damaged files & tampering', what: 'Empty files, random bytes, a mission file renamed as a log, truncated logs, and all five tampering attacks are covered by 763+ automated tests.' },
 ]
 const MEASURED: { what: string; value: string; source: string }[] = [
+  { what: 'Real autopilot firmware (ArduPilot SITL v2, 4 m Pune spraying missions)', value: 'all 8 scenarios (normal, failsafe off, 20 s GPS loss, low battery, mid-flight geofence off, 8 m/s wind, motor failure, compass failure) met 3/3 on fresh fields', source: 'research/results/sitl_check/v2_summary.md' },
+  { what: 'SA1 + FA3: Today\'s fleet specificity & sensitivity (pre-declared e9c4ebc)', value: '14.2% H good/great [vehicle-cluster 95% CI 8.5–20.7%]; RflyMAD sensor faults 53.8% (106/197), fault-free control 0.0% (0/50); archive crashes 36.8% vs prior flights 26.5% (confirming within-drone null)', source: 'research/results/false_alarms/sa1_fa3_summary.md' },
   { what: 'Review speed, 36 real PX4 logs of 0.9 to 92.8 MB', value: 'median 0.23 s; the 92.8 MB (28 min) flight in 2.44 s', source: 'docs/measurements/review_speed.md' },
   { what: 'Planned-versus-flown check, deviations injected into 40 real flights', value: '36/40 sideways (35 m) and 39/40 upward (20 m) found; 0/40 false alarms with 5 s waypoints', source: 'research/results/px4_log_study/injection_reconcile.md' },
   { what: 'Describe-a-problem search, 96 expert-diagnosed crashes held out', value: 'best guess right 22%, below the 27% of guessing the most common cause; so it is not used as a diagnosis', source: 'research/results/px4_log_study/troubleshoot_loo_settled.md' },

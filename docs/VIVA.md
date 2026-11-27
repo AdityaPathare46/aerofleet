@@ -25,11 +25,14 @@ as context only.
 ## The live demonstration order (10 minutes)
 
 1. **Overview** page: the use case and its numbers, the data, six findings, how each design choice follows (3 min).
-1b. **Today's fleet**: the morning go / no-go board, every reason linked to its evidence (1 min).
+1b. **Today's fleet** (fleet `pune-agri`): cohesive 6-drone ArduCopter 4 m Pune spraying fleet with shared baseline,
+    verified/unverified UINs, every verdict (`AGRI-01/02` Ready, `AGRI-06` Check first for compass health, `AGRI-03/04/05`
+    Do not fly for failsafes off, mid-flight geofence disable, and grounded motor-failure incident), plus **Spray register**
+    (live Nov 2026 forms, 5.61 acres estimated swath) and 3D/VR planned-vs-flown spraying replay (2 min).
 2. **Proof** page: press *Recompute the results*, then *Run five attacks on a copy* (2 min). This answers most
    "how do we know" questions before they are asked.
-3. **Fleet Assurance**, fleet `demo`: a flight review (timeline, evidence quality), a drone's History, the public
-   comparison column (3 min).
+3. **Fleet Assurance**, fleet `demo`: real public PX4 logs — a flight review (timeline, evidence quality), a drone's
+   History, the public comparison column, and optional RFC 3161 TSA-timestamped receipt (2 min).
 4. Fleet `demo-settings`: the blocked failsafe and the public-flights column (1 min).
 4b. **Route check** ▸ *Try 5 demo missions*: one clear, one needing permission, two not permitted, one conflict (1 min).
 5. Settings page: "Language models: none" (30 s).
@@ -223,10 +226,11 @@ approve it with a written reason, and the approval is signed into the record.
 **Q23b. What is the map for? This used to be a delivery project.**
 The delivery dispatcher was dropped when the project was re-scoped; its screens are hidden as legacy. The map is now a
 pre-flight **Route check**: load the missions planned for a period and each route is checked against red and yellow
-airspace, the 120 m limit, and the other planned routes, then signed into the record. *Honest limit:* the zones are
-our approximations from the Drone Rules 2021 distances around known airports and military sites in Pune and Mumbai,
-not the official Digital Sky map (which cannot be queried automatically), and the screen says so; a route outside
-those cities is reported "not checked", never "clear". *Show:* Route check ▸ *Try 5 demo missions*.
+airspace, the 120 m limit, and the other planned routes, then signed into the record. *Honest limit:* full local zones
+(airports + military/restricted sites) are loaded for Pune and Mumbai; across the rest of India, 36 major civil airport
+perimeters are checked automatically using Drone Rules 2021 distances (5 km RED / 12 km YELLOW for major airports; 3 km /
+8 km for smaller aerodromes). Routes outside those mapped zones are reported "not checked" (`UNCHECKED`), never "clear",
+and the screen states plainly that this is an approximation, not the official Digital Sky map. *Show:* Route check ▸ *Try 5 demo jobs*.
 
 **Q23c. How does "Today's fleet" decide, and why trust it?**
 Fixed rules only, each shown with its reason: **Do not fly** if a safety-critical setting changed without approval, there
@@ -293,7 +297,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-763 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+765 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -348,10 +352,12 @@ later conversation. Willingness to pay is unproven.
 
 **Q40. What does the spray register actually save the operator?**
 The SOP asks for its Annexure-I form within seven days of each spraying. A log already knows the date, start and end
-time, height and speed, and often the spray direction; the drone's previous form knows the sprayer; the logbook knows
-the last calibration. So the operator types only what a log cannot know (field, crop, product, weather, PPE), sees
-the days left, and gets a printable form in the official layout. *Show:* Spray register ▸ As of the last spraying
-flight ▸ open the form with three problems.
+time, height and speed, moving airborne distance, and often the spray direction; the drone's previous form knows the
+sprayer and track spacing (`5-13`); the logbook knows the last calibration. From moving airborne distance × track spacing
+AeroFleet also computes a **geometric swath area estimate (acres and hectares)** with an explicit caveat that turns are
+included and no flow sensor is read — directly answering the acreage metric agri-operators track and bill on. Overdue
+7-day spray forms also surface as a non-blocking compliance link on *Today's fleet* without altering physical airworthiness
+verdicts. *Show:* Spray register (fleet `pune-agri`) ▸ 5.61 acres total across 5 active Nov 2026 flights, open `AGRI-03` with three SOP problems.
 
 **Q41. Why are there no wind or height limits in the spray checks?**
 Because the SOP gives none: it says "appropriate" wind speed, temperature, humidity and height. Inventing a number
@@ -460,11 +466,13 @@ commanded, which rises with weight and falls as a tank empties) and declared a t
 least 10%. It fell 6.2%, so by our own rule the model was not changed. Likely, public drones carry too little payload
 for it to matter; on sprayers it may, and the code is ready for that retrain once we have sprayer logs.
 
-**Q55. Three demo drones are "Ready" though their last flight was rated a crash. Isn't that a failure?**
-It is the study on screen: crash flights showed no warning in their logs, and a log cannot say whether or why a drone
-crashed. The board reports what the log shows. An operator who knows a drone crashed records `"Incident / crash reported
-(grounded for inspection)"` in the maintenance logbook, which immediately turns Today's fleet to **Do not fly** until a
-subsequent `"Post-incident inspection cleared"` entry is signed into the record.
+**Q55. Some crashed drones show no flight-log warnings. Isn't that a failure?**
+It is the study on screen: crash flights often show no warning in their logs, and a log cannot say whether or why a drone
+crashed. On fleet `demo` (unrelated public logs with no baseline), un-baselined drones now show **Check first** (`no_baseline`)
+rather than silently passing as Ready. On fleet `pune-agri` (where a fleet baseline is set), an operator who knows a drone
+crashed records `"Incident / crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`),
+which immediately turns Today's fleet to **Do not fly** until a subsequent `"Post-incident inspection cleared"` entry is
+signed into the record.
 
 **Q56. Why didn't you turn the ML model into an onboard emergency-takeover controller?**
 Because our own study proved ML fault detectors fail on unseen flight days (LeNet-5 dropped from AUC 0.94 to 0.63) and

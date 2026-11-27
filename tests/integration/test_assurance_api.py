@@ -415,27 +415,29 @@ def test_a_log_cut_off_mid_flight_is_still_reviewed_from_what_survives(api_clien
 
 
 def test_route_check_against_the_real_pune_zones_the_ceiling_and_each_other(api_client, auth_headers):
-    """The five demo missions (tauri-app/public/demo/route_check), one per outcome, plus one outside any supported city."""
+    """The five demo missions (tauri-app/public/demo/route_check), plus one near Delhi IGI airport and one in rural Maharashtra."""
     from pathlib import Path
 
     from aerofleet.integrations.mission_planner import build_waypoint_file
 
     demo = Path(__file__).resolve().parents[2] / "tauri-app" / "public" / "demo" / "route_check"
     files = [("plans", (p.name, p.read_bytes(), "text/plain")) for p in sorted(demo.glob("[A-Z]*.waypoints"))]
-    far = build_waypoint_file({"origin_lat": 28.61, "origin_lon": 77.20, "dest_lat": 28.62, "dest_lon": 77.21, "altitude_m": 60.0})
-    files.append(("plans", ("DELHI-TEST.waypoints", far.encode(), "text/plain")))
+    delhi = build_waypoint_file({"origin_lat": 28.61, "origin_lon": 77.20, "dest_lat": 28.62, "dest_lon": 77.21, "altitude_m": 60.0})
+    rural = build_waypoint_file({"origin_lat": 19.20, "origin_lon": 75.50, "dest_lat": 19.21, "dest_lon": 75.51, "altitude_m": 60.0})
+    files.append(("plans", ("DELHI-TEST.waypoints", delhi.encode(), "text/plain")))
+    files.append(("plans", ("RURAL-MH.waypoints", rural.encode(), "text/plain")))
     r = api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers, files=files)
     assert r.status_code == 200, r.text
     out = r.json()
     v = {m["id"]: m["verdict"] for m in out["missions"]}
     assert v == {"SPRAY-NEAR-CANTONMENT": "NOT_PERMITTED", "CROP-MAP-150M": "NOT_PERMITTED", "SPRAY-NEAR-AIRPORT": "NEEDS_PERMISSION",
-                 "SPRAY-FIELD-A": "CLEAR", "SPRAY-FIELD-B": "CLEAR", "DELHI-TEST": "UNCHECKED"}
+                 "SPRAY-FIELD-A": "CLEAR", "SPRAY-FIELD-B": "CLEAR", "DELHI-TEST": "NEEDS_PERMISSION", "RURAL-MH": "UNCHECKED"}
     cant = next(m for m in out["missions"] if m["id"] == "SPRAY-NEAR-CANTONMENT")
     assert "Pune Cantonment" in cant["summary"] and cant["city"] == "pune"
     assert {frozenset((c["a"], c["b"])) for c in out["conflicts"]} == {frozenset(("SPRAY-FIELD-A", "SPRAY-FIELD-B"))}
-    assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 6
+    assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 7
     assert api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers,
-                           files=[("plans", ("bad name!.waypoints", far.encode(), "text/plain"))]).status_code == 422
+                           files=[("plans", ("bad name!.waypoints", delhi.encode(), "text/plain"))]).status_code == 422
 
 
 def test_the_readiness_board_combines_settings_registration_and_the_last_flight(api_client, auth_headers, operator_headers, tmp_path):

@@ -41,3 +41,18 @@ def test_without_zone_data_a_route_is_unchecked_never_clear():
     r = check_route("FAR", [(28.6, 77.2, 0), (28.61, 77.2, 60)], None)
     assert r["verdict"] == UNCHECKED and "not checked" in explain(r) and "Digital Sky" in explain(r)
     assert check_route("FARHIGH", [(28.6, 77.2, 0), (28.61, 77.2, 200)], None)["verdict"] == NOT_PERMITTED   # height is known anywhere
+
+
+def test_india_wide_airport_lookup_catches_red_yellow_and_never_claims_clear_outside_mapped_cities():
+    from aerofleet.assurance.airspace_check import INDIA_AIRPORTS, india_airport_zone_at
+
+    assert len(INDIA_AIRPORTS) >= 35
+    # Inside Nagpur Airport 5 km RED zone
+    nag_red = check_route("NAG-RED", [(21.092, 79.055, 10), (21.100, 79.060, 10)], india_airport_zone_at, airports_only=True)
+    assert nag_red["verdict"] == NOT_PERMITTED and nag_red["findings"][0]["color"] == "RED" and "Nagpur" in nag_red["findings"][0]["zone"]
+    # Inside Nashik Airport 5-12 km YELLOW band (~8 km south of Ozar)
+    isk_yel = check_route("ISK-YEL", [(20.045, 73.914, 10), (20.040, 73.914, 10)], india_airport_zone_at, airports_only=True)
+    assert isk_yel["verdict"] == NEEDS_PERMISSION and isk_yel["findings"][0]["color"] == "YELLOW" and "Nashik" in isk_yel["findings"][0]["zone"]
+    # Rural Maharashtra far from any airport -> UNCHECKED (never CLEAR because military zones aren't mapped outside Pune/Mumbai)
+    rural = check_route("RURAL", [(17.10, 74.90, 5), (17.105, 74.90, 5)], india_airport_zone_at, airports_only=True)
+    assert rural["verdict"] == UNCHECKED and "Indian airport zones" in explain(rural) and "Digital Sky" in explain(rural)

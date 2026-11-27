@@ -133,12 +133,33 @@ def log_values(report: Dict[str, Any], uploaded_at: str) -> Dict[str, Any]:
     if speeds:
         out["5-15"] = round(median(speeds) * 3.6, 1)
     if moved > 0:
+        out["moved_m"] = round(moved, 1)
         r = math.hypot(sx, sy) / moved
         axis = (math.degrees(math.atan2(sy, sx)) / 2.0) % 180.0
         out["direction_strength"] = round(r, 2)
         if r >= 0.6:                       # most of the distance flown along one axis (back-and-forth passes)
             out["4-6"] = round(axis)
     return out
+
+
+def area_estimate(log: Dict[str, Any], values: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Geometric area estimate from moving airborne distance * track spacing (5-13).
+
+    Honest limit: turns between passes are included and no spray-flow sensor is read from the autopilot log,
+    so this is an upper-bound geometric swath estimate for billing/record reference, not metered volume.
+    """
+    moved = _num(log.get("moved_m"))
+    spacing = _num(values.get("5-13"))
+    if moved is None or moved <= 0 or spacing is None or not (0 < spacing <= 30):
+        return None
+    area_m2 = moved * spacing
+    return {
+        "moved_m": round(moved, 1),
+        "spacing_m": round(spacing, 2),
+        "hectares": round(area_m2 / 10_000.0, 3),
+        "acres": round(area_m2 / 4_046.8564, 2),
+        "note": "Geometric swath estimate (moving airborne distance × track spacing 5-13); includes turns and does not measure spray flow.",
+    }
 
 
 def defaults(log: Dict[str, Any], previous: Optional[Dict[str, Any]], last_calibration: Optional[str]) -> Dict[str, Dict[str, Any]]:
@@ -275,7 +296,9 @@ def print_html(forms: List[Dict[str, Any]], fleet: str) -> str:
             cells.append(f"<td>{e(_show(f['values'].get(code)))}{mark}</td>")
         rows.append(f"<tr><td class='code'>{e(code)}</td><td>{e(label)}</td>{''.join(cells)}</tr>")
     meta = "".join(f"<div class='muted'>{i + 1}: drone {e(f['drone_id'])}, UIN {e(f.get('uin') or 'none on record')}, "
-                   f"review #{f['review_id']} (signed review SHA-256 {e(f.get('review_sha256', '')[:16])}…)</div>" for i, f in enumerate(forms))
+                   f"review #{f['review_id']}"
+                   + (f", est. swath area {f['area']['acres']} acres ({f['area']['hectares']} ha)" if f.get("area") else "")
+                   + f" (signed review SHA-256 {e(f.get('review_sha256', '')[:16])}…)</div>" for i, f in enumerate(forms))
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>Spray Monitoring Form - {e(fleet)}</title>"
             f"<style>{css}</style></head><body><h1>SPRAY MONITORING FORM <span class='muted'>(Annexure-I)</span></h1>"
             f"<div class='muted'>{e(SOURCE)}. Filled from AeroFleet fleet {e(fleet)}; values marked (log) were read from "

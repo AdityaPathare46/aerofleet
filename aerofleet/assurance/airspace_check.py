@@ -19,8 +19,68 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 LEGAL_CEILING_M = 120.0           # Drone Rules 2021: green-zone limit without permission (400 ft)
 STEP_M = 25.0                     # spacing of the points checked along each leg
 CLEAR, NEEDS_PERMISSION, NOT_PERMITTED, UNCHECKED = "CLEAR", "NEEDS_PERMISSION", "NOT_PERMITTED", "UNCHECKED"
-NOTE = ("Zones are approximations from the public distances in India's Drone Rules 2021 around known airports and "
-        "military or strategic sites, not the official Digital Sky map. Check every route on Digital Sky before flight.")
+NOTE = ("Zones are approximations from the public distances in India's Drone Rules 2021: 36 major Indian civil airports "
+        "(5 km red / 12 km yellow; 3 km / 8 km for smaller aerodromes) plus military/strategic sites in Pune and Mumbai. "
+        "Not the official Digital Sky map — check every route on Digital Sky before flight.")
+
+# 36 major Indian civil airports (IATA, name, lat, lon, red_m, yellow_m) using Drone Rules 2021 distances.
+# Outside Pune & Mumbai, military/cantonment sites are not mapped, so a route missing these airports returns UNCHECKED, never CLEAR.
+INDIA_AIRPORTS: Tuple[Tuple[str, str, float, float, float, float], ...] = (
+    ("PNQ", "Pune Airport (Lohegaon)", 18.5822, 73.9197, 5000.0, 12000.0),
+    ("BOM", "Mumbai Chhatrapati Shivaji Maharaj Intl Airport", 19.0896, 72.8656, 5000.0, 12000.0),
+    ("VAJJ", "Juhu Aerodrome (Mumbai)", 19.0968, 72.8347, 3000.0, 8000.0),
+    ("ISK", "Nashik Airport (Ozar)", 20.1194, 73.9136, 5000.0, 12000.0),
+    ("NAG", "Nagpur Dr. Babasaheb Ambedkar Intl Airport", 21.0922, 79.0472, 5000.0, 12000.0),
+    ("IXU", "Aurangabad (Chhatrapati Sambhajinagar) Airport", 19.8627, 75.3981, 5000.0, 12000.0),
+    ("KLH", "Kolhapur Airport", 16.6647, 74.2894, 3000.0, 8000.0),
+    ("SAG", "Shirdi Airport", 19.6886, 74.3789, 3000.0, 8000.0),
+    ("SSE", "Solapur Airport", 17.6280, 75.9349, 3000.0, 8000.0),
+    ("JLG", "Jalgaon Airport", 20.9628, 75.6275, 3000.0, 8000.0),
+    ("NDC", "Nanded Shri Guru Gobind Singh Ji Airport", 19.1833, 77.3186, 3000.0, 8000.0),
+    ("DEL", "Delhi Indira Gandhi Intl Airport", 28.5562, 77.1000, 5000.0, 12000.0),
+    ("BLR", "Bengaluru Kempegowda Intl Airport", 13.1986, 77.7066, 5000.0, 12000.0),
+    ("HYD", "Hyderabad Rajiv Gandhi Intl Airport", 17.2403, 78.4294, 5000.0, 12000.0),
+    ("MAA", "Chennai Intl Airport", 12.9941, 80.1709, 5000.0, 12000.0),
+    ("CCU", "Kolkata Netaji Subhas Chandra Bose Intl Airport", 22.6547, 88.4467, 5000.0, 12000.0),
+    ("AMD", "Ahmedabad Sardar Vallabhbhai Patel Intl Airport", 23.0772, 72.6347, 5000.0, 12000.0),
+    ("STV", "Surat Intl Airport", 21.1141, 72.7418, 5000.0, 12000.0),
+    ("BDQ", "Vadodara Airport", 22.3362, 73.2263, 5000.0, 12000.0),
+    ("HSR", "Rajkot Intl Airport (Hirasar)", 22.3822, 71.0319, 5000.0, 12000.0),
+    ("JAI", "Jaipur Intl Airport", 26.8242, 75.8122, 5000.0, 12000.0),
+    ("UDR", "Udaipur Maharana Pratap Airport", 24.6177, 73.8961, 5000.0, 12000.0),
+    ("LKO", "Lucknow Chaudhary Charan Singh Intl Airport", 26.7606, 80.8893, 5000.0, 12000.0),
+    ("VNS", "Varanasi Lal Bahadur Shastri Intl Airport", 25.4524, 82.8593, 5000.0, 12000.0),
+    ("IDR", "Indore Devi Ahilya Bai Holkar Airport", 22.7218, 75.8011, 5000.0, 12000.0),
+    ("BHO", "Bhopal Raja Bhoj Airport", 23.2875, 77.3374, 5000.0, 12000.0),
+    ("IXC", "Chandigarh Shaheed Bhagat Singh Intl Airport", 30.6735, 76.7885, 5000.0, 12000.0),
+    ("ATQ", "Amritsar Sri Guru Ram Dass Jee Intl Airport", 31.7096, 74.7973, 5000.0, 12000.0),
+    ("PAT", "Patna Jay Prakash Narayan Airport", 25.5913, 85.0880, 5000.0, 12000.0),
+    ("IXR", "Ranchi Birsa Munda Airport", 23.3143, 85.3217, 5000.0, 12000.0),
+    ("BBI", "Bhubaneswar Biju Patnaik Intl Airport", 20.2444, 85.8178, 5000.0, 12000.0),
+    ("VTZ", "Visakhapatnam Airport", 17.7212, 83.2245, 5000.0, 12000.0),
+    ("VGA", "Vijayawada Intl Airport", 16.5304, 80.7968, 5000.0, 12000.0),
+    ("CJB", "Coimbatore Intl Airport", 11.0300, 77.0434, 5000.0, 12000.0),
+    ("COK", "Kochi Cochin Intl Airport", 10.1520, 76.4019, 5000.0, 12000.0),
+    ("TRV", "Thiruvananthapuram Intl Airport", 8.4821, 76.9201, 5000.0, 12000.0),
+)
+
+
+def india_airport_zone_at(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+    """Drone Rules 2021 airport RED/YELLOW lookup across 36 major Indian civil airports."""
+    yellow = None
+    for code, name, alat, alon, red_m, yellow_m in INDIA_AIRPORTS:
+        if abs(lat - alat) > 0.15 or abs(lon - alon) > 0.15:
+            continue
+        d = _metres((lat, lon), (alat, alon))
+        if d <= red_m:
+            return {"id": f"AIRPORT_{code}_RED", "color": "RED", "name": name}
+        if d <= yellow_m and yellow is None:
+            yellow = {"id": f"AIRPORT_{code}_YELLOW", "color": "YELLOW", "name": name}
+    return yellow
+
+
+def in_india_bounds(lat: float, lon: float) -> bool:
+    return 6.0 <= lat <= 37.5 and 68.0 <= lon <= 97.5
 
 
 def _metres(a: Tuple[float, float], b: Tuple[float, float]) -> float:
@@ -43,9 +103,11 @@ def _samples(path: Sequence[Tuple[float, float, float]]):
 
 
 def check_route(mission_id: str, path: Sequence[Tuple[float, float, float]],
-                zone_at: Optional[Callable[[float, float], Optional[Dict[str, Any]]]]) -> Dict[str, Any]:
+                zone_at: Optional[Callable[[float, float], Optional[Dict[str, Any]]]],
+                airports_only: bool = False) -> Dict[str, Any]:
     """`zone_at(lat, lon)` gives the red or yellow zone at a point ({"id", "color", "name"}) or None; None for the
-    whole function means there is no zone data for this place."""
+    whole function means there is no zone data for this place. When `airports_only=True` (outside Pune/Mumbai),
+    missing all airports yields UNCHECKED rather than CLEAR because military/strategic zones are not mapped."""
     pts = list(_samples(path))
     length = pts[-1][0]
     findings: List[Dict[str, Any]] = []
@@ -68,17 +130,21 @@ def check_route(mission_id: str, path: Sequence[Tuple[float, float, float]],
         verdict = NOT_PERMITTED
     elif "YELLOW" in colors:
         verdict = NEEDS_PERMISSION
-    elif zone_at is None:
+    elif zone_at is None or airports_only:
         verdict = UNCHECKED
     else:
         verdict = CLEAR
     return {"id": mission_id, "verdict": verdict, "length_m": round(length), "max_height_m": round(max(p[3] for p in pts), 1),
+            "airports_only": airports_only,
             "findings": sorted(findings, key=lambda f: f["at_m"]), "path": [[round(la, 6), round(lo, 6), round(h, 1)] for la, lo, h in path]}
 
 
 def explain(r: Dict[str, Any]) -> str:
     """One plain sentence per mission, for the screen and the record."""
     if r["verdict"] == UNCHECKED:
+        if r.get("airports_only"):
+            return (f"Checked against {len(INDIA_AIRPORTS)} major Indian airport zones (none entered) and the 120 m limit; "
+                    "non-airport military/strategic zones outside Pune & Mumbai are not mapped here — verify on Digital Sky.")
         return "No airspace data for this location in AeroFleet: not checked. Use Digital Sky."
     parts = []
     for f in r["findings"]:

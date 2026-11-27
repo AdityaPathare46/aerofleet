@@ -171,13 +171,20 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ## 6. Status
 
-**Now (27 Nov 2026, post-audit).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **763 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
-typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (now including
+**Now (27 Nov 2026, post-audit + domain-fit upgrades).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
+reviews yet). Product: **765 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
 cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
 timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`, live-tested against DigiCert
-and FreeTSA), and the four Proof results recompute
-to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
+and FreeTSA), and the Proof page recomputes the four headline results live and summarizes SITL v2, SA1+FA3, and RFC 3161 TSA.
+Domain-fit upgrades (27 Nov): (1) **Nationwide Indian airport airspace check** (`airspace_check.py`: 36 major civil airports,
+Drone Rules 2021 5 km RED / 12 km YELLOW and 3 km / 8 km smaller aerodromes, returning `UNCHECKED` — never `CLEAR` — outside
+mapped areas); (2) **Geometric spray swath area estimator** (`spray_form.py`, `spray.py`, `SprayRegister.tsx`: moving airborne
+distance × track spacing `5-13` in acres & hectares with turns/no-flow-sensor caveat) plus **overdue 7-day spray-form
+compliance link** surfaced on `Today's fleet` (`Readiness.tsx`, non-blocking); (3) **Cohesive Indian spraying demo fleet
+`pune-agri`** (`seed_demo_fleet.py --agri-only`: 6 ArduCopter 4 m Pune spraying flights from `sitl_v2` with shared baseline,
+reconciled `.waypoints` plans for 3D/VR replay, grounded incident on `AGRI-05`, and live Nov 2026 spray forms totaling 5.61
+acres). Review 1-5 Dec 2026; the report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
 Safety audit fixes (27 Nov, `dbc45d3`): fixed `reconcile.py` `ordered` variable-shadowing bug; upgraded `evidence.py` to
 contiguous airborne spans (`alt > 2 m OR speed >= 1.5 m/s`) for low-altitude/downslope sprayers and mid-air `<10%` battery
 detection (`>15 s` before touchdown); closed `readiness.py` silent passes (`NO_REFERENCE` -> `CHECK_FIRST`, partial CSV/GPX

@@ -218,15 +218,28 @@ async def operations_log(fleet: str, start: Optional[str] = Query(None, descript
 async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Morning readiness board: for every drone in the fleet, ready / check first / do not fly, and why
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
+    from aerofleet.assurance import spray_form as sf
     from aerofleet.assurance.maintenance import is_grounded
     from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary
     from aerofleet.assurance.vibration import drone_history
-    from aerofleet.data.models.models import DroneRegistration, MaintenanceEntry
+    from aerofleet.data.models.models import DroneRegistration, MaintenanceEntry, SprayForm
 
     _check_id(fleet, "Fleet")
     snap_ids = {r[0] for r in db.query(ParamSnapshot.drone_id).filter(ParamSnapshot.fleet == fleet).distinct().all()}
     reviews = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
     maint_rows = db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet).all()
+    spray_by_rev = {f.review_id: f for f in db.query(SprayForm).filter(SprayForm.fleet == fleet).all()}
+    today_utc = datetime.now(timezone.utc).date()
+    overdue_by_drone: Dict[str, int] = {}
+    for r in reviews:
+        saved = spray_by_rev.get(r.id)
+        if saved and (saved.not_spray or saved.submitted_on):
+            continue
+        day = (saved.values or {}).get("1-1") if saved else None
+        if not day:
+            day = sf.log_values(r.report or {}, r.created_at.isoformat()).get("1-1")
+        if day and sf.status({"1-1": day}, [], None, today_utc)["state"] == "OVERDUE":
+            overdue_by_drone[r.drone_id] = overdue_by_drone.get(r.drone_id, 0) + 1
     maint_by_drone: Dict[str, List[Dict[str, Any]]] = {}
     for m in maint_rows:
         maint_by_drone.setdefault(m.drone_id, []).append({"id": m.id, "done_at": m.done_at.isoformat(),
@@ -258,6 +271,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
                      last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None,
                      vib, grounded=grounded)
         row["settings_compared_with"] = settings and settings["compared_with"]
+        row["overdue_spray_forms"] = overdue_by_drone.get(drone_id, 0)
         out.append(row)
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
@@ -781,8 +795,9 @@ async def deconflict_plans(plans: List[UploadFile] = File(...), options: str = F
 # ── airspace route check ───────────────────────────────────────────────
 
 def _airspace_for(home):
-    """(city slug, zone lookup) for the supported city whose area covers the take-off point, or (None, None)."""
-    from aerofleet.assurance.airspace_check import _metres
+    """(area slug, zone lookup, airports_only) for the take-off point.
+    Pune and Mumbai include airports + military/strategic sites; the rest of India checks 36 major civil airports."""
+    from aerofleet.assurance.airspace_check import _metres, in_india_bounds, india_airport_zone_at
     from aerofleet.city.airspace import ZoneColor
     from aerofleet.city.registry import CITY_REGISTRY
     from aerofleet.fleet.state import get_fleet_state
@@ -799,8 +814,10 @@ def _airspace_for(home):
                         if z.color == color and m((lat, lon), (z.center_lat, z.center_lon)) <= z.radius_m:
                             return {"id": z.zone_id, "color": color.value, "name": (z.reason or z.zone_id).split(" — ")[0]}
                 return None
-            return slug, zone_at
-    return None, None
+            return slug, zone_at, False
+    if in_india_bounds(home[0], home[1]):
+        return "india-airports", india_airport_zone_at, True
+    return None, None, False
 
 
 @router.post("/plans/airspace")
@@ -830,11 +847,12 @@ async def airspace_check(plans: List[UploadFile] = File(...), user: User = Depen
         except (PlanError, ValueError) as e:
             raise HTTPException(status_code=422, detail=f"{f.filename}: {e}")
         missions.append(Mission(mid, plan))
-        city, zone_at = _airspace_for(plan.home)
-        r = check_route(mid, plan.path, zone_at)
-        r["city"] = city
+        city, zone_at, airports_only = _airspace_for(plan.home)
+        r = check_route(mid, plan.path, zone_at, airports_only=airports_only)
+        r["city"] = city if city and city != "india-airports" else None
         r["summary"] = explain(r)
-        cities.add(city)
+        if r["city"]:
+            cities.add(r["city"])
         results.append(r)
     conflicts = find_conflicts(missions) if len(missions) > 1 else []
     order = {"NOT_PERMITTED": 0, "NEEDS_PERMISSION": 1, "UNCHECKED": 2, "CLEAR": 3}

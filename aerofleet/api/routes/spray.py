@@ -114,8 +114,9 @@ def _form(db: Session, r: FlightReview, saved: Optional[SprayForm], others: List
     reg = db.get(DroneRegistration, r.drone_id)
     found = sf.checks(values, log, reg.uin if reg else None)
     st = sf.status(values, found, saved.submitted_on if saved else None, as_of)
+    area = sf.area_estimate(log, values)
     return {"review_id": r.id, "drone_id": r.drone_id, "fleet": r.fleet, "log_name": r.log_name, "values": values,
-            "sources": sources, "log": log, "checks": found, "status": st, "uin": reg.uin if reg else None,
+            "sources": sources, "log": log, "area": area, "checks": found, "status": st, "uin": reg.uin if reg else None,
             "not_spray": bool(saved and saved.not_spray), "submitted_on": saved and saved.submitted_on,
             "submitted_via": saved and saved.submitted_via, "updated_by": saved and saved.updated_by,
             "updated_at": saved and saved.updated_at.isoformat(), "review_sha256": ledger.payload_hash(r.report)}
@@ -154,11 +155,14 @@ async def spray_register(fleet: str, as_of: Optional[str] = Query(None, descript
     forms = _all(db, fleet, day)
     rows = [{"review_id": f["review_id"], "drone_id": f["drone_id"], "uin": f["uin"], "log_name": f["log_name"],
              "date": f["values"].get("1-1"), "location": f["values"].get("1-2"), "product": f["values"].get("3-1"),
-             "crop": f["values"].get("2-3"), **f["status"], "submitted_on": f["submitted_on"],
+             "crop": f["values"].get("2-3"), "area": f.get("area"), **f["status"], "submitted_on": f["submitted_on"],
              "not_spray": f["not_spray"]} for f in forms]
     spray = sorted([r for r in rows if not r["not_spray"]], key=lambda r: (sf.ORDER[r["state"]], r["due"] or "", r["drone_id"]))
+    total_acres = round(sum((r["area"]["acres"] for r in spray if r.get("area")), 0.0), 2)
+    total_ha = round(sum((r["area"]["hectares"] for r in spray if r.get("area")), 0.0), 3)
     return {"fleet": fleet, "as_of": day.isoformat(), "deadline_days": sf.DEADLINE_DAYS, "source": sf.SOURCE,
             "counts": {k: sum(r["state"] == k for r in spray) for k in sf.ORDER},
+            "total_acres": total_acres, "total_hectares": total_ha,
             "rows": spray, "not_spray": [r for r in rows if r["not_spray"]],
             "latest_flight": max((r["date"] for r in spray if r["date"]), default=None)}
 
@@ -279,13 +283,15 @@ async def register_csv(fleet: str, user: User = Depends(get_current_active_user)
 
     _fleet(fleet)
     forms = [f for f in _all(db, fleet, _as_of(None)) if not f["not_spray"]]
-    cols = ["review_id", "drone_id", "uin", "state", "due", "submitted_on", "submitted_via"] + [c for c, *_ in sf.ALL_FIELDS] + ["review_sha256"]
+    cols = ["review_id", "drone_id", "uin", "state", "due", "submitted_on", "submitted_via", "est_area_acres", "est_area_ha"] + [c for c, *_ in sf.ALL_FIELDS] + ["review_sha256"]
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(cols)
     for f in sorted(forms, key=lambda f: (f["values"].get("1-1") or "", f["drone_id"])):
+        area = f.get("area") or {}
         base = {"review_id": f["review_id"], "drone_id": f["drone_id"], "uin": f["uin"] or "", "state": f["status"]["state"],
                 "due": f["status"]["due"] or "", "submitted_on": f["submitted_on"] or "", "submitted_via": f["submitted_via"] or "",
+                "est_area_acres": area.get("acres", ""), "est_area_ha": area.get("hectares", ""),
                 "review_sha256": f["review_sha256"]}
         w.writerow([base[c] if c in base else sf._show(f["values"].get(c)) for c in cols])
     return Response(buf.getvalue(), media_type="text/csv",

@@ -94,3 +94,11 @@ def test_a_csv_or_gpx_log_without_vibration_still_gives_its_own_date():
     rep = {"flight_s": 60.0, "log": {"start_utc": 1794292200.0}, "replay": {"flown": [[0, 18.5, 73.8, 0.0], [60, 18.5, 73.81, 3.0]]}}
     log = sf.log_values(rep, "2030-01-01T00:00:00")
     assert log["1-1"] == "2026-11-10" and log["time_source"].startswith("log")
+
+
+def test_geometric_spray_area_estimate_uses_moving_distance_and_track_spacing():
+    log = sf.log_values(_report(passes=6, speed=5.0, height=3.0), "2026-11-10T06:40:00")
+    assert log["moved_m"] > 550.0
+    est = sf.area_estimate(log, {"5-13": 5.0})
+    assert est is not None and 0.28 < est["hectares"] < 0.36 and 0.70 < est["acres"] < 0.90
+    assert sf.area_estimate(log, {"5-13": None}) is None
