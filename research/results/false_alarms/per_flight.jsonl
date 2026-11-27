@@ -1,0 +1,1121 @@
+{"log_id": "0074d2c3-5887-4586-b77c-53d92b866192", "half": "H", "rating": "", "warnings": []}
+{"log_id": "00fa5793-6d34-48ca-8f71-20d0dd57bd93", "half": "H", "rating": "", "warnings": []}
+{"log_id": "01192000-ca12-4d53-87b1-34194e8562df", "half": "H", "rating": "", "warnings": []}
+{"log_id": "013f0f09-301c-4f5f-bfc3-085a19431270", "half": "D", "rating": "", "warnings": []}
+{"log_id": "014e5bcf-a4ce-4f84-a40e-ed1c0d2e3c09", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "0193d1aa-f0d4-4636-bbcf-020f2c8fda1b", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "01e21bbe-492a-4ec1-8d0f-e43b918043c1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "02bfe228-dba8-4ffe-9ab2-b30ce8ee026f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "02c44ee0-d33b-48c3-a594-90b3a27906bd", "half": "H", "rating": "", "warnings": []}
+{"log_id": "031c2798-9c36-4eaf-8676-d6db20a17ec2", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "0350ad01-3482-477f-b92a-ead9587cfef8", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "03d2ecd9-9f8d-4a63-8a74-a0f20824db2d", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "03fe1b6b-53e3-4dc3-84c6-f04ff6f75bd2", "half": "D", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "043788af-3b04-4eb9-bca9-d90b3124ea1a", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "0467b169-aec0-44d0-bbd0-a42cce863acf", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Poor GPS"]}
+{"log_id": "049725a3-3108-42c1-a5f0-24a964330cbd", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "04cca1f2-0990-43d3-af39-4856180b0831", "half": "D", "rating": "", "warnings": []}
+{"log_id": "04d473b1-cb62-4e1e-ba92-131c121b8d66", "half": "D", "rating": "", "warnings": []}
+{"log_id": "054b12f3-8c78-4f86-97f3-15e2ecc0040d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "054dbd0a-f37c-4249-b322-50c1d33574de", "half": "H", "rating": "", "warnings": []}
+{"log_id": "056c89bc-fd54-410b-8d6e-f783921a75a3", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "05d07835-f09d-4777-86d6-9ed4971bccd6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "05d47106-8c07-4a17-8fcb-2871dd4466f7", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "06131026-1c25-408c-8650-8ce1b12b7cf4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0638a746-f78e-45ae-878d-2ea8babf1eac", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "066cdd56-86cf-4bac-84ff-e487325dc0b3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "06c54e08-e568-4cc6-ba13-60e770d4533a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "07109a39-cfc4-4f69-9d85-2465210fe073", "half": "H", "rating": "", "warnings": []}
+{"log_id": "07717d03-3f21-4d36-b523-7d5173d7560f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "081af5e8-453e-45c7-8f66-afcfe9a41c91", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "088c1e0c-93c1-4791-891f-c2131106aab5", "half": "D", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "089dd25a-eeeb-4abd-8c82-91a2315c8774", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "08a40a1f-78cc-4fd7-871f-66e6af200eab", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "09ec4a42-5df1-4224-92eb-502445a92bb1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "0a4217ff-2312-4688-a298-414f23b6d99f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0a499a8e-ddc9-4685-b8f3-d0737bb07383", "half": "H", "rating": "", "warnings": []}
+{"log_id": "0ae60f31-acfc-44d5-89e0-ac494362cedc", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "0b05d273-e37f-41a5-b2e8-a6381c709a28", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "0b9b635e-325a-4a67-9ff7-d76747df29db", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "0ba711a6-e76d-45ff-9f7f-a537ca82647c", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "0c52cc44-285e-4a8c-9bba-877b14fce878", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "0c8bbe75-7522-4ee6-a6bc-7ff9f2d1643d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "0cbaab93-165b-40fe-9397-fade2787ac06", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator reported an internal fault"]}
+{"log_id": "0cd9862b-728d-4e91-92a5-1cd7e92a1819", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "0cdf3af6-8eae-4685-bba7-e13a7313f7a2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0d112275-6f44-4059-8244-e269d3fedbfc", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "0d49743e-e1fd-458a-b688-c758badaca72", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "0d53ac43-fdeb-4162-9ed7-a230215ba1f8", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "0e0902ed-bdf4-4eab-a8a2-d27cbb5c7222", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0e412f4a-f069-471c-9226-eeff2fc8563b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0e919c0a-ba10-4807-9e31-82be80b2275d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "0e93b870-f4b8-4ae6-a853-a0ad0b36b2eb", "half": "H", "rating": "", "warnings": ["Estimator rejected height data"]}
+{"log_id": "0e955aab-ff1c-4017-8109-2893e9e8c4c1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "0e98d57e-1838-428e-8d4e-28884d938841", "half": "H", "rating": "", "warnings": []}
+{"log_id": "0f17461f-c206-4c9a-823e-3de1d8d9f670", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "0fc45c7e-4940-4150-b684-1f5927e29f92", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "1078350a-ff8d-4d0a-9130-6b2a3a9bec8f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "10e1b918-94de-4e6e-ad11-79a0950e41b1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "114d429c-d4f6-43e6-b3b4-740bab900d2a", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "1159c1de-7930-489f-aeb1-87604a1be0a1", "half": "H", "rating": "", "warnings": ["Estimator rejected position data"]}
+{"log_id": "11f1c46e-7027-4033-bad7-f64ea9a5f675", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "12129217-a76a-4a03-936c-3f4a050e9877", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "1237995d-a330-4e4c-bf17-6bea9384006b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "12ab1a1a-d2f8-4591-9396-d93f0390888b", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "12c4f856-5e27-45bc-ad02-a3778bd60954", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Poor GPS"]}
+{"log_id": "1311607e-37b1-4421-bd9c-5dabbd000114", "half": "H", "rating": "", "warnings": ["Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight", "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight", "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight", "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight"]}
+{"log_id": "1336bf92-cc07-40c6-9934-7666b0e723bc", "half": "H", "rating": "", "warnings": []}
+{"log_id": "1438cd3e-66ab-440d-9899-a9a0995d95a1", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "143e53db-0dbb-4ae4-90ad-954350c08f1d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "14674a30-b19d-45d4-b0c5-88a9d47504ee", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "1474cab8-184b-4cf3-a53a-05af9be52669", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1474ced2-1d6d-482c-a23b-f9ce96eb6de4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "147f8d93-d4a6-49b6-a4a0-1632f2d18e08", "half": "H", "rating": "", "warnings": []}
+{"log_id": "1487abcc-a1fb-4a06-a218-78ba5be5da72", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "14a7c4d4-3b4c-4484-9f74-82b842d31b7e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "14b4e1bd-68ac-448f-8dec-7e32ca66d185", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "14ba7ac1-1a94-4c99-8315-9956a517e979", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "14e77b9f-cf5b-45b5-9a39-ef7983c51472", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1575d279-b587-41c5-9959-1d4213b1aeef", "half": "H", "rating": "", "warnings": []}
+{"log_id": "1579bd04-b5a4-4ff6-ac20-9d66bc733bff", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "159b9327-169a-49ee-84ed-044315e0da25", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "15a9f2ee-997b-40ad-a592-11df4e223fed", "half": "H", "rating": "", "warnings": []}
+{"log_id": "15aca1b7-3249-4745-ab8d-419211cf524f", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "15cb9dc2-3d50-43be-bc6b-b1c127a6298b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "164a8fd6-c6ab-4540-8a22-6a500bcea5cf", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "172d10a5-5ba7-4192-9c5b-cdda21fea175", "half": "D", "rating": "", "warnings": ["Estimator rejected height data", "Estimator rejected velocity data"]}
+{"log_id": "17362a41-ac78-48e4-8262-89102b1bbc13", "half": "H", "rating": "", "warnings": []}
+{"log_id": "17368a76-dd27-46e2-8ad6-051f4f2aad34", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "17b6952d-69f2-42fc-a86a-484b7890a88c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Poor GPS"]}
+{"log_id": "17f089fe-0ee5-49fc-ac19-43b4b33c1c6d", "half": "H", "rating": "good", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "18305d12-5396-4cc0-be47-9fd6e4b9dada", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "186631fb-6e88-43eb-b55e-b86fb889d07e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "18dbf653-31b6-43be-9137-deadf3e31d04", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "1976f42c-b708-4b2a-a064-d5cc1975dc91", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "198eddd0-c1d2-440e-8ace-c42c2708e5a2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1998298b-0fdc-4683-942f-5c540bc008e0", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "19de8c22-ba60-4022-a809-bc77c8257612", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "19f15fb1-0409-4287-bfd3-c8804a8e0158", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1a224617-c3ac-4159-8f1c-658e88fa55c3", "half": "H", "rating": "", "warnings": []}
+{"log_id": "1a2a304a-7987-4bc9-81e6-be40f38ce232", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "1a2ee0d0-940e-4fe0-9686-8af07d711cff", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "1a7e6925-5795-4886-be40-c61a16c744ef", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator reported an internal fault"]}
+{"log_id": "1a93613f-cfdf-40b9-bee2-14005d3b6c77", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "1b72431a-6611-44c4-8d7c-638e76b6ad78", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "1c430e87-ed49-4801-b39f-4b95a54ab98e", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "1c6a5ae7-3aac-4e70-9024-5360a330c717", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "1c746e8f-835f-4b2b-9ac7-e69d50537ac4", "half": "D", "rating": "", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "1c809d54-af68-4f97-b457-b0a95c5c7bd7", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "1d5b7ed3-7c19-4bf2-8a9b-3b734e478b97", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "1d625f9a-4080-4f23-865d-57ba6e4b2399", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "1dac8523-f66d-4a07-b572-1281a220cc2c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "1db82eb0-e317-4b82-b80f-1780f2de3e29", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1ddcda98-a434-451e-9b02-c7d8f8e2e283", "half": "H", "rating": "good", "warnings": ["Estimator rejected height data"]}
+{"log_id": "1e2e1b0c-d53c-4e77-8c87-bda714aacd6b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1e52de06-dbde-40f2-bdea-4fd883e6bc89", "half": "D", "rating": "", "warnings": []}
+{"log_id": "1e8e04fa-3114-4821-856a-6b8b1ad4e4c9", "half": "H", "rating": "", "warnings": []}
+{"log_id": "1eb3a284-47ed-47f9-bdb1-51323aa10596", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "1f35c35c-6118-452f-a025-9b60d8239b55", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "1f6a6f56-5919-4b06-ad57-911bbd652afa", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "203d3acb-92da-45b6-a6e7-7c02ff15e577", "half": "H", "rating": "", "warnings": []}
+{"log_id": "20671446-dd16-43be-9c41-4155883320d2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "208f9c5d-ea31-49b2-a428-892468a47493", "half": "D", "rating": "", "warnings": []}
+{"log_id": "20c7c529-873c-4703-9578-85bf911bfae3", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "21309e14-ec30-4a67-8c37-4728917941ef", "half": "D", "rating": "", "warnings": []}
+{"log_id": "21316eb8-53ad-43c8-ba44-c022a5ff1c45", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2184074f-02dd-4725-a32c-2288fbb9dd33", "half": "D", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "2225b561-52f5-41b2-bf59-bf3a473b48a9", "half": "H", "rating": "", "warnings": []}
+{"log_id": "22646014-d5f8-44d8-8a31-12521727bcbf", "half": "H", "rating": "", "warnings": []}
+{"log_id": "22667e38-5f61-4514-9c0a-6ff2fa7dcabb", "half": "H", "rating": "", "warnings": []}
+{"log_id": "22eb22e2-e298-4cc1-82d4-0a6ddaa7514e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "23322a05-9c9c-4023-8490-f40b2e1ee4da", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "235f1424-df1a-4b3d-a0d8-eaa58e124220", "half": "D", "rating": "", "warnings": []}
+{"log_id": "23720c09-b01e-45fa-9aa4-b519bc97adf2", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator reported an internal fault"]}
+{"log_id": "23941d64-c72f-469b-909d-40810ad43d1f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "241f61bb-fb61-4731-bfe8-c06ef4180e16", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "2431e3c5-9010-4625-80fe-f8461ad79193", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault", "Poor GPS"]}
+{"log_id": "24674bd0-e696-4517-b5a6-316e1f9ff7ee", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2474ee43-a7ea-4f29-bab1-f270102e2ac6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "248d2db6-3972-48a1-9b22-66a75c8c95fe", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "24a0db8a-181a-4fef-94fa-4065f962af3f", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected velocity data"]}
+{"log_id": "24a60783-95ac-4cb2-b91b-2a36073f2459", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "24d0e2de-f50d-468f-8f0a-021fc02a0d6d", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data"]}
+{"log_id": "2519df60-2411-4c05-8a5b-2c19d03adb55", "half": "D", "rating": "", "warnings": []}
+{"log_id": "256becb4-9e9d-4aed-b858-64be851f3b18", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "264b4cd9-ccb2-4e9a-b5ad-771d42cb8387", "half": "D", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "2679b878-fff1-4611-b291-0ff002b79913", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "2686dd91-e6c4-4882-b410-7e55b4acc424", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "26b1eb2a-f2f4-428f-ab27-1787a2934f84", "half": "H", "rating": "", "warnings": []}
+{"log_id": "26f27829-9a83-49ce-b177-4645d39deb72", "half": "D", "rating": "great", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "27401eeb-4c67-4062-bf46-9875e25de7da", "half": "D", "rating": "", "warnings": []}
+{"log_id": "278afabf-6245-4a79-bb10-edbea99cf355", "half": "D", "rating": "", "warnings": []}
+{"log_id": "27a99208-6605-4bd9-b0b2-cd57afad5d13", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "27b7223c-7d7b-4dba-b82a-da3229e546e0", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "280faa4a-4862-41c3-be60-93653c289844", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "281e1b38-01d0-4b59-8c57-8f299acf6ee3", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "2824e409-9bb7-4295-b49b-92c3617768e7", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "283bdab6-4b4f-4747-abb2-af99dac024dc", "half": "D", "rating": "", "warnings": []}
+{"log_id": "28a62cdc-31cc-4b1a-bf0f-f1fe73d8fb12", "half": "D", "rating": "", "warnings": []}
+{"log_id": "28a8adec-8eb4-4b0e-aa92-dff58eff3264", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "291fc0df-cf51-42bb-8a35-e9396ecb104b", "half": "H", "rating": "", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "294b2c72-b579-45a2-94e3-2bc717fff369", "half": "D", "rating": "good", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "2974c0ed-b31c-4d04-8d5a-48d30eb4acfb", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "29bffddc-9d53-4c9b-9f18-8904be8c8c2d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2a34575b-a2ca-4171-9047-0089bfbc4932", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "2aa3245c-866a-499b-9771-2c34d668daf9", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected position data"]}
+{"log_id": "2ae25c0f-a07e-402e-8248-ada5332d0974", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "2af078ce-e720-4804-9789-84011e37dc87", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "2b4461b6-5f06-4361-b13b-ec3b062e7fad", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "2b49f126-b1d0-4035-8c6a-68c8b61d3ff2", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "2b4adb29-5562-4448-a294-e99df917aa80", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2b664318-3f2e-487c-b829-23920eb1f184", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "2bd3d0d6-b907-42d8-b6e0-1f72bcc2d29e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2c0fe731-094f-4a3b-a7c1-9c92e06412f4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2c3098d9-7767-452e-89d6-064b95fcd822", "half": "H", "rating": "good", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "2cdedbc2-165f-48f8-9d39-89bc8122f201", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2cf2feb7-2736-4479-bad8-ded4119f15d6", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "2d62a70e-aca2-4244-a657-42c8ef1abebe", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2d6b024b-3dc3-4eb6-a16c-22db56c83280", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "2d788f21-0d2e-490b-86f6-a597a6d5f2ea", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "2d86e709-6d63-430f-8312-786c260130a9", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "2dc2cfad-c12b-4cd4-9ac1-da4c102be15a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2dc7e9ba-79e0-4e32-b0a2-bfe3f2e6b905", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "2df1e4c5-904d-4897-9256-63f502bd6265", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "2e12190b-58c3-4a9c-b632-2056381c6123", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "2e269ca0-6aa0-4f0a-9b0f-3c06bd64bd1b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2e70ef03-699b-4af4-8a9c-b0179aa6f785", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2ead8168-b7ef-41b5-8402-8a1906471d7a", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "2f535a18-718d-4058-8cc4-4d479a52cdcd", "half": "D", "rating": "", "warnings": []}
+{"log_id": "2f5967bf-865a-401e-8e12-fadb29bd1f43", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "2f6b10f8-291b-4de1-9478-c763f27a0039", "half": "H", "rating": "", "warnings": []}
+{"log_id": "2f8438e5-ccda-4e18-9b3e-eb90a3eaaff8", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "30491be7-3a08-48bd-b1db-493f80338b60", "half": "D", "rating": "", "warnings": []}
+{"log_id": "305ce017-ba5c-483f-857f-ec4541a98ecd", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "30897bb0-0c60-412a-b0bb-7ae7aa6c47a4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "30986654-3f0d-4e9e-9636-c38b76d48ff0", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "315f7a85-051d-4607-9459-ba394d0ba765", "half": "H", "rating": "", "warnings": []}
+{"log_id": "316efa2b-99fa-4c31-8c35-4947996ee360", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "3198f82f-db81-46b8-a29c-e17490d6b5f0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "31af4232-37ed-4837-9e68-e6fa2e07460d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "31eba87e-eeb4-4443-8eab-c8f450a2c5fb", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data"]}
+{"log_id": "31f46a50-4020-4bf9-a5f7-c3c6889f1e1d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "3204e418-65c5-4423-93c0-07b61797454c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "327d0a14-3c87-45b7-96df-a376be101edf", "half": "D", "rating": "", "warnings": []}
+{"log_id": "328ae641-6b8a-4b12-b945-49f1f1cea9e0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "32b79ae5-f06a-428f-b35b-628a2a0a8f0e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "32bdf1e2-1f61-4660-93bd-231854c793ae", "half": "H", "rating": "great", "warnings": ["Battery below"]}
+{"log_id": "3326baae-01d1-40a1-955d-143c00e98882", "half": "D", "rating": "", "warnings": []}
+{"log_id": "33be8ee0-1d25-4126-ba01-5ac50451cf06", "half": "H", "rating": "", "warnings": []}
+{"log_id": "33cdb8ef-d2f1-45db-a3cd-d01d8b95475d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "33e581e3-5eb3-4698-b698-c0a8bd5746ab", "half": "D", "rating": "", "warnings": []}
+{"log_id": "34082dfc-4c1e-4555-9199-6aae63f1fc0d", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "342edb9f-4368-407d-a828-834255b46981", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "3456a354-da20-44a3-bb8b-64b334b85c3f", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "3468f243-038b-4b12-8598-24580d1d94ed", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3472ea40-85a6-4f93-875b-bd5c1157e280", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3589f3b2-c233-4ea2-98c2-91527781d881", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "359b4075-e80d-4f2b-bc3e-c1cb771e9198", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "35ee921f-3551-4800-8286-609596d783e2", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "36053786-3cc8-4234-b2cd-d600951dfd50", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3634c5f6-9429-4c6d-a420-e6ee7d621c51", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3650ec56-42a9-4e66-b4cc-529e76f39af0", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "371fd501-5d73-42cd-b120-d8e2b2be597a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "372a993a-ca0d-477d-add3-89d180ff6e06", "half": "H", "rating": "", "warnings": []}
+{"log_id": "37719e39-da0c-4dfe-8e75-12c724150b0e", "half": "H", "rating": "great", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "384d53fe-5a0a-4ef7-8a9c-4e74f7caf3f7", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3875793a-8e53-41b0-933f-cd5f2f5d830d", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "3888976b-acd1-4b36-8cc5-e317c9bac156", "half": "D", "rating": "great", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "38a32a69-47ce-4639-95eb-e98f581cf199", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "38b77f07-3d9a-4453-aacc-f48a0fc063da", "half": "D", "rating": "", "warnings": []}
+{"log_id": "396b11a1-8cf0-4401-8681-d7965d6ae47c", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "3974a3de-86b2-4360-8330-58ce7fec1a01", "half": "H", "rating": "good", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "3990e647-edc4-41d3-85c2-f7ede075997f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3aaf0d24-9807-446d-aa37-e0aaa932402e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3ab963b7-a4dd-44b1-9b94-354478c9b055", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "3aff0e46-12bb-49b6-a2ea-9d648b382348", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "3b0bd13a-eafb-4a02-ae28-3e0e3d9b1a01", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3b666802-8b2c-4aad-9383-5ee5216fa067", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3bb37b17-b543-4dc4-985c-a07bcfcbc1e5", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "3bda25f2-c5d2-422a-83f2-af229cf9f537", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "3c4bf720-4c5c-4e9b-9f22-558522ddbaa1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "3c889bca-9c95-4d78-9ee4-702d74a79329", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "3d3303d6-b88f-4ee1-a5ba-596558fa0ceb", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3d51c0b6-bd75-4486-935b-0454f487d084", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "3d81e761-ad48-4a23-9246-e908afd4bccd", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator reported an internal fault"]}
+{"log_id": "3dba6410-f4d7-4ea8-b422-b872ca4e71a6", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "3e1de6cf-d8c7-4b56-8b96-2a0d46529671", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "3e32d03b-96ff-4f8b-b1bc-26068610e1f7", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3e4701ff-a372-4174-9da0-6d325f90db5f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "3eaf32c2-2fd1-4ecf-bf56-04441446c89d", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "3ecb6fb7-5b8c-4663-a348-a482a01b8159", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3eea5a82-c205-40f6-9da2-1031d62101d3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "3fd0492b-dfbf-4685-bc02-21d275abc030", "half": "H", "rating": "", "warnings": []}
+{"log_id": "4004cd13-742e-481d-b018-2469e0ed3df1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "406bfaa6-d4ba-4654-b564-3676dea23677", "half": "H", "rating": "", "warnings": []}
+{"log_id": "408ddf8b-50d8-4444-a217-4cb8976c9a87", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "409395e9-a969-4062-b11f-2862306aaf70", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4094332b-8edf-470e-9adc-5f184934c81d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "40df0e94-19a8-487e-884b-29259bb4235d", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "40fad623-25a9-473a-ab50-0356ed24b18b", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "4106a7fa-7316-4ee7-aaea-0d9321f0e581", "half": "D", "rating": "", "warnings": []}
+{"log_id": "41166814-8e8e-4d65-88e6-b253964494bc", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4135035e-ce40-4181-b51e-ed6e495e82a7", "half": "H", "rating": "", "warnings": []}
+{"log_id": "4147db41-a049-45b2-b9c3-275a1901d30c", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "41bb9528-750c-489a-8335-c43b245eb6e5", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "41e4d8f3-d1f6-4c14-ac8e-d51859791b4d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "41ed7f56-a4a2-4c57-aacf-75669dec5a74", "half": "D", "rating": "", "warnings": []}
+{"log_id": "423c5c50-82ce-4d48-a708-847bdadfa555", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "42a0dcc4-eb8a-4bc6-84fd-5b483c8eff78", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "43254e57-ae0d-457d-94b1-a261712dc4c2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4339f348-e68e-405d-afcd-0c77a3b8c5d6", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "43c2aa29-b41b-4192-8948-dc6393904857", "half": "D", "rating": "", "warnings": []}
+{"log_id": "43deafbb-c0a9-4966-87c7-bad996c996a6", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "44616052-cfb1-41ea-836f-c83c81183096", "half": "D", "rating": "", "warnings": []}
+{"log_id": "44e7cdf6-1b53-477f-8067-75d88caf62eb", "half": "D", "rating": "", "warnings": []}
+{"log_id": "44f73385-34f3-4cbd-a91d-334211a6bdb1", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "4507c537-5098-4152-802d-92f8f8dae596", "half": "H", "rating": "", "warnings": []}
+{"log_id": "45154d4a-8d4a-4143-aa26-5733870f9dc2", "half": "H", "rating": "", "warnings": []}
+{"log_id": "45358dc3-fcc9-48c1-bffb-a3a1f5c3be37", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "45b0d0e4-12ef-4e1e-98a9-995f8e808cc2", "half": "H", "rating": "", "warnings": []}
+{"log_id": "461a138e-d959-4be6-aa7d-5801f38a4d35", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "46ea647f-b57d-4888-8672-fc341fe094d6", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "46fac997-c11e-404a-af64-b50ed933be9c", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "471625c5-0fbd-4dcf-956b-8bd66b7a2b52", "half": "D", "rating": "", "warnings": []}
+{"log_id": "472328e9-2c6f-4b61-94ad-d91c8fd0b118", "half": "D", "rating": "", "warnings": []}
+{"log_id": "478d6cee-427c-4782-8c51-9c456983ce3e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "47c9ab9b-ac41-4721-95b3-76277291eb04", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "47dcf1ba-83b6-4901-8e9a-be6b361f16aa", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data"]}
+{"log_id": "47dfb795-6e9c-462c-8f81-80db0e28a190", "half": "D", "rating": "", "warnings": []}
+{"log_id": "47eadfec-5d96-4be5-bcf0-3671925f5fb8", "half": "H", "rating": "", "warnings": []}
+{"log_id": "4818d559-214e-48d5-9a90-d16a9585a3ef", "half": "H", "rating": "great", "warnings": ["Estimator rejected height data"]}
+{"log_id": "48b1860c-d366-4b55-9af4-624fceb5b1cf", "half": "H", "rating": "", "warnings": ["Estimator rejected position data"]}
+{"log_id": "48cce2e2-6861-44df-bc8a-be3d172a15de", "half": "H", "rating": "", "warnings": []}
+{"log_id": "48e8603a-43be-4640-a3e1-8b1a0326ad12", "half": "D", "rating": "", "warnings": []}
+{"log_id": "48e9a5bb-8a8a-43e5-a15d-be2c1b217eae", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "48fb315d-612c-4ffc-bcfc-8f404a54a481", "half": "D", "rating": "", "warnings": []}
+{"log_id": "49143ec0-6c07-4806-857d-8e0e1c21dfd7", "half": "D", "rating": "", "warnings": []}
+{"log_id": "492eaf75-2887-4ae4-b810-65bfc68b63bf", "half": "H", "rating": "", "warnings": []}
+{"log_id": "494f603b-6988-4203-9d86-4e2b4f0b1c4c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "496f6597-7876-44a1-bab0-e4f7556ec245", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "49862e0c-b4e5-40d4-8012-619b08c312bf", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "4987eb0a-5cae-4031-a921-2342c8e203ee", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "49dcde51-8dda-439e-b43a-ff62d9891f05", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4a19fd16-0fc7-4623-8500-a2aaef1518a1", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "4a404aa3-20f3-4484-9b26-896bebe1932b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "4b562f36-84a7-4ba0-992b-a4fe0cfbdabb", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "4d328860-dd92-4790-9733-666263c6a4a0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4dbc9a16-08d9-4318-822b-91f806795b35", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "4dc5f705-436f-4ee2-9ba0-a8fa6b7644f9", "half": "H", "rating": "great", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "4df0f624-ea30-428f-aad9-2159115237ba", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "4dfd2e2d-307e-4944-afef-b6e173cd0496", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "4e0fcfb7-cb9a-43c6-b42b-a2ea4bd26cad", "half": "D", "rating": "", "warnings": []}
+{"log_id": "4e904033-f636-4657-9c68-7cda2d6058cc", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "4f046b4d-c303-4b58-8851-adaf082f66a4", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "4f167f63-256c-4aaf-8454-9f71720c9e51", "half": "H", "rating": "", "warnings": []}
+{"log_id": "4f600cfa-e7fc-43f8-b38c-e54ad2941e4d", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "4f8bbc7c-5878-455b-ac62-60e6b60eddda", "half": "H", "rating": "", "warnings": []}
+{"log_id": "505d225d-28c2-43aa-aeb7-929b8643ef74", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "507ba701-8345-4d52-9830-741019e2a33d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "50a1774e-3ba1-4936-9867-608e531ff41b", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "50f02274-463f-4205-b353-56ad1bff70cd", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "50fbc6a9-db74-4829-ac3e-07c82cc16dfa", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "512e03c5-430f-4a7a-a2a1-169cce373e2a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "51537ddb-a70f-417a-9408-55f3df97d21b", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "51bc1735-de8d-4d2d-be2e-12e9f08b505f", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "51cef452-0fd0-470a-a943-fc4ed01e1b49", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "51d7e1e3-8562-46d3-8b3c-960e008516b5", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5243ab2d-809e-4060-9407-6a7f8c2a805b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "525a1d33-0a2d-4a2f-862c-8032f209631b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "526b2ca1-21f1-4349-b262-9dc7400229aa", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "5291b27b-3627-4fb8-b16b-5e9ef3e54f2e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "52ab5838-b53f-4f57-936d-d1f91a9e19fa", "half": "H", "rating": "", "warnings": []}
+{"log_id": "52b8176a-6582-45ed-a9b6-efac64f5fe84", "half": "D", "rating": "", "warnings": []}
+{"log_id": "52deaa83-9c49-4956-9168-fca8873ca2cc", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "531fc253-6469-4da0-ac41-b654a5a38451", "half": "D", "rating": "", "warnings": []}
+{"log_id": "533e3823-11d2-4610-a0b4-b2343a64b5c2", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "5390d6ac-4bef-452c-ab24-bfeee573f212", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data"]}
+{"log_id": "541dc4d5-200a-4b3d-aabc-f50460ecede8", "half": "D", "rating": "", "warnings": []}
+{"log_id": "546137fa-41f0-46d6-ab97-e4ad42da6760", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "549dd6dc-bb22-474c-919c-b6d72c78cf9d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "54ed05aa-aa70-45a3-8eda-9f38df25e859", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "553a7acd-eba4-40c4-9c0e-317e6543ec27", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "55427945-b5b2-4c0b-b94b-d286d03642a9", "half": "H", "rating": "", "warnings": []}
+{"log_id": "555a95a4-b742-4023-b2f9-e140aaaead25", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data"]}
+{"log_id": "559bed9e-7d63-4556-8516-abdde853a2e4", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "559e8cdd-702f-4ea4-b78b-36ceac659f85", "half": "D", "rating": "", "warnings": []}
+{"log_id": "5618ecab-9c84-4d5d-b48e-f926900a56e1", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "56a14de2-2f63-479d-9559-af2b4939617f", "half": "H", "rating": "", "warnings": ["Setting RTL_DESCEND_ALT changed 100.084 \u2192 105.043 in flight", "Setting RTL_DESCEND_ALT changed 104.822 \u2192 104.837 in flight", "Setting RTL_DESCEND_ALT changed 105.043 \u2192 104.822 in flight", "Setting RTL_RETURN_ALT changed 100.084 \u2192 105.043 in flight", "Setting RTL_RETURN_ALT changed 104.822 \u2192 104.837 in flight", "Setting RTL_RETURN_ALT changed 105.043 \u2192 104.822 in flight"]}
+{"log_id": "56f2e99d-c488-4012-9ea6-79e154c0248d", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "56f6e724-6f1d-4ed8-840f-f27f48bf5e57", "half": "D", "rating": "", "warnings": []}
+{"log_id": "57674c25-57a3-4bc4-96dd-2f826d7b4d54", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "576cbd2d-2189-4e68-9783-fbe8e1e9402f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "57c227c6-a812-4c98-bbb6-faf0ccd23a27", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "580138bc-6917-4c3d-852d-575405bc5aa2", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "580da730-129e-45bf-a69e-a08b2a42fd68", "half": "D", "rating": "", "warnings": []}
+{"log_id": "580e951e-fbcf-46d4-aa01-3b7037151d82", "half": "H", "rating": "", "warnings": []}
+{"log_id": "58439480-acc3-4666-a2bd-9161a26baff1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "585a310f-bbe7-4e03-80a8-00bc5e7da6ec", "half": "D", "rating": "", "warnings": []}
+{"log_id": "58855ab1-66c5-430a-a945-5d1ead6e917e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "58937279-577a-4727-8eea-9799366604c6", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "58ea5b1e-4aff-42b0-866f-9afc7b4a20a0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "58eac301-ae72-4227-9748-b10299de9db4", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "59678fab-aa4b-4520-80da-1b89bd8b0fd0", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault", "Setting COM_DL_LOSS_T changed 190 \u2192 60 in flight", "Setting RTL_RETURN_ALT changed 90 \u2192 100 in flight"]}
+{"log_id": "597275e0-407c-46dd-a49a-133ad6d93bcb", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "59fdcc0d-c25b-470d-961c-2ecbb1b9bf4a", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "5a197dc7-a97c-4ca4-af72-307cbd83b3b6", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "5aa91378-cc47-4c29-a922-bb4f478fde90", "half": "D", "rating": "", "warnings": []}
+{"log_id": "5b31f897-30d2-4b34-a3bd-ff6b333b278a", "half": "H", "rating": "good", "warnings": ["Estimator rejected height data"]}
+{"log_id": "5b36c6a4-4835-4713-a475-56f191188e7e", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "5b433058-6437-4fe8-853e-73315bcb2137", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight"]}
+{"log_id": "5b7809a6-4696-4428-a3d3-fed89e87120f", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "5b983d09-b727-42c6-872e-6c486b3b0407", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5bdb2743-4ca4-440e-9f12-872dea853a62", "half": "D", "rating": "", "warnings": []}
+{"log_id": "5c04737a-a8be-4645-a724-33e6721ef5c2", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "5c0d58b1-c303-42fe-9040-71d467cac00a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5c56382f-a91d-46d1-85ca-3a96747a9687", "half": "D", "rating": "", "warnings": ["Estimator rejected height data"]}
+{"log_id": "5d05c071-3635-445b-b421-a305f0fa2ae5", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5d1030f3-32a7-41a1-848a-b028d0aaafc4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5d35d911-624b-4192-92ed-4090e3c7f84f", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "5d40c3c3-268a-4164-ae4b-dafddf4020f9", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "5db0b60d-2345-4ce3-951d-a6503718ad7c", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "5de99825-0fb2-4e08-877b-b95c2a63af23", "half": "H", "rating": "good", "warnings": ["Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight"]}
+{"log_id": "5df7eadb-709a-413f-bab2-0818f7c427b1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5dfe9207-ed6a-497f-bf4a-7424aec32076", "half": "D", "rating": "", "warnings": []}
+{"log_id": "5e44b6eb-626a-4736-a4e5-3874229fa287", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator reported an internal fault"]}
+{"log_id": "5eae70ff-6933-48f9-99ee-1f89f75929a4", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected height data", "Estimator rejected position data"]}
+{"log_id": "5ef23eb1-7c95-48c6-9d58-9ff72ba9a757", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "5f722b07-0241-4c23-8834-7675374fc31d", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "5f7a608d-2f11-4208-8826-9d4e90c2a2e4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "5f7fdc32-1119-4e8e-bb73-ac966a2b1fb0", "half": "H", "rating": "great", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "5f888267-7f3b-4dfd-b817-9f4295a145a2", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "5fb76d4c-7e6d-4665-8560-b1646936289c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "5fc23265-bbfb-4d4a-8716-c828b50b116d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "6064ae98-5e2a-4da3-b810-e80fbdf1be5a", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "6066bc15-2d48-44ec-8168-9b7a7d35959c", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "607299d5-4954-4450-9e9e-1d2434424fad", "half": "H", "rating": "", "warnings": []}
+{"log_id": "60a54bea-7254-4096-b338-ae40b252fb5d", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "60bebb0c-699c-48dd-87e0-22bb36db5dca", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "60f07f7e-e47d-4403-b32d-93f6503e71e8", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "6126003f-ab6a-48ef-9dff-b04b230e11c1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "61348b25-1c86-49eb-ad10-5fd7ab9c9a39", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6145fe16-cf3d-4558-b02a-dc6e98400b52", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "615f7734-f670-4b79-802b-746e0365906e", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Poor GPS"]}
+{"log_id": "61877e31-ac0c-4e74-a954-b8780f463108", "half": "D", "rating": "", "warnings": []}
+{"log_id": "618d7b5c-2eac-4ab8-b5a8-e15df6b2a88a", "half": "H", "rating": "", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "61d10b73-b837-4388-bc93-029b3e6936cf", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "62082d95-93c9-4e50-a56f-acca1c23969b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "6225a6d1-7517-4aeb-877d-365f4b060579", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "624a5324-f03a-49de-ae7a-08c4ad654c8f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "6298d280-e7e9-411c-aae1-b14f3a6a7268", "half": "H", "rating": "great", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "629a0ba5-30df-4466-a912-76a9aee24a71", "half": "D", "rating": "", "warnings": []}
+{"log_id": "629c7946-2567-47a8-8574-f3696962023f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "6325303c-cf81-4b28-aec0-a0cb5dc93589", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "632d7ce7-bbe0-42da-810b-ba2281e4ec1e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "64297bf7-d0af-4fc3-9d24-3b6870d0d1fe", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "6447d420-1c86-4ecd-801d-d6ffa2207715", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "64574a93-1a13-47ed-8bdc-94d04f30624e", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "64e569a3-38dd-4d6a-bcdb-9487edb7aec8", "half": "D", "rating": "great", "warnings": ["Battery below"]}
+{"log_id": "65095c06-5854-4e3b-8c37-5d9e66ec1f68", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "655758e8-0a9a-4543-89eb-3218224b46fc", "half": "H", "rating": "", "warnings": []}
+{"log_id": "658217b4-e735-4484-b8d4-1d0f8d99f832", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "65b85bf0-88d6-418c-860f-41a592826b70", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "662c1359-ffa6-4264-b434-719ccc2f43a0", "half": "H", "rating": "", "warnings": []}
+{"log_id": "66332487-04b5-47f5-b1a3-a241e23a4dd7", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "663b70b2-59cc-415f-a92d-af848f71c4f1", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "6647872e-ad17-4167-ae76-9f8742aa53cb", "half": "H", "rating": "", "warnings": []}
+{"log_id": "66623d24-4679-460e-a090-182c08fd81d0", "half": "H", "rating": "", "warnings": []}
+{"log_id": "66725cc3-8f4e-45fd-97bf-a5ee64b8d8a2", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "6674e88b-0199-4069-b2dd-b997cc45531a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "668f84f0-6fe4-4fdb-a9bc-69459ac90c91", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "66a6062f-cbdb-47cd-83f3-fc71724b58c5", "half": "D", "rating": "", "warnings": []}
+{"log_id": "66c52795-6c35-476b-8eda-76fe1bd49e59", "half": "H", "rating": "", "warnings": []}
+{"log_id": "66ebacaf-02ed-47b9-b8c7-6e58c1dfda5c", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "67276f6f-10af-4c2e-93ec-f34cff68d4eb", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "6773fe9e-fec4-43e2-8a8d-5d60f8a32b5b", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault", "Setting NAV_RCL_ACT changed 2 \u2192 0 in flight"]}
+{"log_id": "679d5d06-9bb6-4236-984e-691f81f27b82", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "67a1335d-8400-44d6-a74f-9e82948466f4", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "67a34f93-6513-425d-94e7-7169ee60af20", "half": "D", "rating": "", "warnings": []}
+{"log_id": "67b27584-9c2e-4f15-9ba9-d64ab0429e92", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "67e8308b-319f-4353-9f79-b0183cd959cf", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "6801b51e-b64b-439a-9b4d-ec6b0eef23c5", "half": "D", "rating": "", "warnings": []}
+{"log_id": "681557c1-9828-4461-ad97-083f8b3b55a4", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "682349cf-20ac-4e12-9dcb-8979ef0e1c0a", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "68870e63-859a-47e1-b8d0-2421256e35d1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "68ad257a-7315-4f10-b100-39cf062b30de", "half": "D", "rating": "", "warnings": []}
+{"log_id": "68b2fda0-1e10-44d0-b639-63321ed3d25a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "690ea57f-d3c4-486d-baa7-11193eacadbc", "half": "H", "rating": "", "warnings": []}
+{"log_id": "69192a4d-d1f2-4625-a5e9-f7184a58f3c6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6939bfde-76a7-4842-9c09-a0d4bee04df7", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "697839d2-e3d8-4f7d-8c29-5fa61d1c5723", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "69bdc47e-a84b-43a9-a630-f955e8ae7258", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "69e720c7-8c0b-4b77-a865-7183d196011c", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "6a10396a-5d41-4862-8d14-47a9bad00635", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "6a62444b-7338-4b3e-823c-9039dbaeac35", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6a6a8a4b-76ff-428a-a1d6-0ea4a1c1ed04", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "6a7fcc60-ef26-437b-8291-e557d7d5b329", "half": "H", "rating": "", "warnings": []}
+{"log_id": "6af852ab-3ae2-41ef-b185-1b6aa222eb7f", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "6b427f7d-e71b-4fc7-9dec-9ea155b41284", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "6b9e2492-a56d-4950-9e7c-6595c6ad2734", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6babba16-d57f-4b3c-be8d-c8aae86b2fb4", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "6c1c6011-1219-460f-b23a-7f8c52002d23", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "6c7fc700-5d63-477c-a702-2ce45492546b", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "6cb1b7d6-6ec3-411f-b48d-60bc2b088ce9", "half": "H", "rating": "good", "warnings": ["Estimator rejected height data", "Estimator rejected velocity data"]}
+{"log_id": "6cc33601-8695-4c5a-aef9-69774f53c924", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "6cc3ed62-7b9c-484e-903b-de7b2bd59286", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6d403244-3fb7-4a27-bbef-4619295506b2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6d410f7b-39c3-422b-a8e6-30710c0b2098", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "6d5bb174-bebd-4596-8049-f2b8d8f47e66", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6d94a835-0bea-438a-bc9a-ea0f66c24745", "half": "H", "rating": "", "warnings": []}
+{"log_id": "6dae3538-318f-418e-96b1-8d7b1e18fd8c", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "6db51c38-5c54-45f7-bcf0-86f5c9f52775", "half": "H", "rating": "", "warnings": []}
+{"log_id": "6e4c984e-8216-4a38-9b6f-856d0a395bc6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6e545921-0bd0-45bb-ab22-ac4d593b39c4", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "6f6089fd-0d3f-4194-aa47-8f6ecb5219b2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "6f986cee-1042-4004-bbe8-6d34acb44ab3", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "6fed1377-5126-4770-bee8-a08c30c02a48", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "706d0729-4694-4cb1-b9b6-317b2a0fc8af", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "7072dc09-7c4b-45ca-ac26-89eddda2e716", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "70807844-3967-49f5-be73-f5faf51b07ed", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7137ba64-643b-4fc0-b207-b105a7163548", "half": "D", "rating": "great", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "7166ed98-efd5-45fb-b89a-efbbc8337bf4", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "716cf183-cd58-46be-9219-6e67e527a624", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7174dccd-b8e3-46f6-a8aa-64530289465b", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "718afa3e-e821-4696-ab5e-c11cbe3039a6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "71f01968-f4d7-4057-b0cf-f62d5b63c033", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7209d978-1d20-4bc0-b976-b63703edf920", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "729204cc-3708-4fc2-a660-cad4976e7440", "half": "H", "rating": "", "warnings": []}
+{"log_id": "72d77edc-4260-423e-8eac-4ef71d72c7b4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "72e7ba05-87d5-48fb-8a41-f6d30fe5c553", "half": "D", "rating": "", "warnings": []}
+{"log_id": "731c4e9f-1abd-4247-bece-ab98a64bfea1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "733f47ab-027a-49a6-ac4f-83d09d9e3e1f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "734bf75b-55cf-4a34-bc3a-406693675212", "half": "H", "rating": "", "warnings": []}
+{"log_id": "738d4187-e9aa-48d8-84d0-1ba90749903f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "747caf53-317f-4b21-a002-6d7a745e083f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "74c35e69-85d9-46f8-aeed-7486ec427c16", "half": "H", "rating": "", "warnings": []}
+{"log_id": "74da8e64-b1da-4b6f-93d9-83bce04af0d6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "74f0f40b-2e85-4bdd-9569-5df04dfb76a8", "half": "D", "rating": "", "warnings": []}
+{"log_id": "74f847d2-3b3d-4cc0-8bc3-42761db66145", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "7596fd50-b3f8-4f51-9466-852dd1efb418", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "75e3b281-25b2-4002-aba1-c35ae57abcf0", "half": "H", "rating": "", "warnings": []}
+{"log_id": "76a2a60c-62f0-4d0d-b12f-8647f23a383f", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "76a4bc25-1695-43b9-b6b7-60b628d7fc5b", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "771b556c-52bc-4b2a-a6a2-87feb5b64759", "half": "H", "rating": "", "warnings": []}
+{"log_id": "77e7705f-90f7-4cbe-a3ce-94e27c447fc7", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "7857f742-6dc4-45f2-83f9-3b8ac64c2d4b", "half": "H", "rating": "great", "warnings": ["Battery below", "Estimator rejected height data"]}
+{"log_id": "785c5c05-72e5-4f8f-8ad7-dad7a3797cf1", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "7917cbbc-be65-4ba5-a7a8-76c0a50ef2b8", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "7980f753-f726-47da-be1f-5b497ce705be", "half": "D", "rating": "", "warnings": []}
+{"log_id": "798e509b-bb5a-44a1-97e8-0399413d5b9c", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "79c50209-da61-4faa-b9cf-e78b42d05be2", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Poor GPS"]}
+{"log_id": "7a1116cc-e84c-401f-a07d-a97a93faa838", "half": "D", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "7a72b3e9-5382-4a69-b6eb-9059ed852fc1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7a9c7b51-bc7d-40d4-a0be-76236ea4ec41", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7ab85e2a-1d12-4890-a2eb-0bac435f06f7", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data"]}
+{"log_id": "7ac5a78a-6ca2-4115-973a-2f63558a53b4", "half": "D", "rating": "good", "warnings": ["Poor GPS"]}
+{"log_id": "7b0cc922-a195-4e03-b916-b4fd9043b841", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "7bb99f79-98ec-4271-ba2d-bad695add281", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7bdbec2c-a597-4707-a38e-ac7ae0a38b16", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7be28580-5e40-4255-96cb-961e9f7462f4", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "7cc91a50-1921-45dd-8c64-6721762fd27d", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "7cd99d57-a341-4bda-b426-27270b1d76ed", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "7ce0989a-fb15-445b-b723-9d523cb6c6f2", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "7d27d0af-d9f5-471c-a025-8a6aa757a81d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "7d47d0d8-26dc-4ec0-b3dc-cad448e12eab", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7e566cfe-3887-4d75-aed4-2a70cc1f1d05", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "7e572f40-ccad-464d-a187-27c03b037d78", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "7e645e0b-9a40-42f7-a290-b30d073f2d20", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7e909e69-07c9-46f7-b81d-4a6ef615bc77", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "7ebd0edd-8e52-4ca8-9bff-7c033c2ea3ef", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7ebec132-efe6-49ee-91c9-336cfe1ebde9", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "7ecb3e47-6c65-4638-ab4f-a7661b95592f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "7ee88ae8-1df8-487a-8a32-187632656135", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "7eee3e1a-14a3-4f4b-bf69-884ca88178ef", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "7efdd42c-5aef-49bf-80d1-d1901045845e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7f4d24cc-4ae1-4a73-b694-a1727c679d17", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "7f94ad71-3097-4d0d-8af6-e0ecc9261774", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7fa019ac-084a-429d-a4e8-b3767fca37d4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "7ff58945-40bf-4f8a-9348-d0b0ff2bb417", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "80619701-7c13-40bd-9313-61f96826c881", "half": "D", "rating": "", "warnings": []}
+{"log_id": "813fabb0-ac5d-41b9-a2f3-485db77a416c", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "817970ae-4ba8-40aa-9bfe-58d712c2f673", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "81b979aa-f8cf-4151-8b48-fc19aaad4c47", "half": "H", "rating": "", "warnings": []}
+{"log_id": "82e9df7c-8c31-41dc-8673-00ecfc3536d1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8327a896-d4ec-48ab-ab1f-edaa3be51e59", "half": "D", "rating": "", "warnings": []}
+{"log_id": "83ae8be4-6794-4c73-a495-d1c1ba5bd692", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "83b6a525-f1f3-4947-98c1-9507ec7b801b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "83d1713f-55a7-4295-aaa0-05a38048de92", "half": "H", "rating": "", "warnings": []}
+{"log_id": "84129e0b-ebdc-4c66-bdfa-1cb2a5bd741e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8441d073-f7cf-4908-80df-ffc7625cc578", "half": "D", "rating": "great", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "846d47bc-256d-4084-9c68-78d2e51bf372", "half": "D", "rating": "", "warnings": []}
+{"log_id": "84b11470-8b94-4e18-b1ca-2a94e7e32ebf", "half": "H", "rating": "", "warnings": []}
+{"log_id": "84d43fea-74d2-4c54-aa4d-e518c33b5d01", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "8509dbce-a9dc-48a7-81a6-a7514c662f56", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "8519c959-7e96-49ee-b2f2-0c972f56a6ad", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8541ef11-84d3-46c5-a6ca-92b3f7cd1afe", "half": "D", "rating": "", "warnings": []}
+{"log_id": "85b69be1-821d-4a92-b037-6fc813b7d808", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "85e53dcf-7be3-408d-b206-a8d192f93999", "half": "D", "rating": "", "warnings": []}
+{"log_id": "85e77b4d-531e-414e-88b7-b70459de4f5e", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "864a82be-4a07-478a-b62d-a2a1cfa0fa6f", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "86755293-1e5d-4b70-88ef-2af6794f104f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8688fb3e-7f62-4bcb-bd50-66d9fdb8760a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "869a3945-02d7-4382-a561-f4922daf02d6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "86c6577b-3d62-4ddf-8abb-48a875d842f6", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "8761ddbf-d66d-4349-b038-39fde4a7c7de", "half": "D", "rating": "", "warnings": []}
+{"log_id": "876a8fad-47dc-407b-98dc-3caaa7d2e90f", "half": "D", "rating": "", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "876f626d-616e-4ca9-9703-53bdf1342a0c", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "877466a2-60c0-4a9a-a227-5932c8d8ebc6", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "8784a429-fea5-430a-89de-b28f9576b7ac", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "879638aa-1427-4142-9d1c-676c07398eff", "half": "H", "rating": "", "warnings": []}
+{"log_id": "87d0b4d6-07ab-4a0b-a166-c0e0c066b704", "half": "D", "rating": "", "warnings": ["Estimator rejected position data"]}
+{"log_id": "87d934ea-92a7-45d9-bb92-060652907843", "half": "H", "rating": "", "warnings": []}
+{"log_id": "881e4412-57ab-4f38-a977-fc56595723ad", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8881726e-d1db-4955-a1cd-07c301de5d3e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "88a4b8d7-5de5-4a95-919f-c53886e7fbda", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "88b08706-3df2-4555-b979-e1f165cf1438", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "88fb117b-8172-4ecc-ae26-868f93d2afd6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "891a4e9e-f38c-4953-b88c-0ceee855e95f", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "8925ede8-61f4-4aef-9f76-0a90a3676233", "half": "D", "rating": "", "warnings": []}
+{"log_id": "89313dbf-8c13-4be9-8e04-2e87f2f75f1e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "894da542-52c9-4ce0-b4e0-e18acf4fa26a", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "897ded0a-322f-4d76-bbc8-6e093556a93f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8991e25c-6005-4226-a1cc-60b6a8066c1e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "89920ca1-e799-440b-9696-1e44d0299eaa", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "89e0f2b1-885f-4ffb-a2b4-ed35df2f3cac", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "89e1e12f-1372-48ff-a4e9-4c5707f310aa", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8a065949-082b-4d49-90f4-7fd8618df3e1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8a5c1ffa-4e32-4a08-ae14-f95f892eae6e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8a6ea543-1254-4a50-9f01-35f2dc9c600e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8a9d5ab0-1674-442e-8ccf-e299e3be9793", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data"]}
+{"log_id": "8ab7c78b-fc35-4cc4-8c79-a3ce40eb25fa", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "8b100a9a-51e8-4206-8206-99f3a42d36fc", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "8b705090-2443-470a-9ce1-5cc9dc7f36f6", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator reported an internal fault"]}
+{"log_id": "8b7ce839-7d5d-431a-95b2-21f824d76dbf", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8bdbe9df-1df2-4bcd-8edb-f69dcdf21ce9", "half": "D", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "8bf6dc2d-d5ce-4276-9a6b-dedfb9463f9d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8c1199d5-f0ae-4965-98d4-3982a37db246", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "8ca0567f-4406-43b8-9f4e-cbf5d424de1c", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "8d2939db-76e0-4afe-abaa-00b954535f90", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8d46fdb3-c995-4fa4-bffa-20714380f0f1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8d631448-e7fa-4e28-8f04-726988fb2211", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8d6eb208-fda3-47ef-8c6f-70e08d1e0e04", "half": "H", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "8d75a89a-ad31-4132-9ff9-3cfda23d929a", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8d7cf522-b57f-4387-ba02-ee41da0298f8", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8e0f3488-12a8-44aa-b87f-e2293bf8dc72", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "8e59f7bc-6b35-4181-ae0b-db9b991d377e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8e78fc7b-3376-4909-8aa0-30eb52e7cc03", "half": "H", "rating": "", "warnings": []}
+{"log_id": "8e85d658-9fe1-45ba-b6fe-7124acf3489d", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault", "Poor GPS"]}
+{"log_id": "8e8ce916-1a50-4998-bf6c-ff685c83eabe", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8f58a576-12a9-4fed-b48a-8f6265b25d60", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8f6827c4-54d0-404a-84ac-dcac8db0d784", "half": "D", "rating": "", "warnings": []}
+{"log_id": "8f70eb4d-5eb6-4665-83f7-fb7a90b052c0", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "8fe756d3-9a67-43f8-96ad-64e2f9eb9f52", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "900181d8-9637-48cb-8cd0-0af5ca2ad48a", "half": "H", "rating": "great", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "907aff6b-df05-403e-a86e-40ff68a935b4", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "90d6dcd2-7b87-4963-9390-987c1d062b4a", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "9111cbd4-b26d-4ba8-a888-227d7d8f2dd3", "half": "H", "rating": "", "warnings": []}
+{"log_id": "9112c5f9-c2a6-4674-a834-5c4e66a03756", "half": "D", "rating": "", "warnings": []}
+{"log_id": "91a5938f-8c46-492c-8668-80ad4b29d35a", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "92178965-e7f9-459a-8a91-b889cd417247", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected position data"]}
+{"log_id": "92731dd5-51fa-4252-a0a8-6c80faa259cb", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "92767155-d470-4cf9-a867-7d7214e6015a", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "92bb4b0d-10f7-4f9c-8c52-f5c37933d48c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "92db1496-7e5b-4ed8-9062-e0ae1c6cac3b", "half": "H", "rating": "", "warnings": []}
+{"log_id": "931f379c-c565-4ca1-95d7-1eef5478f4d8", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "9326b2d2-a3cf-4f21-baf5-802a7b19f346", "half": "D", "rating": "", "warnings": []}
+{"log_id": "93543405-5a22-40fb-b5f4-e95579e67c6a", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "9364187c-4455-4ea8-90b1-650d0411a698", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9378c1c9-8384-4504-97ba-3782db52fb42", "half": "D", "rating": "", "warnings": []}
+{"log_id": "938d3865-c588-4288-bceb-d31afacd82b4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "93d7d589-ad22-4b5b-bbc4-f68014584a22", "half": "D", "rating": "", "warnings": []}
+{"log_id": "940ed79a-7c95-4bd0-a3e1-b87da8a9074a", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "9435037d-e23a-419b-ae02-9e13a8c0135a", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "94538b87-2027-4569-9b44-f2eaab05646e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "94979dad-3a88-451c-9eb9-26088c5494b8", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "95d45a51-a181-4d5a-a262-63ab5cd89594", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "95f39cb6-da16-4770-98eb-9b8d01848c3c", "half": "H", "rating": "", "warnings": []}
+{"log_id": "96069d5f-dea3-4b98-a8b6-28d437dc08ba", "half": "H", "rating": "", "warnings": []}
+{"log_id": "9681f544-50ab-4266-91a1-265e813ebe8c", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "9699febc-32e3-4813-bbe1-735bdf4cc105", "half": "H", "rating": "", "warnings": []}
+{"log_id": "96b160a9-f07a-48bd-bff9-22733cd302c7", "half": "H", "rating": "", "warnings": []}
+{"log_id": "96b83cb2-d658-4033-889f-3aca5b7227cd", "half": "D", "rating": "", "warnings": []}
+{"log_id": "96c45e55-33d5-4183-b3d9-0954c70d0cb1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "96e0102c-1371-4abe-99d6-a32d86fb3d13", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "96e882c4-7411-474c-85d4-e2655b76710f", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "97736af8-e676-4b20-b257-4cbb1256072e", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "980cb0d1-26bf-44dc-a88c-f51924c363b0", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "9859c8ba-4be3-43e8-ae6a-ecc3014c25e3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9895000d-738e-4571-8f8b-8ae96883ef75", "half": "H", "rating": "good", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "9898e6f6-5029-4b11-9bda-dbb3e4b536a4", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "98cf585a-1bd7-4d9d-a1a1-c68fe692cb37", "half": "H", "rating": "", "warnings": []}
+{"log_id": "990c83fe-0d21-421c-bc35-cd71a3e273a5", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "99e3d0e1-eec0-4a76-9d61-e1fcae679019", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9a01bc04-9345-4a5b-846f-d20f117aeeff", "half": "H", "rating": "", "warnings": ["Estimator rejected position data"]}
+{"log_id": "9a085cfb-f5c9-4058-bce0-e07b319b90fa", "half": "D", "rating": "good", "warnings": ["Poor GPS"]}
+{"log_id": "9b585374-1f5d-462f-b23b-0f67a0f0735c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9bb16996-192b-4b39-8e4a-5059fd45eae8", "half": "H", "rating": "", "warnings": []}
+{"log_id": "9bd0c11a-0329-4815-9fba-9ff885624f65", "half": "H", "rating": "", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "9bd5b6ac-ff2a-4a8b-8863-3043f362379c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "9bda36cb-5b7f-4c3f-89c9-6aae28a80aa4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9c03c8c9-83b9-4a99-a115-02556da2ed0d", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "9c098d3e-3f50-451b-8f0b-8e5b9976165d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "9c4b77ad-ced2-4790-a00f-c59baa971dc4", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "9c5181a1-1064-422e-8ce1-99dbf6eadaae", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected velocity data"]}
+{"log_id": "9c7d4e56-f9ad-426d-90df-4a662a8b02b3", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault", "Setting NAV_DLL_ACT changed 7 \u2192 8 in flight", "Setting RTL_RETURN_ALT changed 120 \u2192 100 in flight"]}
+{"log_id": "9cdbc0bb-228d-4e19-b8f2-a9548f2d6b20", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "9cdd1917-0800-4aa5-bd17-c44e81d5f6b5", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator reported an internal fault"]}
+{"log_id": "9dd47e2d-842e-4626-ae36-671142211761", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9df8567d-a606-49e2-8590-f97508b2d174", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "9e26dbe1-21d3-43d6-9d1a-7280229df2c1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "9e65c5e5-c44f-43a7-9ded-ac66e4ab748d", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "9e8f5112-1ce3-4540-81fc-9a2412e5cbad", "half": "H", "rating": "", "warnings": []}
+{"log_id": "9ea4e170-5541-4c05-9a62-0165fd831fc6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9ea6c9ea-d5b8-482b-960a-55a02ecc37f9", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "9f01dc82-81fa-4494-bb0d-d17d84c8e4eb", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9f4841a9-6a49-4b37-99dc-f551143e9c3e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "9fb03f3f-55d4-40bd-9cf8-7c7048785222", "half": "D", "rating": "good", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "9fc1f1c6-5e36-4c85-ad2b-43dd80db0ec7", "half": "D", "rating": "", "warnings": []}
+{"log_id": "9fdb25d2-b243-4713-bb2f-1b8d7bcced72", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "a001dee0-9cb0-4b49-b772-edd6d905311f", "half": "D", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "a03a7f5d-ee1b-45d3-a6b3-c6e731a74cd0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a04b39ad-083d-4ef4-b117-56ba96667582", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "a074748a-cbea-45b0-999a-30ba4238318f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a088e237-230c-4e97-b2a7-0b04f5e7c567", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a1090e35-2a96-426e-81f1-800b8c18aa1e", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected height data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "a13fc2b7-226c-4268-a249-4be09953bf69", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "a16514cb-e4d8-48bd-8e26-1b1a6a27ef4e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a166ebf6-b1f1-41e1-87e2-841a8ac710b3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a16fa7a0-4f4b-45ad-a799-01004133f352", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a183171c-9417-48da-bc55-58c2be512f54", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "a1c7ba7f-d924-4f9e-a35e-36fa153b3809", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a1d1ccf0-6141-4a91-8daa-bd70ae1a34ad", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a2585bdf-29ad-4e3c-b068-42f54bc0108e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a2fe1a10-008b-4c82-be81-7c2a85102af3", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "a3026aee-25ab-431a-b076-941084c0cc28", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "a309f313-6056-4034-8449-ad076d65cf96", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a35803cc-548e-49eb-9ffb-fea0b601c0ce", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a3faea49-5db1-4f09-b704-76a50670fc3c", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a436f366-2382-49f9-9716-2bb334158b1a", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "a4739e66-3e84-4ea6-b1a7-07b1181c0490", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a49d3c42-9275-4ce6-b05b-df2f71d988b7", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "a4c09a1e-4759-423a-a827-32757a6fd621", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "a4fb5378-14d7-4336-b9a1-5f9f6f81d854", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "a523adb3-031d-4f2f-927b-cdd4bf827247", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "a59a29df-b1d2-47b6-923f-129f4d7ea534", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a5a64ef7-cdf5-4fad-81f0-4fdd257cf17b", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "a5a7015f-19b4-41c5-8c40-a126f2bb8d4c", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a60408ee-2944-42b2-8924-f2582548a6c8", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a644ffed-3736-44a1-bb7e-bac257d6c38e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a678684f-bc39-4347-a426-cb18299e7cb3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a6852fa1-0578-45ee-b94c-adb32af39830", "half": "H", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "a732baf6-17ca-4992-9d66-f5d1e07ae47e", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "a77f853e-b503-4090-9c07-92a3ac06b7eb", "half": "D", "rating": "", "warnings": []}
+{"log_id": "a7cfc41f-4d47-49a6-8476-2e0c47b0303f", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "a7d61906-d8d7-4d9e-a6e6-e941d34d5a17", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "a7f36448-9ff2-4a0e-9bb7-aa05b330d75d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a80e942a-f324-4679-93d3-9e20528ad3be", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "a82eb5da-9b1c-4eb1-84b8-062e4d7382fe", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "a84dc73f-31f8-4d42-885d-f7c566b6ad3d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "a8544673-33fe-4112-b4f4-3e6b2c0f2e8d", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "a88d30f8-789a-4700-adcf-e56aadf27e83", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "a96de138-d9c1-47cd-92a4-662dc7efb45b", "half": "H", "rating": "", "warnings": []}
+{"log_id": "a99e8469-9fa5-422e-adf6-8e2a3d5cd523", "half": "D", "rating": "", "warnings": []}
+{"log_id": "aa21654f-d75b-4255-848f-28d5d07d7273", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data"]}
+{"log_id": "aa53d7e0-8f5b-4ea2-b7e0-f17714335b05", "half": "D", "rating": "good", "warnings": ["Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "aa7f1a0e-7b05-41fd-b848-e51f6c22ae82", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "ab2d3a52-da3b-4409-9b9b-88936f04fa8d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ab87a6b3-cfba-44d2-94e4-17a768f39a79", "half": "H", "rating": "", "warnings": []}
+{"log_id": "abf090b2-7b45-4db0-bd23-51686ad976ff", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "ac0f33b6-b808-4a85-b9c6-5fb79e42ca61", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "ac4cb8e3-ec95-45cf-aa7a-9b9f94ac1524", "half": "D", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "ac698d3f-9af8-4186-b2f4-0aa8dd967ba4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ac893e73-2f8a-4e12-a182-b64c6f499f48", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "acde9f0b-8cfa-466b-b8df-f2668b9ceaec", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ace36253-0111-4baa-9aad-e4f33f5fc54a", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "ad19c2f7-a790-4787-a2a9-40c40e9484f7", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ad342dbe-987e-40fb-a0be-90363e7caa9f", "half": "D", "rating": "", "warnings": ["Estimator rejected height data"]}
+{"log_id": "ad624c3e-ee07-42b0-a328-8a2290cddcd4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "adc24ee2-51d3-4d30-8b13-678fbc6369df", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "adccafaf-0b65-4955-bbd2-2509c0a7d35e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ae0583b2-8998-428b-a09a-037dfcc90f48", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "ae4649fb-3698-46a9-8f21-2854f803932a", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "ae800d4a-0dd3-4602-ab04-7c79974a441e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ae870df5-4557-4a65-a93b-95d4d0de33d6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "aea413c9-15c0-481b-927f-99a838f1074c", "half": "H", "rating": "", "warnings": []}
+{"log_id": "aef063f5-1f06-4e62-b520-c626977c2abd", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "af5e2060-a6ee-45c2-ab00-e0d6fc194524", "half": "H", "rating": "", "warnings": []}
+{"log_id": "afc0ac29-c1c3-4bf4-8f62-60edc12086f8", "half": "D", "rating": "", "warnings": []}
+{"log_id": "afe62b0e-ae02-4e15-8cd5-bb17eb66ddb4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "aff5c275-e941-43db-8a9f-c3ebb3540622", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b0252f2a-dc2f-452e-bfd5-e5f669bb489e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b052d5c9-59c2-4da0-b850-7a6489ea58dc", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "b09ae931-4ac3-4105-896c-30f74428af5f", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "b0cbc4da-4f22-4fa4-b75a-764d9cd2c613", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b17d9b8b-e6fa-42a7-b1e1-999e188554f6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "b1838ac6-e450-4011-9ed5-1ebae1a49171", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b226ffc8-cd78-4fc7-b693-797765f51e68", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "b22b37b0-eccf-4c3f-9d1d-f127e6b46f87", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b240fa51-e165-4e3f-b83a-cf4c525dcb40", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "b24f6bbe-0dd2-4fea-9e69-9d908f906f29", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b2771264-99ee-4d3f-ab86-ec9cbde83f2d", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b2b1ae91-1b4b-495f-b82c-2216e80bf6a8", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "b3080dc7-d37c-45bd-8074-466e0c55eecf", "half": "H", "rating": "", "warnings": []}
+{"log_id": "b3091073-c2fc-4696-bc7a-96a643725631", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "b321874e-2093-47a6-b858-86bd35ea8a37", "half": "H", "rating": "", "warnings": []}
+{"log_id": "b33c9c78-b539-4bd8-a0e2-1a6ead127b89", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "b390e084-6742-4cdc-969a-653b0f525da0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b3e2b7aa-95e3-4267-b77b-394ee1d85660", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b436f79b-a048-42f7-a5c3-4723b75be70f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b48d46e6-c2e9-4f17-92b7-1a2378806832", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "b49c882e-2efc-4854-af49-dd0887152515", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "b4aa98f7-aafe-404b-9962-18181ddcf2e8", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b4de1721-b86b-4938-86e3-2404ae6cc53b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b528ac8c-041e-4e6e-af4b-6555ee1c6e2b", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "b55b87e1-35d0-4d3a-a7ee-62d36d3a90a0", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b57c2d02-f061-4e28-89d0-82cce4134669", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "b586564f-8fe1-462e-b4e0-480775aa049b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b5c835bb-aa1b-439c-8f72-19686818973f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b684f951-6159-49fe-a1c5-dedf84e1a3fe", "half": "H", "rating": "", "warnings": []}
+{"log_id": "b6f221b3-e91c-4f11-b659-f470659b5556", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b7232d33-c776-4dca-b24d-c97b77659b3c", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b7f2a2fb-ad7b-4dc4-b893-cfe1091d411d", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "b8533b09-f10c-4cb2-9167-27dae672675f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b88d616e-b33b-4824-bb3c-ab602b162683", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "b89e4f83-7f2c-4fe5-b456-55b2c87de628", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "b8b08079-246e-4a97-ba4c-e609448c12ee", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "b90d7b77-84f1-4ddb-b8d2-a8ae7f423cbc", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "b93770af-24d1-4a8a-a853-6d892d4d4bd0", "half": "H", "rating": "", "warnings": []}
+{"log_id": "b95cf010-1cb7-49e5-ae9e-9a3b29760653", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "b96709cf-ad9e-457f-ab6b-17c72a9830f1", "half": "H", "rating": "great", "warnings": ["Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "b9bb9588-465f-44d4-85b7-2b0f38869a37", "half": "D", "rating": "", "warnings": []}
+{"log_id": "b9caa018-6a21-4e13-ac85-05d8c743e1d1", "half": "D", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "b9d6cbb8-e739-497e-b0aa-e18b5ac4140c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ba5a941e-ee9a-4afd-bf4f-1dec9ca864c6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ba6ac8d1-e2b3-4039-bd13-6f68931dc46e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ba7facbe-540a-44d8-a567-fff580cddbb5", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data"]}
+{"log_id": "ba9e87be-175b-4802-9146-81f668ce0393", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "bbcde4cb-c4fe-420b-9af4-a74ac425d525", "half": "D", "rating": "", "warnings": []}
+{"log_id": "bbf4d6fa-d41e-4277-8f20-62e5841b4c96", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "bc2b35bc-23d4-442d-88cd-d3cf30489c6a", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "bc32e5fe-8d54-4432-b3de-d774d2fb4f07", "half": "D", "rating": "", "warnings": []}
+{"log_id": "bc4d07fd-9deb-4a65-9341-e7dbbd32090b", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data"]}
+{"log_id": "bca1898a-32c5-4d12-a610-6789c96563e2", "half": "H", "rating": "", "warnings": []}
+{"log_id": "bcc3f6fe-06e9-4326-bc8b-f306f301ada0", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "bccd49eb-f0f1-412d-add5-268621634f17", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "bd5a9fda-81ff-44e8-a0fb-216837f33292", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "bd60e95f-ac32-4320-bf18-d238dfdd31ca", "half": "D", "rating": "", "warnings": []}
+{"log_id": "bda81975-0fb9-411b-a487-19050b84a431", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "bdc2cfa2-110d-4db4-a446-dd743d65599f", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "be360921-b977-4fa2-b188-8ecb81ac834f", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "be84565c-5da2-4708-9b31-b8e06917363c", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "be9904e0-c171-4290-828f-c2c2e8373f2f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "bf029b8e-a411-402f-aa79-55234864af77", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "bf12be6d-a320-4765-b4ab-6a9daccff70a", "half": "H", "rating": "", "warnings": ["Battery below", "Setting GF_MAX_HOR_DIST changed 150 \u2192 180 in flight"]}
+{"log_id": "bf216347-963b-418f-b0ae-4d59600dd095", "half": "H", "rating": "", "warnings": []}
+{"log_id": "bf2e14d9-4885-4712-aff3-8187a413adc8", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data"]}
+{"log_id": "bf7ed2ec-c67d-4354-8c4e-bfe87fb56a58", "half": "H", "rating": "", "warnings": []}
+{"log_id": "bf7fdbb6-0dfc-4fc2-afda-34765d181c44", "half": "D", "rating": "", "warnings": []}
+{"log_id": "bf87e1d4-be8b-426d-8140-472a3bc9fbbe", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "bfa33d44-061b-4da0-9f54-d273e4990e12", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "bfd1b143-dfea-48cc-b304-1a937f9b83a9", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "c0482880-3067-4c68-bfa6-3a727606aa72", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data"]}
+{"log_id": "c0519105-925d-4cb3-b715-5a86ae689192", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c070d114-7615-4678-a616-d9a83d1a507f", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "c0a46d44-341d-446d-a88f-c927392bfa51", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected height data"]}
+{"log_id": "c0a48c4e-3cd9-4112-abc5-b916a1797517", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c0ed0397-b99a-4710-9e1b-bbca7544f68c", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "c0f487d9-2854-406b-9972-3632d55efd2f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c15f738e-3a74-4588-ae45-783ac7b44907", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c19cb6ac-eb18-4945-a914-36e65e349b24", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c1bd25a1-7b0b-475e-bf21-88a9a53c5be9", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c1bdef93-0b54-4654-9164-60c8aa09db76", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "c208c02b-63a4-4c68-8a65-e66c8ed90db4", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "c20f93b5-7d03-49b6-9afc-3ef16dfa97fb", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "c21f7041-d6b9-4dd0-85be-86f8ab8b0741", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c25024bc-6373-4520-9457-4d67be7fbb5c", "half": "H", "rating": "great", "warnings": ["Battery below"]}
+{"log_id": "c277b575-6d10-49f6-828c-38fb549107ef", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "c2fbb643-f6e4-4661-b801-7b19286e4c99", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c39c02a5-100a-46fd-9b55-587d139b6fec", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "c42ac222-d73b-48e2-95ad-9d7e4a24d4b8", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c47b9c10-d0d1-420e-a8de-02c9490bfd92", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c4a3b5d5-3847-40bb-94fa-880199ed33d6", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "c4aaf5dd-1238-4567-b42a-14f6880a690c", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "c4c43589-926a-4fdc-afb4-f04ab79d10b1", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c54138a2-d64c-433b-b2c5-26849e2e5c3b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c585c25c-de58-4aa6-9b07-51f04b25d96a", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "c5de483c-58a3-4aeb-9100-e403d8d551dd", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c67c5777-4e0a-47f1-ba7d-06481f6edaa2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c69d2fb3-9e28-46d2-ad47-5ace0fa703b0", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c6a13d64-f735-4c1a-850f-f441f2866e98", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c6a73fca-5ea8-4283-9a0d-75acf7a8b17d", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "c7d0f826-fd19-460c-bb4b-2fdb422ea086", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "c7ec5921-fd7a-4037-9887-ad21a6be9b6e", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "c8276346-7889-41ae-a4a8-a21089a8da89", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c846e428-18a1-4063-b7c1-d039f2216807", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c87aa817-55c5-4523-a255-34a50e6dc137", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "c899f841-2912-4fff-846a-439765d2451c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c89be0a3-6f01-4c60-8bdf-2e774adbbdec", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "c8e04c45-d258-42b8-8a18-e7dba3d60e41", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "c8e5603d-68c5-489d-b576-c74de4faaf7d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c8e9b721-72a5-4040-8762-5729eba8ec22", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "c9292f70-4e78-4163-8cd3-ac9cfd0f28b7", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "c9323dfa-fcd5-4620-beed-f24efef91908", "half": "D", "rating": "", "warnings": []}
+{"log_id": "c97fd9b9-017b-4d62-9686-148a78dd931f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c99147d6-5dcb-49aa-8bb5-84cfcc2b489d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "c9eb9ece-5135-4c16-951a-c661fe0f0979", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "ca0cab81-db64-4bc8-891c-8200c99651a4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ca4970cc-5239-4073-a2c1-c516233f96c5", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "ca6d6976-4798-409e-a22f-63d3f99ad6e4", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "ca7a139f-ae04-47c0-8954-fad4dcd9f9e4", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "cab7b689-d95a-43ae-8414-577582fec40a", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "cb42a9b3-926e-4d47-8be8-a33e152ddb1b", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cb74d3ba-d9db-47d0-9491-a13040baa93c", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data"]}
+{"log_id": "cb89d0a8-ba28-47f4-a2ef-e92a5175d440", "half": "D", "rating": "", "warnings": []}
+{"log_id": "cbb04bff-29b8-45a3-9be3-e9697b06491a", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "cbcb3801-11e9-4398-a20f-0eb28d978109", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cc8b2ac5-cb23-46f0-998e-8f9c41531171", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "cce66c47-4e4e-48a6-b126-f716df552b01", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "ccf9bb3e-0c1d-4067-a38a-516ac45c542e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cd76cd2a-a1eb-42bd-ad43-473bf269bd93", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "cdc72b1f-130b-4d8b-b38a-454f432386d5", "half": "D", "rating": "great", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "cdd2c901-770f-4da6-a6e5-e8ce7fbcbd8b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "cdf0ce75-8acd-4802-b658-af26d74c5b5f", "half": "H", "rating": "great", "warnings": []}
+{"log_id": "ce56b450-9ff8-4de7-8050-5a3521cbbff4", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ce70b9d6-e411-4d7b-9e39-8a7da026f717", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "cf2aa6ee-a5e1-4b19-bf49-80ccd1a3ddd8", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cf2df591-cf7e-412e-8c5a-8cb57dc57e1b", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "cf71aabb-e87d-4279-bbde-5e2a7efb1fd9", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cfb1a229-0042-4202-b358-e133b2c3e57d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "cff91879-270d-45b8-962e-89fa7bd327aa", "half": "D", "rating": "", "warnings": ["Setting COM_DL_LOSS_T changed 210 \u2192 200 in flight", "Setting RTL_RETURN_ALT changed 130 \u2192 80 in flight", "Setting RTL_RETURN_ALT changed 80 \u2192 130 in flight"]}
+{"log_id": "d0409f6a-85e7-4bb4-ae7c-181bf30b05ed", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d0692cb0-38ae-46fd-8aa8-afc498416071", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d08cf0c0-587f-4ef8-97ab-c7edffa60f42", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d0cd4486-1c28-4a22-ba34-7ed21b243db3", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "d16f5691-5735-43b3-aec7-7d95c8600073", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "d1d4330f-ca79-4497-8637-4cbb5cb254f3", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d1fd5569-e6d4-4531-bc3b-22c02c79a08a", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "d2173270-4db9-4707-a13d-db50d90a0c32", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "d2658fa1-36f4-4032-af8d-6c64de6e8849", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d2db8763-9675-4421-ae4b-99e14944716a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d3191bc3-fcbc-441c-a359-2f6f090e2839", "half": "H", "rating": "great", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "d33f6391-f1bf-4a6d-995d-d594fa3a0ca3", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d35506a3-488e-4622-9650-69b7c497f472", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected position data"]}
+{"log_id": "d3e68540-f46c-401d-be60-40b847e6958a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d41c6ed3-f361-449b-abbf-7994ad260900", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d42676cb-ca5d-4da0-950c-df6d9d1a956b", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d426d13a-007c-400e-a505-af4ac13c9413", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d437f70b-f0bf-47de-bdd9-4c9906a22b4c", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data"]}
+{"log_id": "d441f955-74c1-4083-b551-5f1cea08c00d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d49003a8-8168-4f72-9d2f-252800d14648", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d494aa13-cf28-47dc-9335-807c5caffcd1", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "d4b9df2a-98af-42db-bc93-53c39c0b5d65", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d4c27e0b-8af5-49b9-b921-c654c66cddf1", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d4c6cc2b-25c9-47a6-ab57-dfaaf558a2cb", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "d4db0550-d338-4049-9dae-c5378005a8e2", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d4e1bb22-e24f-4a0b-a628-33b93072be38", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "d4e4a45f-d5c2-48ac-a532-f6e32286f515", "half": "H", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "d4ff5446-bd3f-4262-827a-7856c93ad56e", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "d50eb997-ec32-4b24-92cf-fa30960a7c1b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d511ed58-1d33-4177-bfe1-76acb8686c44", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "d5780e6e-bbfe-4a46-9d47-6f8eedd3d41e", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d58fa193-43ce-4a02-bb3e-998b6d024cba", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d59411b0-4359-432b-9aba-0415cb977d91", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "d618c574-927c-442b-8611-a1456ecfdea9", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data"]}
+{"log_id": "d62da95c-fae3-448d-bd40-ce6f1cf34104", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d6c4a671-f9b4-4dce-8e8d-21fffd0eeb38", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d7132930-b0d8-4c37-a49d-5192d06be4bf", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "d749fb0e-a3cf-4d3d-a072-0d55c3b5d22e", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "d7887852-bd83-4472-8380-d088ee501350", "half": "H", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "d793cd22-1a13-4f82-ae86-46ac0a9486b6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d7df84f4-3029-4664-a85a-4d50908f1008", "half": "D", "rating": "", "warnings": []}
+{"log_id": "d7f340f4-39d8-4a6c-a7b6-dfb476d68c8a", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "d8120a53-11ea-49f4-bc90-a546f5bb6e56", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "d8269c38-2f63-40c9-a486-6b545a93a662", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "d83cc061-879d-460f-a7b0-b47b064952b9", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "d883fe54-36ad-499a-b3fc-20b609fedda2", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "d8ea895b-f0b0-4e26-babb-9faae326d187", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "d8f351a0-1617-4759-8daf-6864d0d74e95", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "d9065715-91e5-4b84-8dc2-91c750635068", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d90e656d-1d96-46d4-bc57-3b791f50dc45", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Poor GPS"]}
+{"log_id": "d929be6c-8354-4e91-ac14-e120feb134d7", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "d9428aa9-e855-44d1-9844-1a9a1dfc2b97", "half": "H", "rating": "", "warnings": []}
+{"log_id": "d9c12af4-f3c1-42c8-b96c-167d339bd0be", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator reported an internal fault"]}
+{"log_id": "da0a2356-eb30-4b77-8deb-696798a263ba", "half": "H", "rating": "good", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "da2cdbaa-1eed-4c0d-9475-558bd719f480", "half": "D", "rating": "", "warnings": []}
+{"log_id": "da33c140-6f95-44be-b034-dbba20d01726", "half": "H", "rating": "", "warnings": []}
+{"log_id": "dac0c68f-ad99-4e36-96e1-819bcb5b087a", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected position data", "Poor GPS"]}
+{"log_id": "daecef9c-0d9e-4d48-8b1d-377aa0617c5e", "half": "H", "rating": "", "warnings": ["Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight", "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight", "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight", "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight"]}
+{"log_id": "db2b1af2-9c19-48f6-b559-ec21bcb8afd2", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "db5af9c5-0363-48f1-be12-025b46f3acea", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "db7c4859-f280-4bab-848b-1d892b916938", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "dbf9d0a3-0649-4b2f-9046-138c52502c54", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "dc6c9fe2-aebd-4137-9df9-9e7bca16ab51", "half": "D", "rating": "", "warnings": []}
+{"log_id": "dce8a2df-0577-44aa-bcbf-be20ad61f05a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "dcff74c8-9aaa-466d-af2a-0f3cabf54b90", "half": "H", "rating": "", "warnings": []}
+{"log_id": "dd83af8f-68b7-4fdd-98ff-387370e95915", "half": "D", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "de0b6b4d-a5ed-4f2b-970c-3604c23524e5", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "de1fc9bd-b185-4395-ad6f-db200c0666fb", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "de25a4e8-3680-4599-9144-a399220de168", "half": "H", "rating": "", "warnings": []}
+{"log_id": "de2fd939-0e47-4904-8e80-bb3aa850ecde", "half": "D", "rating": "", "warnings": []}
+{"log_id": "de30ee92-d27e-44db-a432-37f8887b5d97", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "de805831-9ee4-418d-8714-07027433b9d5", "half": "D", "rating": "", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "de80e7ea-f2b8-4d92-be41-3f7bfde3ee06", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "de945b77-1c93-4eef-9ba9-9bd36cac68a6", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "debee7d1-e76c-4011-b931-1fbb5155a0c9", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "decddf9f-89e8-4704-b6ce-fbf96e179221", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected velocity data", "Poor GPS"]}
+{"log_id": "ded81947-cbd3-4362-879b-a3f20f01132a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "def4a82d-1a0e-48d2-8ec9-4b186b536e7f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "df240455-16b4-4826-b337-66a1f761172b", "half": "D", "rating": "", "warnings": []}
+{"log_id": "df5c120e-98d9-43a7-83c1-5a5ee90e36f7", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "df5dae5b-aa68-417b-af62-70b29624f5dd", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "df669ac3-e965-4f08-a1f5-feae4a8e8759", "half": "D", "rating": "", "warnings": []}
+{"log_id": "df96abb1-72ff-4587-a1bc-c95955529c4f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e038b0ca-4b8c-4146-a305-ad59acb9da70", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e0544f61-d550-4f17-93fa-ec236b6abd74", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "e070ddb8-cc7a-40bd-9e33-f5ea66ae5afe", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "e076681f-227b-4995-912c-ca603b3f8e06", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e0be3374-1b3e-46c4-abdc-58d09920a030", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "e0ed6f53-174f-47b2-a973-02271609a879", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e12b10c7-ddd3-4080-b7d4-5c3be72946c4", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "e1366a1a-bd34-479c-90fa-8d13231e8636", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e1bfab1b-771c-434e-903b-f4ab909d4855", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "e1fcd35d-e31c-4061-b679-a195d011c1b5", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "e24d8a7f-0ee6-4fd3-9ba1-ddf0861ce2c1", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "e2a8db81-e812-4b5f-92a6-09c15cf4431c", "half": "H", "rating": "", "warnings": ["Estimator rejected position data"]}
+{"log_id": "e2b3db59-392d-40ae-bcdf-11bdf8d7d312", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e2b8eb81-1642-4d1b-80ea-2483d22d3426", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "e3145005-4ea4-4949-ad5d-94697fef5d28", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e3508edd-dcdd-4dbc-bb63-8dfbee3eed63", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "e3cfed76-d510-4b21-99d7-4a47ba67617b", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "e3d5b142-bade-4a51-a80c-b6e1de378f08", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e445cc73-9065-4d15-aa09-2339f91c48ec", "half": "H", "rating": "great", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "e4beea5a-75ad-4101-9e9c-a34d8be0de49", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e4d185ee-9d0e-4853-bed4-0deaf503eca1", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "e4e263a7-d6b4-4de0-8d2f-cc1def9cdbf6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e4f6a52c-f0de-40c0-9e59-5e5c652997c7", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "e530c84b-d0ae-4af3-a808-24f075ead5d5", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "e5645dff-1bd3-4aef-92fd-d134c65dae15", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "e5882475-887e-49fe-8c7d-ed3cbce1628d", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e5a1338c-3f76-4dd5-948f-e939fd5ea241", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e62c145f-0513-41c3-ab40-3a0ef6c6bf10", "half": "D", "rating": "great", "warnings": ["Battery below", "Estimator rejected compass data"]}
+{"log_id": "e62d13e8-9f7d-4474-b8dd-d705eeac7482", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e63a8d83-5ba6-4258-a5b9-69febc874149", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e67dc9b8-1721-4319-83b5-32acce70eea6", "half": "D", "rating": "good", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "e67eb646-3148-473b-8b08-3892d61ae2c6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e7a5396b-16f3-446a-9328-51e7d582a745", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "e81c0bb4-98d5-47da-86a8-f1fc3c456112", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "e85307ef-8240-481f-a918-5823b014690d", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e918560e-c20c-4623-904d-535e539ccdcf", "half": "H", "rating": "", "warnings": []}
+{"log_id": "e941c3b0-8b10-46a8-8b83-d7ccb7b9ad4e", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "e9ef24cf-cf13-413b-bac3-433ada36faaa", "half": "D", "rating": "", "warnings": []}
+{"log_id": "e9fafc5d-88b7-45af-948c-58a8f4696155", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "e9fd0d9a-cbe3-4c59-8dda-a77063e47f7e", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ea05a06c-5605-4c4b-96ac-1041a0f529d1", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "ea7dbb45-c8f1-4a2d-96bc-023ff15b97c9", "half": "D", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "eaacfb46-f636-482d-b83d-ff2f63477d13", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ead40b18-1716-4006-847e-595bbff3e3cd", "half": "H", "rating": "", "warnings": []}
+{"log_id": "eae909cc-c23f-4fc9-bd31-e4f146028b1c", "half": "H", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "eba1f8d3-f860-4b74-9a44-604fb06b8761", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "ebf30b24-b091-44f5-8be8-1451b80a555f", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "ec1cb27a-42c1-4e86-a001-c8cee3029017", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "ed0a56c2-0a75-4980-800b-239709e4d452", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "ed0d3dd1-af10-4f03-8ebb-c20880b0ded9", "half": "D", "rating": "", "warnings": ["Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "ed1b9ee2-3cf5-4d0e-94d8-9c6388c89ef8", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ed2d5880-bb0e-460a-bf8a-7d5a215c5f75", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ed567f2f-323d-4948-8da2-eadd5a815dc4", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "eda0d033-187d-4f52-8bf3-8cc3c320ef71", "half": "H", "rating": "", "warnings": []}
+{"log_id": "edb297d8-162f-4662-bfc0-59d31a2b610e", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "ee032c5c-4975-411f-8546-477c73166222", "half": "D", "rating": "great", "warnings": []}
+{"log_id": "ee06ed49-d44a-4b5a-b8f7-ea52d7bda41c", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "ee1dd6a5-3244-4d56-aedb-4643b89665fb", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "ee49fb99-10c0-4eb7-9426-74d520c564fe", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ee4fc4e2-968c-41f5-8a67-eed2ec8f6917", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "ee5f6ec5-76dc-4cb3-9016-c2a27c1f3486", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "ee609fc1-a51a-473f-b5fc-494715a3ad2c", "half": "D", "rating": "", "warnings": []}
+{"log_id": "eead3f21-3ed8-4402-9b48-51753a908f38", "half": "D", "rating": "", "warnings": []}
+{"log_id": "eec3ae8d-7a56-4f5b-a896-0856d5d06536", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "f00bcc5e-61de-4aec-b6a8-084dcd0e36de", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f0287f05-0af2-456b-9e7d-70bf0d16c25e", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f06e1a38-c72c-4145-9e1b-9b33a28b9df7", "half": "D", "rating": "good", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "f06f9dcb-2fff-47d3-b427-4015b794630e", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "f085089b-f2a6-43b6-a22e-b743b73c232a", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "f08a66fb-f027-484b-be5a-bba9bce4ff2a", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f0eb65e2-99f7-4e73-a51d-37ee4d6f6ca6", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f12251b2-ae73-452e-ae51-814e803bfe3c", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f12777f8-a74e-4eea-be53-b0ff10f67278", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f158d95f-37fa-4439-bd81-b717efa49528", "half": "H", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "f1f05c7f-961b-4e4e-946d-b8290d55f812", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f216014b-f724-43ec-a904-81e8cab313dd", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "f23a8477-d304-4e9f-aa3d-80387616ce74", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f279b471-9dd1-4f71-9d0b-8ede8d5eb2d2", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f27cb0a3-52ef-428a-a37a-336b9d00b48f", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "f2bc9d20-609b-400f-ab48-1d461d0dc647", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "f2f7ef1f-2b1c-4105-a3de-d3287ae9eaba", "half": "H", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "f3051144-6b5d-4a34-883f-bb7bf94cc0b6", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f326586d-09d1-4c0b-981d-4ad29b71c70d", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "f34dbfda-2d64-40bb-95c6-171517dbd1d5", "half": "H", "rating": "good", "warnings": ["Estimator rejected height data", "Estimator rejected velocity data"]}
+{"log_id": "f36fa62d-7d21-4577-8256-8de78833e990", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "f38e7017-d812-48cf-8daa-3310d105d799", "half": "H", "rating": "", "warnings": ["Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "f3cbfc75-0696-4d93-88aa-308615a1bca6", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "f40ce80d-ee7b-4f27-a604-9c763973a349", "half": "D", "rating": "good", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "f4e6a264-4ce3-4f41-9250-20d53012bec9", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "f4f6f16a-01fb-489f-8410-05045134243f", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f4fbf0cd-49ab-478a-b597-7ce35df7f5a3", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "f5074b6d-745a-4ee6-84e0-83fedbc6291f", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f5915fe6-ee9b-4b3d-b756-0e96439b8f83", "half": "H", "rating": "good", "warnings": ["Autopilot in failsafe", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "f59f2e17-9b07-4fb1-82b5-b96197d7b7a1", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "f5a333ef-a614-43ea-a7b3-1cb49654e10a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f5ae3251-e4fa-4e1b-bec8-0e9d7a5471da", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "f5c48706-52ca-47c9-b8fb-ee79ab8b918e", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "f6028ea2-833b-455a-a46d-30eb7a904466", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "f69da1c3-97ac-4a1a-8317-6338b4b021ec", "half": "H", "rating": "", "warnings": ["Estimator rejected compass data", "Estimator rejected velocity data"]}
+{"log_id": "f6b326c3-b076-4629-84fc-4f53a2ee37e9", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe"]}
+{"log_id": "f6d0ae99-e956-4079-9fd4-4316a35b5d62", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f6d0cd1b-0cc8-4366-8982-a6882a362a74", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "f70fa86f-d9bb-4e75-92e4-23ee5d54a6da", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "f728cd91-fdc0-46fc-8c22-758241f13842", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f7499400-3408-4b17-9080-04047666c217", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f7560888-225e-46cf-8169-61c3f32e17e1", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "f78e4f89-43ca-46e7-9007-c165e68a3688", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f7a1dd33-4bb6-45ad-98c6-53c8c884543a", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f7c05ba1-6bb4-48d1-bbbf-84d4af1d5a3a", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f7c6eb77-df69-4422-8c74-bec51b4d48ce", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f7d2de69-2c51-45fd-8d14-61af0f680a47", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected height data", "Estimator rejected position data", "Estimator rejected velocity data"]}
+{"log_id": "f808520f-c3b3-447a-9c6c-df42583472d7", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "f8191e60-3e6e-48bd-a79a-e39f9dc291a4", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f8492274-2a9e-4743-ac26-91eec639c82e", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f90be65c-a09b-4d4f-b305-be49391f98bf", "half": "D", "rating": "", "warnings": []}
+{"log_id": "f918f045-823f-4d91-adbc-4a0213829015", "half": "H", "rating": "good", "warnings": ["Estimator rejected velocity data"]}
+{"log_id": "f921d063-fc6c-4c7b-837d-9e6dcec838a5", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "f93ef486-223b-4293-b79a-3134c90d5758", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "f95d940a-9947-4b2c-8884-cd96edeafa2c", "half": "D", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator reported an internal fault"]}
+{"log_id": "f982a559-b20e-4014-bbb7-53ad3fab84b2", "half": "H", "rating": "", "warnings": []}
+{"log_id": "f9e7c061-1ffb-45ff-9118-454131797f63", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fa2e8158-0a51-49bf-9c36-da37c1e1b6f0", "half": "D", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "fa907da6-32ed-4d7e-aa6a-a87117ef70f2", "half": "D", "rating": "", "warnings": ["Estimator rejected height data"]}
+{"log_id": "faaa857a-3c6d-4b06-bef8-8cb48629d254", "half": "D", "rating": "", "warnings": []}
+{"log_id": "fafc503e-ebcf-40e3-8e93-b684ae9685d7", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator reported an internal fault"]}
+{"log_id": "fb4a36b3-1b75-4607-be72-c1176125bebd", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected velocity data"]}
+{"log_id": "fb6061ba-31a9-4a64-a097-8af3489bdc16", "half": "H", "rating": "great", "warnings": ["Estimator rejected height data"]}
+{"log_id": "fbb58e92-1eae-48e7-9829-b914b690df6a", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fbc60f2c-2464-4577-bcfc-201e7362ebdc", "half": "H", "rating": "good", "warnings": []}
+{"log_id": "fbfbbdbe-5bad-456c-8eb0-011ffe6aba66", "half": "D", "rating": "good", "warnings": ["Battery below"]}
+{"log_id": "fbfbc3c9-690c-4df2-9ffc-6e7af79d2b43", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below", "Estimator rejected compass data", "Estimator rejected position data"]}
+{"log_id": "fc44c6fb-6809-497a-8658-53074374ee65", "half": "D", "rating": "", "warnings": []}
+{"log_id": "fc8dfdcd-c5e5-416b-a445-5f93b1858a26", "half": "H", "rating": "", "warnings": ["Poor GPS"]}
+{"log_id": "fcd7fa3d-3c91-4246-97d0-34c447e818a9", "half": "D", "rating": "good", "warnings": []}
+{"log_id": "fd391c3e-093f-42b8-a288-5dc816d975e5", "half": "D", "rating": "", "warnings": ["Battery below"]}
+{"log_id": "fd3c7a6a-28cf-4269-aa61-85c267eab5ab", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fd4179cb-71f1-497f-b8b8-7ef6b4135621", "half": "H", "rating": "", "warnings": ["Battery below", "Estimator rejected compass data", "Estimator rejected position data", "Estimator rejected velocity data", "Estimator reported an internal fault"]}
+{"log_id": "fd5c7b33-2632-49d5-9492-6742b53d3c0f", "half": "D", "rating": "", "warnings": []}
+{"log_id": "fd658bfa-5606-4c88-bcec-d4cfaed6c300", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fd8d8dce-9704-4468-a1cf-8aa5b0ac43d5", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fdf1fd43-f7bd-4a6f-b50a-fb02ef65caaa", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "fe2cde34-3953-4cc7-bbe0-116a3840f0ac", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "fe733af0-c546-4de8-9a03-a9b93ca5af69", "half": "H", "rating": "", "warnings": []}
+{"log_id": "fe83a560-b58b-40db-9bab-05ee7e9a7b5e", "half": "H", "rating": "", "warnings": ["Autopilot in failsafe", "Battery below"]}
+{"log_id": "febd3815-a75c-4f10-9266-1d83f65c97b3", "half": "H", "rating": "", "warnings": []}
+{"log_id": "ff1836ad-91e5-48f9-9fb6-5b679addcb65", "half": "H", "rating": "great", "warnings": ["Battery below"]}
+{"log_id": "ff32ce06-40b5-4237-a3f9-f8e2f295b6c1", "half": "D", "rating": "", "warnings": ["Estimator rejected compass data"]}
+{"log_id": "ff8e9242-7904-4f39-8344-9cc79300def7", "half": "D", "rating": "", "warnings": []}
+{"log_id": "ffb47255-48f2-412a-ac6c-5c035953ba96", "half": "D", "rating": "", "warnings": ["Estimator reported an internal fault"]}
+{"log_id": "ffe7c333-0843-4943-b2a3-201a42039255", "half": "H", "rating": "", "warnings": []}

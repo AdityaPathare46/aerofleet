@@ -1,0 +1,516 @@
+{
+ "declared": "research/false_alarms/measure.py",
+ "logs_found": 1121,
+ "read": 1121,
+ "unreadable": 0,
+ "all": {
+  "flights": 1121,
+  "flagged": 456,
+  "share": [
+   0.4068,
+   0.3784,
+   0.4358
+  ],
+  "by_kind": {
+   "Estimator rejected compass data": [
+    0.1624,
+    0.1419,
+    0.1851,
+    182
+   ],
+   "Battery below": [
+    0.1624,
+    0.1419,
+    0.1851,
+    182
+   ],
+   "Estimator rejected velocity data": [
+    0.1178,
+    0.1002,
+    0.1379,
+    132
+   ],
+   "Autopilot in failsafe": [
+    0.1115,
+    0.0944,
+    0.1313,
+    125
+   ],
+   "Estimator reported an internal fault": [
+    0.0865,
+    0.0715,
+    0.1044,
+    97
+   ],
+   "Estimator rejected position data": [
+    0.083,
+    0.0682,
+    0.1006,
+    93
+   ],
+   "Estimator rejected height data": [
+    0.041,
+    0.0309,
+    0.0543,
+    46
+   ],
+   "Poor GPS": [
+    0.0196,
+    0.013,
+    0.0295,
+    22
+   ],
+   "Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight": [
+    0.0018,
+    0.0005,
+    0.0065,
+    2
+   ],
+   "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight": [
+    0.0018,
+    0.0005,
+    0.0065,
+    2
+   ],
+   "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight": [
+    0.0018,
+    0.0005,
+    0.0065,
+    2
+   ],
+   "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight": [
+    0.0018,
+    0.0005,
+    0.0065,
+    2
+   ],
+   "Setting RTL_DESCEND_ALT changed 100.084 \u2192 105.043 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_DESCEND_ALT changed 104.822 \u2192 104.837 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_DESCEND_ALT changed 105.043 \u2192 104.822 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 100.084 \u2192 105.043 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 104.822 \u2192 104.837 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 105.043 \u2192 104.822 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting GF_MAX_HOR_DIST changed 150 \u2192 180 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting COM_DL_LOSS_T changed 190 \u2192 60 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 90 \u2192 100 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting COM_DL_LOSS_T changed 210 \u2192 200 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 130 \u2192 80 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 80 \u2192 130 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting NAV_DLL_ACT changed 7 \u2192 8 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 120 \u2192 100 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ],
+   "Setting NAV_RCL_ACT changed 2 \u2192 0 in flight": [
+    0.0009,
+    0.0002,
+    0.005,
+    1
+   ]
+  },
+  "vehicles": 401,
+  "vehicles_with_a_flagged_flight": 218
+ },
+ "good_or_great": {
+  "flights": 299,
+  "flagged": 86,
+  "share": [
+   0.2876,
+   0.2393,
+   0.3414
+  ],
+  "by_kind": {
+   "Estimator rejected compass data": [
+    0.107,
+    0.0768,
+    0.1472,
+    32
+   ],
+   "Battery below": [
+    0.0903,
+    0.0628,
+    0.1282,
+    27
+   ],
+   "Autopilot in failsafe": [
+    0.0836,
+    0.0573,
+    0.1205,
+    25
+   ],
+   "Estimator rejected velocity data": [
+    0.0769,
+    0.0518,
+    0.1128,
+    23
+   ],
+   "Estimator rejected position data": [
+    0.0535,
+    0.0332,
+    0.0851,
+    16
+   ],
+   "Estimator rejected height data": [
+    0.0334,
+    0.0183,
+    0.0605,
+    10
+   ],
+   "Estimator reported an internal fault": [
+    0.0268,
+    0.0136,
+    0.0519,
+    8
+   ],
+   "Poor GPS": [
+    0.0067,
+    0.0018,
+    0.0241,
+    2
+   ],
+   "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": [
+    0.0033,
+    0.0006,
+    0.0187,
+    1
+   ],
+   "Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight": [
+    0.0033,
+    0.0006,
+    0.0187,
+    1
+   ]
+  },
+  "vehicles": 92,
+  "vehicles_with_a_flagged_flight": 45
+ },
+ "D": {
+  "flights": 549,
+  "flagged": 232,
+  "share": [
+   0.4226,
+   0.3819,
+   0.4643
+  ],
+  "by_kind": {
+   "Estimator rejected compass data": [
+    0.1712,
+    0.142,
+    0.205,
+    94
+   ],
+   "Battery below": [
+    0.1603,
+    0.132,
+    0.1933,
+    88
+   ],
+   "Autopilot in failsafe": [
+    0.1038,
+    0.081,
+    0.1322,
+    57
+   ],
+   "Estimator rejected velocity data": [
+    0.0965,
+    0.0746,
+    0.1241,
+    53
+   ],
+   "Estimator reported an internal fault": [
+    0.0965,
+    0.0746,
+    0.1241,
+    53
+   ],
+   "Estimator rejected position data": [
+    0.0619,
+    0.0447,
+    0.0853,
+    34
+   ],
+   "Estimator rejected height data": [
+    0.0255,
+    0.0152,
+    0.0423,
+    14
+   ],
+   "Poor GPS": [
+    0.0255,
+    0.0152,
+    0.0423,
+    14
+   ],
+   "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting COM_DL_LOSS_T changed 190 \u2192 60 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 90 \u2192 100 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting COM_DL_LOSS_T changed 210 \u2192 200 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 130 \u2192 80 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 80 \u2192 130 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting NAV_DLL_ACT changed 7 \u2192 8 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 120 \u2192 100 in flight": [
+    0.0018,
+    0.0003,
+    0.0102,
+    1
+   ]
+  },
+  "vehicles": 201,
+  "vehicles_with_a_flagged_flight": 110
+ },
+ "H": {
+  "flights": 572,
+  "flagged": 224,
+  "share": [
+   0.3916,
+   0.3525,
+   0.4322
+  ],
+  "by_kind": {
+   "Battery below": [
+    0.1643,
+    0.1362,
+    0.1969,
+    94
+   ],
+   "Estimator rejected compass data": [
+    0.1538,
+    0.1266,
+    0.1857,
+    88
+   ],
+   "Estimator rejected velocity data": [
+    0.1381,
+    0.1122,
+    0.1688,
+    79
+   ],
+   "Autopilot in failsafe": [
+    0.1189,
+    0.0949,
+    0.148,
+    68
+   ],
+   "Estimator rejected position data": [
+    0.1031,
+    0.0808,
+    0.1308,
+    59
+   ],
+   "Estimator reported an internal fault": [
+    0.0769,
+    0.0578,
+    0.1017,
+    44
+   ],
+   "Estimator rejected height data": [
+    0.0559,
+    0.0399,
+    0.0779,
+    32
+   ],
+   "Poor GPS": [
+    0.014,
+    0.0071,
+    0.0274,
+    8
+   ],
+   "Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight": [
+    0.0035,
+    0.001,
+    0.0127,
+    2
+   ],
+   "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight": [
+    0.0035,
+    0.001,
+    0.0127,
+    2
+   ],
+   "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight": [
+    0.0035,
+    0.001,
+    0.0127,
+    2
+   ],
+   "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight": [
+    0.0035,
+    0.001,
+    0.0127,
+    2
+   ],
+   "Setting RTL_DESCEND_ALT changed 100.084 \u2192 105.043 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting RTL_DESCEND_ALT changed 104.822 \u2192 104.837 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting RTL_DESCEND_ALT changed 105.043 \u2192 104.822 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 100.084 \u2192 105.043 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 104.822 \u2192 104.837 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting RTL_RETURN_ALT changed 105.043 \u2192 104.822 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting GF_MAX_HOR_DIST changed 150 \u2192 180 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ],
+   "Setting NAV_RCL_ACT changed 2 \u2192 0 in flight": [
+    0.0017,
+    0.0003,
+    0.0098,
+    1
+   ]
+  },
+  "vehicles": 200,
+  "vehicles_with_a_flagged_flight": 108
+ },
+ "pass_mark": "at most 20% of good-or-great flights flagged",
+ "FA1_usable_as_declared": false
+}
