@@ -1,0 +1,93 @@
+{
+ "declared": "research/false_alarms/measure_fa2.py",
+ "read": 1121,
+ "unreadable": 0,
+ "H_good_or_great": {
+  "flights": 190,
+  "flagged": 21,
+  "share": [
+   0.1105,
+   0.0734,
+   0.1631
+  ],
+  "by_reason": {
+   "Estimator rejected position data": 12,
+   "Estimator rejected velocity data": 11,
+   "Estimator rejected height data": 7,
+   "Estimator rejected compass data": 6,
+   "Autopilot in failsafe": 6,
+   "Estimator reported an internal fault": 2,
+   "Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight": 1
+  },
+  "pilot_notes": 16
+ },
+ "H_all": {
+  "flights": 572,
+  "flagged": 113,
+  "share": [
+   0.1976,
+   0.167,
+   0.2322
+  ],
+  "by_reason": {
+   "Autopilot in failsafe": 46,
+   "Estimator rejected compass data": 43,
+   "Estimator rejected velocity data": 43,
+   "Estimator rejected position data": 41,
+   "Estimator reported an internal fault": 19,
+   "Estimator rejected height data": 18,
+   "Poor GPS": 6,
+   "Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight": 2,
+   "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight": 2,
+   "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight": 2,
+   "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight": 2,
+   "Setting RTL_DESCEND_ALT changed 100.084 \u2192 105.043 in flight": 1
+  },
+  "pilot_notes": 94
+ },
+ "D_good_or_great": {
+  "flights": 109,
+  "flagged": 21,
+  "share": [
+   0.1927,
+   0.1296,
+   0.2766
+  ],
+  "by_reason": {
+   "Estimator rejected compass data": 10,
+   "Autopilot in failsafe": 8,
+   "Estimator rejected position data": 4,
+   "Estimator rejected velocity data": 4,
+   "Estimator reported an internal fault": 1,
+   "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": 1,
+   "Poor GPS": 1
+  },
+  "pilot_notes": 11
+ },
+ "D_all": {
+  "flights": 549,
+  "flagged": 109,
+  "share": [
+   0.1985,
+   0.1673,
+   0.234
+  ],
+  "by_reason": {
+   "Estimator rejected compass data": 49,
+   "Autopilot in failsafe": 35,
+   "Estimator rejected velocity data": 27,
+   "Estimator rejected position data": 24,
+   "Estimator reported an internal fault": 20,
+   "Estimator rejected height data": 10,
+   "Poor GPS": 9,
+   "Setting COM_DL_LOSS_T changed 190 \u2192 60 in flight": 1,
+   "Setting RTL_RETURN_ALT changed 90 \u2192 100 in flight": 1,
+   "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": 1,
+   "Setting NAV_DLL_ACT changed 7 \u2192 8 in flight": 1,
+   "Setting RTL_RETURN_ALT changed 120 \u2192 100 in flight": 1
+  },
+  "pilot_notes": 88
+ },
+ "pass_mark": "at most 20% of H's good-or-great flights flagged",
+ "FA2_met": true
+}
