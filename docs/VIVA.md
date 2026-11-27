@@ -384,9 +384,13 @@ Two layers: (1) A **signed receipt** handed weekly to someone outside the operat
 aggregator, or insurer); checking it (`Check a receipt` or `verify_ledger.py --receipt`) catches a chain rebuilt even
 with the operator's own key. (2) **Optional RFC 3161 trusted timestamping** (`Save TSA-timestamped receipt`,
 `GET /ledger/receipt?tsa=true`): AeroFleet sends **only the 32-byte SHA-256 hash** of the receipt to an independent
-Time-Stamping Authority (e.g., DigiCert or FreeTSA), embeds the signed CMS `TimeStampResp` token, and verifies its
-messageImprint digest, CMS signature, `id-kp-timeStamping` EKU, validity window, and optional root CA chain
-(`--tsa-ca`). That eliminates trust in the operator's local computer clock while sending zero flight data off-device.
+Time-Stamping Authority (DigiCert; the only allowed URL), embeds the signed CMS `TimeStampResp` token, and verifies its
+messageImprint digest, nonce, CMS signature, ESS signing-certificate binding, `id-kp-timeStamping` EKU, validity at
+`genTime`, and the chain to a **pinned root** (`aerofleet/assurance/data/tsa_roots.pem`, DigiCert Trusted Root G4; an
+auditor may pass their own bundle with `verify_ledger.py --tsa-ca`). A token signed by a self-made CA is rejected (the
+first version accepted it: critical review 27 Nov, C2). So the receipt's date no longer depends on the operator's clock,
+and no flight data leaves the machine. Limit: it proves the receipt existed by that time, not that the flights in it are
+genuine.
 In addition, `GET /ledger/verify` now cross-checks stored `FlightReview` and `SprayForm` rows in SQLite against their
 signed ledger hashes.
 

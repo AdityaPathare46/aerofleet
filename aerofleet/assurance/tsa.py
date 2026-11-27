@@ -8,6 +8,11 @@ SHA-256 digest existed at or before the TSA's signed UTC time (`genTime`).
 Privacy: only the 32-byte SHA-256 hash of the receipt leaves the machine. No flight logs, locations,
 UINs, or parameters are ever sent to the TSA.
 
+Trust: a token is accepted only if the TSA's certificate chains to a root in `data/tsa_roots.pem` (pinned; today
+DigiCert Trusted Root G4), carries the timeStamping key usage, and is bound to the signature by the ESS
+signing-certificate attribute. A certificate merely embedded in the token proves nothing: anyone can make a CA and a
+"TSA" certificate (critical review 27 Nov 2026, C2). Requests go only to URLs in ALLOWED_TSA_URLS.
+
 Pure Python + `cryptography` (no extra runtime dependencies, no ML/AI libraries).
 """
 from __future__ import annotations
@@ -22,11 +27,17 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID
 
 DEFAULT_TSA_URL = "http://timestamp.digicert.com"
+# Only these TSAs are contacted; each must have its root in data/tsa_roots.pem.
+ALLOWED_TSA_URLS = frozenset({"http://timestamp.digicert.com"})
+ROOTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "tsa_roots.pem")
+OID_CONTENT_TYPE = "1.2.840.113549.1.9.3"
+OID_SIGNING_CERT = "1.2.840.113549.1.9.16.2.12"       # ESS signingCertificate (SHA-1 cert hash)
+OID_SIGNING_CERT_V2 = "1.2.840.113549.1.9.16.2.47"    # ESS signingCertificateV2 (SHA-256 by default)
 OID_SHA256 = "2.16.840.1.101.3.4.2.1"
 OID_SHA384 = "2.16.840.1.101.3.4.2.2"
 OID_SHA512 = "2.16.840.1.101.3.4.2.3"
@@ -56,6 +67,18 @@ HASH_BY_OID = {
 
 class TSAError(RuntimeError):
     """Raised when a TSA cannot be reached or returns an invalid RFC 3161 response."""
+
+
+def trusted_roots_pem() -> str:
+    """The pinned TSA roots (PEM). Tests replace this function to trust a test CA."""
+    with open(ROOTS_FILE, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def check_tsa_url(url: str) -> str:
+    if url not in ALLOWED_TSA_URLS:
+        raise TSAError(f"Timestamp authority {url!r} is not on the allowed list ({', '.join(sorted(ALLOWED_TSA_URLS))})")
+    return url
 
 
 # ── Minimal ASN.1 DER encoder / decoder ──────────────────────────────────────
@@ -190,6 +213,7 @@ def build_tsq(digest_sha256: bytes, nonce: Optional[int] = None) -> Tuple[bytes,
 
 
 def _http_post_tsq(url: str, tsq: bytes, timeout: float = 15.0) -> bytes:
+    check_tsa_url(url)
     req = urllib.request.Request(
         url, data=tsq, method="POST",
         headers={"Content-Type": "application/timestamp-query", "Accept": "application/timestamp-reply"},
@@ -202,6 +226,7 @@ def request_timestamp(digest_sha256: bytes, tsa_url: Optional[str] = None,
                       post: Callable[[str, bytes], bytes] = _http_post_tsq) -> Dict[str, Any]:
     """Request an RFC 3161 timestamp token for `digest_sha256` and verify it before returning."""
     url = tsa_url or os.environ.get("AEROFLEET_TSA_URL") or DEFAULT_TSA_URL
+    check_tsa_url(url)
     tsq, nonce = build_tsq(digest_sha256)
     try:
         tsr = post(url, tsq)
@@ -247,9 +272,9 @@ def _parse_tst_info(tst_der: bytes) -> Dict[str, Any]:
 def _match_signer_cert(certs: List[x509.Certificate], sid_tag: int, sid_val: bytes) -> Optional[x509.Certificate]:
     if sid_tag == 0x30:  # IssuerAndSerialNumber
         parts = _children(sid_val)
-        serial = _decode_int(parts[1][1])
+        issuer_der, serial = parts[0][2], _decode_int(parts[1][1])
         for c in certs:
-            if c.serial_number == serial:
+            if c.serial_number == serial and c.issuer.public_bytes() == issuer_der:
                 return c
     elif sid_tag == 0x80:  # SubjectKeyIdentifier
         for c in certs:
@@ -259,11 +284,19 @@ def _match_signer_cert(certs: List[x509.Certificate], sid_tag: int, sid_val: byt
                     return c
             except x509.ExtensionNotFound:
                 continue
-    return certs[0] if certs else None
+    return None
 
 
-def _verify_cert_chain(leaf: x509.Certificate, all_certs: List[x509.Certificate], ca_pem: str) -> Optional[str]:
-    """Verify leaf -> optional intermediates -> trusted CA certificate(s)."""
+def _is_ca(c: x509.Certificate) -> bool:
+    try:
+        return bool(c.extensions.get_extension_for_class(x509.BasicConstraints).value.ca)
+    except x509.ExtensionNotFound:
+        return False
+
+
+def _verify_cert_chain(leaf: x509.Certificate, all_certs: List[x509.Certificate], ca_pem: str,
+                       at: Optional[datetime] = None) -> Optional[str]:
+    """Verify leaf -> optional intermediates -> trusted CA certificate(s); intermediates must be CAs valid at `at`."""
     trusted = x509.load_pem_x509_certificates(ca_pem.encode("utf-8"))
     if not trusted:
         return "CA bundle contains no certificates"
@@ -281,7 +314,8 @@ def _verify_cert_chain(leaf: x509.Certificate, all_certs: List[x509.Certificate]
         nxt = None
         for cand in pool:
             fp = cand.fingerprint(hashes.SHA256())
-            if fp not in seen and cur.issuer == cand.subject:
+            if fp not in seen and cur.issuer == cand.subject and _is_ca(cand) and (
+                    at is None or cand.not_valid_before_utc <= at <= cand.not_valid_after_utc):
                 try:
                     cur.verify_directly_issued_by(cand)
                     nxt = cand
@@ -290,14 +324,34 @@ def _verify_cert_chain(leaf: x509.Certificate, all_certs: List[x509.Certificate]
                 except Exception:  # noqa: BLE001
                     continue
         if nxt is None:
-            return "TSA signing certificate does not chain to the supplied CA certificate"
+            return "TSA signing certificate does not chain to a trusted root (data/tsa_roots.pem)"
         cur = nxt
     return "TSA certificate chain exceeded maximum depth"
 
 
+def _ess_cert_hash(attrs: Dict[str, bytes]):
+    """(hash function, certHash) from signingCertificateV2 or signingCertificate, or None."""
+    if OID_SIGNING_CERT_V2 in attrs:
+        first = _children(_children(attrs[OID_SIGNING_CERT_V2])[0][1])[0][1]   # certs SEQUENCE -> first ESSCertIDv2
+        kids = _children(first)
+        if kids[0][0] == 0x30:                                             # hashAlgorithm present
+            oid = _decode_oid(_children(kids[0][1])[0][1])
+            if oid not in HASH_BY_OID:
+                return None
+            return HASH_BY_OID[oid][0], kids[1][1]
+        return hashlib.sha256, kids[0][1]                                  # DEFAULT sha256
+    if OID_SIGNING_CERT in attrs:
+        first = _children(_children(attrs[OID_SIGNING_CERT])[0][1])[0][1]
+        return hashlib.sha1, _children(first)[0][1]
+    return None
+
+
 def verify_tsr(tsr_der: bytes, expected_digest_sha256: bytes, expected_nonce: Optional[int] = None,
                ca_pem: Optional[str] = None) -> Dict[str, Any]:
-    """Verify an RFC 3161 DER TimeStampResp against `expected_digest_sha256`."""
+    """Verify an RFC 3161 DER TimeStampResp against `expected_digest_sha256`. `ca_pem` defaults to the pinned roots;
+    `ok` is True only when the chain to a trusted root is verified."""
+    if ca_pem is None:
+        ca_pem = trusted_roots_pem()
     try:
         tag, resp_body, _, _ = _parse_tlv(tsr_der, 0)
         if tag != 0x30:
@@ -327,7 +381,7 @@ def verify_tsr(tsr_der: bytes, expected_digest_sha256: bytes, expected_nonce: Op
             return {"ok": False, "problem": f"Unsupported TSTInfo hash algorithm ({tst['hash_oid']})"}
         if tst["hashed_message"] != expected_digest_sha256:
             return {"ok": False, "problem": "Timestamp token digest does not match this receipt (receipt was edited or token is for another record)"}
-        if expected_nonce is not None and tst["nonce"] is not None and tst["nonce"] != expected_nonce:
+        if expected_nonce is not None and tst["nonce"] != expected_nonce:
             return {"ok": False, "problem": "Timestamp token nonce does not match the request"}
 
         certs: List[x509.Certificate] = []
@@ -372,20 +426,24 @@ def verify_tsr(tsr_der: bytes, expected_digest_sha256: bytes, expected_nonce: Op
         if not (cert.not_valid_before_utc <= tst["gen_time"] <= cert.not_valid_after_utc):
             return {"ok": False, "problem": "TSA certificate was not valid at the token's genTime"}
 
-        # Verify CMS signature
-        if signed_attrs_val is not None:
-            # Verify messageDigest attribute equals hash(tst_der)
-            found_md = None
-            for _, attr_body, _ in _children(signed_attrs_val):
-                ak = _children(attr_body)
-                if _decode_oid(ak[0][1]) == OID_MESSAGE_DIGEST:
-                    found_md = _children(ak[1][1])[0][1]
-                    break
-            if found_md != py_hash(tst_der).digest():
-                return {"ok": False, "problem": "CMS messageDigest attribute does not match TSTInfo (token altered)"}
-            to_verify = _tlv(0x31, signed_attrs_val)
-        else:
-            to_verify = tst_der
+        # Verify CMS signature. For TSTInfo content (not id-data) RFC 5652 requires signed attributes.
+        if signed_attrs_val is None:
+            return {"ok": False, "problem": "Timestamp token has no signed attributes"}
+        attrs: Dict[str, bytes] = {}
+        for _, attr_body, _ in _children(signed_attrs_val):
+            ak = _children(attr_body)
+            attrs[_decode_oid(ak[0][1])] = _children(ak[1][1])[0][1]       # first value of the attribute's SET
+        if attrs.get(OID_CONTENT_TYPE) is None or _decode_oid(attrs[OID_CONTENT_TYPE]) != OID_TST_INFO:
+            return {"ok": False, "problem": "CMS content-type attribute is not TSTInfo"}
+        if attrs.get(OID_MESSAGE_DIGEST) != py_hash(tst_der).digest():
+            return {"ok": False, "problem": "CMS messageDigest attribute does not match TSTInfo (token altered)"}
+        ess = _ess_cert_hash(attrs)
+        if ess is None:
+            return {"ok": False, "problem": "Timestamp token has no ESS signing-certificate attribute"}
+        alg, cert_hash = ess
+        if alg(cert.public_bytes(serialization.Encoding.DER)).digest() != cert_hash:
+            return {"ok": False, "problem": "ESS signing-certificate attribute does not name the signing certificate"}
+        to_verify = _tlv(0x31, signed_attrs_val)
 
         pub = cert.public_key()
         try:
@@ -398,12 +456,10 @@ def verify_tsr(tsr_der: bytes, expected_digest_sha256: bytes, expected_nonce: Op
         except InvalidSignature:
             return {"ok": False, "problem": "TSA cryptographic signature is not valid (timestamp token was altered or forged)"}
 
-        ca_verified = False
-        if ca_pem is not None:
-            err = _verify_cert_chain(cert, certs, ca_pem)
-            if err:
-                return {"ok": False, "problem": err}
-            ca_verified = True
+        err = _verify_cert_chain(cert, certs, ca_pem, at=tst["gen_time"])
+        if err:
+            return {"ok": False, "problem": err}
+        ca_verified = True
 
         return {
             "ok": True,

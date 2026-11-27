@@ -312,7 +312,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
     from aerofleet.assurance import spray_form as sf
     from aerofleet.assurance.maintenance import is_grounded
-    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary
+    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary, setting_notes
     from aerofleet.assurance.vibration import drone_history
     from aerofleet.data.models.models import DroneCompliance, DroneRegistration, MaintenanceEntry, SprayForm
 
@@ -346,14 +346,16 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
                 for r in reviews]
     out = []
     for drone_id in sorted(snap_ids | set(latest) | set(maint_by_drone)):
-        settings = None
+        settings, notes = None, []
         if drone_id in snap_ids:
+            params = _snapshots(db, fleet, drone_id, 1)[0].params
+            notes = setting_notes(params)
             d = _drift(db, fleet, drone_id)
             side = d[d["decided_by"]] if d.get("decided_by") else None
             open_ = [c for c in (side or {}).get("changes", []) if not c["approved"]]
             settings = {"verdict": d["verdict"], "critical": [c["name"] for c in open_ if c["severity"] == "CRITICAL"],
                         "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by"),
-                        "failsafes_off": failsafes_off(_snapshots(db, fleet, drone_id, 1)[0].params)}
+                        "failsafes_off": failsafes_off(params)}
         reg = db.get(DroneRegistration, drone_id)
         comp = _compliance_dict(db.get(DroneCompliance, drone_id))
         last = latest.get(drone_id)
@@ -365,6 +367,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
                      vib, grounded=grounded, compliance=comp)
         row["settings_compared_with"] = settings and settings["compared_with"]
         row["overdue_spray_forms"] = overdue_by_drone.get(drone_id, 0)
+        row["setting_notes"] = notes                     # firmware-default bypasses: shown, never a reason
         out.append(row)
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
@@ -1142,13 +1145,17 @@ async def ledger_tamper_demo(user: User = Depends(get_current_active_user), db: 
 
 @router.get("/ledger/receipt")
 async def ledger_receipt(tsa: bool = Query(False, description="Attach an RFC 3161 trusted timestamp (sends only the receipt's SHA-256 hash)"),
-                         tsa_url: Optional[str] = Query(None, description="Optional RFC 3161 TSA URL override"),
+                         tsa_url: Optional[str] = Query(None, description="RFC 3161 TSA URL; must be on tsa.ALLOWED_TSA_URLS"),
                          user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """A signed receipt for the newest entry, for someone outside the operator's control to keep (the company that
     oversees the drones, an insurer). With `tsa=true`, attaches an RFC 3161 timestamp so the date does not depend
     on the operator's computer clock."""
     from aerofleet.assurance.tsa import TSAError
 
+    from aerofleet.assurance.tsa import ALLOWED_TSA_URLS
+
+    if tsa_url is not None and tsa_url not in ALLOWED_TSA_URLS:       # no requests to arbitrary URLs (review C2)
+        raise HTTPException(status_code=422, detail=f"tsa_url must be one of: {', '.join(sorted(ALLOWED_TSA_URLS))}")
     try:
         return ledger.make_receipt(db, include_tsa=tsa, tsa_url=tsa_url)
     except TSAError as e:
@@ -1157,7 +1164,6 @@ async def ledger_receipt(tsa: bool = Query(False, description="Attach an RFC 316
 
 class ReceiptIn(BaseModel):
     receipt: Dict[str, Any]
-    ca_pem: Optional[str] = None
 
 
 @router.post("/ledger/check-receipt")
@@ -1166,7 +1172,7 @@ async def ledger_check_receipt(body: ReceiptIn, user: User = Depends(get_current
     from aerofleet.data.models.models import AssuranceLedgerEntry
 
     rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq).all()
-    return ledger.check_receipt([ledger.to_dict(r) for r in rows], ledger.public_key_pem(), body.receipt, ca_pem=body.ca_pem)
+    return ledger.check_receipt([ledger.to_dict(r) for r in rows], ledger.public_key_pem(), body.receipt)
 
 
 @router.get("/ledger/verify")

@@ -175,8 +175,8 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 reviews yet). Product: **769 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
 cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
-timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`, live-tested against DigiCert
-and FreeTSA), and the Proof page recomputes the four headline results live and summarizes SITL v2, SA1+FA3, and RFC 3161 TSA.
+timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`; chain checked against the pinned DigiCert root in
+`aerofleet/assurance/data/tsa_roots.pem`, only DigiCert's URL allowed; live-tested against DigiCert 27 Nov), and the Proof page recomputes the four headline results live and summarizes SITL v2, SA1+FA3, and RFC 3161 TSA.
 Domain-fit upgrades (27 Nov): (1) **Nationwide Indian airport airspace check** (`airspace_check.py`: 36 major civil airports,
 Drone Rules 2021 5 km RED / 12 km YELLOW and 3 km / 8 km smaller aerodromes, returning `UNCHECKED` — never `CLEAR` — outside
 mapped areas); (2) **Geometric spray swath area estimator** (`spray_form.py`, `spray.py`, `SprayRegister.tsx`: moving airborne

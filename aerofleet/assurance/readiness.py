@@ -38,18 +38,29 @@ AP_FAILSAFE_RULES = {"batt.fs_low_action": "Low-battery failsafe", "batt.fs_crit
 AP_MARKERS = ("FS_THR_ENABLE", "BATT_FS_LOW_ACT", "BATT_FS_CRT_ACT", "FENCE_ENABLE", "FS_EKF_ACTION", "ARMING_CHECK")
 PX4_FAILSAFES = {"NAV_RCL_ACT": (0, "RC-loss failsafe"), "COM_LOW_BAT_ACT": (0, "Low-battery failsafe (warning only)"),
                  "GF_ACTION": (0, "Geofence breach action")}
-PX4_CIRCUIT_BREAKERS = {"CBRK_IO_SAFETY": (22027, "Safety switch bypassed"),
-                        "CBRK_SUPPLY_CHK": (894281, "Power-supply check bypassed"),
-                        "CBRK_FLIGHTTERM": (121212, "Flight termination check bypassed")}
+PX4_CIRCUIT_BREAKERS = {"CBRK_SUPPLY_CHK": (894281, "Power-supply check bypassed")}
+# PX4 circuit breakers that are bypassed BY DEFAULT, so flagging them would put nearly every stock drone on "Check first"
+# (27 Nov 2026, 200 random public PX4 logs: CBRK_FLIGHTTERM bypassed in 199, CBRK_IO_SAFETY in 142;
+# docs/CRITICAL_REVIEW_2026-11-27.md, C1). CBRK_FLIGHTTERM is not checked at all: flight termination is an extra
+# feature that PX4 ships disabled, not a failsafe. CBRK_IO_SAFETY (no hardware safety switch) is shown as a note only.
+PX4_DEFAULT_BYPASS_NOTES = {"CBRK_IO_SAFETY": (22027, "Hardware safety switch bypassed (PX4 default on recent firmware)")}
+
+
+def _as_int(v) -> Optional[int]:
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return None
 
 
 def failsafes_off(params) -> List[Dict[str, str]]:
-    """Failsafes or critical safety checks switched off in a drone's settings: [{"name", "title"}]."""
+    """Failsafes or critical safety checks switched off in a drone's settings: [{"name", "title"}]. These are reasons
+    for "Check first". Values that are the firmware's own default bypass are in setting_notes() instead."""
     if not params:
         return []
-    out = [{"name": n, "title": t} for n, (off, t) in PX4_FAILSAFES.items() if n in params and int(params[n]) == off]
-    out += [{"name": n, "title": t} for n, (bypass, t) in PX4_CIRCUIT_BREAKERS.items() if n in params and int(params[n]) == bypass]
-    if "ARMING_CHECK" in params and int(params["ARMING_CHECK"]) == 0:
+    out = [{"name": n, "title": t} for n, (off, t) in PX4_FAILSAFES.items() if n in params and _as_int(params[n]) == off]
+    out += [{"name": n, "title": t} for n, (bypass, t) in PX4_CIRCUIT_BREAKERS.items() if n in params and _as_int(params[n]) == bypass]
+    if "ARMING_CHECK" in params and _as_int(params["ARMING_CHECK"]) == 0:
         out.append({"name": "ARMING_CHECK", "title": "Pre-arm safety checks disabled"})
     if any(k in params for k in AP_MARKERS):                               # ArduPilot settings
         from aerofleet.assurance.static_checks import checks_from_params
@@ -59,6 +70,16 @@ def failsafes_off(params) -> List[Dict[str, str]]:
                 names = [k for k in (c.get("evidence") or {}) if k.isupper()]       # the settings the rule read
                 out.append({"name": names[0] if names else c["id"], "title": AP_FAILSAFE_RULES[c["id"]]})
     return out
+
+
+def setting_notes(params) -> List[str]:
+    """Safety-related settings worth knowing about that are the firmware's default: shown beside the verdict, never a
+    reason (like the pilot notes)."""
+    if not params:
+        return []
+    return [f"{t} ({n} = {v})" for n, (v, t) in PX4_DEFAULT_BYPASS_NOTES.items() if n in params and _as_int(params[n]) == v]
+
+
 ORDER = {DO_NOT_FLY: 0, CHECK_FIRST: 1, READY: 2}
 VIBRATION_NOTE = ("Context only: in the study behind AeroFleet, vibration did not warn of a crash within a drone and was not "
                   "shown to beat random inspection, so it never changes the verdict.")

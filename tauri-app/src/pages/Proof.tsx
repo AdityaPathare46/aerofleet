@@ -42,7 +42,7 @@ const TESTS: { name: string; what: string }[] = [
   { name: 'Paper numbers stay true', what: 'docs/paper/check_numbers.py checks 30 items across the paper, supplement, cover letter, highlights and Overview page against the committed result files.' },
   { name: 'Results recompute', what: 'The four claims above are recomputed in a test, compared with the paper\'s text, and the declaration is checked to predate the result (tests/unit/test_evidence.py).' },
   { name: 'Learned model exported exactly', what: 'The app evaluates the trained trees in plain Python; they reproduce scikit-learn to within 3e-14, and a test checks the evaluator (tests/unit/test_assurance_normal_flight.py).' },
-  { name: 'RFC 3161 trusted timestamping & DB cross-check', what: 'Receipts optionally attach an RFC 3161 TSA token (sending only the 32-byte SHA-256 hash; verified live against DigiCert & FreeTSA and offline in test_assurance_tsa.py), and GET /ledger/verify cross-checks stored FlightReview & SprayForm SQLite rows.' },
+  { name: 'RFC 3161 trusted timestamping & DB cross-check', what: 'Receipts optionally attach an RFC 3161 TSA token (sending only the 32-byte SHA-256 hash; accepted only if it chains to the pinned DigiCert root, with ESS binding and nonce; a token from a self-made CA is rejected, test_assurance_tsa.py), and GET /ledger/verify cross-checks stored FlightReview & SprayForm SQLite rows.' },
   { name: 'Damaged files & tampering', what: 'Empty files, random bytes, a mission file renamed as a log, truncated logs, and all five tampering attacks are covered by 763+ automated tests.' },
 ]
 const MEASURED: { what: string; value: string; source: string }[] = [

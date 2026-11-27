@@ -69,7 +69,18 @@ def test_readiness_no_reference_grounded_partial_log_and_circuit_breakers():
 
     # PX4 circuit breakers & ArduPilot ARMING_CHECK=0 are caught by failsafes_off
     off_px4 = {f["name"] for f in readiness.failsafes_off({"CBRK_IO_SAFETY": 22027, "CBRK_SUPPLY_CHK": 894281})}
-    assert off_px4 == {"CBRK_IO_SAFETY", "CBRK_SUPPLY_CHK"}
+    assert off_px4 == {"CBRK_SUPPLY_CHK"}
+
+
+def test_px4_default_bypasses_are_notes_not_reasons():
+    """C1 (critical review 27 Nov 2026): PX4 ships CBRK_FLIGHTTERM=121212 and, on recent firmware, CBRK_IO_SAFETY=22027.
+    Flagging them put 199 of 200 public PX4 drones on Check first."""
+    stock = {"CBRK_FLIGHTTERM": 121212, "CBRK_IO_SAFETY": 22027, "NAV_RCL_ACT": 2, "COM_LOW_BAT_ACT": 3, "GF_ACTION": 1,
+             "CBRK_SUPPLY_CHK": 0}
+    assert readiness.failsafes_off(stock) == []
+    assert readiness.setting_notes(stock) == ["Hardware safety switch bypassed (PX4 default on recent firmware) (CBRK_IO_SAFETY = 22027)"]
+    assert readiness.setting_notes({"CBRK_IO_SAFETY": 0}) == [] and readiness.setting_notes({}) == []
+    assert readiness.failsafes_off({"NAV_RCL_ACT": "0.0"})[0]["name"] == "NAV_RCL_ACT"     # string values read as numbers
     off_ap = {f["name"] for f in readiness.failsafes_off({"ARMING_CHECK": 0})}
     assert "ARMING_CHECK" in off_ap
 

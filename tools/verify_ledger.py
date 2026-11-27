@@ -115,7 +115,7 @@ def main(argv=None):
     ap.add_argument("--heads")
     ap.add_argument("--key-sha256")
     ap.add_argument("--receipt", action="append", default=[])
-    ap.add_argument("--tsa-ca", help="PEM root CA bundle to verify RFC 3161 TSA certificate chains")
+    ap.add_argument("--tsa-ca", help="PEM root CA bundle to verify RFC 3161 TSA chains (default: aerofleet/assurance/data/tsa_roots.pem)")
     a = ap.parse_args(argv)
     export = json.load(open(a.export, encoding="utf-8"))
     heads = None
@@ -127,7 +127,7 @@ def main(argv=None):
     print(f"{r['entries']} entries · key fingerprint {r['key_sha256']} · head {r['head']}")
     for tv in r["tsa_verified"]:
         print(f"RFC 3161 TSA OK (entry {tv['seq']}): attested {tv['gen_time']} by {tv['tsa_subject']}"
-              + (" [CA chain verified]" if tv["ca_verified"] else " [embedded TSA cert]"))
+              + (" [chain checked against your --tsa-ca bundle]" if a.tsa_ca else " [chain checked against the pinned roots]"))
     print("OK: the record is intact" if r["ok"] else "FAILED:\n  " + "\n  ".join(r["problems"]))
     return 0 if r["ok"] else 1
 

@@ -14,6 +14,7 @@ interface Row {
   registration: { uin: string; status: string } | null
   compliance?: Compliance | null
   grounded?: { done_at: string; action: string; note?: string | null } | null
+  setting_notes?: string[]
   last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[]; pilot_notes?: string[] } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
   overdue_spray_forms?: number
@@ -129,6 +130,8 @@ export default function ReadinessPage() {
               <span>{tr('settingsLine')}: {d.settings_verdict ? (d.settings_compared_with ? `${tr(d.settings_verdict)} (${tr(d.settings_compared_with === 'vs_baseline' ? 'vsBaseline' : 'vsPrevious')})` : tr(d.settings_verdict)) : tr('notChecked')}</span>
               {d.last_flight?.pilot_notes && d.last_flight.pilot_notes.length > 0 && (
                 <span title="How the last flight was flown: shown for the pilot, never a reason on its own">{tr('pilotNote')}: {d.last_flight.pilot_notes.join('; ')}</span>)}
+              {d.setting_notes && d.setting_notes.length > 0 && (
+                <span title="A safety-related setting that is the firmware's own default: shown, never a reason on its own">{tr('settingNote')}: {d.setting_notes.join('; ')}</span>)}
               {d.last_flight?.normal_flight && d.last_flight.normal_flight.length > 0 && (
                 <span title="From the learned normal-flight model: context, never part of the verdict. Not trained on spraying drones (payload is not an input).">{tr('model')}: {d.last_flight.normal_flight.join('; ')}</span>)}
               {d.vibration && <span title={tr('vibNote')}>{tr('vibration')}: {d.vibration.latest_vs_own ? tr('vibOwn', { x: d.vibration.latest_vs_own.higher_than, y: d.vibration.latest_vs_own.earlier_flights }) : tr('fewFlights')}{d.vibration.public ? tr('vibPublic', { p: d.vibration.public.higher_than_pct }) : ''}</span>}
