@@ -207,14 +207,14 @@ def reconcile(plan: Plan, track: Sequence[Tuple[float, float, float, float]], mo
             until = modes[i + 1][0] if i + 1 < len(modes) else t_end
             manual.append({"mode": name, "start_s": round(t - t0, 1), "duration_s": round(max(0.0, until - t), 1)})
 
-    ordered = sorted(horiz)
+    horiz_sorted = sorted(horiz)
     outside = sum(e["duration_s"] for e in episodes if e["kind"] == "off_route")
     return {
         "verdict": "DEVIATED" if episodes or manual else "CONFORMED",
         "tolerances": {"corridor_m": corridor_m, "altitude_m": altitude_tol_m, "min_duration_s": min_duration_s,
                        "matching": "in flying order" if ordered else "nearest leg anywhere"},
-        "horizontal_m": {"max": round(ordered[-1], 1), "p95": round(ordered[int(0.95 * (len(ordered) - 1))], 1),
-                         "median": round(ordered[len(ordered) // 2], 1)},
+        "horizontal_m": {"max": round(horiz_sorted[-1], 1), "p95": round(horiz_sorted[int(0.95 * (len(horiz_sorted) - 1))], 1),
+                         "median": round(horiz_sorted[len(horiz_sorted) // 2], 1)},
         "vertical_m": {"max": round(max(vert), 1)},
         "max_height_m": {"flown": round(max(p[3] for p in track), 1), "planned": round(plan.max_alt_m, 1)},
         "time_off_route_s": round(outside, 1), "flight_s": round(t_end - t0, 1), "points": len(track),

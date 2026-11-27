@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PKG = ROOT / "aerofleet"
-ENTRY = [ROOT / "aerofleet/api/routes/assurance.py", ROOT / "aerofleet/api/routes/vr.py",
+ENTRY = [ROOT / "aerofleet/api/routes/assurance.py", ROOT / "aerofleet/api/routes/spray.py",
+         ROOT / "aerofleet/api/routes/vr.py", ROOT / "aerofleet/api/routes/vr_study.py",
          ROOT / "aerofleet/api/routes/evidence.py", ROOT / "aerofleet/evidence.py"] + sorted(
     p for p in (PKG / "assurance").glob("*.py") if p.name != "review_panel.py" and not p.name.startswith("._"))
 FORBIDDEN_INTERNAL = ("aerofleet.agents", "aerofleet.assurance.review_panel", "agent_memory")

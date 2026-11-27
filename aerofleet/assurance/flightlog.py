@@ -240,15 +240,19 @@ class _ApHealth:
         self.err: List[Tuple[float, int, int]] = []
         self.mag: Dict[int, List[Tuple[float, bool]]] = {}
         self.xkf4: List[Tuple[float, float, float, float, float]] = []
+        self.primary_core: int = 0
         self.att: List[Tuple[float, bool]] = []
         self.rcou: List[Tuple[float, List[float]]] = []
 
     def add(self, kind: str, t: float, m) -> None:
         if kind == "ERR":
-            self.err.append((t, int(m.Subsys), int(m.ECode)))
+            sub, code = int(m.Subsys), int(m.ECode)
+            if sub == 24:                       # ArduPilot EKF primary core switch (ECode = new primary core index)
+                self.primary_core = code
+            self.err.append((t, sub, code))
         elif kind == "MAG" and len(self.mag.get(int(getattr(m, "I", 0)), [])) < MAX_POINTS:
             self.mag.setdefault(int(getattr(m, "I", 0)), []).append((t, not bool(getattr(m, "Health", 1))))
-        elif kind == "XKF4" and int(getattr(m, "C", 0)) == 0 and len(self.xkf4) < MAX_POINTS:
+        elif kind == "XKF4" and int(getattr(m, "C", 0)) == self.primary_core and len(self.xkf4) < MAX_POINTS:
             self.xkf4.append((t, float(m.SV), float(m.SP), float(m.SH), float(m.SM)))
         elif kind == "ATT" and len(self.att) < MAX_POINTS:
             self.att.append((t, max(abs(float(m.Roll)), abs(float(m.Pitch))) > TILT_DEG))

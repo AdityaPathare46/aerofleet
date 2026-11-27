@@ -109,3 +109,20 @@ def test_the_signing_key_is_created_private_and_reads_need_a_login(api_client):
     ledger.public_key_pem()
     assert stat.S_IMODE(os.stat(ledger.key_file()).st_mode) == 0o600
     assert api_client.get(f"{URL}/ledger").status_code == 401 and api_client.get(f"{URL}/ledger/verify").status_code == 401
+
+
+def test_ledger_verify_catches_a_tampered_stored_flight_review(api_client, auth_headers, tmp_path):
+    from aerofleet.data.database import get_db_session
+    from aerofleet.data.models.models import FlightReview
+    from tests.integration.test_assurance_api import _flight_files
+
+    files = _flight_files(tmp_path)
+    rev = api_client.post(f"{URL}/fleets/led/drones/D1/flights", headers=auth_headers, files=files).json()
+    assert api_client.get(f"{URL}/ledger/verify", headers=auth_headers).json()["ok"] is True
+
+    with get_db_session() as db:
+        row = db.get(FlightReview, rev["id"])
+        row.report = dict(row.report, verdict="DEVIATED")
+        db.commit()
+    v = api_client.get(f"{URL}/ledger/verify", headers=auth_headers).json()
+    assert v["ok"] is False and v["stored_records"]["ok"] is False and f"#{rev['id']}" in v["problem"]

@@ -204,6 +204,35 @@ def verify_chain(db: Session) -> Dict[str, Any]:
     return verify_entries([to_dict(r) for r in rows], public_key_pem())
 
 
+def verify_stored_records(db: Session) -> Dict[str, Any]:
+    """Cross-check stored flight reviews and spray forms against the signed ledger's payload hashes.
+
+    Without this, editing a FlightReview row directly in SQLite leaves the ledger chain intact.
+    """
+    from aerofleet.data.models.models import FlightReview, SprayForm
+
+    entries = db.query(AssuranceLedgerEntry).all()
+    review_hashes = {e.payload_sha256 for e in entries if e.kind == "flight_review"}
+    spray_hashes = {e.payload_sha256 for e in entries if e.kind == "spray_form"}
+    reviews = db.query(FlightReview).order_by(FlightReview.id).all()
+    for r in reviews:
+        if payload_hash(r.report) not in review_hashes:
+            return {"ok": False, "reviews_checked": len(reviews),
+                    "problem": f"Stored flight review #{r.id} ({r.fleet}/{r.drone_id}) does not match any entry in the signed record."}
+    forms = db.query(SprayForm).order_by(SprayForm.review_id).all()
+    by_rev = {r.id: r for r in reviews}
+    for f in forms:
+        r = by_rev.get(f.review_id)
+        if r is None:
+            continue
+        payload = {"review_id": r.id, "review_sha256": payload_hash(r.report), "values": f.values,
+                   "not_spray": f.not_spray, "submitted_on": f.submitted_on, "submitted_via": f.submitted_via}
+        if payload_hash(payload) not in spray_hashes:
+            return {"ok": False, "reviews_checked": len(reviews), "spray_forms_checked": len(forms),
+                    "problem": f"Stored spray form for flight #{f.review_id} does not match any entry in the signed record."}
+    return {"ok": True, "reviews_checked": len(reviews), "spray_forms_checked": len(forms), "problem": None}
+
+
 def matches(db: Session, seq: int, payload: Any) -> bool:
     """Is `payload` exactly what entry `seq` recorded?"""
     row = db.get(AssuranceLedgerEntry, seq)
@@ -242,9 +271,13 @@ def check_receipt(entries: List[Dict[str, Any]], public_pem: str, receipt: Dict[
     chain = verify_entries(entries, public_pem)
     if not chain["ok"]:
         return {"ok": False, "problem": f"The record itself fails its check: {chain['problem']}"}
-    heads = check_heads(entries, [{"seq": receipt["seq"], "entry_hash": receipt["entry_hash"]}])
-    if not heads["ok"]:
-        return {"ok": False, "problem": heads["problem"].replace("Recorded head", "The entry named on the receipt,")}
+    if receipt["seq"] == 0:
+        if receipt["entry_hash"] != GENESIS:
+            return {"ok": False, "problem": "Empty-record receipt does not carry the genesis hash."}
+    else:
+        heads = check_heads(entries, [{"seq": receipt["seq"], "entry_hash": receipt["entry_hash"]}])
+        if not heads["ok"]:
+            return {"ok": False, "problem": heads["problem"].replace("Recorded head", "The entry named on the receipt,")}
     newest = entries[-1]["seq"] if entries else 0
     return {"ok": True, "problem": None, "seq": receipt["seq"], "issued_at": receipt["issued_at"],
             "entries_since": newest - receipt["seq"],

@@ -16,10 +16,25 @@ from typing import Any, Dict, List, Optional
 
 ACTIONS = ["Propellers replaced", "Motor replaced", "Motor mounts / arms tightened or replaced", "Battery replaced",
            "Flight controller re-mounted or vibration damping changed", "Sensors calibrated (compass, accelerometer)",
-           "Firmware updated", "Spray system serviced", "Spray system calibrated (nozzle output)", "Other"]
+           "Firmware updated", "Spray system serviced", "Spray system calibrated (nozzle output)",
+           "Incident / crash reported (grounded for inspection)", "Post-incident inspection cleared", "Other"]
+GROUNDING_ACTION = "Incident / crash reported (grounded for inspection)"
+CLEARANCE_ACTION = "Post-incident inspection cleared"
 N_SIDE = 3                     # flights compared on each side of the work
 NOTE = ("Median of up to 3 flights before and 3 after the work. A few flights cannot prove a fix worked: read it as a "
         "description, and watch the next flights.")
+
+
+def is_grounded(entries: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Return the latest unresolved grounding record if a drone had an incident/crash without a later clearance."""
+    ordered = sorted(entries, key=lambda m: (_when(m["done_at"]), int(m.get("id") or 0)))
+    grounded = None
+    for m in ordered:
+        if m.get("action") == GROUNDING_ACTION:
+            grounded = {"done_at": m["done_at"], "note": m.get("note", ""), "done_by": m.get("done_by", "")}
+        elif m.get("action") == CLEARANCE_ACTION:
+            grounded = None
+    return grounded
 
 
 def _when(iso: str) -> datetime:

@@ -107,7 +107,7 @@ export default function ReadinessPage() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'grid', gap: 4, alignContent: 'start' }}>
               <span>{tr('lastFlight')}: <b>{day(d.last_flight?.flown_at, lang)}</b>{d.last_flight?.flight_s ? ` · ${Math.round(d.last_flight.flight_s / 60)} ${tr('min')}` : ''}</span>
-              <span>{tr('settingsLine')}: {d.settings_verdict ? `${tr(d.settings_verdict)} (${tr(d.settings_compared_with === 'vs_baseline' ? 'vsBaseline' : 'vsPrevious')})` : tr('notChecked')}</span>
+              <span>{tr('settingsLine')}: {d.settings_verdict ? (d.settings_compared_with ? `${tr(d.settings_verdict)} (${tr(d.settings_compared_with === 'vs_baseline' ? 'vsBaseline' : 'vsPrevious')})` : tr(d.settings_verdict)) : tr('notChecked')}</span>
               {d.last_flight?.pilot_notes && d.last_flight.pilot_notes.length > 0 && (
                 <span title="How the last flight was flown: shown for the pilot, never a reason on its own">{tr('pilotNote')}: {d.last_flight.pilot_notes.join('; ')}</span>)}
               {d.last_flight?.normal_flight && d.last_flight.normal_flight.length > 0 && (

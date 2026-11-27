@@ -73,7 +73,11 @@ def verify(export, heads=None, key_sha256=None, receipts=()):
         except (InvalidSignature, ValueError, KeyError, TypeError):
             problems.append(f"Receipt for entry {r.get('seq')}: its signature is not valid (the receipt was edited)")
             continue
-        heads = (heads or []) + [{"seq": r["seq"], "entry_hash": r["entry_hash"]}]
+        if r.get("seq") == 0:
+            if r.get("entry_hash") != GENESIS:
+                problems.append("Receipt for empty record does not carry genesis hash")
+        else:
+            heads = (heads or []) + [{"seq": r["seq"], "entry_hash": r["entry_hash"]}]
     if heads is not None:
         by_seq = {e["seq"]: e["entry_hash"] for e in export["entries"]}
         for h in heads:

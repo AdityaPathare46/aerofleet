@@ -2,14 +2,16 @@
 
 AeroFleet does not name a cause. The measured reason (research/results/px4_log_study/): on public PX4 crash
 logs a fixed rule could not tell a pilot-caused crash from an aircraft fault (balanced accuracy 0.47 on
-held-out crashes), and five small language models lost to a plain rule on generated cases. What the code can
-do reliably is put the facts in order, so the person reviewing sees them at once instead of opening plots.
+held-out crashes), and four small local language models failed to beat a plain rule on 97 real crash cases.
+What the code can do reliably is put the facts in order, so the person reviewing sees them at once instead
+of opening plots.
 
 Every event is a number from the log at a time; times are seconds from the start of the track, the same clock
 as the plan-deviation episodes.
 """
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from aerofleet.assurance.drift import CRITICAL, HIGH, severity_of
@@ -20,10 +22,11 @@ LOW_BATTERY_PCT, CRITICAL_BATTERY_PCT = 20.0, 10.0
 MIN_SATS, MAX_HDOP = 6, 2.5
 MIN_HEALTH_S = 1.0         # shorter estimator complaints are common on healthy flights and are not listed
 # A GPS or autopilot-health complaint is a WARNING (and so a "Check first" reason on Today's fleet) only for the part
-# that happened in the air (track above AIRBORNE_M) and only if that part lasts SUSTAINED_S; otherwise it is listed as
-# a NOTICE. Chosen after the declared false-alarm measurement FA1 failed (28.8% of healthy flights flagged), on the
-# development half of the vehicles only, and tested on the held-out half in FA2 (research/false_alarms/).
-AIRBORNE_M, SUSTAINED_S = 2.0, 3.0
+# that happened in the air (track above AIRBORNE_M or moving horizontally at >= AIRBORNE_SPEED_MPS, so low-altitude
+# and downslope agricultural spraying passes are included) and only if that airborne part lasts SUSTAINED_S; otherwise
+# it is listed as a NOTICE. Chosen after FA1 failed (28.8% of healthy flights flagged) and tested in FA2/FA3.
+AIRBORNE_M, AIRBORNE_SPEED_MPS, SUSTAINED_S = 2.0, 1.5, 3.0
+LANDING_MARGIN_S = 15.0    # battery < 10% more than this long before touchdown is flagged as in-flight, not a low landing
 LOOKBACK_S = 30.0          # events this long before an episode count as "around it"
 
 
@@ -46,11 +49,29 @@ def _spans(samples: Sequence[Tuple[float, bool]], t0: float) -> List[Tuple[float
     return out
 
 
+def _airborne_spans(track, t0: float) -> List[Tuple[float, float]]:
+    """Contiguous airborne intervals in track seconds: above AIRBORNE_M OR moving at >= AIRBORNE_SPEED_MPS."""
+    flags: List[Tuple[float, bool]] = []
+    for i, p in enumerate(track):
+        air = p[3] > AIRBORNE_M
+        if not air and i > 0:
+            prev = track[i - 1]
+            dt = p[0] - prev[0]
+            if dt > 0:
+                dy = (p[1] - prev[1]) * 111_320.0
+                dx = (p[2] - prev[2]) * 111_320.0 * math.cos(math.radians(p[1]))
+                if math.hypot(dx, dy) / dt >= AIRBORNE_SPEED_MPS:
+                    air = True
+        flags.append((p[0], air))
+    return _spans(flags, t0)
+
+
 def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_changes=(), health=()) -> List[Dict[str, Any]]:
     """All notable events in the flight, in time order."""
     if not track:
         return []
     t0, t_end = track[0][0], track[-1][0] - track[0][0]
+    air_spans = _airborne_spans(track, t0)
     ev: List[Dict[str, Any]] = []
 
     prev: Optional[str] = None
@@ -70,11 +91,14 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
                              f"Setting {name} changed {old:g} → {new:g} in flight ({'safety-critical' if sev == CRITICAL else 'flight limit'})",
                              name=name, old=old, new=new))
 
-    for threshold, level in ((LOW_BATTERY_PCT, "notice"), (CRITICAL_BATTERY_PCT, "warning")):
+    for threshold, lvl in ((LOW_BATTERY_PCT, "notice"), (CRITICAL_BATTERY_PCT, "warning")):
         hit = next(((t, v, r) for t, v, r in battery if r is not None and r < threshold), None)
         if hit:
-            ev.append(_event(hit[0] - t0, "battery", level, f"Battery below {threshold:g}% ({hit[2]:.0f}%" + (f", {hit[1]:.1f} V)" if hit[1] > 0 else ")"),
-                             percent=hit[2], volts=hit[1]))
+            hit_s = hit[0] - t0
+            in_flight = (lvl == "warning" and any(lo <= hit_s <= hi - LANDING_MARGIN_S for lo, hi in air_spans))
+            extra = {"in_flight": True} if in_flight else {}
+            ev.append(_event(hit_s, "battery", lvl, f"Battery below {threshold:g}% ({hit[2]:.0f}%" + (f", {hit[1]:.1f} V)" if hit[1] > 0 else ")"),
+                             percent=hit[2], volts=hit[1], **extra))
     if battery:
         v_start = max(v for t, v, _ in battery[: max(1, len(battery) // 20)])
         t_min, v_min, _ = min(battery, key=lambda b: b[1])
@@ -82,15 +106,13 @@ def timeline(report: Dict[str, Any], track, modes, battery=(), gps=(), param_cha
             ev.append(_event(t_min - t0, "battery", "notice", f"Battery voltage fell {100 * (v_start - v_min) / v_start:.0f}% "
                              f"({v_start:.1f} → {v_min:.1f} V)", volts=v_min))
 
-    air = [p[0] - t0 for p in track if p[3] > AIRBORNE_M]
-    window = (min(air), max(air)) if air else None
-
     def level(a: float, b: float) -> str:     # a, b in seconds from the first track point
-        if window is None:
+        if not air_spans:
             return "notice"
         if a == b:
-            return "warning" if window[0] <= a <= window[1] else "notice"
-        return "warning" if min(b, window[1]) - max(a, window[0]) >= SUSTAINED_S else "notice"
+            return "warning" if any(lo <= a <= hi for lo, hi in air_spans) else "notice"
+        overlap = sum(max(0.0, min(b, hi) - max(a, lo)) for lo, hi in air_spans)
+        return "warning" if overlap >= SUSTAINED_S else "notice"
 
     poor = [(t, fix < 3 or sats < MIN_SATS or (hdop is not None and hdop > MAX_HDOP)) for t, sats, hdop, fix in gps]
     for a, b in _spans(poor, t0):

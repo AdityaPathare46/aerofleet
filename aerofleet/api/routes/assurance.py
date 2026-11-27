@@ -218,13 +218,19 @@ async def operations_log(fleet: str, start: Optional[str] = Query(None, descript
 async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Morning readiness board: for every drone in the fleet, ready / check first / do not fly, and why
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
+    from aerofleet.assurance.maintenance import is_grounded
     from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary
     from aerofleet.assurance.vibration import drone_history
-    from aerofleet.data.models.models import DroneRegistration
+    from aerofleet.data.models.models import DroneRegistration, MaintenanceEntry
 
     _check_id(fleet, "Fleet")
     snap_ids = {r[0] for r in db.query(ParamSnapshot.drone_id).filter(ParamSnapshot.fleet == fleet).distinct().all()}
     reviews = db.query(FlightReview).filter(FlightReview.fleet == fleet).order_by(FlightReview.created_at.desc()).limit(2000).all()
+    maint_rows = db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet).all()
+    maint_by_drone: Dict[str, List[Dict[str, Any]]] = {}
+    for m in maint_rows:
+        maint_by_drone.setdefault(m.drone_id, []).append({"id": m.id, "done_at": m.done_at.isoformat(),
+                                                          "action": m.action, "note": m.note, "done_by": m.done_by})
     latest: Dict[str, FlightReview] = {}
     for r in reviews:
         cur = latest.get(r.drone_id)
@@ -234,7 +240,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     vib_rows = [{"id": r.id, "drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report, "log_name": r.log_name}
                 for r in reviews]
     out = []
-    for drone_id in sorted(snap_ids | set(latest)):
+    for drone_id in sorted(snap_ids | set(latest) | set(maint_by_drone)):
         settings = None
         if drone_id in snap_ids:
             d = _drift(db, fleet, drone_id)
@@ -247,18 +253,20 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
         last = latest.get(drone_id)
         hist = drone_history(vib_rows, drone_id)
         vib = {"latest_vs_own": hist.get("latest_vs_own"), "public": hist.get("latest_vs_public")} if hist.get("flights") else None
+        grounded = is_grounded(maint_by_drone.get(drone_id, []))
         row = assess(drone_id, settings, {"uin": reg.uin, "status": reg.status} if reg else None,
-                     last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None, vib)
+                     last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None,
+                     vib, grounded=grounded)
         row["settings_compared_with"] = settings and settings["compared_with"]
         out.append(row)
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
-            "rules": "Do not fly: an unapproved safety-critical setting change, or no UIN on record. Check first: a flight-limit "
-                     "change, a failsafe switched off, an unverified UIN, settings never checked, or warnings in the air during the last flight "
-                     "(a sensor or GPS complaint lasting 3 s or more, or an autopilot error report; a landing below 10% battery is a "
-                     "pilot note, not a reason). "
-                     "Ready: none of these."}
+            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record, or grounded after a reported incident. "
+                     "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off, "
+                     "an unverified UIN, settings never checked, a partial CSV/GPX log, or warnings in the air during the last flight "
+                     "(a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop; "
+                     "a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
 
 
 @router.get("/policy")
@@ -545,7 +553,7 @@ async def fleet_vibration(fleet: str, user: User = Depends(get_current_active_us
 
 class MaintenanceIn(BaseModel):
     done_at: datetime                                           # when the work was done
-    action: str = Field(..., max_length=40)
+    action: str = Field(..., max_length=80)
     note: str = Field("", max_length=1000)
 
 
@@ -846,13 +854,18 @@ async def airspace_check(plans: List[UploadFile] = File(...), user: User = Depen
 async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form(..., ge=0, le=500),
                           usable_wh: float = Form(..., gt=0, le=100000), hour_utc: Optional[str] = Form(None),
                           max_wind_mps: Optional[float] = Form(None, gt=0, le=60), profile: Optional[str] = Form(None),
+                          airframe_profile: Optional[str] = Form(None),
+                          cruise_speed_mps: Optional[float] = Form(None, gt=0.5, le=50),
+                          cruise_power_w: Optional[float] = Form(None, gt=10, le=50000),
                           user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Battery margin for a mission in still air, on the 10 m wind and on the wind at its cruise height.
 
     `usable_wh` is the battery energy above the landing reserve. The wind comes from the Open-Meteo
     forecast for the mission's home position and `hour_utc` (default: the current forecast hour).
     `profile` supplies the wind by hand instead — JSON {"10": [speed, from_deg], "80": [...], "120": [...],
-    "180": [...]} — for offline use. 503 when no forecast can be fetched and none was supplied.
+    "180": [...]} — for offline use. `airframe_profile` picks a power/speed preset (`light_survey`,
+    `agri_sprayer_10l`, `agri_sprayer_16l`, `light_multirotor`) or pass `cruise_speed_mps` and `cruise_power_w`.
+    503 when no forecast can be fetched and none was supplied.
     """
     import json
 
@@ -878,7 +891,12 @@ async def wind_check_plan(plan: UploadFile = File(...), payload_kg: float = Form
         except WindUnavailable as e:
             raise HTTPException(status_code=503, detail=f"{e}. Supply the wind by hand with the 'profile' field to check offline.")
         source = "Open-Meteo forecast"
-    report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps)
+    try:
+        report = wind_check(mission, payload_kg, usable_wh, wind, max_wind_mps,
+                            airframe_profile=airframe_profile, cruise_speed_mps=cruise_speed_mps,
+                            cruise_power_w=cruise_power_w)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     report.update({"hour_utc": hour, "wind_source": source, "notes": list(mission.notes), "plan_name": (plan.filename or "")[:120],
                    "input_file": ledger.file_fingerprint(plan.filename, plan_bytes)})
     report["ledger_seq"] = ledger.append(db, "wind_check", (plan.filename or "mission")[:120], report, user.username).seq
@@ -988,7 +1006,7 @@ async def ledger_check_receipt(body: ReceiptIn, user: User = Depends(get_current
 
 @router.get("/ledger/verify")
 async def verify_ledger(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Re-check every link and signature, and that every head recorded in the heads file is still in the chain.
+    """Re-check every link, signature, recorded head, and stored flight-review / spray-form payload digest.
     `ok: false` names the first problem."""
     result = ledger.verify_chain(db)
     path = ledger.heads_file()
@@ -1000,4 +1018,8 @@ async def verify_ledger(user: User = Depends(get_current_active_user), db: Sessi
         result["heads"] = heads
         if result["ok"] and not heads["ok"]:
             result.update(ok=False, problem=heads["problem"])
+    records = ledger.verify_stored_records(db)
+    result["stored_records"] = records
+    if result["ok"] and not records["ok"]:
+        result.update(ok=False, problem=records["problem"])
     return result

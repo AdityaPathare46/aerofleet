@@ -84,6 +84,8 @@ interface Deconflicted {
 interface WindCase { energy_wh: number | null; flyable: boolean; margin_wh: number | null }
 interface WindReport {
   verdict: 'PASS' | 'FAILS_AT_ALTITUDE' | 'FAIL'; cruise_height_m: number; usable_wh: number; hour_utc: string | null; wind_source: string
+  airframe?: { profile: string; cruise_speed_mps: number; cruise_power_w: number }
+  low_altitude_note?: string | null
   wind: { at_10m: { speed_mps: number; from_deg: number }; at_cruise: { speed_mps: number; from_deg: number }; ratio: number | null; over_limit: boolean; limit_mps: number | null }
   still_air: WindCase; ground_wind: WindCase; cruise_wind: WindCase; assumptions: string
 }
@@ -158,7 +160,8 @@ export default function FleetAssurancePage() {
   const [plansResult, setPlansResult] = useState<Deconflicted | null>(null)
   const windFile = useRef<HTMLInputElement>(null)
   const [windPlan, setWindPlan] = useState<File | null>(null)
-  const [payloadKg, setPayloadKg] = useState('1')
+  const [airframeProfile, setAirframeProfile] = useState('agri_sprayer_10l')
+  const [payloadKg, setPayloadKg] = useState('10')
   const [usableWh, setUsableWh] = useState('')
   const [windLimit, setWindLimit] = useState('')
   const [windResult, setWindResult] = useState<WindReport | null>(null)
@@ -251,6 +254,7 @@ export default function FleetAssurancePage() {
     if (!windPlan) throw new Error('Choose the mission file first.')
     if (!(Number(usableWh) > 0)) throw new Error('Enter the battery energy available above the landing reserve, in Wh.')
     const body = new FormData(); body.append('plan', windPlan); body.append('payload_kg', payloadKg || '0'); body.append('usable_wh', usableWh)
+    body.append('airframe_profile', airframeProfile)
     if (Number(windLimit) > 0) body.append('max_wind_mps', windLimit)
     setWindResult(await plain<WindReport>('/plans/wind-check', { method: 'POST', body }))
   })
@@ -852,6 +856,14 @@ export default function FleetAssurancePage() {
         <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
           <input ref={windFile} id="wind-plan-file" type="file" hidden onChange={(e) => { setWindPlan(e.target.files?.[0] ?? null); setWindResult(null); e.target.value = '' }} />
           <button className="btn" disabled={busy} onClick={() => windFile.current?.click()}>{windPlan ? windPlan.name : 'Choose mission file'}</button>
+          <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Airframe profile
+            <select id="wind-airframe" value={airframeProfile} onChange={(e) => setAirframeProfile(e.target.value)}>
+              <option value="agri_sprayer_10l">10 L agri-sprayer (5 m/s, ~1.6 kW + 180 W/kg)</option>
+              <option value="agri_sprayer_16l">16 L agri-sprayer (5 m/s, ~2.2 kW + 190 W/kg)</option>
+              <option value="light_survey">Survey / mapping quad (10 m/s, ~380 W + 95 W/kg)</option>
+              <option value="light_multirotor">Small test multirotor (12 m/s, legacy baseline)</option>
+            </select>
+          </label>
           <label style={{ display: 'grid', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>Payload (kg)
             <input id="wind-payload" value={payloadKg} onChange={(e) => setPayloadKg(e.target.value)} inputMode="decimal" style={{ width: 90 }} />
           </label>
@@ -882,6 +894,7 @@ export default function FleetAssurancePage() {
                   <td style={{ fontWeight: 600, color: c.margin_wh !== null && c.margin_wh >= 0 ? 'var(--status-green)' : 'var(--status-red)' }}>{c.margin_wh !== null ? `${c.margin_wh} Wh` : '—'}</td>
                 </tr>))}</tbody>
             </table>
+            {windResult.low_altitude_note && <div style={{ fontSize: 12, color: '#92400E' }}>{windResult.low_altitude_note}</div>}
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{windResult.wind_source}{windResult.hour_utc ? `, ${windResult.hour_utc} UTC` : ''}. {windResult.assumptions}</div>
           </div>
         )}
