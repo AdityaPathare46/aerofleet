@@ -163,7 +163,8 @@ export default function SettingsPage() {
   }, [apiUrl])
 
   useEffect(() => {
-    if (activeTab !== 'local_ollama') return
+    // The language-model settings belong to the legacy screens; with them hidden nothing here contacts a model server.
+    if (!showLegacy || activeTab !== 'local_ollama') return
     refreshOllamaStatus()
     refreshInstalledModels()
     tauriInvoke<string>('get_linux_install_command').then(setLinuxCommand).catch(() => {})
@@ -179,7 +180,7 @@ export default function SettingsPage() {
       unlistenInstall?.()
       unlistenPull?.()
     }
-  }, [activeTab, refreshOllamaStatus, refreshInstalledModels])
+  }, [showLegacy, activeTab, refreshOllamaStatus, refreshInstalledModels])
 
   async function handleInstallOllama() {
     setBusy('install')

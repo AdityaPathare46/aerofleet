@@ -227,7 +227,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 
 | Check | Result |
 |---|---|
-| Automated tests | **738 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| Automated tests | **745 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
 | No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
 | Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
 | Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |

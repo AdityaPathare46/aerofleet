@@ -335,7 +335,7 @@ export default function VRSafetyView() {
       </div>
 
       {needsAuth ? (
-        <SignInCard apiUrl={apiUrl} reason="The live swarm feed and flight reviews need an authenticated session."
+        <SignInCard apiUrl={apiUrl} reason="Flight reviews and rehearsals need a signed-in user."
           onSignedIn={() => { setNeedsAuth(false); setAuthNonce((n) => n + 1) }} />
       ) : (
         <>

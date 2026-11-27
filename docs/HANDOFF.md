@@ -167,7 +167,14 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ---
 
-## 6. Current status (25 Oct 2026)
+## 6. Status
+
+**Now (27 Nov 2026).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
+reviews yet). Product: 745 tests pass (`tests/unit` and `tests/integration`), 30 of 30 number checks agree, the app
+typechecks and builds, every screen loads without errors, the signed record verifies, the tamper demo catches all five
+attacks, and the four Proof results recompute to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is
+credited to Aditya Pathare and Atharv Waghmare only. The entries below are the history, oldest first.
+
 
 **Paper** (Round 11 peer review complete, publication grade **>= 9.3/10** achieved for *Reliability Engineering & System Safety*; 43 pages, 6 figures, 11 tables, 36 references, abstract 198 words, zero placeholders, DOIs verified):
 Resolved all Round 11 peer review items: (1) Rewrote Table 6 headline finding across Abstract, Contribution (i), §5.3, §7, and Conclusion: changing the comparison population from other aircraft's normal flights to the same aircraft's earlier flights lowered model AUC from about 0.83--0.88 to 0.53--0.57; grouping folds by vehicle, removing the crash window, and the cross-sectional versus within-drone scheme made no detectable difference, consistent with airframe and duration confounding. Added cluster bootstrap across 67 drone clusters ([0.500, 0.643]), proving no within-drone signal is detectable (CI spans 0.50). (2) Demoted screening PPV numbers in Abstract, Contribution (iv), §5.4, §6, §7, §9, and Table 10 from population claims to an exploratory illustration conditional on assumed 10% flag rate (illustrative PPV 2.26--2.43% [exact Bayes], lift 3.3x, 41--44 inspections per crash) on 107 controls across 20 strata with 17 reused controls. (3) Qualified depth-3 decision trees in §4.4, §5.2, Contribution (iii), §7, §9: reported $0.595 \pm 0.130$ and $0.621 \pm 0.105$ (upper bounds near 0.73) as inconclusive non-linear models examined in uncommitted early development and not retained due to fold instability, clarifying that prospectively declared negative applies to linear models and stumps. (4) Softened expert-log conclusions in §5.6, §7, §9: dropped "confirming"; reported that AUC 0.450 [0.185, 0.715] on 29 logs provides no evidence of discrimination and remains inconclusive; relabeled 0.19--0.73 as "conservative class-averaged Clopper--Pearson bound"; noted statistical model covers 4 of the 5 pilot logs due to topic availability. (5) Clarified registration dates in §4.1 and §8: documented confirmatory commits (20--24 Oct: `63bc72e`, `af6fab2`, `4475c8c`, `0c8ee47`, `d5d56c7`, `8b417d2`, `d7a6574`) and run dates 20--24 Oct; maintained author-controlled timestamp caveat prior to 25 Oct SWH capture; kept exploratory hedging on 7/9 to 1/9 leakage. (6) Framed wider permutation SD as a hypothesis in §5.2; corrected S7 sensitivity details in §8 to vibration across pitch/roll tilt thresholds (56 drones at 45 deg [0.46, $p=0.79$], 61 drones at 60 deg [0.48, $p=0.67$], 64 drones at 75 deg [0.50, $p=0.54$]); confirmed reference records (AAIB, Kose et al., Silalahi et al., EASA, Duvvuru). Rebuilt LaTeX PDF, DOCX manuscript, and Overleaf source zip.
@@ -195,7 +202,7 @@ simulated live swarm unless legacy screens are on. *Hardware* is now *Drone regi
 MAVLink vehicles and emergency stop are legacy only. The paper's Section 6 wording is "never contacts the aircraft in
 flight" (the bench inspection reads a flight controller, read-only). Proof page, no-AI test, tamper demo: see docs/VIVA.md.
 
-**Product**: all features work locally and are tested; 683 tests pass; app typechecks. Internal rating 7/10.
+**Product (25 Oct)**: all features work locally and are tested; 683 tests pass; app typechecks. Internal rating 7/10.
 Removed on 25 Oct: four old start scripts, and "Incident replay" (the earlier product's AI-council view) from the VR
 view. "Live swarm" in the VR view is still from the earlier dispatch product (simulated drones).
 

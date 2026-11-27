@@ -146,7 +146,7 @@ export function VrConnect({ apiUrl, scenario, signedIn }: { apiUrl: string; scen
             <div>
               <div style={{ fontSize: 18, fontWeight: 700 }}>View this in VR</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
-                Connect the AeroFleet VR app and it shows exactly what you're looking at here — city, live swarm or incident, selected drone — and follows as you change it.
+                Connect the AeroFleet VR app and it shows exactly what you're looking at here — the reviewed flight or the rehearsed missions — and follows as you change it.
               </div>
             </div>
 
@@ -197,7 +197,8 @@ export function VrConnect({ apiUrl, scenario, signedIn }: { apiUrl: string; scen
                     </div>
                     {device.status.mode && (
                       <div style={{ color: 'var(--text-secondary)' }}>
-                        Showing {device.status.mode === 'replay' ? `incident ${device.status.incident_id ?? ''}` : 'the live swarm'} · {device.status.city}
+                        Showing {device.status.mode === 'flight' ? 'a reviewed flight' : device.status.mode === 'rehearsal' ? 'the rehearsed missions'
+                          : device.status.mode === 'replay' ? `incident ${device.status.incident_id ?? ''}` : 'the live swarm'} · {device.status.city}
                         {device.status.in_headset === false && ' (running without a headset)'}
                       </div>
                     )}

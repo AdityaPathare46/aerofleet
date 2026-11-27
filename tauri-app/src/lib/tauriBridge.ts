@@ -11,11 +11,13 @@ export function isTauri(): boolean {
 }
 
 export async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  if (!isTauri()) throw new Error(`${cmd} needs the desktop app`)
   const { invoke } = await import('@tauri-apps/api/core')
   return invoke<T>(cmd, args)
 }
 
 export async function tauriListen(event: string, handler: (payload: any) => void): Promise<() => void> {
+  if (!isTauri()) return () => {}                 // a plain browser tab has no native events to listen to
   const { listen } = await import('@tauri-apps/api/event')
   return listen(event, (e) => handler(e.payload))
 }
