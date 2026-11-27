@@ -2,6 +2,9 @@
 
 **The safety and records back office for agricultural drone fleets.**
 
+> New to the project? Start with the complete team guide: [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md) (what it
+> is, how we got here, every screen, every check, how to run it, and an honest list of its weak points).
+
 Each morning AeroFleet tells a drone service provider which drones can fly today and why. Before a job it checks the
 route against restricted airspace and the other planned flights. After flying it turns each drone's log into a signed,
 time-ordered record, compares the flight with what a healthy flight of a similar drone looks like, and keeps the
