@@ -523,7 +523,8 @@ export default function FleetAssurancePage() {
                       {t.position === 'inside' ? 'within range' : `${t.position} range${t.times_mid != null ? ` (${t.times_mid}x typical)` : ''}`}</td>
                   </tr>))}</tbody>
               </table>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{review.report.normal_flight.note}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{review.report.normal_flight.note}
+                {!review.report.normal_flight.note.includes('spraying drones') && ' Not trained on spraying drones: they are heavier and their tank empties during the flight, and payload is not an input, so for a sprayer the battery range in particular is a rough guide only.'}</div>
             </div>)}
           {review.report.episodes.length === 0 && review.report.manual_control.length === 0
             ? <div style={{ fontSize: 13 }}>{review.verdict === 'LOG_ONLY' ? 'No pilot-flown modes in the log.' : 'No excursions and no manual takeovers.'}</div>

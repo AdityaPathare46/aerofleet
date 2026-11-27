@@ -59,7 +59,9 @@ One row per drone. The verdict comes **only from fixed rules and recorded facts*
   configuration and nobody approved it; or the drone has no UIN on record (the Drone Rules require one).
 - **Check first**: a flight-limit setting changed; a failsafe is switched off in the drone's settings (even if the
   approved baseline has it off: ArduPilot ships with its battery failsafe off); the UIN is not verified; the settings
-  were never checked; or the last flight's log shows warnings (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
+  were never checked; or the last flight's log shows warnings **in the air** (a GPS or sensor complaint lasting 3 s or
+  more, or an autopilot error report). A landing below 10% battery is shown as a pilot note, not a reason. Measured on
+  healthy public flights: the first rule flagged 28.8% (FA1, failed); this rule flagged 11.1% on held-out drones (FA2) (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
   setting changed in flight, leaving the plan).
 - **Ready**: none of these.
 
@@ -230,7 +232,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 
 | Check | Result |
 |---|---|
-| Automated tests | **745 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
+| Automated tests | **752 pass** (`python -m pytest -q --no-cov tests/unit tests/integration`) |
 | No AI in the decision path | A test follows every import from the product code and fails if it can reach an AI agent, the language-model panel or any ML library (`tests/unit/test_no_ai_in_decision_path.py`) |
 | Numbers stay true | `docs/paper/check_numbers.py` checks key numbers in the paper and every number on the Overview page against the result files (30 of 30 agree) |
 | Results recompute | The headline results are recomputed in a test and compared with the paper; each declaration predates its result (`tests/unit/test_evidence.py`) |
@@ -240,6 +242,7 @@ and results: [`research/px4_log_study/`](research/px4_log_study/),
 | Tampering | Every attack on the Proof page is also an automated test |
 | Real autopilot firmware (SITL) | The real ArduCopter flight code flew a spraying mission at 4 m near Pune, 8 scenarios x 3 runs, faults put in on purpose ([`PROTOCOL.md`](research/sitl_check/PROTOCOL.md), [`summary.md`](research/results/sitl_check/summary.md)). Met in 3 of 3 runs: normal flight (no false alarm), GPS lost 20 s, low battery, geofence switched off in flight, 8 m/s wind. Not met: failsafes switched off (the declared expectation named a battery failsafe that is already off in ArduPilot's defaults; the throttle failsafe was caught and the drone blocked every time). Not shown, as expected: a motor failure, and a compass failure (estimator checks are read only from PX4 logs) |
 | SITL retest after the fixes | AeroFleet now flags a failsafe switched off whatever the baseline says, and reads ArduPilot's own error reports, compass health, estimator test ratios, tilt and motor saturation. Declared retest on fresh flights over new fields ([`PROTOCOL_v2.md`](research/sitl_check/PROTOCOL_v2.md), [`summary.md`](research/results/sitl_check_v2/summary.md)): **all 8 scenarios met in 3 of 3 runs**, including failsafes off, motor failure and compass failure; normal and windy flights stayed clean. The first check's results stand as recorded |
+| False alarms of Today's fleet | Declared, on 1,121 healthy public PX4 flights: the first rule flagged 28.8% of good-or-great flights (FA1, **failed**, pass mark 20%); the rule was revised on half the drones and tested on the other half: **11.1%** [7.3, 16.3] (FA2, passed) ([`research/results/false_alarms/`](research/results/false_alarms/fa2_summary.md)) |
 | Public-archive search | Declared test on 514 public flights: the signs a description's words name were in that flight's own log 15.8% of the time, against 18.0% by chance. **Failed**, so logs are matched only from a real flight's log ([`summary.md`](research/results/archive_search/summary.md)) |
 
 ## Where AI is and is not used

@@ -61,13 +61,22 @@ on expertise, and records that protect the pilot (third-party insurance is manda
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
 (26 of 94), which is exactly what the settings check covers.
 
-Open **Today's fleet** (fleet `demo`): 3 do not fly, 4 check first, 1 ready, each with its reason, all from real
-public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed, PX4-03's
-autopilot rejected compass data, PX4-01 ended below 10% battery. PX4-05 has no UIN on record and PX4-07's is not
-verified (demo registrations, labelled DEMO). Press a reason's button to open its evidence.
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each with its reason, all from real
+public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed (and its
+low-battery failsafe only warns), PX4-06's autopilot rejected position data for 4 s in the air. PX4-05 has no UIN on
+record and PX4-07's is not verified (demo registrations, labelled DEMO). PX4-01 shows a **pilot note**: its last
+flight landed below 10% battery, which says how it was flown, not whether the drone is fit today. Press a reason's
+button to open its evidence.
 
 Say: the verdict comes only from fixed rules and recorded facts. Vibration is shown but never changes the verdict,
-because the study found it is not a validated warning.
+because the study found it is not a validated warning. A GPS or sensor complaint counts only in the air and only if it
+lasts 3 s: with the earlier 1 s rule, 28.8% of healthy public flights were flagged (FA1, failed); with this rule, 11.1%
+of held-out healthy flights (FA2, passed).
+
+**Be ready for this question:** the uploaders rated every demo drone's last flight a crash, yet three show *Ready*.
+That is the study's own finding on screen: crash flights showed no warning in their logs, and a log cannot say whether
+a drone crashed or why. The board reports what the log shows; an operator who knows a drone crashed records it in the
+maintenance logbook and inspects it.
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
 not change with the language, log messages stay in English, and the note under the buttons says the translation is

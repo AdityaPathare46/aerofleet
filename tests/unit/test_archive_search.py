@@ -65,3 +65,31 @@ def test_without_an_index_the_search_says_how_to_build_it(tmp_path, monkeypatch)
 def test_the_user_s_own_log_is_never_its_own_match(index):  # noqa: F811
     out = arch.search("compass", signs={"est_compass"}, exclude={"l1", "r1"})
     assert "l1" not in [m["id"] for m in out["log_matches"]] and "r1" not in [m["id"] for m in out["text_matches"]]
+
+
+def test_signs_from_a_stored_review_include_high_vibration_only_against_the_public_reference(monkeypatch):
+    from aerofleet.assurance import log_signs, public_reference
+
+    rep = {"evidence_timeline": [{"kind": "sensor", "level": "warning", "text": "Estimator rejected height data for 3 s"},
+                                 {"kind": "sensor", "level": "warning", "text": "Estimator reported an internal fault for 2 s"},
+                                 {"kind": "battery", "level": "notice", "text": "Battery below 20% (18%)"},
+                                 {"kind": "battery", "level": "notice", "text": "Battery voltage fell 30% (25 → 17 V)"},
+                                 {"kind": "setting", "level": "warning", "text": "Setting FENCE_ENABLE changed 1 → 0 in flight"},
+                                 {"kind": "plan", "level": "warning", "text": "Off the planned route for 9 s"}],
+           "vibration": {"source": "px4_estimator", "p95": 1.0}, "log": {"vehicle": "quadcopter"}}
+    monkeypatch.setattr(public_reference, "vibration_position", lambda *a: {"higher_than_pct": 95})
+    assert log_signs.signs_from_report(rep) == {"est_height", "est_fault", "battery_low", "voltage_sag", "setting_in_flight",
+                                                "off_plan", "vibration_high"}
+    monkeypatch.setattr(public_reference, "vibration_position", lambda *a: {"higher_than_pct": 50})
+    assert "vibration_high" not in log_signs.signs_from_report(rep)
+    assert log_signs.signs_from_report({}) == set()
+
+
+def test_signs_from_a_parsed_log_use_the_same_timeline(monkeypatch):
+    from aerofleet.assurance import log_signs
+    from aerofleet.assurance.flightlog import FlightLog
+
+    f = FlightLog(format="ulg", track=[(float(t), 18.5, 73.8, 10.0) for t in range(60)],
+                  gps=[(float(t), 3 if 20 <= t < 30 else 12, 0.9, 3) for t in range(60)],
+                  health=[(5.0, 9.0, "Estimator rejected compass data")])
+    assert log_signs.signs_from_flight(f) == {"gps_poor", "est_compass"}

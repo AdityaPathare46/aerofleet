@@ -115,7 +115,7 @@ The app is a desktop app (Tauri + React) talking to a local Python API (FastAPI 
 | Screen | What it does | Code |
 |---|---|---|
 | **Overview** | The story: use case, study findings, design decisions, measured results, what is not shown | `tauri-app/src/pages/Overview.tsx`, `lib/studyFacts.ts` (every number has a source checked by `check_numbers.py`) |
-| **Today's fleet** | Morning go / no-go per drone. *Do not fly*: an unapproved safety-critical setting change, or no UIN. *Check first*: a flight-limit change, **a failsafe switched off** (even if approved), an unverified UIN, settings never checked, warnings in the last flight. Vibration and the model shown as context only. English, Hindi, Marathi | `aerofleet/assurance/readiness.py`, `pages/Readiness.tsx`, `lib/readinessText.ts` |
+| **Today's fleet** | Morning go / no-go per drone. *Do not fly*: an unapproved safety-critical setting change, or no UIN. *Check first*: a flight-limit change, **a failsafe switched off** (even if approved), an unverified UIN, settings never checked, warnings in the air in the last flight (a GPS or sensor complaint lasting 3 s, an autopilot error report). A landing below 10% battery is a pilot note. Vibration and the model shown as context only. English, Hindi, Marathi | `aerofleet/assurance/readiness.py`, `pages/Readiness.tsx`, `lib/readinessText.ts` |
 | **Spray register** | The SOP's Spray Monitoring Form (Annexure-I, CIB&RC 434th meeting, 30 Nov 2021) per spraying flight, part-filled from the log (date, times, height above take-off, speed, spray direction), fixed checks quoting the SOP, deadline = spraying date + 7 days, printable form, signed saves, frozen once submitted | `aerofleet/assurance/spray_form.py`, `api/routes/spray.py`, `pages/SprayRegister.tsx` |
 | **Fleet trends** | Flights and hours per week or month, warnings per flight, per-drone trends, operations-log CSV | `assurance/trends.py`, `assurance/operations_log.py` |
 | **Fleet Assurance** | Settings drift against the approved baseline (with named approvals); flight review of a log (events in time order, evidence quality, planned vs flown); evening batch upload (drone matched by its flight-controller id); vibration history; maintenance logbook; "Something wrong? Describe it" (expert-cause checklist) and **public-archive search**; mission conflict check and fix; battery for the wind aloft; signed record, export, **receipts** | `assurance/drift.py`, `reconcile.py`, `evidence.py`, `vibration.py`, `maintenance.py`, `troubleshoot.py`, `archive_search.py`, `deconflict.py`, `wind.py`, `ledger.py` |
@@ -145,7 +145,9 @@ Full write-up: `research/normal_flight/README.md`. In short: quantile gradient-b
 ordinary public PX4 flights of 401 vehicles** (no crash labels) give the 5-95% range of vibration and battery voltage
 drop for a drone like this flown like this. Four declared tests: H1 calibration **failed** (72.7% / 73.3% instead of
 85-95%), H2 skill passed (47.6% / 15.4% lower error than the median), H3 motor faults passed with caveats, H4†
-conformal calibration passed (90.4% / 90.8%). Exported to JSON and run in plain Python: no ML library in the product.
+conformal calibration passed (90.4% / 90.8%). A later declared attempt to add the drone's measured loading (H5) did
+not reach its pass mark (6.2% lower error, mark 10%), so the shipped model is unchanged. Exported to JSON and run in
+plain Python: no ML library in the product.
 
 ---
 
@@ -153,7 +155,7 @@ conformal calibration passed (90.4% / 90.8%). Exported to JSON and run in plain 
 
 | Check | Result | Where |
 |---|---|---|
-| Automated tests | **745 pass** | `tests/unit`, `tests/integration` |
+| Automated tests | **752 pass** | `tests/unit`, `tests/integration` |
 | Numbers in paper and app vs result files | 30 of 30 agree | `docs/paper/check_numbers.py` |
 | No AI in the decision path | A test follows every import | `tests/unit/test_no_ai_in_decision_path.py` |
 | Planned vs flown, 40 real flights with injected deviations | 36/40 sideways 35 m and 39/40 upward 20 m found; 0/40 false alarms **with a waypoint every 5 s** (9/40 at 10 s) | `research/results/px4_log_study/injection_reconcile.md` |
@@ -163,6 +165,8 @@ conformal calibration passed (90.4% / 90.8%). Exported to JSON and run in plain 
 | SITL retest after fixes (v2, fresh flights) | **All 8 scenarios met 3/3**; normal and windy flights clean | `research/results/sitl_check_v2/summary.md` |
 | Real DJI exports | 3 DJI Mini 4 Pro flight-record CSVs read correctly; heights match the files' own maximum; 4 reader faults found and fixed. Airdata layout untested on a real file | `tests/integration/test_real_dji_exports.py` |
 | Public-archive search | Matching logs from words **failed** (15.8% vs 18.0% by chance), so it was removed; logs matched only from a real flight | `research/results/archive_search/summary.md` |
+| False alarms of Today's fleet on healthy public flights (FA1) | 28.8% of good-or-great flights flagged: **failed** (pass mark 20%) | `research/results/false_alarms/summary.md` |
+| Revised rule on held-out drones (FA2) | **11.1%** [7.3, 16.3] flagged: passed; real motor-fault flights still flagged 19.4% (was 21.5%) | `research/results/false_alarms/fa2_summary.md` |
 | VR debrief study | Declared, **not yet run** | `research/vr_study/PROTOCOL.md` |
 
 ---
@@ -230,6 +234,7 @@ repo, hence `AEROFLEET_VENV`. Create a user from the sign-in card, or use the lo
 | All tests | `python -m pytest -q --no-cov tests/unit tests/integration` |
 | Check the paper's numbers | `python docs/paper/check_numbers.py` |
 | Check a signed record without the app | `python tools/verify_ledger.py export.json --receipt receipt.json` |
+| Back up the database and keys (safe while running) | `python tools/backup.py` (to `~/AeroFleet_backups/<date>`; keep it off this laptop and out of git) |
 | Build the archive search index (about 20 min) | `python tools/build_archive_index.py` |
 | Fly the SITL checks | `python research/sitl_check/run_v2.py` then `evaluate_v2.py` (needs `~/aerofleet_sitl`) |
 | VR on a Quest 3 | `docs/VR_QUEST3_GUIDE.md`; for the study, `research/vr_study/PROTOCOL.md` (adb reverse ports 1420 and 8000) |
@@ -241,7 +246,7 @@ repo, hence `AEROFLEET_VENV`. Create a user from the sign-in card, or use the lo
 Step by step in `docs/DEMO.md`. The 10-minute version:
 
 1. **Overview**: the use case and the study in one screen.
-2. **Today's fleet** (fleet `demo`): 3 do not fly, 4 check first, 1 ready, each reason with a button to its evidence;
+2. **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each reason with a button to its evidence;
    switch to मराठी.
 3. **Fleet Assurance**: open a flight review (events, evidence quality, expected range); a drone's vibration history;
    the signed record ▸ *Check the record*.
@@ -273,12 +278,12 @@ Ranked by how hard an examiner can push on them. "Say" is the honest answer; "Fi
    research drones, not sprayers. The use case is argued from government documents, not from users.
    *Say:* built and tested in software on public logs and on the real autopilot firmware; no operator yet. *Fix:* one
    conversation with an operator or a Krishi Vigyan Kendra, with their feedback written down.
-2. **False alarms on a real fleet are unmeasured.** Today's fleet says *Check first* for any warning in the last log
-   (GPS under 6 satellites or HDOP above 2.5, battery under 10%, estimator rejecting data for 1 s or more, tilt above
-   60°, motor saturation). These thresholds are conventions, not validated. On real PX4 logs the estimator often
-   rejects compass data briefly (demo drone PX4-03 shows it), so a healthy drone may be flagged too often.
-   *Say:* the false-alarm rate on real fleets is unknown; on simulated normal and windy flights it was zero. *Fix:* a
-   declared measurement of how many of the 1,121 ordinary public flights would get *Check first*.
+2. **False alarms: measured, failed, fixed, and still only on public flights.** With the original rule (any warning
+   in the last log, sensor complaints from 1 s, battery under 10% a reason) 28.8% of healthy public flights rated good or
+   great got *Check first* (FA1, declared, **failed** the 20% pass mark). The rule was changed on half the drones
+   (complaints count only in the air and from 3 s; a low-battery landing is a pilot note) and tested on the other half:
+   **11.1% [7.3, 16.3]** (FA2, declared, passed); 19.8% of all held-out flights. Cost: real motor-fault flights flagged
+   19.4% instead of 21.5%. *Still open:* the rate on real spraying drones. Files: `research/results/false_alarms/`.
 3. **The VR claim is untested** until the study runs. *Say:* declared study, results reported whatever they show.
 4. **No real hardware.** SITL runs the real ArduCopter code but simulates sensors, frame vibration and weather.
 
@@ -294,7 +299,9 @@ Ranked by how hard an examiner can push on them. "Say" is the honest answer; "Fi
 
 9. **Not trained on spraying drones.** Spraying drones are heavier and their payload changes during the flight (the
    tank empties); battery drop depends on payload, and payload and mass are not inputs. Ranges for a sprayer may be
-   wrong. *Fix:* sprayer logs, or at least a payload input.
+   wrong. The app now says so beside every expected range. We tried adding the drone's loading measured from its
+   own log (the thrust the autopilot commanded): declared test H5 **failed** (battery error only 6.2% lower, mark 10%),
+   so the model was not changed. *Fix:* sprayer logs.
 10. **Its calibration test failed**; the fix (H4) is exploratory and widened the ranges about 1.5 times, so "outside
     the range" is rare and may rarely help. Usefulness was never tested: no decision was shown to improve.
 11. **PX4 only.** ArduPilot, DJI and CSV/GPX flights get no expected range.
@@ -314,8 +321,11 @@ Ranked by how hard an examiner can push on them. "Say" is the honest answer; "Fi
 18. **Archive search:** matching from words failed its test; the local logs over-represent crashes.
 19. **Legacy code is still in the repository** (about 4,000 lines of AI agents and 8 hidden screens). It cannot run in
     the product's decisions (a test proves it), but an examiner may open it. *Say:* kept as the project's history.
-20. **Not checked in this review:** a packaged desktop installer (we run through `start.sh`); multi-user use and
-    backups of the database; behaviour with very large fleets.
+20. **Partly addressed:** `tools/backup.py` now makes a consistent, fingerprinted copy of the database and keys and
+    verifies the signed record inside the copy. The macOS app now builds (`npx tauri build --bundles app`) and,
+    opened like any installed app, starts its own backend against the same database as `start.sh` (three launcher
+    bugs fixed on 27 Nov). It still needs this project folder and its Python environment on the same machine; it is
+    not a self-contained installer. Not checked: Windows build since the changes, multi-user use, very large fleets.
 21. **Test coverage** is 93% of the 2.0 core's statements (section 13), lower in `log_signs.py` (75%); coverage shows
     which lines ran, not that they are right.
 

@@ -151,15 +151,44 @@ pub(crate) fn find_project_root() -> Option<PathBuf> {
     None
 }
 
+/// A Python can serve the backend only if it has the backend's packages; a stale or half-made environment (an old
+/// .venv left in the project) is skipped instead of being started and failing.
+fn usable(python: &Path) -> bool {
+    Command::new(python)
+        .args(["-c", "import fastapi, uvicorn, sqlalchemy, pydantic_settings"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
 fn find_python(root: &Path) -> Option<PathBuf> {
-    let venv_candidates = [
+    // An explicit interpreter wins (power users, CI).
+    if let Ok(p) = std::env::var("AEROFLEET_PYTHON") {
+        let p = PathBuf::from(p);
+        if p.is_file() && usable(&p) {
+            return Some(p);
+        }
+    }
+    let mut venv_candidates = vec![
         root.join(".venv").join("bin").join("python"),
         root.join(".venv").join("Scripts").join("python.exe"),
         root.join("venv").join("bin").join("python"),
         root.join("venv").join("Scripts").join("python.exe"),
     ];
+    // start.sh's AEROFLEET_VENV convention: when the project sits on a drive that cannot hold a virtual environment
+    // (exFAT has no symlinks), the environment lives at ~/.venvs/aerofleet. An app opened from the Finder does not
+    // inherit shell variables, so that documented default is checked here too.
+    if let Ok(v) = std::env::var("AEROFLEET_VENV") {
+        venv_candidates.push(PathBuf::from(v).join("bin").join("python"));
+    }
+    if let Some(home) = dirs::home_dir() {
+        venv_candidates.push(home.join(".venvs").join("aerofleet").join("bin").join("python"));
+        venv_candidates.push(home.join(".venvs").join("aerofleet").join("Scripts").join("python.exe"));
+    }
     for c in &venv_candidates {
-        if c.is_file() {
+        if c.is_file() && usable(c) {
             return Some(c.clone());
         }
     }
@@ -172,7 +201,7 @@ fn find_python(root: &Path) -> Option<PathBuf> {
             if output.status.success() {
                 if let Some(first_line) = String::from_utf8_lossy(&output.stdout).lines().next() {
                     let trimmed = first_line.trim();
-                    if !trimmed.is_empty() {
+                    if !trimmed.is_empty() && usable(Path::new(trimmed)) {
                         return Some(PathBuf::from(trimmed));
                     }
                 }
@@ -197,15 +226,37 @@ pub struct BackendLaunchResult {
     pub already_running: bool,
 }
 
+/// Where the spawned backend writes its output: a file, never an unread pipe. (A pipe nobody reads fills up while the
+/// API logs its start-up, and the backend then stalls before it ever listens.)
+pub(crate) fn backend_log_file() -> Option<PathBuf> {
+    dirs::data_local_dir().map(|d| d.join("AeroFleet").join("backend.log"))
+}
+
 fn spawn_backend(root: &Path, python: &Path) -> Result<Child, String> {
+    let (out, err) = match backend_log_file() {
+        Some(path) => {
+            if let Some(dir) = path.parent() {
+                let _ = std::fs::create_dir_all(dir);
+            }
+            match std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+                Ok(f) => match f.try_clone() {
+                    Ok(f2) => (Stdio::from(f), Stdio::from(f2)),
+                    Err(_) => (Stdio::null(), Stdio::null()),
+                },
+                Err(_) => (Stdio::null(), Stdio::null()),
+            }
+        }
+        None => (Stdio::null(), Stdio::null()),
+    };
+    // No DATABASE_URL override: the project's .env decides where the data lives, exactly as with start.sh, so the
+    // installed app and the command line always open the same database and signed record.
     Command::new(python)
         .args(["-m", "uvicorn", "aerofleet.api.app:app", "--host", BACKEND_HOST, "--port", BACKEND_PORT])
         .current_dir(root)
-        .env("DATABASE_URL", "sqlite:///./data/aerofleet.db")
         .env("ENVIRONMENT", "development")
         .env("PYTHONPATH", root)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stdout(out)
+        .stderr(err)
         .spawn()
         .map_err(|e| format!("Found Python at {} but failed to launch it: {e}", python.display()))
 }

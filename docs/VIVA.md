@@ -433,6 +433,25 @@ runs flat, so it marks a drone at its power limit, not a failed motor: we still 
 Time. SITL runs the same flight code and lets us put faults in on purpose with a known right answer, which a bench or
 field flight cannot. It is the standard step before real flights; a bench session is in future work.
 
+**Q54. How often does Today's fleet cry wolf?**
+We measured it, declared first, on 1,121 healthy public PX4 flights read exactly as the product reads them. The first
+rule flagged 28.8% of flights their pilots rated good or great: it failed our own 20% pass mark. We changed the rule on
+half the drones (a sensor or GPS complaint counts only in the air and only if it lasts 3 s; a low-battery landing is a
+pilot note, not a reason about the drone) and tested it once on the other half: 11.1% [7.3, 16.3]. It cost a little
+sensitivity: real motor-fault flights flagged 19.4% instead of 21.5%. Not yet measured on real spraying drones.
+
+**Q54b. Why not train the model on spraying drones, with payload as an input?**
+There is no data for it: no public log records payload weight, and the public archive has about 20 flights from 4
+vehicles that mention spraying. So we measured loading from each log instead (the collective thrust the autopilot
+commanded, which rises with weight and falls as a tank empties) and declared a test: battery-drop error must fall at
+least 10%. It fell 6.2%, so by our own rule the model was not changed. Likely, public drones carry too little payload
+for it to matter; on sprayers it may, and the code is ready for that retrain once we have sprayer logs.
+
+**Q55. Three demo drones are "Ready" though their last flight was rated a crash. Isn't that a failure?**
+It is the study on screen: crash flights showed no warning in their logs, and a log cannot say whether or why a drone
+crashed. The board reports what the log shows. An operator who knows a drone crashed records it in the maintenance
+logbook and inspects it; AeroFleet never claims a drone is undamaged.
+
 ## Questions to answer with "we did not test that"
 
 - "Does AeroFleet reduce crashes?" Not tested; that needs the prospective study.

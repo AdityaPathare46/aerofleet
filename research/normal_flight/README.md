@@ -100,6 +100,21 @@ flight. The model *responds* to faults; it is **not a fault detector**.
 
 Commits: `de4382a` (H1-H3 declared), `a53e245` (H1-H3 results), `76db013` (H4 declared), `98bb3f5` (H4 result).
 
+**Later attempt: payload as an input (H5, H6).** No public log records payload and the archive holds almost no spraying
+flights (20 entries from 4 vehicles), so training "on sprayers" was not possible. Instead we measured each drone's
+loading from its own log: the collective thrust the autopilot commanded (higher for a heavier or fully loaded drone,
+falling as a tank empties). Declared first (`a080221`), result `22bed27`:
+
+| Test | Result | Pass mark | Outcome |
+|---|---|---|---|
+| H5 battery-drop error with loading vs without, held-out drones | 6.2% lower (0.826 → 0.775) | at least 10% lower | **Not supported** |
+| H5v vibration, same | no change (−0.3%) | at least 10% lower | Not supported |
+| H6 calibrated coverage with loading | 91.4% battery, 90.9% vibration | 85-95% | Supported |
+
+By the rule fixed in advance the shipped model stays as it was. Likely reason (a guess): public flights are mostly light
+drones without payload, so loading varies little here; on sprayers it may matter more, which needs sprayer logs to
+test. The reader and `features()` already compute the loading inputs for that retrain.
+
 ## 6. How the app uses it
 
 | Where | What is shown |
@@ -126,8 +141,11 @@ model file. Both need the downloaded logs on the data drive.
 ## 8. Limits
 
 - **PX4 only.** No ArduPilot, DJI or CSV/GPX flights in training, so those logs get no expected range.
-- **Not spraying drones specifically.** The public archive does not mark agricultural drones; the ranges describe
-  ordinary public PX4 flying.
+- **Not spraying drones.** The public archive does not mark agricultural drones; the ranges describe ordinary public
+  PX4 flying, mostly small drones without a payload. Spraying drones are heavier and their tank empties during the
+  flight, and payload is not an input, so for a sprayer the battery range in particular is a rough guide. The app says
+  so beside every expected range. Adding measured loading was tried and did not pass its declared test on public
+  flights (H5, above); fixing it needs sprayer logs.
 - **Self-uploaded flights** are not a random sample of all drones.
 - **Wide ranges on purpose.** After calibration, "outside the range" is uncommon, so it is worth a look when it happens.
 - **Not a prediction.** Being outside the range was not shown to mean a drone will fail.

@@ -170,10 +170,15 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 ## 6. Status
 
 **Now (27 Nov 2026).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: 745 tests pass (`tests/unit` and `tests/integration`), 30 of 30 number checks agree, the app
+reviews yet). Product: 752 tests pass (`tests/unit` and `tests/integration`), 30 of 30 number checks agree, the app
 typechecks and builds, every screen loads without errors, the signed record verifies, the tamper demo catches all five
 attacks, and the four Proof results recompute to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is
-credited to Aditya Pathare and Atharv Waghmare only. The entries below are the history, oldest first.
+credited to Aditya Pathare and Atharv Waghmare only. False alarms (27 Nov): FA1 declared 5f44b0b failed (28.8% of
+healthy public flights flagged); rule revised on half D (complaints count in the air from 3 s; low-battery landing is
+a pilot note); FA2 declared 481987a passed on held-out half H (11.1%). Demo fleet reloaded: board is now 3 do not fly,
+2 check first, 3 ready. New: tools/backup.py. macOS app built with CARGO_TARGET_DIR on the internal disk; launcher fixed (unread
+output pipe stalled the backend, forced DATABASE_URL pointed at an old data/aerofleet.db, a stale .venv in the repo was
+picked first; it now writes ~/Library/Application Support/AeroFleet/backend.log). The entries below are the history, oldest first.
 
 
 **Paper** (Round 11 peer review complete, publication grade **>= 9.3/10** achieved for *Reliability Engineering & System Safety*; 43 pages, 6 figures, 11 tables, 36 references, abstract 198 words, zero placeholders, DOIs verified):
