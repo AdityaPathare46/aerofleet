@@ -30,6 +30,8 @@ END_MARGIN_S = 10.0                    # as for the vibration value: an impact m
 MIN_S = 60.0
 NOTE = ("Expected range from a model trained on ordinary public PX4 flights of similar drones (no crash data). Context for "
         "an inspector, not a prediction: being outside the range was not shown to mean a drone will fail.")
+SPRAYER_LIMIT = ("Not trained on spraying drones: they are heavier and their tank empties during the flight, and payload is "
+                 "not an input, so for a sprayer the battery range in particular is a rough guide only.")
 
 
 def kind_of(vehicle: Optional[str]) -> str:
@@ -77,6 +79,11 @@ def features(flight, t_from: Optional[float] = None, t_to: Optional[float] = Non
         if hi > lo and m and m.upper() in PILOT_MODES:
             manual += hi - lo
     vib = [v for t, v in flight.vibration if a <= t <= b]
+    # Loading, measured from the log itself: the collective thrust the autopilot commanded while the motors were working
+    # (above 5%). A heavier drone or a full tank needs more thrust to stay up; a tank emptying shows as a fall over the
+    # flight. No payload weight is recorded in any PX4 log, so this is the closest measured stand-in.
+    thr = sorted((t, v) for t, v in getattr(flight, "thrust", []) if a <= t <= b and v > 0.05)
+    q = len(thr) // 4
     cells = flight.params.get("BAT1_N_CELLS") or flight.params.get("BAT_N_CELLS")
     batt = [v for t, v, _r in flight.battery if a <= t <= b and v > 0]
     out: Dict[str, Any] = {
@@ -86,6 +93,9 @@ def features(flight, t_from: Optional[float] = None, t_to: Optional[float] = Non
         "cells": float(cells) if cells and cells > 0 else None,
         "vibration": float(np.percentile(vib, 95)) if len(vib) >= 10 else None,
         "battery_drop_pct_per_min": None, "volts_per_cell": None,
+        "thrust": float(np.median([v for _, v in thr])) if len(thr) >= 20 else None,
+        "thrust_change": (float(np.median([v for _, v in thr[-q:]])) - float(np.median([v for _, v in thr[:q]])))
+                         if len(thr) >= 20 else None,
     }
     if len(batt) >= 20:
         k = max(1, len(batt) // 10)
@@ -154,7 +164,7 @@ def assess(flight) -> Optional[Dict[str, Any]]:
     f = features(flight)
     if f is None:
         return None
-    out: Dict[str, Any] = {"note": NOTE, "model": model().get("card", {}).get("name"), "targets": {}}
+    out: Dict[str, Any] = {"note": f"{NOTE} {SPRAYER_LIMIT}", "model": model().get("card", {}).get("name"), "targets": {}}
     for target, label, unit in (("vibration", "Vibration (95th percentile)", f"{f['source']} units"),
                                 ("battery_drop_pct_per_min", "Battery voltage drop", "% per minute")):
         obs, exp = f.get(target), expected(target, f)

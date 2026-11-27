@@ -43,6 +43,7 @@ class FlightLog:
     hardware: Optional[str] = None                           # flight-controller board, e.g. PX4_FMU_V5 (PX4 logs)
     firmware: Optional[str] = None                           # autopilot release, e.g. "1.14" (PX4 logs)
     vehicle_uuid: Optional[str] = None                       # the flight controller's own unique id (PX4 sys_uuid)
+    thrust: List[Tuple[float, float]] = field(default_factory=list)   # (t_s, collective thrust the autopilot commanded, 0-1; PX4)
 
     @property
     def duration_s(self) -> float:
@@ -77,7 +78,7 @@ PX4_NAV_STATES = {0: "MANUAL", 1: "ALTCTL", 2: "POSCTL", 3: "MISSION", 4: "HOLD"
                   15: "STABILIZE", 16: "RATTITUDE", 17: "TAKEOFF", 18: "LAND", 19: "FOLLOW", 20: "PRECLAND", 21: "ORBIT",
                   22: "VTOL_TAKEOFF"}
 ULOG_TOPICS = ["vehicle_global_position", "home_position", "vehicle_gps_position", "sensor_gps", "vehicle_status",
-               "battery_status", "vehicle_imu_status", "estimator_status"]
+               "battery_status", "vehicle_imu_status", "estimator_status", "vehicle_attitude_setpoint"]
 
 
 def _read_ulog(path: str) -> FlightLog:
@@ -154,6 +155,16 @@ def _read_ulog(path: str) -> FlightLog:
     elif est is not None and "vibe[1]" in est:
         log.vibration = [(sec(t), float(v)) for t, v in list(zip(est["timestamp"], est["vibe[1]"]))[:MAX_POINTS]]
         log.vibration_source = "px4_estimator"
+    sp = data.get("vehicle_attitude_setpoint")   # how hard the drone was asked to push: rises with payload and weight
+    if sp is not None:
+        if "thrust_body[2]" in sp:          # multirotors push up (z); planes and VTOLs in forward flight push forward (x)
+            col = [max(abs(float(x)), abs(float(z))) for x, z in zip(sp.get("thrust_body[0]", [0.0] * len(sp["thrust_body[2]"])),
+                                                                     sp["thrust_body[2]"])]
+        else:
+            col = [abs(float(v)) for v in sp["thrust"]] if "thrust" in sp else None
+        if col is not None:
+            step = max(1, len(col) // MAX_POINTS + 1)
+            log.thrust = [(sec(t), v) for t, v in zip(sp["timestamp"][::step], col[::step])]
     st = data.get("vehicle_status")
     if st is not None:
         last = None
