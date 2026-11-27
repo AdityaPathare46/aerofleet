@@ -417,6 +417,28 @@ class DroneRegistration(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class DroneCompliance(Base):
+    """Per-drone Indian regulatory compliance details beyond UIN: Drone Rules 2021 Rule 44 third-party
+    insurance, Rule 13 Type Certificate (DAN/TC), and Rule 34 assigned Remote Pilot Certificate (RPC).
+
+    Stored in a separate additive table keyed by drone_id so existing SQLite databases upgrade cleanly
+    via init_db() without schema migrations. Every save is signed into the Ed25519 ledger.
+    """
+
+    __tablename__ = "drone_compliance"
+
+    drone_id = Column(String(50), primary_key=True)
+    insurance_policy = Column(String(80), nullable=True)
+    insurance_insurer = Column(String(120), nullable=True)
+    insurance_valid_until = Column(String(10), nullable=True)     # YYYY-MM-DD (Rule 44)
+    type_certificate_no = Column(String(80), nullable=True)       # Rule 13 DAN / TC number
+    pilot_name = Column(String(100), nullable=True)
+    pilot_rpc_no = Column(String(80), nullable=True)              # Rule 34 Remote Pilot Certificate
+    pilot_rpc_valid_until = Column(String(10), nullable=True)     # YYYY-MM-DD
+    updated_by = Column(String(100), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class FleetBaseline(Base):
     """The approved flight-controller configuration for a fleet (AeroFleet 2.0 drift check).
 

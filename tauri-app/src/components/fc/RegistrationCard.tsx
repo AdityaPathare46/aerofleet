@@ -27,20 +27,43 @@ function headers(): Record<string, string> {
   return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
 }
 
+interface Compliance {
+  insurance_policy: string | null
+  insurance_insurer: string | null
+  insurance_valid_until: string | null
+  type_certificate_no: string | null
+  pilot_name: string | null
+  pilot_rpc_no: string | null
+  pilot_rpc_valid_until: string | null
+  updated_by?: string | null
+}
+
+const EMPTY_COMP: Compliance = {
+  insurance_policy: null, insurance_insurer: null, insurance_valid_until: null,
+  type_certificate_no: null, pilot_name: null, pilot_rpc_no: null, pilot_rpc_valid_until: null,
+}
+
 export default function RegistrationCard({ apiUrl, droneId }: { apiUrl: string; droneId: string }) {
   const [reg, setReg] = useState<Registration | null>(null)
+  const [comp, setComp] = useState<Compliance>(EMPTY_COMP)
   const [uin, setUin] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [compSaved, setCompSaved] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const id = droneId.trim()
   const url = `${apiUrl}/api/v1/fleet/registrations/${encodeURIComponent(id)}`
+  const compUrl = `${apiUrl}/api/v1/assurance/drones/${encodeURIComponent(id)}/compliance`
 
   const load = useCallback(async () => {
-    if (!id) { setReg(null); return }
-    const r = await fetch(url, { headers: headers() })
+    if (!id) { setReg(null); setComp(EMPTY_COMP); return }
+    const [r, c] = await Promise.all([
+      fetch(url, { headers: headers() }),
+      fetch(compUrl, { headers: headers() }).catch(() => null),
+    ])
     if (r.ok) { const body: Registration = await r.json(); setReg(body); setUin(body.uin ?? '') }
-  }, [id, url])
+    if (c && c.ok) { setComp(await c.json()) }
+  }, [id, url, compUrl])
 
   useEffect(() => {
     const t = setTimeout(() => { load().catch(() => setReg(null)) }, 300)
@@ -55,6 +78,22 @@ export default function RegistrationCard({ apiUrl, droneId }: { apiUrl: string; 
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
       setReg(await r.json())
       setNote('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const saveCompliance = async () => {
+    setBusy(true); setError(null); setCompSaved(null)
+    try {
+      const r = await fetch(compUrl, { method: 'PUT', headers: headers(), body: JSON.stringify(comp) })
+      if (r.status === 403) throw new Error('Only an operator can update DGCA compliance records.')
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail ?? `HTTP ${r.status}`)
+      const out = await r.json()
+      setComp(out)
+      setCompSaved(`Signed into ledger entry #${out.ledger_seq}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -100,6 +139,36 @@ export default function RegistrationCard({ apiUrl, droneId }: { apiUrl: string; 
               </button>
             </div>
           )}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'grid', gap: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>DGCA Drone Rules 2021 — Insurance (Rule 44), Type Certificate (Rule 13) &amp; Pilot RPC (Rule 34)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: 8 }}>
+              <label style={{ fontSize: 12 }}>Policy No. (Rule 44)
+                <input className="form-input" value={comp.insurance_policy ?? ''} onChange={(e) => setComp({ ...comp, insurance_policy: e.target.value })} placeholder="e.g. NIA-UAS-2026-001" />
+              </label>
+              <label style={{ fontSize: 12 }}>Insurer
+                <input className="form-input" value={comp.insurance_insurer ?? ''} onChange={(e) => setComp({ ...comp, insurance_insurer: e.target.value })} placeholder="e.g. New India Assurance" />
+              </label>
+              <label style={{ fontSize: 12 }}>Insurance valid until
+                <input type="date" className="form-input" value={comp.insurance_valid_until ?? ''} onChange={(e) => setComp({ ...comp, insurance_valid_until: e.target.value })} />
+              </label>
+              <label style={{ fontSize: 12 }}>Type Certificate / DAN (Rule 13)
+                <input className="form-input mono" value={comp.type_certificate_no ?? ''} onChange={(e) => setComp({ ...comp, type_certificate_no: e.target.value })} placeholder="e.g. DAN-AGRI10L" />
+              </label>
+              <label style={{ fontSize: 12 }}>Assigned Pilot
+                <input className="form-input" value={comp.pilot_name ?? ''} onChange={(e) => setComp({ ...comp, pilot_name: e.target.value })} placeholder="Pilot full name" />
+              </label>
+              <label style={{ fontSize: 12 }}>Pilot RPC No. (Rule 34)
+                <input className="form-input mono" value={comp.pilot_rpc_no ?? ''} onChange={(e) => setComp({ ...comp, pilot_rpc_no: e.target.value })} placeholder="e.g. RPC-MH-2026-041" />
+              </label>
+              <label style={{ fontSize: 12 }}>RPC valid until
+                <input type="date" className="form-input" value={comp.pilot_rpc_valid_until ?? ''} onChange={(e) => setComp({ ...comp, pilot_rpc_valid_until: e.target.value })} />
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button className="btn btn--primary" disabled={busy} onClick={saveCompliance}>Save compliance record (signed)</button>
+              {compSaved && <span style={{ fontSize: 12, color: 'var(--status-green)' }}>{compSaved}</span>}
+            </div>
+          </div>
           {error && <div style={{ fontSize: 13, color: 'var(--status-red)' }}>{error}</div>}
         </div>
       )}

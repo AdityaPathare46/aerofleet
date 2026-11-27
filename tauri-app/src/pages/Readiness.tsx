@@ -3,13 +3,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
+import FleetPicker, { initialFleet } from '../components/FleetPicker'
 import { LANGS, LOCALE, REVIEWED, saveLang, savedLang, t, type Lang } from '../lib/readinessText'
 
 type Status = 'READY' | 'CHECK_FIRST' | 'DO_NOT_FLY'
 interface Reason { level: Status; text: string; where: 'settings' | 'flight' | 'register'; code?: string; args?: Record<string, unknown> }
+interface Compliance { insurance_policy?: string | null; insurance_insurer?: string | null; insurance_valid_until?: string | null; type_certificate_no?: string | null; pilot_name?: string | null; pilot_rpc_no?: string | null; pilot_rpc_valid_until?: string | null }
 interface Row {
   drone_id: string; status: Status; reasons: Reason[]; settings_verdict: string | null; settings_compared_with: string | null
   registration: { uin: string; status: string } | null
+  compliance?: Compliance | null
+  grounded?: { done_at: string; action: string; note?: string | null } | null
   last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[]; pilot_notes?: string[] } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
   overdue_spray_forms?: number
@@ -33,13 +37,22 @@ const day = (iso?: string, lang: Lang = 'en') => {
 
 export default function ReadinessPage() {
   const { apiUrl, setActivePage } = useAppStore()
-  const fleet = (() => { try { return localStorage.getItem('aerofleet_fleet') || 'default' } catch { return 'default' } })()
+  const [fleet, setFleet] = useState<string>(initialFleet())
   const [board, setBoard] = useState<Board | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [needsAuth, setNeedsAuth] = useState(false)
   const [loading, setLoading] = useState(false)
   const [lang, setLang] = useState<Lang>(savedLang())
   const tr = (k: string, a?: Record<string, unknown>) => t(lang, k, a)
+
+  const openAccidentDossier = async (droneId: string) => {
+    try {
+      const r = await fetch(`${apiUrl}/api/v1/assurance/fleets/${encodeURIComponent(fleet)}/drones/${encodeURIComponent(droneId)}/accident-dossier`, { headers: token() })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const url = URL.createObjectURL(new Blob([await r.text()], { type: 'text/html' }))
+      window.open(url, '_blank', 'noopener')
+    } catch (e) { setError((e as Error).message) }
+  }
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -67,9 +80,10 @@ export default function ReadinessPage() {
         <div style={{ flex: 1 }}>
           <h1 style={{ margin: 0, fontSize: 22 }}>{tr('title')}</h1>
           <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
-            {tr('intro')} {tr('fleet')} <b>{fleet}</b> {tr('fleetHint')}.
+            {tr('intro')}
           </div>
         </div>
+        <FleetPicker apiUrl={apiUrl} fleet={fleet} onChange={setFleet} />
         <div role="group" aria-label={tr('language')} style={{ display: 'flex', gap: 4 }}>
           {LANGS.map((l) => (
             <button key={l.id} className={`btn${lang === l.id ? ' btn--primary' : ''}`} aria-pressed={lang === l.id} lang={l.id}
@@ -96,6 +110,10 @@ export default function ReadinessPage() {
               <b style={{ fontSize: 16 }}>{d.drone_id}</b>
               <span style={{ justifySelf: 'start', fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, color: LOOK[d.status].color, background: LOOK[d.status].bg }}>{tr(d.status)}</span>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.registration ? `UIN ${d.registration.uin}` : tr('noUin')}</span>
+              {d.compliance?.insurance_valid_until && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Ins. to {d.compliance.insurance_valid_until}</span>)}
+              {d.compliance?.pilot_rpc_no && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>RPC {d.compliance.pilot_rpc_no}</span>)}
             </div>
             <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
               {d.reasons.length === 0 && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{tr('allClear')}</span>}
@@ -118,6 +136,11 @@ export default function ReadinessPage() {
                 <button className="btn" style={{ justifySelf: 'start', padding: '2px 8px', fontSize: 11, color: '#B45309', borderColor: '#F59E0B' }}
                   onClick={() => setActivePage('spray')}>
                   {d.overdue_spray_forms} overdue 7-day spray form{d.overdue_spray_forms === 1 ? '' : 's'} →
+                </button>)}
+              {(d.grounded || d.status === 'DO_NOT_FLY') && (
+                <button className="btn" style={{ justifySelf: 'start', padding: '2px 8px', fontSize: 11, color: '#DC2626', borderColor: '#DC2626' }}
+                  onClick={() => openAccidentDossier(d.drone_id)}>
+                  {tr('accidentDossier')} →
                 </button>)}
             </div>
           </div>))}

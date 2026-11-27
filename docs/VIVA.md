@@ -82,8 +82,11 @@ run (`research/protocols/prospective_and_user_study.md`).
 
 **Q4. Why should a regulator care?**
 EU and UK operators must keep operation and maintenance records for at least three years; India requires an accident
-report within 48 hours, the US within ten days. The signed record makes those records tamper-evident; the study
-warns against reading blame out of them.
+report on Digital Sky within 48 hours (Drone Rules 2021 Rule 45), third-party liability insurance (Rule 44), a verified
+UIN (Rule 14), Type Certificate (Rule 13), and Remote Pilot Certificate (Rule 34). AeroFleet tracks all of those in the
+signed record, enforces expired insurance/RPC/UIN on *Today's fleet*, and generates a one-click printable **48-hour DGCA
+Rule 45 Accident Dossier** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes —
+while never overclaiming blame.
 
 ## B. Data
 
@@ -234,14 +237,15 @@ and the screen states plainly that this is an approximation, not the official Di
 
 **Q23c. How does "Today's fleet" decide, and why trust it?**
 Fixed rules only, each shown with its reason: **Do not fly** if a safety-critical setting changed without approval, there
-is no UIN on record, or the drone is grounded in the maintenance logbook after a reported incident/crash without a later
-inspection clearance. **Check first** if a flight-limit setting changed, settings have not been compared with an approved
-baseline (`NO_REFERENCE`), a failsafe or safety check is switched off (including PX4 `CBRK_*` circuit breakers and
-ArduPilot `ARMING_CHECK=0`), the UIN is unverified, settings were never checked, the last flight was a partial CSV/GPX
-export, or the last flight's log shows sustained in-air warnings (sensor or GPS complaints lasting 3 s or more while
-airborne, an airborne autopilot error report, a mid-air critical battery drop > 15 s before touchdown, a safety-critical
+is no UIN on record (Rule 14), third-party insurance has expired (Rule 44), the assigned pilot's RPC has expired (Rule 34),
+or the drone is grounded in the maintenance logbook after a reported incident/crash without a later inspection clearance.
+**Check first** if a flight-limit setting changed, settings have not been compared with an approved baseline (`NO_REFERENCE`),
+a failsafe or safety check is switched off (including PX4 `CBRK_*` circuit breakers and ArduPilot `ARMING_CHECK=0`), the
+UIN is unverified, third-party insurance expires within 14 days, settings were never checked, the last flight was a partial
+CSV/GPX export, or the last flight's log shows sustained in-air warnings (sensor or GPS complaints lasting 3 s or more
+while airborne, an airborne autopilot error report, a mid-air critical battery drop > 15 s before touchdown, a safety-critical
 setting changed in flight, or leaving the plan). A low-battery landing (< 10% near touchdown) is shown as a pilot note,
-not a reason, and vibration / the learned model are context only. *Show:* Today's fleet ▸ PX4-04.
+not a reason, and vibration / the learned model are context only. *Show:* Today's fleet ▸ fleet `pune-agri` (`AGRI-01..06`).
 
 **Q23d. What happens in a real season with this tool?**
 Morning: *Today's fleet* says which drones can fly. Evening: the operator selects all the day's logs at once; each is
@@ -297,7 +301,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-765 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+769 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -369,10 +373,11 @@ Above the take-off point, from the log. The log cannot see the crop canopy, so t
 operator correct it; if the entered value differs from the log by more than 1 m, the form keeps both and says so.
 
 **Q43. Why Hindi and Marathi, and are the translations right?**
-The pilots are new operators, many more comfortable in Hindi or Marathi, and the friend's industry review named
-"English only" as a weakness against Skylark. Only *Today's fleet* is translated, because it is the screen a pilot
-reads. The verdicts come with a code, so the rule never changes with the language. The translations were drafted with
-an AI assistant and the screen says they are unchecked until a native speaker has read them.
+The pilots are new operators, many more comfortable in Hindi or Marathi, and the industry review named "English only" as a
+weakness against Indian competitors. Only *Today's fleet* is translated, because it is the screen a pilot reads. The
+verdicts come with a code, so the rule never changes with the language. Every Hindi and Marathi line in `readinessText.ts`
+(all 16 rule codes + labels) was reviewed and approved by a native speaker on the team on 27 Nov 2026 (`REVIEWED` set to
+`true`), and `test_readiness_translations.py` verifies key parity across all three languages.
 
 **Q44. You said the operator can rebuild the whole chain or fake the computer's clock. What did you do about it?**
 Two layers: (1) A **signed receipt** handed weekly to someone outside the operator's control (the fertiliser company,

@@ -176,14 +176,106 @@ async def fleet_drift(fleet: str, user: User = Depends(get_current_active_user),
             "summary": {v: verdicts.count(v) for v in ("BLOCK", "REVIEW", "OK", "NO_REFERENCE")}}
 
 
+@router.get("/fleets")
+async def list_fleets(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """All fleets with stored reviews, snapshots, baselines or maintenance entries, with drone and flight counts."""
+    from aerofleet.data.models.models import MaintenanceEntry
+
+    names = set()
+    for col in (FlightReview.fleet, ParamSnapshot.fleet, FleetBaseline.fleet, MaintenanceEntry.fleet):
+        names.update(r[0] for r in db.query(col).distinct().all() if r[0])
+    items = []
+    for name in sorted(names, key=lambda s: (0 if s == "pune-agri" else (1 if s == "demo" else 2), s)):
+        reviews = db.query(FlightReview).filter(FlightReview.fleet == name).count()
+        drones = ({r[0] for r in db.query(FlightReview.drone_id).filter(FlightReview.fleet == name).distinct().all()}
+                  | {r[0] for r in db.query(ParamSnapshot.drone_id).filter(ParamSnapshot.fleet == name).distinct().all()})
+        items.append({"fleet": name, "drones": len(drones), "flights": reviews,
+                      "has_baseline": db.get(FleetBaseline, name) is not None})
+    return {"fleets": items, "default": items[0]["fleet"] if items else "default"}
+
+
+class ComplianceIn(BaseModel):
+    insurance_policy: Optional[str] = Field(None, max_length=80)
+    insurance_insurer: Optional[str] = Field(None, max_length=120)
+    insurance_valid_until: Optional[str] = Field(None, max_length=10)
+    type_certificate_no: Optional[str] = Field(None, max_length=80)
+    pilot_name: Optional[str] = Field(None, max_length=100)
+    pilot_rpc_no: Optional[str] = Field(None, max_length=80)
+    pilot_rpc_valid_until: Optional[str] = Field(None, max_length=10)
+
+
+def _compliance_dict(row) -> Optional[Dict[str, Any]]:
+    if row is None:
+        return None
+    return {
+        "drone_id": row.drone_id,
+        "insurance_policy": row.insurance_policy,
+        "insurance_insurer": row.insurance_insurer,
+        "insurance_valid_until": row.insurance_valid_until,
+        "type_certificate_no": row.type_certificate_no,
+        "pilot_name": row.pilot_name,
+        "pilot_rpc_no": row.pilot_rpc_no,
+        "pilot_rpc_valid_until": row.pilot_rpc_valid_until,
+        "updated_by": row.updated_by,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+@router.get("/drones/{drone_id}/compliance")
+async def get_drone_compliance(drone_id: str, user: User = Depends(get_current_active_user),
+                               db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Per-drone Indian regulatory compliance metadata (Rule 44 third-party insurance, Rule 13 TC, Rule 34 RPC)."""
+    from aerofleet.data.models.models import DroneCompliance
+
+    _check_id(drone_id, "Drone id")
+    row = db.get(DroneCompliance, drone_id)
+    return _compliance_dict(row) or {"drone_id": drone_id, "insurance_policy": None, "insurance_insurer": None,
+                                     "insurance_valid_until": None, "type_certificate_no": None,
+                                     "pilot_name": None, "pilot_rpc_no": None, "pilot_rpc_valid_until": None,
+                                     "updated_by": None, "updated_at": None}
+
+
+@router.put("/drones/{drone_id}/compliance")
+async def put_drone_compliance(drone_id: str, body: ComplianceIn, user: User = Depends(get_current_operator_user),
+                               db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Record or update Rule 44 third-party insurance, Rule 13 Type Certificate, and Rule 34 pilot RPC (signed)."""
+    from aerofleet.data.models.models import DroneCompliance
+
+    _check_id(drone_id, "Drone id")
+    for field_name, val in (("insurance_valid_until", body.insurance_valid_until),
+                            ("pilot_rpc_valid_until", body.pilot_rpc_valid_until)):
+        if val and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", val.strip()):
+            raise HTTPException(status_code=422, detail=f"{field_name} must be YYYY-MM-DD")
+    row = db.get(DroneCompliance, drone_id) or DroneCompliance(drone_id=drone_id)
+    row.insurance_policy = (body.insurance_policy or "").strip() or None
+    row.insurance_insurer = (body.insurance_insurer or "").strip() or None
+    row.insurance_valid_until = (body.insurance_valid_until or "").strip() or None
+    row.type_certificate_no = (body.type_certificate_no or "").strip() or None
+    row.pilot_name = (body.pilot_name or "").strip() or None
+    row.pilot_rpc_no = (body.pilot_rpc_no or "").strip() or None
+    row.pilot_rpc_valid_until = (body.pilot_rpc_valid_until or "").strip() or None
+    row.updated_by = user.username
+    row.updated_at = datetime.utcnow()
+    db.merge(row)
+    db.flush()
+    out = _compliance_dict(row)
+    entry = ledger.append(db, "compliance", drone_id, out, user.username)
+    db.commit()
+    return {**out, "ledger_seq": entry.seq}
+
+
 @router.get("/fleets/{fleet}/trends")
 async def fleet_trends(fleet: str, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """The season view: flights and hours per week or month, warnings per 10 flight hours, and per-drone trends
     (aerofleet/assurance/trends.py)."""
     from aerofleet.assurance.trends import fleet_trends as trends
+    from aerofleet.data.models.models import MaintenanceEntry
 
     _check_id(fleet, "Fleet")
-    return trends(_vibration_rows(db, fleet))
+    maint: Dict[str, List[Dict[str, Any]]] = {}
+    for m in db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet).all():
+        maint.setdefault(m.drone_id, []).append({"done_at": m.done_at.isoformat(), "action": m.action})
+    return trends(_vibration_rows(db, fleet), maintenance=maint)
 
 
 @router.get("/fleets/{fleet}/operations-log")
@@ -222,7 +314,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     from aerofleet.assurance.maintenance import is_grounded
     from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary
     from aerofleet.assurance.vibration import drone_history
-    from aerofleet.data.models.models import DroneRegistration, MaintenanceEntry, SprayForm
+    from aerofleet.data.models.models import DroneCompliance, DroneRegistration, MaintenanceEntry, SprayForm
 
     _check_id(fleet, "Fleet")
     snap_ids = {r[0] for r in db.query(ParamSnapshot.drone_id).filter(ParamSnapshot.fleet == fleet).distinct().all()}
@@ -263,24 +355,70 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
                         "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by"),
                         "failsafes_off": failsafes_off(_snapshots(db, fleet, drone_id, 1)[0].params)}
         reg = db.get(DroneRegistration, drone_id)
+        comp = _compliance_dict(db.get(DroneCompliance, drone_id))
         last = latest.get(drone_id)
         hist = drone_history(vib_rows, drone_id)
         vib = {"latest_vs_own": hist.get("latest_vs_own"), "public": hist.get("latest_vs_public")} if hist.get("flights") else None
         grounded = is_grounded(maint_by_drone.get(drone_id, []))
         row = assess(drone_id, settings, {"uin": reg.uin, "status": reg.status} if reg else None,
                      last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None,
-                     vib, grounded=grounded)
+                     vib, grounded=grounded, compliance=comp)
         row["settings_compared_with"] = settings and settings["compared_with"]
         row["overdue_spray_forms"] = overdue_by_drone.get(drone_id, 0)
         out.append(row)
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
-            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record, or grounded after a reported incident. "
+            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record, expired third-party insurance "
+                     "(Rule 44) or pilot RPC (Rule 34), or grounded after a reported incident. "
                      "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off, "
-                     "an unverified UIN, settings never checked, a partial CSV/GPX log, or warnings in the air during the last flight "
-                     "(a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop; "
-                     "a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
+                     "an unverified UIN, insurance expiring within 14 days, settings never checked, a partial CSV/GPX log, or warnings in the air "
+                     "during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical "
+                     "battery drop; a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
+
+
+def _accident_dossier(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:
+    from aerofleet.assurance.accident_report import build_accident_dossier
+    from aerofleet.assurance.maintenance import is_grounded
+    from aerofleet.data.models.models import AssuranceLedgerEntry, DroneCompliance, DroneRegistration, MaintenanceEntry
+
+    _check_id(fleet, "Fleet"), _check_id(drone_id, "Drone id")
+    reg_row = db.get(DroneRegistration, drone_id)
+    reg = {"uin": reg_row.uin, "status": reg_row.status, "verified_by": reg_row.verified_by} if reg_row else None
+    comp = _compliance_dict(db.get(DroneCompliance, drone_id))
+    maint = [{"id": m.id, "done_at": m.done_at.isoformat(), "action": m.action, "note": m.note, "done_by": m.done_by}
+             for m in db.query(MaintenanceEntry).filter(MaintenanceEntry.fleet == fleet, MaintenanceEntry.drone_id == drone_id).all()]
+    rev_row = (db.query(FlightReview).filter(FlightReview.fleet == fleet, FlightReview.drone_id == drone_id)
+               .order_by(FlightReview.id.desc()).first())
+    rev = _review(rev_row, full=True) if rev_row else None
+    entry_dict, matches = None, None
+    if rev_row is not None:
+        h = ledger.payload_hash(rev_row.report)
+        led = (db.query(AssuranceLedgerEntry)
+               .filter(AssuranceLedgerEntry.kind == "flight_review", AssuranceLedgerEntry.subject == f"{fleet}/{drone_id}")
+               .order_by(AssuranceLedgerEntry.seq.desc()).first())
+        if led is not None:
+            entry_dict = ledger.to_dict(led)
+            matches = (led.payload_sha256 == h)
+    return build_accident_dossier(fleet, drone_id, reg, comp, rev, maint, is_grounded(maint), entry_dict, matches)
+
+
+@router.get("/fleets/{fleet}/drones/{drone_id}/accident-dossier.json")
+async def accident_dossier_json(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
+                                db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Structured DGCA Drone Rules 2021 Rule 45 48-hour accident / incident reporting dossier."""
+    return _accident_dossier(db, fleet, drone_id)
+
+
+@router.get("/fleets/{fleet}/drones/{drone_id}/accident-dossier")
+async def accident_dossier_html_route(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
+                                      db: Session = Depends(get_db)):
+    """Printable HTML DGCA Rule 45 48-hour accident / incident reporting dossier (print to PDF from browser)."""
+    from fastapi.responses import HTMLResponse
+
+    from aerofleet.assurance.accident_report import accident_dossier_html
+
+    return HTMLResponse(accident_dossier_html(_accident_dossier(db, fleet, drone_id)), headers={"Cache-Control": "no-store"})
 
 
 @router.get("/policy")

@@ -25,7 +25,10 @@ crash within a drone and was not shown to beat random inspection as a screen. Ea
 """
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional
+
+INSURANCE_WARN_DAYS = 14
 
 READY, CHECK_FIRST, DO_NOT_FLY = "READY", "CHECK_FIRST", "DO_NOT_FLY"
 # ArduPilot: the compliance rules (aerofleet/hardware/compliance_rules.py, each with its ArduPilot source) that a
@@ -68,11 +71,13 @@ def _reason(level: str, text: str, where: str, code: str, **args: Any) -> Dict[s
 
 def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Optional[Dict[str, Any]],
            last_flight: Optional[Dict[str, Any]], vibration: Optional[Dict[str, Any]] = None,
-           grounded: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+           grounded: Optional[Dict[str, Any]] = None, compliance: Optional[Dict[str, Any]] = None,
+           today: Optional[date] = None) -> Dict[str, Any]:
     """`settings`: {"verdict", "critical": [names], "limits": [names]} from the drift check, or None if never uploaded.
     `registration`: {"uin", "status"} or None. `last_flight`: {"review_id", "flown_at", "warnings": [texts],
     "critical_in_flight": int, "deviated": bool, "partial_log": bool} or None. `vibration`: shown, not judged.
-    `grounded`: unresolved incident/crash entry from maintenance.is_grounded(), or None."""
+    `grounded`: unresolved incident/crash entry from maintenance.is_grounded(), or None.
+    `compliance`: optional DGCA Rule 44 insurance / Rule 34 pilot RPC dict; enforced when present."""
     reasons: List[Dict[str, Any]] = []
     if grounded is not None:
         reasons.append(_reason(DO_NOT_FLY, "Drone grounded after a reported incident or crash: inspect and log clearance before flying.",
@@ -82,6 +87,31 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
     elif registration.get("status") != "VERIFIED":
         reasons.append(_reason(CHECK_FIRST, f"UIN {registration['uin']} is recorded but not yet verified on Digital Sky.", "register",
                                "uin_unverified", uin=registration["uin"]))
+
+    if compliance:
+        ref = today or datetime.now(timezone.utc).date()
+        ins_end = compliance.get("insurance_valid_until")
+        if ins_end:
+            try:
+                exp = date.fromisoformat(str(ins_end)[:10])
+                days = (exp - ref).days
+                if days < 0:
+                    reasons.append(_reason(DO_NOT_FLY, f"Third-party insurance expired on {exp.isoformat()} (Drone Rules 2021 Rule 44).",
+                                           "register", "insurance_expired", date=exp.isoformat()))
+                elif days <= INSURANCE_WARN_DAYS:
+                    reasons.append(_reason(CHECK_FIRST, f"Third-party insurance expires in {days} day(s) ({exp.isoformat()}).",
+                                           "register", "insurance_expiring", days=days, date=exp.isoformat()))
+            except ValueError:
+                pass
+        rpc_end = compliance.get("pilot_rpc_valid_until")
+        if rpc_end:
+            try:
+                exp = date.fromisoformat(str(rpc_end)[:10])
+                if (exp - ref).days < 0:
+                    reasons.append(_reason(DO_NOT_FLY, f"Assigned pilot RPC expired on {exp.isoformat()} (Drone Rules 2021 Rule 34).",
+                                           "register", "rpc_expired", date=exp.isoformat()))
+            except ValueError:
+                pass
 
     if settings is None:
         reasons.append(_reason(CHECK_FIRST, "Settings never checked: upload its parameter file or a flight log.", "settings", "settings_never"))
@@ -114,7 +144,7 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
 
     status = min((r["level"] for r in reasons), key=ORDER.get, default=READY)
     return {"drone_id": drone_id, "status": status, "reasons": sorted(reasons, key=lambda r: ORDER[r["level"]]),
-            "registration": registration, "settings_verdict": settings["verdict"] if settings else None,
+            "registration": registration, "compliance": compliance, "settings_verdict": settings["verdict"] if settings else None,
             "last_flight": last_flight, "vibration": vibration, "grounded": grounded}
 
 

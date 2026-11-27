@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 from statistics import median
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 def _when(r: Dict[str, Any]) -> datetime:
@@ -26,8 +26,10 @@ def _outside(rep: Dict[str, Any]) -> List[str]:
     return [k for k, t in (((rep.get("normal_flight") or {}).get("targets")) or {}).items() if t.get("position") != "inside"]
 
 
-def fleet_trends(reviews: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """`reviews`: {"drone_id", "created_at", "report"} for every reviewed flight of the fleet."""
+def fleet_trends(reviews: List[Dict[str, Any]],
+                 maintenance: Optional[Dict[str, List[Dict[str, Any]]]] = None) -> Dict[str, Any]:
+    """`reviews`: {"drone_id", "created_at", "report"} for every reviewed flight of the fleet.
+    `maintenance`: optional {drone_id: [{"done_at", "action"}]} for service-interval tracking."""
     if not reviews:
         return {"flights": 0, "drones": [], "periods": [], "message": "No reviewed flights yet."}
     rows = sorted(reviews, key=_when)
@@ -54,11 +56,25 @@ def fleet_trends(reviews: List[Dict[str, Any]]) -> Dict[str, Any]:
         vib = [v for v in vib if v is not None]
         batt = [t.get("times_mid") for r in rs for k, t in ((((r.get("report") or {}).get("normal_flight") or {}).get("targets")) or {}).items()
                 if k == "battery_drop_pct_per_min" and t.get("times_mid")]
+        ms = sorted((maintenance or {}).get(d) or [], key=lambda m: str(m.get("done_at") or ""))
+        last_m = ms[-1] if ms else None
+        since_f, since_h = len(rs), h
+        if last_m and last_m.get("done_at"):
+            try:
+                mdt = datetime.fromisoformat(str(last_m["done_at"]).replace("Z", "+00:00"))
+                mdt = mdt if mdt.tzinfo else mdt.replace(tzinfo=timezone.utc)
+                after = [r for r in rs if _when(r) > mdt]
+                since_f = len(after)
+                since_h = sum(float((r.get("report") or {}).get("flight_s") or 0) for r in after) / 3600
+            except ValueError:
+                pass
         drones.append({"drone_id": d, "flights": len(rs), "hours": round(h, 2), "last_flown": _when(rs[-1]).isoformat(),
                        "warnings_per_flight": round(sum(_warnings(r.get("report") or {}) for r in rs) / len(rs), 1),
                        "latest_vibration_vs_own_median": round(vib[-1] / median(vib[:-1]), 2) if len(vib) >= 4 and median(vib[:-1]) > 0 else None,
                        "battery_vs_expected_median": round(median(batt), 2) if batt else None,
-                       "flights_outside_expected": sum(1 for r in rs if (r.get("report") or {}).get("normal_flight") and _outside(r["report"]))})
+                       "flights_outside_expected": sum(1 for r in rs if (r.get("report") or {}).get("normal_flight") and _outside(r["report"])),
+                       "since_maintenance_flights": since_f, "since_maintenance_hours": round(since_h, 2),
+                       "last_maintenance_action": last_m.get("action") if last_m else None})
     return {"flights": len(rows), "drone_count": len(per), "hours": round(hours, 1), "first": first.isoformat(), "last": last.isoformat(),
             "warnings_per_flight": round(warns / len(rows), 1),
             "share_outside_expected": round(len(outside) / len(scored), 3) if scored else None, "scored_flights": len(scored),

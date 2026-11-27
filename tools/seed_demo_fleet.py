@@ -297,7 +297,7 @@ def seed_agri_fleet(db, fleet: str = "pune-agri") -> None:
     from aerofleet.assurance import ledger
     from aerofleet.assurance import maintenance as maint
     from aerofleet.assurance import spray_form as sf
-    from aerofleet.data.models.models import DroneRegistration, FleetBaseline, FlightReview, MaintenanceEntry, ParamSnapshot, SprayForm
+    from aerofleet.data.models.models import DroneCompliance, DroneRegistration, FleetBaseline, FlightReview, MaintenanceEntry, ParamSnapshot, SprayForm
 
     sitl_dir = os.path.join(DATA, "sitl_v2")
     if not os.path.isdir(sitl_dir):
@@ -345,6 +345,21 @@ def seed_agri_fleet(db, fleet: str = "pune-agri") -> None:
             verified_at=datetime.utcnow() if uin_status == "VERIFIED" else None,
             verification_note="DEMO UIN for ArduCopter SITL spraying fleet",
         ))
+        today_d = datetime.utcnow().date()
+        ins_exp = (today_d + timedelta(days=9 if drone == "AGRI-06" else 240)).isoformat()
+        rpc_exp = (today_d + timedelta(days=1800)).isoformat()
+        comp_payload = {
+            "drone_id": drone,
+            "insurance_policy": f"DEMO-NIA-UAS-2026-{drone[-2:]}",
+            "insurance_insurer": "New India Assurance (DEMO)",
+            "insurance_valid_until": ins_exp,
+            "type_certificate_no": "DAN-DEMO-AGRI10L-2026",
+            "pilot_name": f"SHG Pilot {drone[-2:]} (DEMO)",
+            "pilot_rpc_no": f"DEMO-RPC-MH-{drone[-2:]}",
+            "pilot_rpc_valid_until": rpc_exp,
+        }
+        db.merge(DroneCompliance(**comp_payload, updated_by=SEEDER.username, updated_at=datetime.utcnow()))
+        ledger.append(db, "compliance", drone, comp_payload, SEEDER.username)
         seeded_reviews.append((drone, out["id"], form_kind))
 
     # Ground AGRI-05 after its motor-failure flight in the maintenance logbook

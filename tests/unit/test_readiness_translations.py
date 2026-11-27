@@ -17,13 +17,23 @@ def _keys():
 
 
 def _all_codes():
+    from datetime import date
+
     codes = set()
+    ref = date(2026, 11, 27)
+    comps = (
+        None,
+        {"insurance_valid_until": "2026-11-20", "pilot_rpc_valid_until": "2026-11-01"},
+        {"insurance_valid_until": "2026-12-05"},
+    )
     for reg in (None, {"uin": "U", "status": "RECORDED"}):
-        for settings in (None, {"verdict": "BLOCK", "critical": ["A"], "limits": []}, {"verdict": "REVIEW", "critical": [], "limits": ["B"]},
-                         {"verdict": "NO_REFERENCE", "critical": [], "limits": []},
-                         {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": [{"name": "NAV_RCL_ACT", "title": "t"}]}):
-            last = {"warnings": ["w1", "w2", "w3", "w4"], "critical_in_flight": 1, "deviated": True, "partial_log": True}
-            codes |= {r["code"] for r in assess("D", settings, reg, last, grounded={"done_at": "2026-11-01T00:00:00"})["reasons"]}
+        for comp in comps:
+            for settings in (None, {"verdict": "BLOCK", "critical": ["A"], "limits": []}, {"verdict": "REVIEW", "critical": [], "limits": ["B"]},
+                             {"verdict": "NO_REFERENCE", "critical": [], "limits": []},
+                             {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": [{"name": "NAV_RCL_ACT", "title": "t"}]}):
+                last = {"warnings": ["w1", "w2", "w3", "w4"], "critical_in_flight": 1, "deviated": True, "partial_log": True}
+                codes |= {r["code"] for r in assess("D", settings, reg, last, grounded={"done_at": "2026-11-01T00:00:00"},
+                                                    compliance=comp, today=ref)["reasons"]}
     return codes
 
 
@@ -35,7 +45,8 @@ def test_the_three_languages_have_the_same_keys():
 def test_every_reason_code_and_place_is_translated():
     k = _keys()["en"]
     codes = _all_codes()
-    assert codes == {"no_uin", "uin_unverified", "settings_never", "no_baseline", "critical_changed", "limit_changed",
+    assert codes == {"no_uin", "uin_unverified", "insurance_expired", "insurance_expiring", "rpc_expired",
+                     "settings_never", "no_baseline", "critical_changed", "limit_changed",
                      "critical_in_flight", "deviated", "warning", "more_warnings", "failsafe_off",
                      "grounded_incident", "partial_log"}
-    assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY"} <= k
+    assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY", "accidentDossier"} <= k

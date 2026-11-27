@@ -2,9 +2,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
+import FleetPicker, { initialFleet } from '../components/FleetPicker'
 
 interface Period { period: string; flights: number; hours: number; warnings: number }
-interface DroneTrend { drone_id: string; flights: number; hours: number; last_flown: string; warnings_per_flight: number; latest_vibration_vs_own_median: number | null; battery_vs_expected_median: number | null; flights_outside_expected: number }
+interface DroneTrend { drone_id: string; flights: number; hours: number; last_flown: string; warnings_per_flight: number; latest_vibration_vs_own_median: number | null; battery_vs_expected_median: number | null; flights_outside_expected: number; since_maintenance_flights?: number; since_maintenance_hours?: number; last_maintenance_action?: string | null }
 interface Trends { flights: number; drone_count: number; hours: number; first: string; last: string; warnings_per_flight: number; share_outside_expected: number | null; scored_flights: number; period: 'week' | 'month'; periods: Period[]; drones: DroneTrend[]; note: string; message?: string }
 
 const BLUE = '#2a78d6', ORANGE = '#eb6834'
@@ -45,7 +46,7 @@ function Bars({ periods, period }: { periods: Period[]; period: string }) {
 
 export default function TrendsPage() {
   const { apiUrl, setActivePage } = useAppStore()
-  const fleet = (() => { try { return localStorage.getItem('aerofleet_fleet') || 'default' } catch { return 'default' } })()
+  const [fleet, setFleet] = useState<string>(initialFleet())
   const [t, setT] = useState<Trends | null>(null)
   const [needsAuth, setNeedsAuth] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,12 +80,15 @@ export default function TrendsPage() {
 
   return (
     <div style={{ display: 'grid', gap: 16, maxWidth: 1100 }} id="trends">
-      <div>
-        <h1 style={{ margin: 0, fontSize: 22 }}>Fleet trends</h1>
-        <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
-          The season at a glance for fleet <b>{fleet}</b>: how much it flew, how many warnings the logs showed, and which drones are
-          drifting from what is expected of them.
+      <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: 22 }}>Fleet trends</h1>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
+            The season at a glance for fleet <b>{fleet}</b>: how much it flew, service intervals since last maintenance, how many warnings the logs showed, and which drones are
+            drifting from what is expected of them.
+          </div>
         </div>
+        <FleetPicker apiUrl={apiUrl} fleet={fleet} onChange={setFleet} />
       </div>
       {needsAuth && <SignInCard apiUrl={apiUrl} reason="Trends read this install's flight reviews." onSignedIn={load} />}
       {error && <div role="alert" style={{ color: 'var(--status-red)' }}>{error}</div>}
@@ -106,12 +110,16 @@ export default function TrendsPage() {
           <style>{'#trends td, #trends th { padding: 6px 12px 6px 0; vertical-align: top; } #trends td:first-child { white-space: nowrap; }'}</style>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}>
-              <th>Drone</th><th>Flights</th><th>Hours</th><th>Last flown</th><th>Warnings / flight</th>
+              <th>Drone</th><th>Flights</th><th>Hours</th><th>Since maintenance</th><th>Last flown</th><th>Warnings / flight</th>
               <th title="Newest flight's vibration divided by the median of its earlier flights">Vibration, newest vs own</th>
               <th title="Median of battery drain divided by the learned model's typical value">Battery drain vs expected</th><th>Outside expected</th><th /></tr></thead>
             <tbody>{t.drones.map((d) => (
               <tr key={d.drone_id} style={{ borderTop: '1px solid var(--border)' }}>
-                <td style={{ padding: '6px 0', fontWeight: 600 }}>{d.drone_id}</td><td>{d.flights}</td><td>{d.hours}</td><td>{day(d.last_flown)}</td>
+                <td style={{ padding: '6px 0', fontWeight: 600 }}>{d.drone_id}</td><td>{d.flights}</td><td>{d.hours}</td>
+                <td title={d.last_maintenance_action ? `Last: ${d.last_maintenance_action}` : 'No maintenance recorded yet'}>
+                  {d.since_maintenance_flights != null ? `${d.since_maintenance_flights} flt · ${d.since_maintenance_hours} h` : '—'}
+                </td>
+                <td>{day(d.last_flown)}</td>
                 <td style={{ color: d.warnings_per_flight >= 1 ? '#B45309' : undefined }}>{d.warnings_per_flight}</td>
                 <td>{d.latest_vibration_vs_own_median != null ? `${d.latest_vibration_vs_own_median}x` : '—'}</td>
                 <td style={{ color: (d.battery_vs_expected_median ?? 0) > 1.5 ? '#B45309' : undefined }}>{d.battery_vs_expected_median != null ? `${d.battery_vs_expected_median}x` : '—'}</td>

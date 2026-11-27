@@ -172,7 +172,7 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 ## 6. Status
 
 **Now (27 Nov 2026, post-audit + domain-fit upgrades).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **765 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+reviews yet). Product: **769 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
 cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
 timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`, live-tested against DigiCert
@@ -184,7 +184,14 @@ distance × track spacing `5-13` in acres & hectares with turns/no-flow-sensor c
 compliance link** surfaced on `Today's fleet` (`Readiness.tsx`, non-blocking); (3) **Cohesive Indian spraying demo fleet
 `pune-agri`** (`seed_demo_fleet.py --agri-only`: 6 ArduCopter 4 m Pune spraying flights from `sitl_v2` with shared baseline,
 reconciled `.waypoints` plans for 3D/VR replay, grounded incident on `AGRI-05`, and live Nov 2026 spray forms totaling 5.61
-acres). Review 1-5 Dec 2026; the report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
+acres); (4) **DGCA Drone Rules 2021 compliance ledger** (`DroneCompliance` table + `GET/PUT /drones/{id}/compliance`, signed:
+Rule 44 third-party insurance expiry grounds to `DO_NOT_FLY` and warns at ≤ 14 d, Rule 13 Type Certificate/DAN, Rule 34 pilot
+RPC expiry grounds to `DO_NOT_FLY`); (5) **DGCA Rule 45 printable 48-hour Accident / Incident Dossier** (`accident_report.py`,
+`GET .../accident-dossier` + `.json`: IST/UTC 48 h statutory deadline countdown, UIN/insurance/RPC, telemetry timeline with no
+blame attribution, maintenance logbook, Ed25519 ledger verification); (6) **1-click multi-fleet switcher** (`GET /fleets`,
+`FleetPicker.tsx` on Today's fleet, Spray register, Fleet trends), **maintenance service-interval counters** in `trends.py`,
+and **native-speaker approved Hindi & Marathi** (`REVIEWED = { en: true, hi: true, mr: true }`). Review 1-5 Dec 2026; the
+report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
 Safety audit fixes (27 Nov, `dbc45d3`): fixed `reconcile.py` `ordered` variable-shadowing bug; upgraded `evidence.py` to
 contiguous airborne spans (`alt > 2 m OR speed >= 1.5 m/s`) for low-altitude/downslope sprayers and mid-air `<10%` battery
 detection (`>15 s` before touchdown); closed `readiness.py` silent passes (`NO_REFERENCE` -> `CHECK_FIRST`, partial CSV/GPX

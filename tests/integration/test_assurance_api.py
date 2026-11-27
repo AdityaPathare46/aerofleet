@@ -492,3 +492,42 @@ def test_the_evening_batch_upload_matches_each_log_to_its_drone(api_client, auth
     assert by["mystery.ulg"]["drone_id"] is None and "Unknown drone" in by["mystery.ulg"]["error"]
     assert out["reviewed"] == 2 and out["not_reviewed"] == 1 and by["BT-1_morning.ulg"]["verdict"] == "LOG_ONLY"
     assert api_client.post(f"{URL}/flights/batch", headers=auth_headers, files=[]).status_code == 422
+
+
+def test_dgca_compliance_rule45_accident_dossier_and_fleet_list(api_client, auth_headers, operator_headers, tmp_path):
+    from aerofleet.data.database import get_session
+    from aerofleet.data.models.models import DroneRegistration
+
+    api_client.post(f"{URL}/baseline", headers=operator_headers, files=_file(BASE))
+    api_client.post(f"{URL}/drones/DG-1/params", headers=auth_headers, files=_file(BASE))
+    api_client.post(f"{URL}/drones/DG-1/flights", headers=auth_headers, files=_flight_files(tmp_path))
+    db = get_session()
+    db.merge(DroneRegistration(drone_id="DG-1", uin="UA00DG1", status="VERIFIED"))
+    db.commit()
+
+    # Save expired Rule 44 insurance -> signed into ledger and turns readiness to DO_NOT_FLY
+    r = api_client.put(
+        "/api/v1/assurance/drones/DG-1/compliance",
+        headers=operator_headers,
+        json={"insurance_policy": "POL-99", "insurance_insurer": "NIA", "insurance_valid_until": "2020-01-01",
+              "type_certificate_no": "DAN-AGRI", "pilot_name": "Pilot A", "pilot_rpc_no": "RPC-1", "pilot_rpc_valid_until": "2030-01-01"},
+    )
+    assert r.status_code == 200 and r.json()["ledger_seq"] >= 1
+    board = api_client.get(f"{URL}/readiness", headers=auth_headers).json()
+    row = next(d for d in board["drones"] if d["drone_id"] == "DG-1")
+    assert row["status"] == "DO_NOT_FLY"
+    assert any(x["code"] == "insurance_expired" for x in row["reasons"])
+
+    # Fleet listing includes the test fleet
+    fleet_name = URL.rsplit("/", 1)[-1]
+    fleets = api_client.get("/api/v1/assurance/fleets", headers=auth_headers).json()
+    assert any(f["fleet"] == fleet_name and f["drones"] >= 1 for f in fleets["fleets"])
+
+    # Rule 45 48-hour accident dossier JSON & printable HTML both return complete verified data
+    dj = api_client.get(f"{URL}/drones/DG-1/accident-dossier.json", headers=auth_headers)
+    assert dj.status_code == 200
+    body = dj.json()
+    assert body["aircraft"]["uin"] == "UA00DG1" and body["aircraft"]["insurance_policy"] == "POL-99"
+    assert body["ledger"] and body["ledger"]["matches_record"] is True
+    dh = api_client.get(f"{URL}/drones/DG-1/accident-dossier", headers=auth_headers)
+    assert dh.status_code == 200 and "DGCA Rule 45" in dh.text and "POL-99" in dh.text and "VERIFIED" in dh.text

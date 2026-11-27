@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
+import FleetPicker, { initialFleet } from '../components/FleetPicker'
 
 type State = 'OVERDUE' | 'DUE_SOON' | 'DRAFT' | 'READY' | 'SUBMITTED'
 interface AreaEst { moved_m: number; spacing_m: number; hectares: number; acres: number; note: string }
@@ -54,7 +55,7 @@ function Input({ f, v, set, disabled }: { f: Field; v: Val; set: (v: Val) => voi
 
 export default function SprayRegisterPage() {
   const { apiUrl } = useAppStore()
-  const fleet = (() => { try { return localStorage.getItem('aerofleet_fleet') || 'default' } catch { return 'default' } })()
+  const [fleet, setFleet] = useState<string>(initialFleet())
   const base = `${apiUrl}/api/v1/assurance`
   const [asOf, setAsOf] = useState(today())
   const [reg, setReg] = useState<Register | null>(null)
@@ -125,14 +126,17 @@ export default function SprayRegisterPage() {
 
   return (
     <div style={{ display: 'grid', gap: 16, maxWidth: 1150 }} id="spray">
-      <div>
-        <h1 style={{ margin: 0, fontSize: 22 }}>Spray register</h1>
-        <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
-          The crop-protection SOP asks the operator to submit a <b>Spray Monitoring Form</b> within <b>seven days</b> of spraying
-          pesticide by drone. Each reviewed flight of fleet <b>{fleet}</b> gets that form, with what the flight log can tell
-          already filled in, the days left, and fixed checks that quote the SOP. AeroFleet does not send the form; it records
-          when and how you sent it.
+      <div style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: 22 }}>Spray register</h1>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+            The crop-protection SOP asks the operator to submit a <b>Spray Monitoring Form</b> within <b>seven days</b> of spraying
+            pesticide by drone. Each reviewed flight of fleet <b>{fleet}</b> gets that form, with what the flight log can tell
+            already filled in, the days left, and fixed checks that quote the SOP. AeroFleet does not send the form; it records
+            when and how you sent it.
+          </div>
         </div>
+        <FleetPicker apiUrl={apiUrl} fleet={fleet} onChange={(next) => { setFleet(next); setForm(null); setPicked([]) }} />
       </div>
       {needsAuth && <SignInCard apiUrl={apiUrl} reason="The spray register reads this install's flight reviews." onSignedIn={load} />}
       {error && <div role="alert" style={{ color: 'var(--status-red)' }}>{error}</div>}
