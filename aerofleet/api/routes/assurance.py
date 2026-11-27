@@ -985,14 +985,23 @@ async def ledger_tamper_demo(user: User = Depends(get_current_active_user), db: 
 
 
 @router.get("/ledger/receipt")
-async def ledger_receipt(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def ledger_receipt(tsa: bool = Query(False, description="Attach an RFC 3161 trusted timestamp (sends only the receipt's SHA-256 hash)"),
+                         tsa_url: Optional[str] = Query(None, description="Optional RFC 3161 TSA URL override"),
+                         user: User = Depends(get_current_active_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
     """A signed receipt for the newest entry, for someone outside the operator's control to keep (the company that
-    oversees the drones, an insurer). Checking it later shows whether the record was rebuilt or cut short since."""
-    return ledger.make_receipt(db)
+    oversees the drones, an insurer). With `tsa=true`, attaches an RFC 3161 timestamp so the date does not depend
+    on the operator's computer clock."""
+    from aerofleet.assurance.tsa import TSAError
+
+    try:
+        return ledger.make_receipt(db, include_tsa=tsa, tsa_url=tsa_url)
+    except TSAError as e:
+        raise HTTPException(status_code=503, detail=f"{e}. Save an untimestamped receipt offline or retry when connected.")
 
 
 class ReceiptIn(BaseModel):
     receipt: Dict[str, Any]
+    ca_pem: Optional[str] = None
 
 
 @router.post("/ledger/check-receipt")
@@ -1001,7 +1010,7 @@ async def ledger_check_receipt(body: ReceiptIn, user: User = Depends(get_current
     from aerofleet.data.models.models import AssuranceLedgerEntry
 
     rows = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq).all()
-    return ledger.check_receipt([ledger.to_dict(r) for r in rows], ledger.public_key_pem(), body.receipt)
+    return ledger.check_receipt([ledger.to_dict(r) for r in rows], ledger.public_key_pem(), body.receipt, ca_pem=body.ca_pem)
 
 
 @router.get("/ledger/verify")

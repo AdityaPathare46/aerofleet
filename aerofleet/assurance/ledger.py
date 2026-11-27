@@ -248,26 +248,53 @@ def matches(db: Session, seq: int, payload: Any) -> bool:
 RECEIPT_FIELDS = ("aerofleet_receipt", "seq", "entry_hash", "entry_created_at", "issued_at", "key_sha256")
 
 
-def make_receipt(db: Session) -> Dict[str, Any]:
+def make_receipt(db: Session, include_tsa: bool = False, tsa_url: Optional[str] = None,
+                 post=None) -> Dict[str, Any]:
     last = db.query(AssuranceLedgerEntry).order_by(AssuranceLedgerEntry.seq.desc()).first()
     body = {"aerofleet_receipt": 1, "seq": last.seq if last else 0, "entry_hash": last.entry_hash if last else GENESIS,
             "entry_created_at": last.created_at if last else None, "issued_at": datetime.utcnow().isoformat(timespec="seconds"),
             "key_sha256": key_fingerprint(public_key_pem())}
-    return {**body, "signature": base64.b64encode(_private_key().sign(hashlib.sha256(canonical(body)).digest())).decode()}
+    digest = hashlib.sha256(canonical(body)).digest()
+    out: Dict[str, Any] = {**body, "signature": base64.b64encode(_private_key().sign(digest)).decode()}
+    if include_tsa:
+        from aerofleet.assurance import tsa
+
+        kwargs: Dict[str, Any] = {"tsa_url": tsa_url}
+        if post is not None:
+            kwargs["post"] = post
+        out["tsa"] = tsa.request_timestamp(digest, **kwargs)
+    return out
 
 
-def check_receipt(entries: List[Dict[str, Any]], public_pem: str, receipt: Dict[str, Any]) -> Dict[str, Any]:
-    """Does the record still contain the entry this receipt names, and was the receipt issued by this install?"""
+def check_receipt(entries: List[Dict[str, Any]], public_pem: str, receipt: Dict[str, Any],
+                  ca_pem: Optional[str] = None) -> Dict[str, Any]:
+    """Does the record still contain the entry this receipt names, and was the receipt issued by this install?
+    If an RFC 3161 timestamp token (`tsa`) is attached, its digest, CMS signature, and certificate are also verified."""
     if not isinstance(receipt, dict) or receipt.get("aerofleet_receipt") != 1 or any(k not in receipt for k in RECEIPT_FIELDS + ("signature",)):
         return {"ok": False, "problem": "This is not an AeroFleet receipt (fields are missing)."}
     if receipt["key_sha256"] != key_fingerprint(public_pem):
         return {"ok": False, "problem": "The receipt was issued with a different key: the record was re-signed, or it is another install's receipt."}
     public: Ed25519PublicKey = serialization.load_pem_public_key(public_pem.encode())
     body = {k: receipt[k] for k in RECEIPT_FIELDS}
+    digest = hashlib.sha256(canonical(body)).digest()
     try:
-        public.verify(base64.b64decode(receipt["signature"]), hashlib.sha256(canonical(body)).digest())
+        public.verify(base64.b64decode(receipt["signature"]), digest)
     except (InvalidSignature, ValueError, TypeError):
         return {"ok": False, "problem": "The receipt's signature is not valid: the receipt itself was edited."}
+    tsa_result = None
+    if receipt.get("tsa") is not None:
+        from aerofleet.assurance import tsa
+
+        ts = receipt["tsa"]
+        if not isinstance(ts, dict) or not ts.get("tsr_b64"):
+            return {"ok": False, "problem": "The attached RFC 3161 timestamp is malformed."}
+        try:
+            tsr_bytes = base64.b64decode(ts["tsr_b64"])
+        except ValueError:
+            return {"ok": False, "problem": "The attached RFC 3161 timestamp is not valid base64."}
+        tsa_result = tsa.verify_tsr(tsr_bytes, digest, expected_nonce=ts.get("nonce"), ca_pem=ca_pem)
+        if not tsa_result["ok"]:
+            return {"ok": False, "problem": f"RFC 3161 timestamp failed: {tsa_result['problem']}"}
     chain = verify_entries(entries, public_pem)
     if not chain["ok"]:
         return {"ok": False, "problem": f"The record itself fails its check: {chain['problem']}"}
@@ -279,7 +306,12 @@ def check_receipt(entries: List[Dict[str, Any]], public_pem: str, receipt: Dict[
         if not heads["ok"]:
             return {"ok": False, "problem": heads["problem"].replace("Recorded head", "The entry named on the receipt,")}
     newest = entries[-1]["seq"] if entries else 0
+    if tsa_result is not None:
+        meaning = (f"Entry {receipt['seq']} and everything before it are unchanged; RFC 3161 TSA ({tsa_result['tsa_subject']}) "
+                   f"attested this receipt at {tsa_result['gen_time']} (independent of this computer's clock); "
+                   f"{newest - receipt['seq']} entries were added after it.")
+    else:
+        meaning = (f"Entry {receipt['seq']} and everything before it are unchanged since {receipt['issued_at']} UTC "
+                   f"(local clock); {newest - receipt['seq']} entries were added after it.")
     return {"ok": True, "problem": None, "seq": receipt["seq"], "issued_at": receipt["issued_at"],
-            "entries_since": newest - receipt["seq"],
-            "meaning": f"Entry {receipt['seq']} and everything before it are unchanged since {receipt['issued_at']} UTC; "
-                       f"{newest - receipt['seq']} entries were added after it."}
+            "entries_since": newest - receipt["seq"], "tsa": tsa_result, "meaning": meaning}

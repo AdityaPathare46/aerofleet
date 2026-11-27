@@ -293,7 +293,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-760 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+763 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -368,12 +368,16 @@ The pilots are new operators, many more comfortable in Hindi or Marathi, and the
 reads. The verdicts come with a code, so the rule never changes with the language. The translations were drafted with
 an AI assistant and the screen says they are unchecked until a native speaker has read them.
 
-**Q44. You said the operator can rebuild the whole chain. What did you do about it?**
-A signed receipt. Each week the operator saves a receipt of the newest entry and sends it to someone outside their
-control, such as the fertiliser company. Later, *Check a receipt* (or `verify_ledger.py --receipt`) shows whether that
-exact entry is still in the record. A test rebuilds the chain with the operator's own key: the chain passes its own
-check and fails the receipt. It is only as strong as how often receipts are sent, and the clock is still the
-machine's.
+**Q44. You said the operator can rebuild the whole chain or fake the computer's clock. What did you do about it?**
+Two layers: (1) A **signed receipt** handed weekly to someone outside the operator's control (the fertiliser company,
+aggregator, or insurer); checking it (`Check a receipt` or `verify_ledger.py --receipt`) catches a chain rebuilt even
+with the operator's own key. (2) **Optional RFC 3161 trusted timestamping** (`Save TSA-timestamped receipt`,
+`GET /ledger/receipt?tsa=true`): AeroFleet sends **only the 32-byte SHA-256 hash** of the receipt to an independent
+Time-Stamping Authority (e.g., DigiCert or FreeTSA), embeds the signed CMS `TimeStampResp` token, and verifies its
+messageImprint digest, CMS signature, `id-kp-timeStamping` EKU, validity window, and optional root CA chain
+(`--tsa-ca`). That eliminates trust in the operator's local computer clock while sending zero flight data off-device.
+In addition, `GET /ledger/verify` now cross-checks stored `FlightReview` and `SprayForm` rows in SQLite against their
+signed ledger hashes.
 
 **Q45. The forum numbers say 96 in one place and 94 in another.**
 94 threads blamed the aircraft alone, 2 blamed both pilot and aircraft. The configuration count (26 of 94) is over the

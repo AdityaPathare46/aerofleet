@@ -279,9 +279,9 @@ export default function FleetAssurancePage() {
   }, [apiUrl])
   useEffect(() => { loadLedger() }, [loadLedger, rows, flights])
   const verifyLedger = () => act(async () => { setLedgerCheck(await plain<LedgerCheck>('/ledger/verify')); await loadLedger() })
-  const getReceipt = () => act(async () => {
-    const r = await plain<{ seq: number }>('/ledger/receipt')
-    download(`aerofleet-receipt-entry-${r.seq}`, JSON.stringify(r, null, 1), '.json')
+  const getReceipt = (withTsa = false) => act(async () => {
+    const r = await plain<{ seq: number }>(`/ledger/receipt${withTsa ? '?tsa=true' : ''}`)
+    download(`aerofleet-receipt-entry-${r.seq}${withTsa ? '-rfc3161' : ''}`, JSON.stringify(r, null, 1), '.json')
   })
   const checkReceipt = (file: File | undefined) => act(async () => {
     if (!file) return
@@ -913,9 +913,12 @@ export default function FleetAssurancePage() {
           <div style={{ flex: 1, minWidth: 260, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             <b>Receipt for someone else to keep.</b> You hold the key and the database, so on your machine alone the record
             could be rebuilt. Send a receipt each week to someone outside your control (the company that oversees your
-            drones, or your insurer). Later, a rebuilt or shortened record no longer contains the entry the receipt names.
+            drones, or your insurer). With <b>RFC 3161 timestamping</b>, an independent Time-Stamping Authority signs only
+            the 32-byte receipt hash (no flight data leaves this laptop), proving when the record existed without trusting
+            the local computer's clock.
           </div>
-          <button className="btn" id="btn-receipt" disabled={busy || !ledger?.entries.length} onClick={getReceipt}>Save a receipt</button>
+          <button className="btn" id="btn-receipt" disabled={busy || !ledger?.entries.length} onClick={() => getReceipt(false)}>Save a receipt</button>
+          <button className="btn" id="btn-receipt-tsa" disabled={busy || !ledger?.entries.length} onClick={() => getReceipt(true)}>Save TSA-timestamped receipt</button>
           <label className="btn" style={{ cursor: 'pointer' }}>Check a receipt
             <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={(e) => { checkReceipt(e.target.files?.[0]); e.target.value = '' }} /></label>
         </div>

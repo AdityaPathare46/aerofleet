@@ -172,9 +172,11 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 ## 6. Status
 
 **Now (27 Nov 2026, post-audit).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **760 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+reviews yet). Product: **763 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (now including
-cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify`), and the four Proof results recompute
+cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
+timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`, live-tested against DigiCert
+and FreeTSA), and the four Proof results recompute
 to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
 Safety audit fixes (27 Nov, `dbc45d3`): fixed `reconcile.py` `ordered` variable-shadowing bug; upgraded `evidence.py` to
 contiguous airborne spans (`alt > 2 m OR speed >= 1.5 m/s`) for low-altitude/downslope sprayers and mid-air `<10%` battery

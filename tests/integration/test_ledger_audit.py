@@ -186,3 +186,29 @@ def test_a_receipt_kept_by_someone_else_catches_a_chain_rebuilt_with_the_same_ke
     assert caught["ok"] is False and "rebuilt" in caught["problem"]
     assert tool.verify(export, receipts=[receipt])["ok"] is True
     assert tool.verify(rebuilt, receipts=[receipt])["ok"] is False
+
+
+def test_rfc3161_timestamped_receipt_over_api_and_offline_fallback(api_client, auth_headers, operator_headers, monkeypatch):
+    from aerofleet.assurance import tsa
+    from tests.unit.test_assurance_tsa import _make_tsa_pki, _sign_tsr
+
+    _make_three(api_client, auth_headers, operator_headers)
+    _, ca_pem, tsa_key, tsa_cert = _make_tsa_pki()
+
+    monkeypatch.setattr(tsa, "_http_post_tsq", lambda _u, q, timeout=15.0: _sign_tsr(q, tsa_key, tsa_cert))
+    monkeypatch.setattr(tsa.request_timestamp, "__defaults__", (None, tsa._http_post_tsq))
+
+    r = api_client.get(f"{URL}/ledger/receipt?tsa=true", headers=auth_headers)
+    assert r.status_code == 200, r.text
+    receipt = r.json()
+    assert receipt["tsa"]["standard"] == "RFC3161" and receipt["tsa"]["gen_time"].endswith("Z")
+
+    checked = api_client.post(f"{URL}/ledger/check-receipt", headers=auth_headers, json={"receipt": receipt, "ca_pem": ca_pem}).json()
+    assert checked["ok"] is True and checked["tsa"]["ca_verified"] is True and "RFC 3161 TSA" in checked["meaning"]
+
+    def offline(_u, _q, timeout=15.0):
+        raise OSError("network unreachable")
+
+    monkeypatch.setattr(tsa.request_timestamp, "__defaults__", (None, offline))
+    fail = api_client.get(f"{URL}/ledger/receipt?tsa=true", headers=auth_headers)
+    assert fail.status_code == 503 and "untimestamped receipt offline" in fail.json()["detail"]

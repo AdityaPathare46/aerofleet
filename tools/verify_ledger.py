@@ -19,10 +19,15 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import sys
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 GENESIS = "0" * 64
 
@@ -39,9 +44,10 @@ def entry_hash(e):
 RECEIPT_FIELDS = ("aerofleet_receipt", "seq", "entry_hash", "entry_created_at", "issued_at", "key_sha256")
 
 
-def verify(export, heads=None, key_sha256=None, receipts=()):
+def verify(export, heads=None, key_sha256=None, receipts=(), tsa_ca_pem=None):
     pem = export["public_key_pem"]
     problems = []
+    tsa_verified = []
     fingerprint = hashlib.sha256(pem.strip().encode()).hexdigest()
     if key_sha256 and key_sha256.lower() != fingerprint:
         problems.append(f"The public key is not the one you were given (fingerprint {fingerprint[:16]}…)")
@@ -68,11 +74,25 @@ def verify(export, heads=None, key_sha256=None, receipts=()):
         if r.get("key_sha256") != fingerprint:
             problems.append(f"Receipt for entry {r.get('seq')}: issued with a different key")
             continue
+        digest = hashlib.sha256(canonical(body)).digest()
         try:
-            public.verify(base64.b64decode(r["signature"]), hashlib.sha256(canonical(body)).digest())
+            public.verify(base64.b64decode(r["signature"]), digest)
         except (InvalidSignature, ValueError, KeyError, TypeError):
             problems.append(f"Receipt for entry {r.get('seq')}: its signature is not valid (the receipt was edited)")
             continue
+        if r.get("tsa") is not None:
+            from aerofleet.assurance import tsa as tsa_mod
+
+            ts = r["tsa"]
+            try:
+                res = tsa_mod.verify_tsr(base64.b64decode(ts["tsr_b64"]), digest, expected_nonce=ts.get("nonce"), ca_pem=tsa_ca_pem)
+            except Exception as exc:  # noqa: BLE001
+                res = {"ok": False, "problem": str(exc)}
+            if not res["ok"]:
+                problems.append(f"Receipt for entry {r.get('seq')}: RFC 3161 timestamp failed ({res['problem']})")
+                continue
+            tsa_verified.append({"seq": r.get("seq"), "gen_time": res["gen_time"], "tsa_subject": res["tsa_subject"],
+                                 "ca_verified": res["ca_verified"]})
         if r.get("seq") == 0:
             if r.get("entry_hash") != GENESIS:
                 problems.append("Receipt for empty record does not carry genesis hash")
@@ -85,7 +105,8 @@ def verify(export, heads=None, key_sha256=None, receipts=()):
                 problems.append(f"Recorded head {h['seq']} is " + ("missing from the chain" if h["seq"] not in by_seq
                                                                    else "different in the chain (rebuilt or altered)"))
                 break
-    return {"ok": not problems, "entries": len(export["entries"]), "head": prev, "key_sha256": fingerprint, "problems": problems}
+    return {"ok": not problems, "entries": len(export["entries"]), "head": prev, "key_sha256": fingerprint,
+            "tsa_verified": tsa_verified, "problems": problems}
 
 
 def main(argv=None):
@@ -94,14 +115,19 @@ def main(argv=None):
     ap.add_argument("--heads")
     ap.add_argument("--key-sha256")
     ap.add_argument("--receipt", action="append", default=[])
+    ap.add_argument("--tsa-ca", help="PEM root CA bundle to verify RFC 3161 TSA certificate chains")
     a = ap.parse_args(argv)
     export = json.load(open(a.export, encoding="utf-8"))
     heads = None
     if a.heads:
         heads = [json.loads(l) for l in open(a.heads, encoding="utf-8") if l.strip()]
     receipts = [json.load(open(p, encoding="utf-8")) for p in a.receipt]
-    r = verify(export, heads, a.key_sha256, receipts)
+    ca_pem = open(a.tsa_ca, encoding="utf-8").read() if a.tsa_ca else None
+    r = verify(export, heads, a.key_sha256, receipts, tsa_ca_pem=ca_pem)
     print(f"{r['entries']} entries · key fingerprint {r['key_sha256']} · head {r['head']}")
+    for tv in r["tsa_verified"]:
+        print(f"RFC 3161 TSA OK (entry {tv['seq']}): attested {tv['gen_time']} by {tv['tsa_subject']}"
+              + (" [CA chain verified]" if tv["ca_verified"] else " [embedded TSA cert]"))
     print("OK: the record is intact" if r["ok"] else "FAILED:\n  " + "\n  ".join(r["problems"]))
     return 0 if r["ok"] else 1
 
