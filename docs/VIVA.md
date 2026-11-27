@@ -9,16 +9,18 @@ checks the key ones. Read `docs/DEMO.md` for the walk-through itself.
 
 ## The 60-second answer: "What is your project?"
 
-AeroFleet is the safety and records back office for agricultural drone service providers in India. Namo Drone
-Didi alone approved 15,000 spraying drones for women self-help groups (about 500 delivered under the scheme by March
-2026, 1,094 to SHGs in all), flown by pilots with 5 + 10 days of training,
-who rent flights to farmers. Every morning AeroFleet tells them which drones can fly and why; before a job it checks
-the route against restricted airspace; after flying it turns each log into a signed, time-ordered record for the
-insurer and the 7-day spray report. What makes it more than a dashboard is the evidence behind each design choice:
-we tested what flight logs can and cannot show on 590 crash logs from a 479,547-log public archive, declaring every
-test first. Logs cannot assign blame (0.47 balanced accuracy, chance is 0.50), so AeroFleet never does; the cause
-experts named most was configuration (26 of 94), so settings are checked first; vibration is not a validated warning,
-so it is shown as context only.
+AeroFleet is an independent safety assurance and regulatory records platform for small-to-mid Indian PX4 and ArduPilot
+drone fleets — Drone-as-a-Service operators, RPTO training academies, and Lead Fertiliser Company / agricultural drone
+service aggregators — with a built-in Indian agricultural spraying compliance module (Namo Drone Didi approved 15,000
+drones, about 500 delivered under the scheme by March 2026 and 1,094 to SHGs in all, flown by pilots with 5 + 10 days of
+training). Every morning it gives field pilots a one-glance go/no-go board in English, Hindi or Marathi; before a job it
+checks routes against restricted airspace and battery against wind with realistic airframe profiles; after flying it turns
+each log into an Ed25519-signed, offline-verifiable record for insurers and the mandatory 7-day CIB&RC Annexure-I spray
+report. What makes it distinctive is the empirical evidence behind every design boundary: we tested what flight logs can
+and cannot show on 590 crash logs from a 479,547-log public archive, pre-declaring every test in git first. Logs cannot
+assign blame (0.47 balanced accuracy, chance 0.50), so AeroFleet never does; tuning/configuration was the #1 expert-named
+cause (26 of 94), so baseline drift and failsafes are checked first; vibration is not a validated screen, so it is shown
+as context only.
 
 ## The live demonstration order (10 minutes)
 
@@ -227,11 +229,15 @@ not the official Digital Sky map (which cannot be queried automatically), and th
 those cities is reported "not checked", never "clear". *Show:* Route check ▸ *Try 5 demo missions*.
 
 **Q23c. How does "Today's fleet" decide, and why trust it?**
-Fixed rules only, each shown with its reason: do not fly if a safety-critical setting changed without approval or
-there is no UIN on record; check first if a flight-limit setting changed, the UIN is unverified, settings were never
-checked, or the last flight's log shows warnings (sensor data rejected, poor GPS, critical battery, a safety setting
-changed in flight, leaving the plan). Vibration is displayed but never changes the verdict. *Show:* Today's fleet ▸
-PX4-04, whose critical-battery threshold really changed between two of its public flights.
+Fixed rules only, each shown with its reason: **Do not fly** if a safety-critical setting changed without approval, there
+is no UIN on record, or the drone is grounded in the maintenance logbook after a reported incident/crash without a later
+inspection clearance. **Check first** if a flight-limit setting changed, settings have not been compared with an approved
+baseline (`NO_REFERENCE`), a failsafe or safety check is switched off (including PX4 `CBRK_*` circuit breakers and
+ArduPilot `ARMING_CHECK=0`), the UIN is unverified, settings were never checked, the last flight was a partial CSV/GPX
+export, or the last flight's log shows sustained in-air warnings (sensor or GPS complaints lasting 3 s or more while
+airborne, an airborne autopilot error report, a mid-air critical battery drop > 15 s before touchdown, a safety-critical
+setting changed in flight, or leaving the plan). A low-battery landing (< 10% near touchdown) is shown as a pilot note,
+not a reason, and vibration / the learned model are context only. *Show:* Today's fleet ▸ PX4-04.
 
 **Q23d. What happens in a real season with this tool?**
 Morning: *Today's fleet* says which drones can fly. Evening: the operator selects all the day's logs at once; each is
@@ -287,9 +293,10 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-677 automated tests, run before every commit. Beyond unit tests: the numbers in the paper are checked against the
-result files (`check_numbers.py`, 30 checks), the paper's headline results are recomputed and compared in a test, and
-the "no AI" claim is a test. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
+760 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
+results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
+assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
 
 **Q32. Why Python and React? Why not a mobile app?**
 Python has the standard log libraries (`pyulog` for PX4, `pymavlink` for ArduPilot); the desktop app is a web front
@@ -326,11 +333,13 @@ under ethics approval, real-mission false-alarm rates from a fleet's own plans, 
 needs the public reference and the learned model, not its own history.
 
 **Q38. Why not Airdata, DJI FlightHub or AeroGCS?**
-Airdata is a mature global logbook, but has no India UIN or SOP logic and no signed record we could verify offline.
-FlightHub serves DJI hardware only, and DJI logs are closed. AeroGCS is the closest Indian rival and ships with many
-spraying drones, but it is the manufacturer's own system, not an independent record. FlightMD (open source) is closest
-in spirit; AeroFleet adds approvals, a go / no-go, the spray form, the signed record and a pre-registered study. The
-honest weak points: we read only PX4 and ArduPilot logs, have no mobile app, and no operator has used it.
+Airdata is a mature global logbook, but has no India UIN or CIB&RC SOP logic and no offline-verifiable signed record.
+FlightHub serves DJI hardware only, and DJI native logs are encrypted. AeroGCS is the closest Indian rival and ships with
+many spraying drones, but it is the manufacturer's own system, not an independent third-party audit record. FlightMD
+(open source) is closest in spirit; AeroFleet adds baseline approvals, a morning go/no-go board, the 7-day spray register,
+an offline-verifiable Ed25519 ledger with external receipts, and a pre-registered empirical study. Honest weak points:
+full telemetry/settings/vibration checks require PX4 or ArduPilot (closed controllers are limited to CSV/GPX exports),
+no mobile app yet, and no live operator field trial yet.
 
 **Q39. Who would pay?**
 Probably not the self-help group. Lead fertiliser companies, which the scheme asks to help with repair and
@@ -412,14 +421,13 @@ start with the headset. The trials, the key, the counterbalancing and the analys
 participant.
 
 **Q52. Did you ever run it on a real autopilot?**
-On the real ArduCopter flight code, yes: ArduPilot SITL runs the same firmware that flies on a Pixhawk, with a
-simulated drone, and writes the same .bin log. We flew a spraying mission at 4 m near Pune, 8 scenarios, 3 runs each,
-declared first (research/sitl_check/PROTOCOL.md). Caught every time: GPS lost for 20 s, low battery, geofence
-switched off in flight, and no false alarm on normal flights or in 8 m/s wind. One declared expectation failed: we
-expected two failsafes to be named, but ArduPilot ships with the battery failsafe already off, so only the throttle
-failsafe changed; it was caught and the drone was blocked every time. Not shown: a motor failure (we have no crash
-detection and name no cause) and a compass failure (we read estimator checks only from PX4 logs; ArduPilot logs have
-them too, which is the next step). What SITL cannot give: real sensor noise and real frame vibration.
+On the real ArduCopter flight code, yes: ArduPilot SITL runs the exact firmware that flies on a Pixhawk, with a
+simulated quadcopter, and writes the same DataFlash `.bin` log. We flew a spraying mission at 4 m near Pune, 8 scenarios,
+3 runs each, declared first (`research/sitl_check/PROTOCOL.md`). In v1: caught every time were GPS lost for 20 s, low
+battery, geofence switched off in flight, and no false alarm on normal flights or in 8 m/s wind; S1 failed its initial
+expectation because ArduPilot ships with `BATT_FS_LOW_ACT=0` by default, and S6/S7 exposed that we did not yet read
+ArduPilot's onboard `ERR`/`MAG`/`XKF4`/`ATT`/`RCOU` health records (fixed and retested in v2 below). What SITL cannot
+give: real sensor noise and real frame vibration.
 
 **Q52b. And after that? You fixed things after seeing the results. Isn't that cheating?**
 The first results stand as recorded. We then changed the product (failsafes switched off are flagged whatever the
@@ -433,12 +441,13 @@ runs flat, so it marks a drone at its power limit, not a failed motor: we still 
 Time. SITL runs the same flight code and lets us put faults in on purpose with a known right answer, which a bench or
 field flight cannot. It is the standard step before real flights; a bench session is in future work.
 
-**Q54. How often does Today's fleet cry wolf?**
-We measured it, declared first, on 1,121 healthy public PX4 flights read exactly as the product reads them. The first
-rule flagged 28.8% of flights their pilots rated good or great: it failed our own 20% pass mark. We changed the rule on
-half the drones (a sensor or GPS complaint counts only in the air and only if it lasts 3 s; a low-battery landing is a
-pilot note, not a reason about the drone) and tested it once on the other half: 11.1% [7.3, 16.3]. It cost a little
-sensitivity: real motor-fault flights flagged 19.4% instead of 21.5%. Not yet measured on real spraying drones.
+**Q54. How often does Today's fleet cry wolf — and does it actually catch real faults?**
+We measured both in three pre-declared stages on the product's exact code:
+- **FA1** (`5f44b0b`, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
+- **FA2** (`481987a`, passed): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut held-out half H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
+- **SA1 + FA3** (`e9c4ebc`, passed both marks): after fixing two safety gaps (counting horizontal motion ≥ 1.5 m/s so low-altitude/downslope spraying passes are airborne, and keeping mid-air battery < 10% > 15 s before touchdown as a warning) and adding **vehicle-cluster bootstrap CIs** (matching our paper's Checklist Item #2):
+  - **Specificity (FA3, held-out H):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles); all H ordinary **27.3%** (unrated 33.8%); controlled RflyMAD fault-free flights **0.0%** (0/50).
+  - **Sensitivity (SA1):** RflyMAD injected sensor faults **53.8%** (106/197, pass mark ≥ 50% **met**), motor faults **19.8%** (48/242, most absorbed 15–20% losses); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H flights (27.3%), directly confirming our paper's within-drone null on the product's own readiness board. Not yet measured on real spraying drones.
 
 **Q54b. Why not train the model on spraying drones, with payload as an input?**
 There is no data for it: no public log records payload weight, and the public archive has about 20 flights from 4
@@ -449,13 +458,30 @@ for it to matter; on sprayers it may, and the code is ready for that retrain onc
 
 **Q55. Three demo drones are "Ready" though their last flight was rated a crash. Isn't that a failure?**
 It is the study on screen: crash flights showed no warning in their logs, and a log cannot say whether or why a drone
-crashed. The board reports what the log shows. An operator who knows a drone crashed records it in the maintenance
-logbook and inspects it; AeroFleet never claims a drone is undamaged.
+crashed. The board reports what the log shows. An operator who knows a drone crashed records `"Incident / crash reported
+(grounded for inspection)"` in the maintenance logbook, which immediately turns Today's fleet to **Do not fly** until a
+subsequent `"Post-incident inspection cleared"` entry is signed into the record.
+
+**Q56. Why didn't you turn the ML model into an onboard emergency-takeover controller?**
+Because our own study proved ML fault detectors fail on unseen flight days (LeNet-5 dropped from AUC 0.94 to 0.63) and
+even tuned log rules carry double-digit flag rates on healthy flights. Putting an uncertified ML model in charge of
+mid-air takeover would force-land healthy drones into hazards and violate aviation safety principles. Onboard emergency
+handling belongs to the flight controller's deterministic failsafes (ArduPilot/PX4 RTL/LAND); AeroFleet's job is to
+verify before takeoff that those failsafes are enabled and uncorrupted.
+
+**Q57. How does a desktop app and a Meta Quest 3 fit a rural SHG Drone Didi pilot?**
+Two distinct personas. The rural field pilot needs only the one-glance morning `Today's fleet` board (English, Hindi or
+Marathi) at the cluster hub. The **desktop app, baseline governance, 7-day spray register, and Quest 3 3D debrief table**
+are for the **Lead Fertiliser Company / agri-drone aggregator supervisor, commercial DaaS operations lead, or RPTO chief
+instructor** who manages maintenance, compliance, and pilot debriefing across a multi-drone fleet.
 
 ## Questions to answer with "we did not test that"
 
-- "Does AeroFleet reduce crashes?" Not tested; that needs the prospective study.
-- "Does it work on DJI drones?" No: DJI logs are not open; the tool reads PX4 and ArduPilot.
+- "Does AeroFleet reduce crashes?" Not tested; that needs the pre-registered 6-month prospective study.
+- "Does it read native encrypted DJI logs?" No: DJI native logs are encrypted; AeroFleet reads converted DJI CSV exports
+  (tested on 3 real DJI Mini 4 Pro flights) for position, battery, GPS, mode, spray forms and signed records — not
+  settings, vibration or autopilot health checks.
 - "Would vibration work as a screen on a bigger dataset?" Unknown. About 247 matched sets would be needed if the true
   effect is the smaller replicated one, more than the archive holds.
-- "Is the VR replay useful?" Built and tested in a browser; not tested on a headset or with users.
+- "Is the VR replay proven to improve debriefing?" Built and tested in a browser with a pre-registered 12-person Quest 3
+  study (`research/vr_study/PROTOCOL.md`); not yet run on users unless noted from completed study results.

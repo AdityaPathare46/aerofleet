@@ -9,13 +9,15 @@ background, but where they disagree with this file, this file is right.
 
 ## 1. What this project is, in one paragraph
 
-**AeroFleet** is a ground-side assurance tool (no licence file yet, so not open source until one is added) for PX4 and ArduPilot drone fleets, plus a research paper
-built on a study of 479,547 public PX4 flight logs. The tool reads files an operator already has (parameter files,
-mission files, flight logs); it contacts no aircraft and **calls no AI model in any decision**. The study found that
-flight logs **cannot** tell whether a crash was the pilot's or the aircraft's fault, but drones that later crashed
-were rougher (more vibration) on ordinary flights than matched drones. So the tool shows evidence and ranks drones;
-it never names a crash cause. The paper's title: *"Evidence, not verdicts: what 479,547 public PX4 flight logs can and
-cannot tell a drone fleet operator"*, targeted at **Reliability Engineering & System Safety** (Elsevier).
+**AeroFleet** is an open-source (MIT, `LICENSE`), ground-side assurance tool for PX4 and ArduPilot drone fleets
+(commercial DaaS operators, RPTO training academies, and Indian agricultural drone aggregators), plus a research paper
+built on a study of 590 crash logs from a 479,547-flight public PX4 archive. The tool reads files an operator already
+has (parameter files, mission files, flight logs); it contacts no aircraft in flight and **calls no AI model in any
+decision**. The study found that flight logs **cannot** tell whether a crash was the pilot's or the aircraft's fault,
+but drones that later crashed were rougher (more vibration) on ordinary flights than matched drones. So the tool shows
+evidence and ranks drones; it never names a crash cause. The paper's title: *"Evidence, not verdicts: what 590 public
+PX4 crash logs can and cannot tell a drone fleet operator"*, submitted to **Accident Analysis & Prevention** (Elsevier)
+on 17 Nov 2026.
 
 People: Dr. Nagesh Chougule (corresponding author, nkc.mech@coeptech.ac.in), Vibhav Ambardekar, Aditya Pathare
 (main developer; this machine's user), Atharv Waghmare, Shreyash Pawar, Piyush Bhamare. Department of Mechanical
@@ -158,7 +160,7 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 | Factorial optimism audit (declared after Round 14; exploratory) | 2x2 (m=10 s, grouped CV, one extractor): 103 vs rated 0.825, vs matched unrated 0.686; 67 vs rated 0.673, vs unrated 0.623. Neither normal-set (+0.094 [-0.014, 0.197]) nor crash-set (+0.108 [-0.037, 0.224]) effect supported: **"The AUC depends on the comparison set; the cause is not isolated."** Full factorial: drop 0.212 [0.062, 0.335] (0.878 to 0.666); Shapley: grouped folds **0.062 [0.034, 0.087], only material factor**; normals 0.070, crash set 0.064 (CIs span 0); m 0.014; 30 s window 0.001. Same-aircraft step a further -0.21 to chance. Old Step 4b 0.522 superseded (mixed extractors). The 67 are not a subset of the 103 (10 of 67 in the 148). First run aborted at A3 (float32 rounding), amended `f6ba424` | `factorial_audit.md` |
 | Robustness (post hoc) | Held with same airframe, without crash-day flights, duration-adjusted; mainly older estimator metric (48 sets) | `sensitivity*.md` |
 | Newer metric replication (declared) | **Inconclusive: independent 10 new cases 0.50 (p = 0.5760); pooled 19 sets 0.58, CI 0.39-0.76, p = 0.25**; design power at N=19 is 0.379 at 0.67, 0.118 at 0.58; 55 sets needed assuming discovery effect, 247 sets needed at true 0.58 due to winner's curse (exceeds archive capacity; partner fleets required) | `rough_drone_newer.md` |
-| Q4 expert diagnoses | 148 real crash threads (settled labels): drone 94, pilot 9, both 2, unclear/no diagnosis 43; tuning/config most named (26/94); 43 downloadable logs (38 aircraft, 5 pilot); 37 aircraft logs with checkable categories in Table 7; rule wrong on 48.6% of decided cases (BA 0.381, 95% CI 0.20-0.59); pilot recall 1/5 (Wilson CI 3.7-71.0%); poster confirmed only 47/94 aircraft and 5/9 pilot diagnoses | `forum_expert_labels.md` |
+| Q4 expert diagnoses | 148 real crash threads (settled labels): drone 94, pilot 9, both 2, unclear/no diagnosis 43; tuning/config most named (26/94); 43 downloadable logs (38 aircraft, 5 pilot); 35 aircraft logs with checkable categories in Supplement Table; rule wrong on 48.6% of decided cases (BA 0.381, Bayesian 95% CrI [0.25, 0.61]); pilot recall 1/5 (Wilson CI 3.7-71.0%); poster confirmed only 47/94 aircraft and 5/9 pilot diagnoses | `forum_expert_labels.md` |
 | LLM panels | Fixed rule 45/60 right, 0 wrong; panels 6-38 wrong; one adversary flipped 45-56 of 60 | `research/panel_eval/` |
 | Planned-vs-flown, injected deviations (declared) | Sideways >= 35 m found 90-98%, upward >= 20 m 92-98%; false alarms 9/40 (22%) on track-built plans, 0/40 with 5 s waypoints | `injection_reconcile*.md` |
 | Planned-vs-flown, real missions (declared) | Only 6 distinct missions in archive; no deviation in mission mode; 2 reported = drone had left mission mode (RTL / pilot takeover). Too few for a rate | `real_mission_reconcile.md` |
@@ -169,14 +171,24 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ## 6. Status
 
-**Now (27 Nov 2026).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: 752 tests pass (`tests/unit` and `tests/integration`), 30 of 30 number checks agree, the app
-typechecks and builds, every screen loads without errors, the signed record verifies, the tamper demo catches all five
-attacks, and the four Proof results recompute to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is
-credited to Aditya Pathare and Atharv Waghmare only. False alarms (27 Nov): FA1 declared 5f44b0b failed (28.8% of
-healthy public flights flagged); rule revised on half D (complaints count in the air from 3 s; low-battery landing is
-a pilot note); FA2 declared 481987a passed on held-out half H (11.1%). Demo fleet reloaded: board is now 3 do not fly,
-2 check first, 3 ready. New: tools/backup.py. macOS app built with CARGO_TARGET_DIR on the internal disk; launcher fixed (unread
+**Now (27 Nov 2026, post-audit).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
+reviews yet). Product: **760 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (now including
+cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify`), and the four Proof results recompute
+to the paper. Review 1-5 Dec 2026; the report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
+Safety audit fixes (27 Nov, `dbc45d3`): fixed `reconcile.py` `ordered` variable-shadowing bug; upgraded `evidence.py` to
+contiguous airborne spans (`alt > 2 m OR speed >= 1.5 m/s`) for low-altitude/downslope sprayers and mid-air `<10%` battery
+detection (`>15 s` before touchdown); closed `readiness.py` silent passes (`NO_REFERENCE` -> `CHECK_FIRST`, partial CSV/GPX
+-> `CHECK_FIRST`, maintenance incident grounding -> `DO_NOT_FLY`, PX4 `CBRK_*` & ArduPilot `ARMING_CHECK=0`); tracked
+ArduPilot EKF3 primary core switches (`ERR` subsys 24) in `flightlog.py`; decoupled `wind.py` from legacy delivery dispatcher
+with realistic `agri_sprayer_10l/16l` and `light_survey` airframe profiles + UI selector; expanded no-AI import guard to
+`spray.py` & `vr_study.py`; refined product–domain positioning to Indian commercial/institutional PX4 & ArduPilot fleets
+(DaaS, RPTOs, LFC aggregators) with CIB&RC agricultural spraying compliance as a vertical module.
+False alarms & sensitivity (27 Nov): FA1 (`5f44b0b`) failed (28.8%); FA2 (`481987a`) passed on held-out H (11.1%); **SA1 + FA3**
+declared (`e9c4ebc`) and **passed both marks**: H good/great **14.2%** (27/190; Wilson [10.0, 19.9%], vehicle-cluster 95% CI
+[8.5, 20.7%]; H baseline was 25.3%), H all 27.3% (unrated 33.8%); RflyMAD sensor faults **53.8%** (106/197), motor faults
+**19.8%** (48/242), fault-free control **0.0%** (0/50); forum expert aircraft crashes 37.5% (12/32), archive crashes 36.8%
+(49/133) vs prior flights 26.5% (118/445). Demo fleet reloaded earlier; rebuild after any schema/seed changes. New: tools/backup.py. macOS app built with CARGO_TARGET_DIR on the internal disk; launcher fixed (unread
 output pipe stalled the backend, forced DATABASE_URL pointed at an old data/aerofleet.db, a stale .venv in the repo was
 picked first; it now writes ~/Library/Application Support/AeroFleet/backend.log). The entries below are the history, oldest first.
 

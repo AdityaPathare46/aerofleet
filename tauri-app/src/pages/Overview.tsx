@@ -66,18 +66,18 @@ const HOW: { finding: string; does: string; section: string; button: string }[] 
 ]
 
 const FLOW: { when: string; what: string[]; section: string }[] = [
-  { when: 'Morning, before going out', what: ['Today\'s fleet: every drone ready / check first / do not fly, with the reason', 'Settings against the approved configuration (the cause experts named most)', 'Each spraying route against red and yellow airspace and the 120 m limit'], section: 'page:readiness' },
-  { when: 'Planning the day\'s jobs', what: ['Farms near an airport or a cantonment flagged before anyone drives out', 'Jobs that would cross each other in the air found and re-timed', 'Battery against the forecast wind at working height'], section: 'page:routes' },
-  { when: 'Evening, after flying', what: ['Upload all the day\'s logs at once; each is matched to its drone automatically', 'Events in time order, evidence quality, and the learned model\'s expected range', 'A signed, printable record, and a CSV operations log for the spray report'], section: 'flight-list' },
-  { when: 'Across the season', what: ['Fleet trends: hours, warnings per flight, drones drifting from expected', 'A maintenance logbook that shows whether each fix worked', 'Registration (UIN) and airworthiness checks per drone'], section: 'page:trends' },
+  { when: 'Morning, before going out', what: ['Today\'s fleet (English / Hindi / Marathi): every drone ready / check first / do not fly, with the reason', 'Settings against the approved fleet baseline (the cause experts named most), plus failsafe-off and incident-grounding checks', 'Each planned route against red and yellow airspace and the 120 m limit'], section: 'page:readiness' },
+  { when: 'Planning the day\'s jobs', what: ['Sites near an airport or cantonment flagged before a crew drives out', 'Multi-drone jobs checked for spatial/temporal conflicts and re-timed', 'Battery checked against forecast wind with selectable airframe power profiles (agri-sprayer, survey quad, custom)'], section: 'page:routes' },
+  { when: 'Evening, after flying', what: ['Batch-upload the day\'s logs (PX4, ArduPilot, MAVLink .tlog, or DJI CSV/GPX); PX4 logs match automatically by flight-controller ID', 'Chronological evidence timeline, evidence quality, and conformal normal-flight context range', 'Signed, tamper-evident record with external receipts, CSV operations log, and pre-filled 7-day CIB&RC Annexure-I spray forms'], section: 'flight-list' },
+  { when: 'Across the season & training', what: ['Fleet trends: hours, warnings per flight, drones drifting from expected', 'Maintenance logbook with incident grounding/clearance and before-vs-after comparisons', 'Registration (UIN), 59 flight-controller compliance rules, and 3D/WebXR debrief replay for RPTO & hub instructors'], section: 'page:trends' },
 ]
 
 const WHO: { who: string; gets: string }[] = [
-  { who: 'Drone service providers and self-help groups', gets: 'A morning go / no-go for every drone, written so a pilot with weeks of training can act on it, and records that protect the pilot when something goes wrong.' },
-  { who: 'Fleet operators', gets: 'One place for settings, flight reviews and records, without trusting an unproven verdict.' },
-  { who: 'Maintenance engineers', gets: 'Which drone to look at first, with its own history beside the fleet\'s.' },
-  { who: 'Investigators and insurers', gets: 'A time-ordered, signed account of what the log shows, and a clear statement of what it cannot show.' },
-  { who: 'Regulators and tool builders', gets: 'A ten-item checklist for testing any log-based diagnostic before it is trusted.' },
+  { who: 'Commercial DaaS operators & LFC agri-drone aggregators', gets: 'One back-office hub for PX4/ArduPilot fleet baselines, morning go/no-go checks, CIB&RC 7-day spray forms, and offline-verifiable records across 3–30 drones.' },
+  { who: 'Field pilots (including SHG / Drone Didi operators)', gets: 'A one-glance morning readiness board in English, Hindi or Marathi — plus signed factual records that protect the pilot when someone asks whose fault an incident was.' },
+  { who: 'RPTO training academies & maintenance engineers', gets: 'Which drone to inspect first, per-drone history beside peers, incident grounding/clearance tracking, and a 3D tabletop replay for structured post-flight pilot debriefs.' },
+  { who: 'Investigators and insurers', gets: 'A time-ordered, Ed25519-signed account with third-party receipts and a clear statement of what flight logs cannot prove.' },
+  { who: 'Regulators and tool builders', gets: 'A ten-item reporting checklist for evaluating any log-based diagnostic before it is trusted.' },
 ]
 
 export default function OverviewPage() {
@@ -98,11 +98,13 @@ export default function OverviewPage() {
       {/* 1. What it is */}
       <div className="card" style={{ ...card, padding: 28, background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: '#fff', border: 'none' }}>
         <div style={{ ...kicker, color: 'rgba(255,255,255,0.75)' }}>AeroFleet 2.0 · COEP Technological University</div>
-        <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>The safety and records back office for agricultural drone fleets.</h1>
+        <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>Independent safety and records back office for Indian PX4 &amp; ArduPilot drone fleets.</h1>
         <div style={{ fontSize: 16, maxWidth: 820, lineHeight: 1.5 }}>
-          Each morning AeroFleet tells a drone service provider which drones can fly today and why; before a job it checks the route
-          against restricted airspace; after flying it turns each log into a signed, time-ordered record. It is built on what
-          {' '}{STUDY.crashLogs} real crash logs from a {STUDY.logs}-log public archive can and cannot show: evidence, not verdicts.
+          Built for commercial Drone-as-a-Service operators, RPTO training academies, and Lead Fertiliser Company / agricultural drone
+          aggregators — with a built-in Indian agricultural spraying compliance module (CIB&amp;RC Annexure-I + Hindi/Marathi morning board).
+          Every morning it shows which drones can fly and why; before a job it checks routes and wind margin; after flying it turns each log
+          into a signed, time-ordered record grounded in what {STUDY.crashLogs} real crash logs from a {STUDY.logs}-log public archive can
+          and cannot show: evidence, not verdicts.
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
           <button className="btn" style={{ background: '#fff', color: 'var(--accent)', fontWeight: 700 }} onClick={() => goTo('page:readiness')}>See today's fleet</button>
@@ -133,10 +135,12 @@ export default function OverviewPage() {
           <span style={{ fontSize: 13, lineHeight: 1.5 }}>{TOP_CAUSE.text}</span>
         </div>
         <div style={{ fontSize: 14, lineHeight: 1.55 }}>
-          <b>The gap.</b> A self-help group with one or two drones has no maintenance engineer and no fleet software. Commercial fleet
-          tools and new AI products promise to read a log and say what failed and who was to blame, and that answer can decide an
-          insurance claim or who is held responsible. <b>We tested whether real logs can carry that weight; they cannot.</b> So
-          AeroFleet checks what can be checked by rule, shows the rest as evidence, and never names a cause.
+          <b>The gap.</b> Commercial Indian drone operators, RPTO training fleets, and Lead Fertiliser Company / agri-drone aggregators
+          supervise new pilots with tight statutory reporting and insurance requirements, yet lack an independent assurance record.
+          Commercial tools and new AI products promise to read a log and name what failed and who was to blame — verdicts that can
+          decide an insurance claim or liability dispute. <b>We tested whether real logs can carry that weight; they cannot.</b> So
+          AeroFleet enforces deterministic pre-flight governance, presents post-flight evidence without naming a cause, and binds every
+          record to an offline-verifiable cryptographic chain.
         </div>
         <div style={grid(220)}>
           {REGULATION.map((r) => (
@@ -209,7 +213,7 @@ export default function OverviewPage() {
       {/* 6. How an operator uses it */}
       <div className="card" style={card}>
         <div style={kicker}>How it is used</div>
-        <h2 style={h2}>A day with AeroFleet, for a spraying service provider</h2>
+        <h2 style={h2}>A day with AeroFleet, from morning hub check to signed records</h2>
         <div style={grid(220)}>
           {FLOW.map((s, i) => (
             <button key={s.when} onClick={() => goTo(s.section)} className="card"
