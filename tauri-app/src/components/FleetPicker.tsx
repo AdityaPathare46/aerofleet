@@ -33,6 +33,13 @@ export function SimulatedFleetBanner({ fleet }: { fleet: string }) {
 
 export default function FleetPicker({ apiUrl, fleet, onChange }: { apiUrl: string; fleet: string; onChange: (next: string) => void }) {
   const [fleets, setFleets] = useState<FleetItem[]>([])
+  const [authTick, setAuthTick] = useState(0)
+
+  useEffect(() => {
+    const onAuth = () => setAuthTick((n) => n + 1)
+    window.addEventListener('aerofleet-auth', onAuth)
+    return () => window.removeEventListener('aerofleet-auth', onAuth)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -50,7 +57,7 @@ export default function FleetPicker({ apiUrl, fleet, onChange }: { apiUrl: strin
       .catch(() => {})
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiUrl])
+  }, [apiUrl, authTick])
 
   const options = fleets.some((f) => f.fleet === fleet)
     ? fleets

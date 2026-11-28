@@ -34,6 +34,7 @@ export default function SignInCard({ apiUrl, onSignedIn, reason }: {
       })
       if (!r.ok) throw new Error(r.status === 401 ? 'Incorrect username or password' : `Sign-in failed (HTTP ${r.status})`)
       storeTokens(await r.json())
+      window.dispatchEvent(new Event('aerofleet-auth'))
       onSignedIn()
     } catch (err) {
       setError(String((err as Error).message || err))
