@@ -6,7 +6,7 @@ flights, with the questions an examiner is likely to ask. About 10 minutes.
 Last checked 27 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
 
 > **Two seeded demo fleets:**
-> - **`pune-agri [Simulated SITL]` (start here for the Indian operator workflow):** 6 **simulated** ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`, visibly badged as simulated on screen and printouts) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05` (with 1-click Rule 30 48h Digital Sky Accident Record), active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres upper-bound swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
+> - **`pune-agri [Simulated SITL]` (start here for the Indian operator workflow):** 6 **simulated** ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`, visibly badged as simulated on screen and printouts) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05` (with 1-click Rule 30 / 2025 AAIB Accident Record), active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres upper-bound swath), and every readiness outcome (`No rule fired`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
 > - **`demo` & `demo-settings` (empirical study evidence):** 64 real public PX4 flights of 8 unrelated airframes showing the within-drone vibration null, public reference comparison, maintenance logbook before/after, and settings drift.
 
 ## 1. Set up (once)
@@ -77,10 +77,12 @@ because the study found it is not a validated warning. A GPS or sensor complaint
 lasts 3 s: with the earlier 1 s rule, 28.8% of healthy public flights were flagged (FA1, failed); with this rule, 11.1%
 of held-out healthy flights (FA2, passed).
 
-**Be ready for this question:** the uploaders rated every demo drone's last flight a crash, yet three show *Ready*.
-That is the study's own finding on screen: crash flights showed no warning in their logs, and a log cannot say whether
-a drone crashed or why. The board reports what the log shows; an operator who knows a drone crashed records it in the
-maintenance logbook and inspects it.
+**Be ready for this question:** the uploaders rated every demo drone's last flight a crash, yet three (`PX4-01`,
+`PX4-02`, `PX4-03`) show **No rule fired** (with a non-blocking record-age note showing their logs are years old). That
+is the study's own finding on screen: crash flights often show no warning in their logs (SA1: 36.8% of archive crashes
+flagged vs 27.3% of ordinary flights, ~1.35×), which is exactly why the green state reads **No rule fired (records check
+only — not an airworthiness sign-off)** rather than *Ready*. An operator who knows a drone crashed records it in the
+maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
 not change with the language, log messages stay in English, and the note under the buttons says the translation is
@@ -263,7 +265,7 @@ database could rebuild the whole chain; a copy of the heads file kept by someone
 come from this computer's clock, and no trusted hardware is involved.
 
 **Has it been tested with real operators?**
-No. 775 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+No. 776 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
 has been done. The paper says so.
 
 **Does it work with ArduPilot?**

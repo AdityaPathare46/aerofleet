@@ -46,7 +46,7 @@ names a cause. Every day it answers four questions with fixed rules and recorded
 
 | Question | Screen |
 |---|---|
-| Can each drone fly today, and why not? | Today's fleet: *Ready / Check first / Do not fly*, each reason written out |
+| Can each drone fly today, and why not? | Today's fleet: *No rule fired / Check first / Do not fly* (records check only), each reason written out |
 | Is this spraying route allowed? | Route check: approximate restricted airspace, the 120 m limit, conflicts between jobs |
 | What happened in the flight, and can we prove it later? | Fleet Assurance: event timeline, signed and hash-chained record, comparison with healthy flights |
 | Is the seven-day spray report done? | Spray register: the government's Spray Monitoring Form, part-filled from the log, with days left |

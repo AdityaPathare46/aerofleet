@@ -25,10 +25,11 @@ as context only.
 ## The live demonstration order (10 minutes)
 
 1. **Overview** page: the use case and its numbers, the data, six findings, how each design choice follows (3 min).
-1b. **Today's fleet** (fleet `pune-agri`): cohesive 6-drone ArduCopter 4 m Pune spraying fleet with shared baseline,
-    verified/unverified UINs, every verdict (`AGRI-01/02` Ready, `AGRI-06` Check first for compass health, `AGRI-03/04/05`
-    Do not fly for failsafes off, mid-flight geofence disable, and grounded motor-failure incident), plus **Spray register**
-    (live Nov 2026 forms, 5.61 acres estimated swath) and 3D/VR planned-vs-flown spraying replay (2 min).
+1b. **Today's fleet** (fleet `pune-agri [Simulated SITL]`): 6-drone simulated ArduCopter 4 m Pune spraying fleet with
+    shared baseline, verified/unverified UINs, every status (`AGRI-01/02` No rule fired, `AGRI-06` Check first for
+    compass health & expiring insurance, `AGRI-03/04/05` Do not fly for failsafes off, mid-flight geofence disable, and
+    grounded motor-failure incident), plus **Spray register** (live Nov 2026 forms, 5.61 acres upper-bound swath) and
+    3D/VR planned-vs-flown spraying replay (2 min).
 2. **Proof** page: press *Recompute the results*, then *Run five attacks on a copy* (2 min). This answers most
    "how do we know" questions before they are asked.
 3. **Fleet Assurance**, fleet `demo`: real public PX4 logs — a flight review (timeline, evidence quality), a drone's
@@ -82,25 +83,28 @@ checks themselves are general: any PX4 or ArduPilot fleet can use them.
 **Q3. Who would use this — and why haven't you tested it with real operators yet?**
 Fleet supervisors at Indian commercial DaaS operators, RPTO training academies, and Lead Fertiliser Company / agricultural
 drone aggregators (settings governance, morning records check, 7-day CIB&RC spray register, 24 h / 48 h accident records),
-plus maintenance engineers and insurers. *Honest limit & why it is defensible:* no paying operator has deployed it yet
-and `pune-agri` uses simulated ArduPilot SITL logs. In safety-critical software, offline empirical validation (590 real
-crash logs, SITL firmware fault injection, false-alarm calibration, and tamper-proofing — TRL 4–5) must come *before*
-putting unvalidated rules in front of pesticide-spraying pilots. Our pre-registered 6-month prospective field study and
-operator study protocol (`research/protocols/prospective_and_user_study.md`) is the immediate next stage once an RPTO or
-LFC partner approves field deployment.
+plus maintenance engineers and insurers. *Honest limit & why it is defensible:* no paying operator has deployed it yet and `pune-agri` uses simulated ArduPilot
+SITL logs (**lab and simulation validation only**). In safety-critical software, offline empirical validation (590 real
+crash logs, SITL firmware fault injection, false-alarm calibration, and tamper-proofing) must come *before* putting
+unvalidated rules in front of pesticide-spraying pilots. Our **declared (git-committed) protocol document** for a
+6-month prospective field study (`research/protocols/prospective_and_user_study.md`, not yet run) is the immediate next
+stage once an RPTO or LFC partner approves field deployment.
 
 **Q4. Why should a regulator care?**
 EU and UK operators must keep operation and maintenance records for at least three years. In India, two overlapping
-frameworks apply: (1) **Drone Rules, 2021** (G.S.R. 589(E), as amended in 2022 and 2023) require a verified UIN
-(**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), Remote Pilot Certificate (**Rule 31** / Rule 34),
-third-party liability insurance (**Rule 44**), and an accident report on Digital Sky within **48 hours** (**Rule 30**,
-verified against the Gazette text); and (2) the **Aircraft (Investigation of Accidents and Incidents) Rules, 2025**
-(under Bharatiya Vayuyan Adhiniyam, 2024) extend to unmanned aircraft, require **24-hour notification to AAIB and DGCA**,
-and explicitly enshrine a **no-blame, safety-prevention investigation principle** aligned with ICAO Annex 13. AeroFleet
-tracks those credentials in the signed record, enforces expired insurance/RPC/UIN (IST date) and stale unlogged reviews
-(> 14 days) on *Today's fleet*, and generates a one-click printable **Accident Record prepared for Digital Sky & AAIB**
-showing both the 24 h and 48 h countdowns, telemetry timeline, maintenance logbook, and Ed25519 hashes — matching India's
-no-blame statutory principle while never claiming to be an official DGCA/AAIB form.
+frameworks apply: (1) **Drone Rules, 2021** (G.S.R. 589(E), 25 Aug 2021, as amended in 2022 and 2023) require a verified
+UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), Remote Pilot Certificate (**Rule 31**; procedure
+Rule 34), third-party liability insurance (**Rule 44**), and an accident report on Digital Sky within **48 hours**
+(**Rule 30 — "Mandatory reporting of an accident"**, verified on `egazette.gov.in`; note some secondary summaries
+misnumber it as Rule 29); and (2) the **Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (under
+Bharatiya Vayuyan Adhiniyam, 2024) extend to unmanned aircraft, require **24-hour notification to AAIB and DGCA** when an
+event meets the statutory definition of an accident or serious incident, and explicitly enshrine a **no-blame,
+safety-prevention investigation principle** aligned with ICAO Annex 13. AeroFleet tracks those credentials in the signed
+record, enforces expired insurance/RPC/UIN (IST date) on *Today's fleet* (and shows a non-blocking record-age note if
+the last reviewed flight is older than 14 days), and generates a one-click printable **Accident Record prepared for
+Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows (with the explicit scope caveat that they apply
+only if the event meets the statutory definition), telemetry timeline, maintenance logbook, and Ed25519 hashes —
+matching India's no-blame principle while never claiming to be an official DGCA/AAIB form.
 
 ## B. Data
 
@@ -212,12 +216,13 @@ before training and declared them. The finding does not depend on matching their
 dropped by 0.33 [0.28, 0.38] between random windows and held-out days. The point is the drop, not the level.
 
 **Q19. What about the language models? Everyone is using them.**
-Two reasons — one architectural and one empirical. Architecturally, safety-assurance records must be **deterministic,
-offline-auditable, reproducible across machines, and free of prompt-injection paths**; an LLM cannot guarantee any of
-those. Empirically, we tested **four small local models (3–4B parameters, not frontier cloud models)** as single
-reviewers and voting panels: on 97 real crash cases with independent labels, no panel beat a fixed rule, one compromised
-reviewer moved 16 to 89 of the 97 verdicts, and Mac vs RTX agreement was only 16/33. That is why AeroFleet uses zero AI
-in its decision path. *Show:* Settings ▸ "Language models: none"; the static no-AI import test.
+Two reasons — one empirical on real logs and one architectural. Empirically, lead with the **blind test on 97 real
+crash logs** using four **small local models (3–4B parameters, not frontier cloud models)**: the fixed rule itself was
+right in only 26 and wrong in 62 (so it was not a strawman winner either), no voting panel beat it, one compromised
+reviewer flipped **16 to 89 of the 97 verdicts**, and Mac vs RTX panel agreement was only **16 of 33**. Architecturally,
+safety-assurance records must be **deterministic, offline-auditable, reproducible across machines, and free of
+prompt-injection paths** — none of which an LLM can guarantee. That is why AeroFleet uses zero AI in its decision path.
+*Show:* Settings ▸ "Language models: none"; the static no-AI import test.
 
 ## E. The tool
 
@@ -324,7 +329,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-775 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+776 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -368,7 +373,7 @@ Airdata is a mature global logbook, but has no India UIN or CIB&RC SOP logic and
 FlightHub serves DJI hardware only, and DJI native logs are encrypted. AeroGCS is the closest Indian rival and ships with
 many spraying drones, but it is the manufacturer's own system, not an independent third-party audit record. FlightMD
 (open source) is closest in spirit; AeroFleet adds baseline approvals, a morning go/no-go board, the 7-day spray register,
-an offline-verifiable Ed25519 ledger with external receipts, and a pre-registered empirical study. Honest weak points:
+an offline-verifiable Ed25519 ledger with external receipts, and a pre-declared (git-committed) empirical study. Honest weak points:
 full telemetry/settings/vibration checks require PX4 or ArduPilot (closed controllers are limited to CSV/GPX exports),
 no mobile app yet, and no live operator field trial yet.
 
@@ -505,10 +510,11 @@ for it to matter; on sprayers it may, and the code is ready for that retrain onc
 Because calling it "Ready" would be unsafe: our own SA1 numbers show the board flags only 36.8% of archive crashes and
 19.8% of RflyMAD motor faults (about 1.35× as often as ordinary flights). It is a **records check, not an airworthiness
 sign-off**. So the UI explicitly labels the green state **"No rule fired"** and reminds the pilot to perform a physical
-pre-flight check. In addition, if a drone's last reviewed flight is older than 14 days (`stale_flight`), it automatically
-drops to **Check first** so a drone that flew unlogged cannot stay silently green. And when an operator knows a drone
-crashed, recording `"Incident / crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`)
-immediately turns Today's fleet to **Do not fly** until signed inspection clearance is logged.
+pre-flight check. If a drone's last reviewed flight is older than 14 days, a non-blocking **record-age note** warns the
+pilot to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle between crop
+cycles are not stuck on false-alarm Check first). And when an operator knows a drone crashed, recording `"Incident /
+crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`) immediately turns Today's fleet
+to **Do not fly** until signed inspection clearance is logged.
 
 **Q56. Why didn't you turn the ML model into an onboard emergency-takeover controller?**
 Because our own study proved ML fault detectors fail on unseen flight days (LeNet-5 dropped from AUC 0.94 to 0.63) and
@@ -525,11 +531,11 @@ instructor** who manages maintenance, compliance, and pilot debriefing across a 
 
 ## Questions to answer with "we did not test that"
 
-- "Does AeroFleet reduce crashes?" Not tested; that needs the pre-registered 6-month prospective study.
+- "Does AeroFleet reduce crashes?" Not tested; that needs the declared 6-month prospective study protocol (not yet run).
 - "Does it read native encrypted DJI logs?" No: DJI native logs are encrypted; AeroFleet reads converted DJI CSV exports
   (tested on 3 real DJI Mini 4 Pro flights) for position, battery, GPS, mode, spray forms and signed records — not
   settings, vibration or autopilot health checks.
 - "Would vibration work as a screen on a bigger dataset?" Unknown. About 247 matched sets would be needed if the true
   effect is the smaller replicated one, more than the archive holds.
-- "Is the VR replay proven to improve debriefing?" Built and tested in a browser with a pre-registered 12-person Quest 3
-  study (`research/vr_study/PROTOCOL.md`); not yet run on users unless noted from completed study results.
+- "Is the VR replay proven to improve debriefing?" Built and tested in a browser with a pre-declared (git-committed) 12-person Quest 3
+  study protocol (`research/vr_study/PROTOCOL.md`); not yet run on users unless noted from completed study results.

@@ -112,8 +112,9 @@ def build_accident_dossier(
 
     return {
         "rule": (
-            "Drone Rules, 2021 (G.S.R. 589(E)), Rule 30 (48-hour Digital Sky accident report) & "
-            "Aircraft (Investigation of Accidents and Incidents) Rules, 2025 (24-hour AAIB/DGCA notification for UAS; no-blame safety investigation)"
+            'Drone Rules, 2021 (G.S.R. 589(E), 25 Aug 2021), Rule 30 ("Mandatory reporting of an accident" — 48-hour Digital Sky report) & '
+            "Aircraft (Investigation of Accidents and Incidents) Rules, 2025 (24-hour AAIB/DGCA notification for UAS; no-blame safety investigation) — "
+            "deadlines apply only if the event meets the statutory definition of an accident or serious incident"
         ),
         "generated_at": _fmt_dt(now),
         "fleet": fleet,
@@ -202,8 +203,10 @@ def accident_dossier_html(d: Dict[str, Any]) -> str:
             if dl.get("aaib_2025_hours_remaining") is not None else ""
         )
         banner_txt = (
-            f"<b>Drone Rules 2021 Rule 30 (Digital Sky 48 h report):</b> {dl['hours_remaining']:.1f} hours remaining — "
+            f"<b>Drone Rules, 2021 — Rule 30 (\"Mandatory reporting of an accident\", 48 h Digital Sky):</b> {dl['hours_remaining']:.1f} hours remaining — "
             f"due by <b>{e(dl['due']['ist'] or '')}</b> ({e(dl['due']['utc'] or '')}).{aaib_part}"
+            "<br><span class='muted'>Statutory deadlines apply only if the occurrence meets the legal definition of an accident or serious incident "
+            "(Drone Rules, 2021 Rule 3 / Aircraft (Investigation of Accidents and Incidents) Rules, 2025).</span>"
         )
     else:
         banner_cls = "banner-amber"

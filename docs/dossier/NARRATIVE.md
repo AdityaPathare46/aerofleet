@@ -227,7 +227,7 @@ attribute blame.
   Python. `tests/unit/test_no_ai_in_decision_path.py` follows every import from all 2.0 product routes (including
   `spray.py` and `vr_study.py`) and assurance modules and fails if it reaches any AI agent, LLM panel, or ML library.
 - **License**: MIT (`LICENSE` at repository root).
-- **Tests**: **775 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
+- **Tests**: **776 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
   typecheck clean; 30/30 paper-to-code number checks agree.
 - **Packaging**: the macOS app builds and starts its own backend (it still needs the project folder and its Python
   environment on the same machine).
@@ -288,8 +288,8 @@ An operator approves an exact value with a written reason, and the approval is s
 | Display status | When |
 |---|---|
 | **Do not fly** | an unapproved safety-critical setting change; no UIN on record (Rule 14); drone grounded in maintenance logbook after a reported incident/crash without a subsequent clearance; expired third-party insurance (Rule 44, IST date); expired assigned pilot RPC (Rule 31, IST date) |
-| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **a failsafe or safety check switched off (checked regardless of baseline by design**, because stock ArduPilot and PX4 ship with low-battery actions off/warn-only: ArduPilot low/critical battery, RC-loss, EKF, geofence, `ARMING_CHECK=0`; PX4 `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281`); an unverified UIN; missing or expiring (≤ 14 d) insurance; settings never checked; last flight from a partial CSV/GPX export; **last reviewed flight older than 14 days (`stale_flight`)**; or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
-| **No rule fired** | none of these (internal API enum `READY` retained for compatibility; UI explicitly warns to perform a physical pre-flight check) |
+| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **an unapproved failsafe or safety check switched off** (checked even if present in a raw baseline, because stock ArduPilot and PX4 ship with low-battery actions off/warn-only — ArduPilot low/critical battery, RC-loss, EKF, geofence, `ARMING_CHECK=0`; PX4 `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281` — **cleared when explicitly approved by an operator with a signed written reason** in `FleetBaseline.approved`, which moves it to a non-blocking setting note); an unverified UIN; missing or expiring (≤ 14 d) insurance; settings never checked; last flight from a partial CSV/GPX export; or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
+| **No rule fired** | none of these (internal API enum `READY` retained for compatibility; UI explicitly warns to perform a physical pre-flight check, and shows a non-blocking record-age note whenever the last reviewed flight is older than 14 days so seasonal sprayers are not stuck on false-alarm Check first) |
 
 - **Non-blocking context & notes**: low-battery landing (`pilot_notes`), PX4 firmware-default safety-switch bypass
   `CBRK_IO_SAFETY=22027` (`setting_notes`, fixed under C1; `CBRK_FLIGHTTERM` is not checked at all), overdue 7-day
@@ -412,13 +412,14 @@ Two seeded fleets serve distinct demonstration roles (1-click switchable via `<F
 1. **`pune-agri` (simulated ArduPilot SITL spraying fleet — default view):** 6 drones (`AGRI-01`..`AGRI-06`) seeded from
    ArduCopter SITL v2 4 m spraying `.bin` logs and paired `.waypoints` plans near Pune, with a shared approved baseline,
    reconciled tracks playable in 3D/VR, DEMO UINs/insurance/RPCs, live Nov 2026 spray forms totaling **5.61 acres**
-   (2.275 ha), and every readiness state (`AGRI-01/02` Ready; `AGRI-06` Check first for unverified UIN, insurance
+   (2.275 ha), and every readiness state (`AGRI-01/02` No rule fired; `AGRI-06` Check first for unverified UIN, insurance
    expiring in 9 days, and compass unhealthy 110 s; `AGRI-03` Do not fly for failsafes off + 3 SOP spray problems;
    `AGRI-04` Do not fly for mid-flight geofence disable; `AGRI-05` Do not fly grounded after motor failure with a live
-   48-hour accident dossier). *Note (M2): screens must explicitly label this fleet as simulated (ArduPilot SITL).*
+   24 h / 48 h accident record). *Note (M2): screens and printouts explicitly label this fleet as simulated (ArduPilot SITL).*
 2. **`demo` & `demo-settings` (real public PX4 study evidence):** 64 real public PX4 flights of 8 unrelated airframes
-   (each with one crash-rated flight and earlier flights, no shared baseline — un-baselined drones now show `Check first`
-   rather than silently passing as `Ready`), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray forms,
+   (each with one crash-rated flight and earlier flights; `3 Do not fly, 2 Check first, 3 No rule fired`, each showing a
+   non-blocking record-age note because the public logs are years old — illustrating on screen why the green badge reads
+   *No rule fired*, never *Ready*), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray forms,
    and `demo-settings` showing a blocked RC-loss failsafe (`NAV_RCL_ACT` 2 → 0).
 
 ---
@@ -498,28 +499,38 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 - `docs/paper/check_numbers.py`: **30 of 30** numbers in the paper and app Overview agree with the result files.
 - `docs/CRITICAL_REVIEW_2026-11-27.md` (included in Appendix H): independent line-by-line review of commits
   `24c814f..8928782`; critical findings **C1** and **C2** fixed in `fc73ec6`, and **H1-H5, M1-M5, L2** + external
-  dossier review fixes completed on 28 Nov (**775 tests passing**).
+  dossier review fixes completed on 28 Nov (**776 tests passing**).
 
 ---
 
 ## 9. Known weak points (honest status as of 28 Nov 2026)
 
-1. **No real user or field sprayer logs.** No operator has used the tool; `pune-agri [Simulated SITL]` is simulated
-   ArduPilot SITL (visibly badged on screens and printouts); `demo` is public PX4 hobby/research flights.
-2. **Remaining verification & governance limits (post-C1/C2/H1-H5/M1-M5 fixes):**
-   - **FA4 not yet run:** a fresh whole-board false-alarm test (combining flight rules with smoothed 2 s groundspeed +
-     settings rules after C1) on unseen logs has not been declared or run yet; FA3 (14.2%, cluster CI [8.5, 20.7%]) was
-     a re-measurement on H rather than an untouched held-out test, and SA1-RflyMAD (53.8%) is descriptive.
+1. **No real user or field sprayer logs (lab and simulation validation only).** No operator has used the tool;
+   `pune-agri [Simulated SITL]` is simulated ArduPilot SITL (visibly badged on screens and printouts); `demo` is public
+   PX4 hobby/research flights. The 6-month prospective study is a declared (git-committed) protocol document, not yet run.
+2. **Remaining verification & governance limits (post-C1/C2/H1-H5/M1-M5 + external review fixes):**
+   - **Whole-board false-alarm rate (FA4) unmeasured:** FA1–FA3 measured flight-log rules only, before the 2 s smoothed
+     groundspeed (M3) and before C1 settings checks (where 152/200 unconfigured stock PX4 logs flag, 145 for
+     `COM_LOW_BAT_ACT = 0` unless an approved baseline sets it to 2/3 or an operator signs a written exception). FA3
+     (14.2%, cluster CI [8.5, 20.7%]) was a re-measurement on H rather than an untouched held-out test, and SA1-RflyMAD
+     (53.8%) is descriptive. A fresh whole-board FA4 on unseen logs is future work.
+   - **Record staleness (`stale_note`):** reviews older than 14 days show a non-blocking record-age note (deliberately
+     non-blocking so seasonal sprayers idle between crop cycles are not stuck on Check first, meaning unlogged flights
+     within 14 days still rely on operator upload discipline).
+   - **Statutory citations:** Drone Rules 2021 Rule 30 ("Mandatory reporting of an accident") was verified on
+     `egazette.gov.in`, though some secondary summaries (e.g. Mondaq) misnumber it as Rule 29; verify page numbers
+     directly against the downloaded Gazette PDF before printing the final report. Both the 24 h (2025 AAIB Rules) and
+     48 h (Rule 30) countdowns apply only when an event meets the statutory definition of an accident/serious incident.
    - **Translations (H3):** Hindi and Marathi lines were team-reviewed by a Marathi-native member; an independent outside
      reader per language (especially Hindi) is still recommended before field deployment.
    - **Per-pilot RPC schema (M4 remainder):** RPC is currently stored per drone (`DroneCompliance`) rather than in a
-     separate `pilots` table (a pilot often flies multiple drones); missing insurance passes only when no compliance row
-     exists at all (legacy/public logs).
+     separate `pilots` table; missing insurance passes when no compliance row exists at all (legacy/public logs).
    - **RSA-PSS timestamps (L4):** `tsa.py` verifies PKCS#1 v1.5 and ECDSA signatures (failing closed on RSA-PSS).
 3. **The normal-flight model** is PX4-only, not trained on sprayers (H5 failed), ranges are wide, and decision utility
    is untested.
-4. **The research study**: unreliable self-reported labels; one self-uploaded archive; between-drone vibration is
-   suggestive only (p = 0.076 site-weighted); paper unreviewed.
+4. **The research study**: unreliable self-reported labels (κ = −0.10 against blind relabelling); one self-uploaded
+   archive; between-drone vibration **did not replicate on the newer accelerometer metric** (rank 0.58, p = 0.25; new
+   cases only 0.50, p = 0.58); LLM panel benchmark tested four 3-4B local models (not frontier models); paper unreviewed.
 5. **Log coverage**: closed agricultural controllers and native encrypted DJI logs are unread; Airdata CSV untested.
 6. **Legacy code**: ~4,000 lines of AeroFleet 1 LLM agents and 8 hidden screens remain in the repo (isolated and
    verified unreachable by the no-AI test).
@@ -528,16 +539,18 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 ## 10. Remaining work before the 1-5 December viva
 
-1. Write and print the **7-chapter B.Tech final project report** with every number aligned to commit `HEAD`.
-2. Optional if time allows before 1 Dec: obtain one external Hindi/Marathi proof-reader sign-off, declare and run
-   **FA4** on fresh logs never used in FA1/FA2/FA3, and run the 12-participant Quest 3 VR debrief study.
+1. Write and print the **7-chapter B.Tech final project report** with every number aligned to commit `HEAD` (and verify
+   Gazette PDF page citations for G.S.R. 589(E) Rule 30 and the 2025 Accident Investigation Rules).
+2. Run a full dry-run of the live demonstration script in the packaged app today.
+3. Optional if time allows before 1 Dec: obtain one external Hindi/Marathi proof-reader sign-off, run a formative 20-min
+   walkthrough with 1–2 local RPTO/fleet practitioners, or declare and run FA4 on fresh logs never used in FA1–FA3.
 
 ---
 
 ## 11. What we believe is distinctive
 
-1. A product designed around a **pre-registered negative result**: it refuses to name crash causes because declared
-   tests on 590 crashes showed logs cannot support blame attribution.
+1. A product designed around a **pre-declared (git-committed) negative result**: it refuses to name crash causes
+   because declared tests on 590 crashes showed attribution cannot be validated with available public logs and labels.
 2. **Pre-declared product verification with failures and critical reviews published openly** (H1, H5, FA1, archive
    search A1, SITL S1, and `CRITICAL_REVIEW_2026-11-27.md` C1/C2 fixes).
 3. A **tamper-evident governance layer** (approved baseline with signed reasons, failsafe-off checks, Ed25519 ledger,

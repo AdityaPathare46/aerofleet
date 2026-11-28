@@ -55,31 +55,51 @@ def _as_int(v) -> Optional[int]:
         return None
 
 
-def failsafes_off(params) -> List[Dict[str, str]]:
+def _approved_match(approved: Optional[Dict[str, Any]], name: str, val: Any) -> Optional[Dict[str, Any]]:
+    if not approved or name not in approved:
+        return None
+    entry = approved[name]
+    a_val = _as_int(entry.get("value") if isinstance(entry, dict) else entry)
+    p_val = _as_int(val)
+    if a_val is not None and p_val is not None and a_val == p_val:
+        return entry if isinstance(entry, dict) else {"value": a_val}
+    return None
+
+
+def failsafes_off(params, approved: Optional[Dict[str, Any]] = None) -> List[Dict[str, str]]:
     """Failsafes or critical safety checks switched off in a drone's settings: [{"name", "title"}]. These are reasons
-    for "Check first". Values that are the firmware's own default bypass are in setting_notes() instead."""
+    for "Check first" unless the operator has explicitly signed off that exact value in `FleetBaseline.approved`
+    with a written reason (in which case setting_notes() records the signed exception). Values that are the firmware's
+    own default bypass are in setting_notes() instead."""
     if not params:
         return []
-    out = [{"name": n, "title": t} for n, (off, t) in PX4_FAILSAFES.items() if n in params and _as_int(params[n]) == off]
-    out += [{"name": n, "title": t} for n, (bypass, t) in PX4_CIRCUIT_BREAKERS.items() if n in params and _as_int(params[n]) == bypass]
+    raw = [{"name": n, "title": t} for n, (off, t) in PX4_FAILSAFES.items() if n in params and _as_int(params[n]) == off]
+    raw += [{"name": n, "title": t} for n, (bypass, t) in PX4_CIRCUIT_BREAKERS.items() if n in params and _as_int(params[n]) == bypass]
     if "ARMING_CHECK" in params and _as_int(params["ARMING_CHECK"]) == 0:
-        out.append({"name": "ARMING_CHECK", "title": "Pre-arm safety checks disabled"})
+        raw.append({"name": "ARMING_CHECK", "title": "Pre-arm safety checks disabled"})
     if any(k in params for k in AP_MARKERS):                               # ArduPilot settings
         from aerofleet.assurance.static_checks import checks_from_params
 
         for c in checks_from_params(params)["evaluated"]:
             if c["id"] in AP_FAILSAFE_RULES and c["status"] == "FAIL":
                 names = [k for k in (c.get("evidence") or {}) if k.isupper()]       # the settings the rule read
-                out.append({"name": names[0] if names else c["id"], "title": AP_FAILSAFE_RULES[c["id"]]})
-    return out
+                raw.append({"name": names[0] if names else c["id"], "title": AP_FAILSAFE_RULES[c["id"]]})
+    return [item for item in raw if _approved_match(approved, item["name"], params.get(item["name"])) is None]
 
 
-def setting_notes(params) -> List[str]:
-    """Safety-related settings worth knowing about that are the firmware's default: shown beside the verdict, never a
-    reason (like the pilot notes)."""
+def setting_notes(params, approved: Optional[Dict[str, Any]] = None) -> List[str]:
+    """Safety-related settings worth knowing about that are the firmware's default or disabled under a signed
+    operator approval: shown beside the verdict, never a reason (like the pilot notes)."""
     if not params:
         return []
-    return [f"{t} ({n} = {v})" for n, (v, t) in PX4_DEFAULT_BYPASS_NOTES.items() if n in params and _as_int(params[n]) == v]
+    notes = [f"{t} ({n} = {v})" for n, (v, t) in PX4_DEFAULT_BYPASS_NOTES.items() if n in params and _as_int(params[n]) == v]
+    if approved:
+        for item in failsafes_off(params, approved=None):
+            hit = _approved_match(approved, item["name"], params.get(item["name"]))
+            if hit is not None:
+                who = hit.get("by") or "operator"
+                notes.append(f"{item['title']} ({item['name']}): off under signed approval by {who}")
+    return notes
 
 
 ORDER = {DO_NOT_FLY: 0, CHECK_FIRST: 1, READY: 2}
@@ -157,6 +177,7 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
         reasons.append(_reason(CHECK_FIRST, f"Failsafe switched off: {fs['title']} ({fs['name']}).", "settings",
                                "failsafe_off", title=fs["title"], name=fs["name"]))
 
+    stale_note: Optional[Dict[str, Any]] = None
     if last_flight is not None:
         if max_stale_days is not None and last_flight.get("flown_at"):
             try:
@@ -165,11 +186,11 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
                 fdate = fdt.astimezone(IST).date() if fdt.tzinfo else fdt.date()
                 age = (ref - fdate).days
                 if age > max_stale_days:
-                    reasons.append(_reason(
-                        CHECK_FIRST,
-                        f"Last reviewed flight was {age} day(s) ago ({fdate.isoformat()}): confirm no unlogged flights occurred since.",
-                        "flight", "stale_flight", days=age, date=fdate.isoformat(),
-                    ))
+                    stale_note = {
+                        "days": age,
+                        "date": fdate.isoformat(),
+                        "text": f"Last reviewed flight was {age} day(s) ago ({fdate.isoformat()}): confirm no unlogged flights occurred since.",
+                    }
             except ValueError:
                 pass
         if last_flight.get("partial_log"):
@@ -189,7 +210,7 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
     status = min((r["level"] for r in reasons), key=ORDER.get, default=READY)
     return {"drone_id": drone_id, "status": status, "reasons": sorted(reasons, key=lambda r: ORDER[r["level"]]),
             "registration": registration, "compliance": compliance, "settings_verdict": settings["verdict"] if settings else None,
-            "last_flight": last_flight, "vibration": vibration, "grounded": grounded}
+            "last_flight": last_flight, "stale_note": stale_note, "vibration": vibration, "grounded": grounded}
 
 
 def last_flight_summary(review_id: int, report: Dict[str, Any], uploaded_at: str) -> Dict[str, Any]:

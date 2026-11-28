@@ -50,5 +50,5 @@ def test_every_reason_code_and_place_is_translated():
     assert codes == {"no_uin", "uin_unverified", "no_insurance", "insurance_expired", "insurance_expiring", "rpc_expired",
                      "settings_never", "no_baseline", "critical_changed", "limit_changed",
                      "critical_in_flight", "deviated", "warning", "more_warnings", "failsafe_off",
-                     "grounded_incident", "partial_log", "stale_flight"}
-    assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY", "accidentDossier"} <= k
+                     "grounded_incident", "partial_log"}
+    assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY", "accidentDossier", "stale_flight"} <= k

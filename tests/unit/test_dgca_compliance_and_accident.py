@@ -80,16 +80,27 @@ def test_rule30_accident_dossier_48h_deadline_and_html_escaping():
     assert "&lt;script&gt;bad&lt;/script&gt;" in html
 
 
-def test_stale_flight_prevents_silent_green_when_review_is_old():
+def test_stale_flight_surfaces_non_blocking_note_without_seasonal_false_alarm():
     ref = date(2026, 11, 28)
     ok_settings = {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": []}
     ok_reg = {"uin": "UA001", "status": "VERIFIED"}
     fresh = {"review_id": 1, "flown_at": "2026-11-26T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
     old = {"review_id": 2, "flown_at": "2026-10-01T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
-    assert assess("D1", ok_settings, ok_reg, fresh, today=ref, max_stale_days=14)["status"] == READY
+    r_fresh = assess("D1", ok_settings, ok_reg, fresh, today=ref, max_stale_days=14)
+    assert r_fresh["status"] == READY and r_fresh["stale_note"] is None
     r_old = assess("D1", ok_settings, ok_reg, old, today=ref, max_stale_days=14)
-    assert r_old["status"] == CHECK_FIRST
-    assert any(x["code"] == "stale_flight" for x in r_old["reasons"])
+    assert r_old["status"] == READY and r_old["stale_note"] is not None and r_old["stale_note"]["days"] == 58
+
+
+def test_signed_operator_approval_clears_deliberate_failsafe_off():
+    from aerofleet.assurance.readiness import failsafes_off, setting_notes
+
+    params = {"COM_LOW_BAT_ACT": 0, "NAV_RCL_ACT": 2}
+    assert [f["name"] for f in failsafes_off(params)] == ["COM_LOW_BAT_ACT"]
+    approved = {"COM_LOW_BAT_ACT": {"value": 0, "by": "chief-op", "note": "Tethered power rig"}}
+    assert failsafes_off(params, approved=approved) == []
+    notes = setting_notes(params, approved=approved)
+    assert any("COM_LOW_BAT_ACT" in n and "chief-op" in n for n in notes)
 
 
 def test_m3_smoothed_airborne_speed_rejects_parked_gps_jitter():

@@ -344,18 +344,20 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
             latest[r.drone_id] = r
     vib_rows = [{"id": r.id, "drone_id": r.drone_id, "created_at": r.created_at.isoformat(), "report": r.report, "log_name": r.log_name}
                 for r in reviews]
+    base = db.get(FleetBaseline, fleet)
+    approved_map = (base.approved or {}) if base else None
     out = []
     for drone_id in sorted(snap_ids | set(latest) | set(maint_by_drone)):
         settings, notes = None, []
         if drone_id in snap_ids:
             params = _snapshots(db, fleet, drone_id, 1)[0].params
-            notes = setting_notes(params)
+            notes = setting_notes(params, approved=approved_map)
             d = _drift(db, fleet, drone_id)
             side = d[d["decided_by"]] if d.get("decided_by") else None
             open_ = [c for c in (side or {}).get("changes", []) if not c["approved"]]
             settings = {"verdict": d["verdict"], "critical": [c["name"] for c in open_ if c["severity"] == "CRITICAL"],
                         "limits": [c["name"] for c in open_ if c["severity"] == "HIGH"], "compared_with": d.get("decided_by"),
-                        "failsafes_off": failsafes_off(params)}
+                        "failsafes_off": failsafes_off(params, approved=approved_map)}
         reg = db.get(DroneRegistration, drone_id)
         comp = _compliance_dict(db.get(DroneCompliance, drone_id))
         last = latest.get(drone_id)
@@ -375,11 +377,11 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
             "rules": "Records check only — not a physical airworthiness sign-off. "
                      "Do not fly: an unapproved safety-critical setting change, no UIN on record (Rule 14), expired third-party insurance "
                      "(Rule 44) or pilot RPC (Rule 31), or grounded after a reported incident. "
-                     "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off "
-                     "(checked regardless of baseline), an unverified UIN, missing or expiring (<=14 d) insurance, settings never checked, "
-                     "a partial CSV/GPX log, a last reviewed flight older than 14 days, or warnings in the air during the last flight "
+                     "Check first: a flight-limit change, settings not yet compared with a baseline, an unapproved failsafe or safety check "
+                     "switched off (cleared if explicitly signed off in baseline approvals with a written reason), an unverified UIN, missing "
+                     "or expiring (<=14 d) insurance, settings never checked, a partial CSV/GPX log, or warnings in the air during the last flight "
                      "(a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop; "
-                     "a landing below 10% battery is a pilot note, not a reason). No rule fired: none of these."}
+                     "a landing below 10% battery and reviews older than 14 days are shown as non-blocking notes). No rule fired: none of these."}
 
 
 def _accident_dossier(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:

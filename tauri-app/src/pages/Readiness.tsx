@@ -16,6 +16,7 @@ interface Row {
   grounded?: { done_at: string; action: string; note?: string | null } | null
   setting_notes?: string[]
   last_flight: { review_id: number; flown_at: string; warnings: string[]; flight_s?: number; normal_flight?: string[]; pilot_notes?: string[] } | null
+  stale_note?: { days: number; date: string; text: string } | null
   vibration: { latest_vs_own: { higher_than: number; earlier_flights: number } | null; public: { higher_than_pct: number; flights: number } | null } | null
   overdue_spray_forms?: number
 }
@@ -128,6 +129,8 @@ export default function ReadinessPage() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'grid', gap: 4, alignContent: 'start' }}>
               <span>{tr('lastFlight')}: <b>{day(d.last_flight?.flown_at, lang)}</b>{d.last_flight?.flight_s ? ` · ${Math.round(d.last_flight.flight_s / 60)} ${tr('min')}` : ''}</span>
+              {d.stale_note && (
+                <span style={{ color: '#B45309' }}>{tr('stale_flight', { days: d.stale_note.days, date: d.stale_note.date })}</span>)}
               <span>{tr('settingsLine')}: {d.settings_verdict ? (d.settings_compared_with ? `${tr(d.settings_verdict)} (${tr(d.settings_compared_with === 'vs_baseline' ? 'vsBaseline' : 'vsPrevious')})` : tr(d.settings_verdict)) : tr('notChecked')}</span>
               {d.last_flight?.pilot_notes && d.last_flight.pilot_notes.length > 0 && (
                 <span title="How the last flight was flown: shown for the pilot, never a reason on its own">{tr('pilotNote')}: {d.last_flight.pilot_notes.join('; ')}</span>)}

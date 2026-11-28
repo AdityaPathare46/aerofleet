@@ -63,7 +63,7 @@ One row per drone. The verdict comes **only from fixed rules and recorded facts*
   more, or an autopilot error report). A landing below 10% battery is shown as a pilot note, not a reason. Measured on
   healthy public flights: the first rule flagged 28.8% (FA1, failed); this rule flagged 11.1% on held-out drones (FA2) (sensor data rejected by the autopilot, poor GPS, critical battery, a safety
   setting changed in flight, leaving the plan).
-- **Ready**: none of these.
+- **No rule fired** (records check only — not an airworthiness sign-off): none of these.
 
 Vibration and the learned model are shown as **context and never change the verdict**: the study found vibration is
 not a validated warning. Module: `aerofleet/assurance/readiness.py`.

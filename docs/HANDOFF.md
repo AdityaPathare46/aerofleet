@@ -172,7 +172,7 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 ## 6. Status
 
 **Now (28 Nov 2026, post-critical-review + external dossier review).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **775 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+reviews yet). Product: **776 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
 subject- and count-bound cross-checking of stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify`, catching
 edits, cross-drone swaps, and orphaned spray forms — M1 — plus optional **RFC 3161 trusted timestamping** pinned to
