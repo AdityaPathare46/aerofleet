@@ -1,6 +1,6 @@
 # AeroFleet 2.0: complete project dossier for an external review
 
-*Generated from the project repository on 2026-11-28 (commit 94c94cc). Part I is written for you, the reviewer.
+*Generated from the project repository on 2026-11-28 (commit b4d4b55). Part I is written for you, the reviewer.
 Part II (the appendices) is copied from the repository's own files: every result write-up, every declared test with
 its commit, the full research paper and supplement, the viva notes, the 27 Nov critical review, and the code inventory.
 Personal names and contact details have been removed; "the team" means a two-person final-year student team, with a
@@ -283,7 +283,7 @@ An operator approves an exact value with a written reason, and the approval is s
 ### 5.4 Today's fleet (`readiness.py`): the morning records check
 
 *Records check only — not a physical airworthiness sign-off.* The green state is explicitly labelled **"No rule fired"**
-(not "Ready") because SA1 shows the rules flag crash flights ~1.35× as often as ordinary flights and miss most faults.
+(not "Ready") because SA1 (re-measured on shipped HEAD, descriptive) shows the flight-log rules flag crash flights 1.36× as often as ordinary flights and miss most faults.
 
 | Display status | When |
 |---|---|
@@ -363,10 +363,13 @@ ledger's payload hashes (see section 9 M1 for remaining swap/deletion hardening)
     & Explanation (2) (Gazette pp. 24-25)** cover unmanned aircraft with State design or operational approval (e.g. DGCA
     Type-Certified sprayers); **Rule 3 (p. 28)** mandates that the sole objective is accident prevention, not blame or
     liability (ICAO Annex 13); **Rule 4(1) & Proviso (p. 28; Schedule Table 2 p. 42)** mandate 24 h notification to AAIB
-    (`[e-mail removed]`/portal) and DGCA by the remote pilot-in-command.
-  - Both active and `OVERDUE` banners state that deadlines apply only if the event meets the statutory definition,
-    alongside the telemetry timeline (no blame), maintenance history, simulated-fleet banner when applicable, and
-    Ed25519 verification block. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* remains at draft stage.
+    (`aaib.moca@nic.in`/portal) and DGCA by the remote pilot-in-command.
+  - Both active and `OVERDUE` banners state that deadlines apply only if the event meets the statutory definition, and
+    the 24 h AAIB line is dynamically conditioned on `type_certificate_no` in the drone's compliance record (flagging
+    **"may not apply — no Type Certificate / State design or operational approval recorded"** per Rule 2(1)(a)(ii)
+    Explanation (2) when empty), alongside the telemetry timeline (no blame), maintenance history, simulated-fleet
+    banner when applicable, and Ed25519 verification block. The *Draft Civil Drone (Promotion and Regulation) Bill,
+    2025* remains at draft stage.
 - **Vibration history**: each drone flight by flight in GPS-time order against its own earlier flights, comparable fleet
   drones, and 292 public PX4 flights of 141 never-crashed vehicles; last 10 s left out.
 - **Maintenance logbook**: work recorded and signed (including `"Incident / crash reported (grounded for inspection)"`
@@ -427,10 +430,11 @@ Two seeded fleets serve distinct demonstration roles (1-click switchable via `<F
    `AGRI-04` Do not fly for mid-flight geofence disable; `AGRI-05` Do not fly grounded after motor failure with a live
    24 h / 48 h accident record). *Note (M2): screens and printouts explicitly label this fleet as simulated (ArduPilot SITL).*
 2. **`demo` & `demo-settings` (real public PX4 study evidence):** 64 real public PX4 flights of 8 unrelated airframes
-   (each with one crash-rated flight and earlier flights; `3 Do not fly, 2 Check first, 3 No rule fired`, each showing a
-   non-blocking record-age note because the public logs are years old — illustrating on screen why the green badge reads
-   *No rule fired*, never *Ready*), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray forms,
-   and `demo-settings` showing a blocked RC-loss failsafe (`NAV_RCL_ACT` 2 → 0).
+   (each with one crash-rated flight and earlier flights; `3 Do not fly, 5 Check first, 0 No rule fired` — `PX4-01`,
+   `PX4-02`, and `PX4-03` fired zero telemetry or settings rules and sit on *Check first* solely because their 2017–2018
+   public logs exceed the 90-day record-age limit, demonstrating both that years-old logs cannot stay green and that
+   crash logs often fire no telemetry rule), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray
+   forms, and `demo-settings` showing a blocked RC-loss failsafe (`NAV_RCL_ACT` 2 → 0).
 
 ---
 
@@ -472,15 +476,19 @@ A spraying-style mission (passes 8 m apart at 4 m over an 80 × 40 m field near 
 - **FA2** (declared `481987a`): rule revised on development half D only (airborne > 2 m, ≥ 3 s, landing battery as
   pilot note), tested on untouched held-out half H: **11.1%** [7.3, 16.3%] of 190 good-or-great flights, 19.8% of all
   572; **passed**.
-- **SA1 + FA3** (`e9c4ebc` / `ffd0f27`, after adding `speed ≥ 1.5 m/s` airborne spans and mid-air `< 10%` battery):
-  - **FA3 (re-measured on H, NOT an independent held-out test — see H1):** good-or-great **14.2%** (27/190; flight
-    Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles; upper bound crosses 20%); all H
-    ordinary **27.3%** (unrated 33.8%).
-  - **SA1 (descriptive — see H2, RflyMAD 53.8% was already observed during D development):** RflyMAD injected sensor
-    faults **53.8%** (106/197), fault-free control **0.0%** (0/50), motor faults **19.8%** (48/242); forum expert
-    aircraft crashes **37.5%** (12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133) vs crashed
-    drones' *prior* ordinary flights **26.5%** (118/445) — virtually identical to ordinary H (27.3%), showing the board
-    flags crash flights ~1.35× as often as normal flights and confirms the within-drone null on the product itself.
+- **SA1 + FA3** (`e9c4ebc` / `ffd0f27`, and **re-measured descriptively on shipped `HEAD` post-M3** 2 s smoothed
+  groundspeed in `sa1_fa3_head_remeasure.json`):
+  - **FA3 (descriptive, re-measured on shipped `HEAD` on H — NOT an independent held-out test, H1):** good-or-great
+    **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles; unchanged
+    from `ffd0f27`, upper bound crosses 20%); all H ordinary **27.1%** (155/572; unrated 33.5%, down 1 flight from
+    pre-M3 27.3%).
+  - **SA1 (descriptive, re-measured on shipped `HEAD` — H2, RflyMAD 53.8% was already observed during D development):**
+    RflyMAD injected sensor faults **53.8%** (106/197), fault-free control **0.0%** (0/50), motor faults **19.8%**
+    (48/242) — all unchanged on `HEAD`; forum expert aircraft crashes **34.4%** (11/32, down 1 flight from pre-M3
+    12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133) vs crashed drones' *prior* ordinary
+    flights **27.0%** (120/445, vs pre-M3 26.5%) — virtually identical to ordinary H (27.1%), showing the shipped
+    flight-log rules flag crash flights **1.36×** as often as normal flights and confirming the within-drone null on the
+    product itself.
 - **Settings-rule check on 200 random public PX4 logs (C1, 27 Nov):** before C1 fix, `CBRK_FLIGHTTERM` (199/200) and
   `CBRK_IO_SAFETY` (142/200) flagged **199/200** stock PX4 drones. After dropping `CBRK_FLIGHTTERM` and moving
   `CBRK_IO_SAFETY` to a setting note (`fc73ec6`), **152/200** flag — of which **145** are `COM_LOW_BAT_ACT = 0`
@@ -531,14 +539,16 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    `pune-agri [Simulated SITL]` is simulated ArduPilot SITL (visibly badged on screens and printouts); `demo` is public
    PX4 hobby/research flights. The 6-month prospective study is a declared (git-committed) protocol document, not yet run.
 2. **Remaining verification & governance limits (post-C1/C2/H1-H5/M1-M5 + external review fixes):**
-   - **Whole-board false-alarm rate (FA4) unmeasured:** FA1–FA3 measured flight-log rules only, before the 2 s smoothed
-     groundspeed (M3) and before C1 settings checks (where 152/200 unconfigured stock PX4 logs flag, 145 for
-     `COM_LOW_BAT_ACT = 0` unless an approved baseline sets it to 2/3 or an operator signs a written exception). FA3
-     (14.2%, cluster CI [8.5, 20.7%]) was a re-measurement on H rather than an untouched held-out test, and SA1-RflyMAD
-     (53.8%) is descriptive. A fresh whole-board FA4 on unseen logs is future work.
-   - **Record staleness (`stale_note`):** reviews older than 14 days show a non-blocking record-age note (deliberately
-     non-blocking so seasonal sprayers idle between crop cycles are not stuck on Check first, meaning unlogged flights
-     within 14 days still rely on operator upload discipline).
+   - **Whole-board false-alarm rate (FA4) unmeasured:** FA3 + SA1 were re-measured descriptively on shipped `HEAD`
+     (post-M3 2 s smoothed groundspeed: FA3 H good/great 14.2% [cluster 8.5, 20.7%], H all 27.1%, SA1 archive crashes
+     36.8% = 1.36×), so the flight-log numbers match shipped code; however, **board-level false-alarm rate is
+     unmeasured** because two board-level rule changes came after FA3 (C1 settings checks, where 152/200 unconfigured
+     stock PX4 logs flag, 145 for `COM_LOW_BAT_ACT = 0` unless baseline/signed approval overrides it, and the 90-day
+     staleness escalation). A fresh whole-board FA4 on unseen logs is declared future work.
+   - **Record staleness (two-tier 14 d / 90 d rule):** reviews 15–90 days old show a non-blocking `stale_note` (so
+     seasonal sprayers idle for weeks between crop cycles are not stuck on Check first), while reviews **older than
+     90 days** escalate to `CHECK_FIRST` (`stale_flight`) so a drone idle for months or years cannot stay green.
+     Unlogged flights within 14–90 days still rely on operator upload discipline.
    - **Statutory scope:** Primary Gazette PDFs are now verified page-by-page (`G.S.R. 589(E)` Rule 30 on p. 31 vs
      Rule 29 "Right of way"; `G.S.R. 829(E)` Rules 2(1)(a)(ii), 3, 4(1) on pp. 24-28). Both the 24 h (2025 AAIB Rules,
      limited by Explanation (2) to State-approved UAS) and 48 h (Rule 30) countdowns apply only when an event meets the
@@ -593,8 +603,9 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    strongest counter-argument, and how should we answer it?
 2. After C1/C2, H1-H5, M1-M5, L2, primary Gazette PDF verification, and the live packaged-app dry-run (`12b93af`), are
    there any remaining critical safety, security, legal, or statistical flaws?
-3. How should we present FA2 (11.1%, held out), FA3 (14.2%, cluster CI up to 20.7%, re-measured on H), and SA1 (36.8%
-   archive crashes vs 26.5% prior flights vs 53.8% RflyMAD sensor faults) in the B.Tech report without overclaiming?
+3. How should we present FA2 (11.1%, held out), FA3 (14.2%, cluster CI up to 20.7%, descriptive re-measurement on
+   shipped HEAD), and SA1 (36.8% archive crashes vs 27.0% prior flights vs 53.8% RflyMAD sensor faults) in the B.Tech
+   report without overclaiming?
 4. Is the normal-flight model worth keeping given H1/H5 failed and usefulness is untested?
 5. With the codebase, packaged app, and Gazette citations frozen for the 1-5 December review, which remaining documented
    limits (FA4, external Hindi/Marathi proof-reader, per-pilot RPC table, field operator logs) should be stated upfront
@@ -688,7 +699,7 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 ## Appendix B. Every result write-up
 
-Copied verbatim from `research/results/`.
+Copied verbatim from `research/results/`. *Historical note: pre-28-Nov result logs (such as SITL v2) refer to the green readiness state by its earlier UI label "Ready"; on 28 Nov the UI label was renamed to "No rule fired".*
 
 ### archive_search/summary.md
 
@@ -1042,6 +1053,24 @@ FA3 pass mark (<= 20% of H good/great): **Met**.
 | Crashed drones' prior flights (`within/`) | 445 | 118 | 26.5% [22.6, 30.8] | 26.5% [17.3, 35.2] |
 
 SA1-RflyMAD pass mark (Real-Sensors >= 50% and Real-No_Fault <= 5%): **Met**.
+
+#### Descriptive Re-measurement on Shipped HEAD (post-M3 smoothed groundspeed, 28 Nov 2026)
+
+Re-run of `measure_sa1_fa3.py` on shipped `HEAD` after adding the M3 2 s smoothed groundspeed filter in `evidence._airborne_spans()` (full JSON in `sa1_fa3_head_remeasure.json`; **descriptive**, on the same evaluation splits — original `ffd0f27` numbers above are preserved untouched). Flight-log rules only; whole-board false-alarm rate including settings and 90-day record age (**FA4**) remains unmeasured.
+
+| Stratum | `ffd0f27` (pre-M3) | Shipped `HEAD` (post-M3, descriptive) | Vehicle-Cluster 95% CI (`HEAD`) |
+|---|---:|---:|---|
+| FA3 H good/great | 27/190 (14.2%) | **27/190 (14.2%)** | 14.2% [8.5, 20.7] |
+| FA3 H unrated ordinary | 129/382 (33.8%) | **128/382 (33.5%)** | 33.5% [26.3, 40.6] |
+| FA3 H all ordinary | 156/572 (27.3%) | **155/572 (27.1%)** | 27.1% [21.9, 32.7] |
+| FA3 D good/great (ref) | 23/109 (21.1%) | **23/109 (21.1%)** | 21.1% [10.7, 33.7] |
+| SA1 RflyMAD sensor faults | 106/197 (53.8%) | **106/197 (53.8%)** | 53.8% [48.5, 64.6] |
+| SA1 RflyMAD motor faults | 48/242 (19.8%) | **48/242 (19.8%)** | 19.8% [8.7, 39.7] |
+| SA1 RflyMAD fault-free (control) | 0/50 (0.0%) | **0/50 (0.0%)** | 0.0% [0.0, 0.0] |
+| SA1 Forum expert: aircraft-caused | 12/32 (37.5%) | **11/32 (34.4%)** | 34.4% [18.8, 50.0] |
+| SA1 Forum expert: pilot-caused | 2/4 (50.0%) | **2/4 (50.0%)** | 50.0% [0.0, 100.0] |
+| SA1 Archive real-hardware crashes | 49/133 (36.8%) | **49/133 (36.8%)** | 36.8% [27.9, 45.6] |
+| SA1 Crashed drones' prior flights (`within/`) | 118/445 (26.5%) | **120/445 (27.0%)** | 27.0% [18.0, 35.7] |
 
 
 ### false_alarms/summary.md
@@ -8766,7 +8795,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | File | Lines | First line of its docstring |
 |---|---|---|
 | `aerofleet/assurance/__init__.py` | 4 | AeroFleet 2.0 ground-side assurance: deterministic checks on uploaded files (no drone, no LLM). |
-| `aerofleet/assurance/accident_report.py` | 323 | Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier). |
+| `aerofleet/assurance/accident_report.py` | 330 | Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier). |
 | `aerofleet/assurance/airspace_check.py` | 176 | Pre-flight route check: does a planned mission stay out of restricted airspace and under the height limit? |
 | `aerofleet/assurance/archive_search.py` | 167 | Search the public PX4 log archive for flights like the user's problem. |
 | `aerofleet/assurance/deconflict.py` | 203 | Fleet plan deconfliction: make a set of planned missions safe against each other before anyone flies. |
@@ -8782,7 +8811,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `aerofleet/assurance/operations_log.py` | 76 | Operations log: one row per reviewed flight, as a CSV a service provider can keep and report from. |
 | `aerofleet/assurance/params.py` | 101 | Read a flight-controller parameter file into {NAME: value} — no hardware involved. |
 | `aerofleet/assurance/public_reference.py` | 66 | Compare a flight or a setting with ordinary public PX4 flights. |
-| `aerofleet/assurance/readiness.py` | 236 | Morning readiness: for each drone in a fleet, ready / check first / do not fly, and exactly why. |
+| `aerofleet/assurance/readiness.py` | 244 | Morning readiness: for each drone in a fleet, ready / check first / do not fly, and exactly why. |
 | `aerofleet/assurance/reconcile.py` | 222 | Planned versus flown: did the aircraft fly the mission that was approved? |
 | `aerofleet/assurance/report_html.py` | 116 | A self-contained, printable page for one flight review (print it to PDF from any browser). |
 | `aerofleet/assurance/review_panel.py` | 244 | A review panel that argues about the LIKELY CAUSE of a finding the code has already made. |
@@ -8796,7 +8825,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `aerofleet/api/routes/__init__.py` | 0 |  |
 | `aerofleet/api/routes/admin.py` | 59 | Admin panel — list users and grant/revoke is_operator / is_admin |
 | `aerofleet/api/routes/agents.py` | 119 | Agent and council API endpoints. |
-| `aerofleet/api/routes/assurance.py` | 1200 | AeroFleet 2.0 ground-side assurance: parameter-file upload, fleet baseline, configuration drift. |
+| `aerofleet/api/routes/assurance.py` | 1201 | AeroFleet 2.0 ground-side assurance: parameter-file upload, fleet baseline, configuration drift. |
 | `aerofleet/api/routes/auth.py` | 228 | Authentication and user management API endpoints. |
 | `aerofleet/api/routes/cities.py` | 125 | City registry API endpoint — powers the frontend city selector, plus the |
 | `aerofleet/api/routes/compliance.py` | 318 | AeroFleet 2.0 — Pre-Flight Compliance API routes. |
@@ -8820,7 +8849,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tools/backup.py` | 99 |  |
 | `tools/benchmark_review.py` | 67 | How long a flight review takes on real PX4 logs, on this computer. |
 | `tools/build_archive_index.py` | 139 |  |
-| `tools/build_dossier.py` | 183 | Build docs/AEROFLEET_DOSSIER.md: one file with everything about the project, for an external review. |
+| `tools/build_dossier.py` | 197 | Build docs/AEROFLEET_DOSSIER.md: one file with everything about the project, for an external review. |
 | `tools/build_public_reference.py` | 123 | Build the public-flight reference the app compares a user's flights and settings with. |
 | `tools/mock_mavlink_vehicle.py` | 849 |  |
 | `tools/preflight_llm_check.py` | 127 |  |
@@ -8859,7 +8888,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tauri-app/src-tauri/src/ollama_installer.rs` | 479 | ! Ollama detection + Windows/macOS installer automation. |
 | `tauri-app/src-tauri/src/vr_headset.rs` | 245 | ! PC-VR headset support for the VR Safety View. |
 
-Total: 20,268 lines in these files.
+Total: 20,298 lines in these files.
 
 #### Numeric constants in the assurance core
 
@@ -8911,7 +8940,8 @@ params.py: MAX_BYTES = 2 * 1024 * 1024
 public_reference.py: VIBRATION_NOTE = ("Compared with public PX4 flights rated good or great. A description, not a limit: being above most of
 public_reference.py: SETTING_NOTE = ("How public PX4 flights rated good or great set this. Common is not proof of safe: in the study, setting
 readiness.py: INSURANCE_WARN_DAYS = 14
-readiness.py: STALE_FLIGHT_DAYS = 14     # default age threshold in fleet_readiness(): confirm no unlogged flights occurred since
+readiness.py: STALE_FLIGHT_DAYS = 14     # 15–90 d: non-blocking record-age note (avoids seasonal false alarms on idle sprayers)
+readiness.py: STALE_BLOCK_DAYS = 90      # > 90 d: escalates to CHECK_FIRST so a drone idle for months/years cannot stay green
 readiness.py: AP_MARKERS = ("FS_THR_ENABLE", "BATT_FS_LOW_ACT", "BATT_FS_CRT_ACT", "FENCE_ENABLE", "FS_EKF_ACTION", "ARMING_CHECK")
 readiness.py: VIBRATION_NOTE = ("Context only: in the study behind AeroFleet, vibration did not warn of a crash within a drone and was
 reconcile.py: M_PER_DEG = 111_320.0
@@ -11167,7 +11197,7 @@ on the post-hoc rule v2 0.68 on 31 answered crashes); (2) an audit showing how m
 from evaluation choices (AUC fell by 0.21 [0.06, 0.34] across 32 settings; a published detector fell from 0.94 to 0.63
 when whole days were held out); (3) a ten-item reporting checklist and a records tool designed from those limits (whose
 green status explicitly reads **"No rule fired — records check only, not an airworthiness sign-off"** because it flags
-crash flights only ~1.35× as often as ordinary flights); (4) a normal-flight model trained on 1,121 public flights of
+crash flights only ~1.36× as often as ordinary flights); (4) a normal-flight model trained on 1,121 public flights of
 401 vehicles, tested on unseen drones and on real injected faults, used as context only.
 *Show:* Overview ▸ findings; paper Table 1 (related work) and Section 6.
 
@@ -11219,10 +11249,12 @@ Adhiniyam, 2024, `civilaviation.gov.in/sites/default/files/2026-05/aaib-rules-20
 pilot-in-command (**Rule 4(1) & Proviso**, p. 28; Schedule Table 2 p. 42), and explicitly mandate that the sole
 objective is **accident prevention, not apportioning blame or liability** (**Rule 3**, p. 28, aligned with ICAO Annex
 13). AeroFleet tracks those credentials in the signed record, enforces expired insurance/RPC/UIN (IST date) on *Today's
-fleet* (and shows a non-blocking record-age note if the last reviewed flight is older than 14 days), and generates a
-one-click printable **Accident Record prepared for Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows
-with exact Gazette citations and the scope caveat that they apply only if the event meets the statutory definition —
-matching India's no-blame principle while never claiming to be an official DGCA/AAIB form.
+fleet* (with a two-tier record-age rule: non-blocking note at 15–90 days for seasonal sprayers, escalating to *Check
+first* past 90 days so a years-old log never stays green), and generates a one-click printable **Accident Record
+prepared for Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows with exact Gazette citations, the
+statutory-definition scope caveat, and a dynamic check on `type_certificate_no` (flagging "may not apply" on the 24 h
+AAIB line when no State design/operational approval is on record per Rule 2(1)(a)(ii) Explanation (2)) — matching
+India's no-blame principle while never claiming to be an official DGCA/AAIB form.
 
 #### B. Data
 
@@ -11616,8 +11648,8 @@ We measured both in three stages on the product's exact code, being transparent 
 - **FA1** (`5f44b0b`, pre-declared, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
 - **FA2** (`481987a`, pre-declared, passed on untouched held-out half H): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
 - **SA1 + FA3** (`e9c4ebc`, re-measurement + descriptive sensitivity after adding airborne speed and mid-air battery rules, with **vehicle-cluster bootstrap CIs** matching Checklist Item #2):
-  - **FA3 (re-measured on H, NOT an untouched held-out test — H1):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]** — upper bound crosses 20%, so only the point estimate is under 20%); all H ordinary **27.3%** (unrated 33.8%); RflyMAD fault-free **0.0%** (0/50). *(Note: M3 smoothed the groundspeed window to 2 s afterwards to suppress parked GPS jitter; a fresh whole-board FA4 on unseen logs is future work.)*
-  - **SA1 (descriptive — H2, because RflyMAD 53.8% had already been observed during D development):** RflyMAD injected sensor faults **53.8%** (106/197), motor faults **19.8%** (48/242); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H (27.3%), meaning the board flags crash flights ~1.35× as often as ordinary flights and directly mirrors the paper's within-drone null. Not yet measured on real spraying drones.
+  - **FA3 (descriptive, re-measured on shipped HEAD post-M3 on H — NOT an untouched held-out test, H1):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]** — unchanged from `ffd0f27`, upper bound crosses 20%, so only the point estimate is under 20%); all H ordinary **27.1%** (155/572; unrated 33.5%, down 1 flight from pre-M3 27.3%); RflyMAD fault-free **0.0%** (0/50). **Board-level false-alarm rate (FA4) is unmeasured:** FA3 measures flight-log rules only, and two board-level rule changes came after FA3 (C1 settings + 90-day staleness).
+  - **SA1 (descriptive, re-measured on shipped HEAD post-M3 — H2, because RflyMAD 53.8% had already been observed during D development):** RflyMAD injected sensor faults **53.8%** (106/197), motor faults **19.8%** (48/242); expert-diagnosed forum aircraft crashes **34.4%** (11/32, down 1 flight from pre-M3 12/32; pilot 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **27.0%** (120/445, vs pre-M3 26.5%) — virtually identical to ordinary H (27.1%), meaning the shipped flight-log rules flag crash flights **1.36×** as often as ordinary flights and directly mirror the paper's within-drone null. Not yet measured on real spraying drones.
 
 **Q54b. Why not train the model on spraying drones, with payload as an input?**
 There is no data for it: no public log records payload weight, and the public archive has about 20 flights from 4
@@ -11627,8 +11659,9 @@ least 10%. It fell 6.2%, so by our own rule the model was not changed. Likely, p
 for it to matter; on sprayers it may, and the code is ready for that retrain once we have sprayer logs.
 
 **Q55. Some crashed drones show no flight-log warnings. Why does the green badge say "No rule fired" instead of "Ready"?**
-Because calling it "Ready" would be unsafe: our own SA1 numbers show the board flags only 36.8% of archive crashes and
-19.8% of RflyMAD motor faults (about 1.35× as often as ordinary flights). It is a **records check, not an airworthiness
+Because calling it "Ready" would be unsafe: our own SA1 numbers (re-measured on shipped HEAD, descriptive) show the
+flight-log rules flag only 36.8% of archive crashes and 19.8% of RflyMAD motor faults (about 1.36× as often as ordinary
+flights). It is a **records check, not an airworthiness
 sign-off**. So the UI explicitly labels the green state **"No rule fired"** and reminds the pilot to perform a physical
 pre-flight check. If a drone's last reviewed flight is older than 14 days, a non-blocking **record-age note** warns the
 pilot to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle between crop
@@ -11732,7 +11765,7 @@ on expertise, and records that protect the pilot (third-party insurance is manda
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
 (26 of 94), which is exactly what the settings check covers.
 
-Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 no rule fired, each with its reason, all from real
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 5 check first, 0 no rule fired (because the public PX4 logs are years old, crossing the 90-day record-age check), each with its reason, all from real
 public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed (and its
 low-battery failsafe only warns), PX4-06's autopilot rejected position data for 4 s in the air. PX4-05 has no UIN on
 record and PX4-07's is not verified (demo registrations, labelled DEMO). PX4-01 shows a **pilot note**: its last
@@ -11745,11 +11778,13 @@ lasts 3 s: with the earlier 1 s rule, 28.8% of healthy public flights were flagg
 of held-out healthy flights (FA2, passed).
 
 **Be ready for this question:** the uploaders rated every demo drone's last flight a crash, yet three (`PX4-01`,
-`PX4-02`, `PX4-03`) show **No rule fired** (with a non-blocking record-age note showing their logs are years old). That
-is the study's own finding on screen: crash flights often show no warning in their logs (SA1: 36.8% of archive crashes
-flagged vs 27.3% of ordinary flights, ~1.35×), which is exactly why the green state reads **No rule fired (records check
-only — not an airworthiness sign-off)** rather than *Ready*. An operator who knows a drone crashed records it in the
-maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
+`PX4-02`, `PX4-03`) fired **zero** flight-telemetry or settings rules — they are on *Check first* solely because their
+2017–2018 public logs are more than 90 days old (15–90 days shows a non-blocking age note so seasonal sprayers idle
+between crop cycles are not flooded with alarms; past 90 days escalates to *Check first* so a years-old log never stays
+green). At the time those flights ran, no telemetry rule fired: that is the study's own finding on screen (SA1: ~37% of
+archive crashes flagged vs 27.1% of ordinary flights, 1.36× — descriptive re-measurement on shipped HEAD), which is why the green state on `pune-agri` (`AGRI-01`,
+`AGRI-02`) reads **No rule fired (records check only — not an airworthiness sign-off)** rather than *Ready*. An operator
+who knows a drone crashed records it in the maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
 not change with the language, log messages stay in English, and the translations were reviewed by the Marathi-speaking
@@ -12411,6 +12446,8 @@ hardware:
 ### docs/CRITICAL_REVIEW_2026-11-27.md
 
 *Source: `docs/CRITICAL_REVIEW_2026-11-27.md`*
+
+> *Historical snapshot (27 November 2026, pre-remediation): preserved verbatim to show every finding prior to the C1/C2 fixes (`fc73ec6`), H1-H5/M1-M5/L2 remediation (`8129e83`), 37-airport update, and the "Ready" -> "No rule fired" UI rename.*
 
 ### Critical review of AeroFleet 2.0, 27 November 2026
 
