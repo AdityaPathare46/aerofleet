@@ -1,6 +1,6 @@
 # AeroFleet 2.0: complete project dossier for an external review
 
-*Generated from the project repository on 2026-11-28 (commit b4d4b55). Part I is written for you, the reviewer.
+*Generated from the project repository on 2026-11-28 (commit 26cd10b). Part I is written for you, the reviewer.
 Part II (the appendices) is copied from the repository's own files: every result write-up, every declared test with
 its commit, the full research paper and supplement, the viva notes, the 27 Nov critical review, and the code inventory.
 Personal names and contact details have been removed; "the team" means a two-person final-year student team, with a
@@ -288,8 +288,8 @@ An operator approves an exact value with a written reason, and the approval is s
 | Display status | When |
 |---|---|
 | **Do not fly** | an unapproved safety-critical setting change; no UIN on record (Rule 14); drone grounded in maintenance logbook after a reported incident/crash without a subsequent clearance; expired third-party insurance (Rule 44, IST date); expired assigned pilot RPC (Rule 31, IST date) |
-| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **an unapproved failsafe or safety check switched off** (checked even if present in a raw baseline, because stock ArduPilot and PX4 ship with low-battery actions off/warn-only — ArduPilot low/critical battery, RC-loss, EKF, geofence, `ARMING_CHECK=0`; PX4 `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281` — **cleared when explicitly approved by an operator with a signed written reason** in `FleetBaseline.approved`, which moves it to a non-blocking setting note); an unverified UIN; missing or expiring (≤ 14 d) insurance; settings never checked; last flight from a partial CSV/GPX export; or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
-| **No rule fired** | none of these (internal API enum `READY` retained for compatibility; UI explicitly warns to perform a physical pre-flight check, and shows a non-blocking record-age note whenever the last reviewed flight is older than 14 days so seasonal sprayers are not stuck on false-alarm Check first) |
+| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **an unapproved failsafe or safety check switched off** (checked even if present in a raw baseline, because stock ArduPilot and PX4 ship with low-battery actions off/warn-only — ArduPilot low/critical battery, RC-loss, EKF, geofence, `ARMING_CHECK=0`; PX4 `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281` — **cleared when explicitly approved by an operator with a signed written reason** in `FleetBaseline.approved`, which moves it to a non-blocking setting note); an unverified UIN; missing or expiring (≤ 14 d) insurance; settings never checked; last flight from a partial CSV/GPX export; **last reviewed flight older than 90 days** (`stale_flight`); or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
+| **No rule fired** | none of these (internal API enum `READY` retained for compatibility; UI explicitly warns to perform a physical pre-flight check, and shows a non-blocking record-age note whenever the last reviewed flight is 15–90 days old so seasonal sprayers idle for weeks are not stuck on false-alarm Check first, escalating to Check first past 90 days) |
 
 - **Non-blocking context & notes**: low-battery landing (`pilot_notes`), PX4 firmware-default safety-switch bypass
   `CBRK_IO_SAFETY=22027` (`setting_notes`, fixed under C1; `CBRK_FLIGHTTERM` is not checked at all), overdue 7-day
@@ -1066,7 +1066,7 @@ Re-run of `measure_sa1_fa3.py` on shipped `HEAD` after adding the M3 2 s smoothe
 | FA3 D good/great (ref) | 23/109 (21.1%) | **23/109 (21.1%)** | 21.1% [10.7, 33.7] |
 | SA1 RflyMAD sensor faults | 106/197 (53.8%) | **106/197 (53.8%)** | 53.8% [48.5, 64.6] |
 | SA1 RflyMAD motor faults | 48/242 (19.8%) | **48/242 (19.8%)** | 19.8% [8.7, 39.7] |
-| SA1 RflyMAD fault-free (control) | 0/50 (0.0%) | **0/50 (0.0%)** | 0.0% [0.0, 0.0] |
+| SA1 RflyMAD fault-free (control) | 0/50 (0.0%) | **0/50 (0.0%)** | 0/50 (Wilson 95% upper bound 7.1%; bootstrap degenerate at 0) |
 | SA1 Forum expert: aircraft-caused | 12/32 (37.5%) | **11/32 (34.4%)** | 34.4% [18.8, 50.0] |
 | SA1 Forum expert: pilot-caused | 2/4 (50.0%) | **2/4 (50.0%)** | 50.0% [0.0, 100.0] |
 | SA1 Archive real-hardware crashes | 49/133 (36.8%) | **49/133 (36.8%)** | 36.8% [27.9, 45.6] |
@@ -10994,7 +10994,7 @@ repo, hence `AEROFLEET_VENV`. Create a user from the sign-in card, or use the lo
 Step by step in `docs/DEMO.md`. The 10-minute version:
 
 1. **Overview**: the use case and the study in one screen.
-2. **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each reason with a button to its evidence;
+2. **Today's fleet** (`pune-agri`: 3 do not fly, 1 check first, 2 no rule fired; `demo`: 3 do not fly, 5 check first, 0 no rule fired because the 2017–2018 public logs exceed the 90-day record-age limit), each reason with a button to its evidence;
    switch to मराठी.
 3. **Fleet Assurance**: open a flight review (events, evidence quality, expected range); a drone's vibration history;
    the signed record ▸ *Check the record*.
@@ -11663,9 +11663,10 @@ Because calling it "Ready" would be unsafe: our own SA1 numbers (re-measured on 
 flight-log rules flag only 36.8% of archive crashes and 19.8% of RflyMAD motor faults (about 1.36× as often as ordinary
 flights). It is a **records check, not an airworthiness
 sign-off**. So the UI explicitly labels the green state **"No rule fired"** and reminds the pilot to perform a physical
-pre-flight check. If a drone's last reviewed flight is older than 14 days, a non-blocking **record-age note** warns the
-pilot to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle between crop
-cycles are not stuck on false-alarm Check first). And when an operator knows a drone crashed, recording `"Incident /
+pre-flight check. If a drone's last reviewed flight is 15–90 days old, a non-blocking **record-age note** warns the pilot
+to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle for weeks between crop
+cycles are not stuck on false-alarm Check first), and **over 90 days it escalates to Check first** so a months- or
+years-old log can never stay green. And when an operator knows a drone crashed, recording `"Incident /
 crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`) immediately turns Today's fleet
 to **Do not fly** until signed inspection clearance is logged.
 
