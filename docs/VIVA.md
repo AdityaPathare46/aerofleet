@@ -92,18 +92,23 @@ stage once an RPTO or LFC partner approves field deployment.
 
 **Q4. Why should a regulator care?**
 EU and UK operators must keep operation and maintenance records for at least three years. In India, two overlapping
-frameworks apply: (1) **Drone Rules, 2021** (G.S.R. 589(E), 25 Aug 2021, as amended in 2022 and 2023) require a verified
-UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), Remote Pilot Certificate (**Rule 31**; procedure
-Rule 34), third-party liability insurance (**Rule 44**), and an accident report on Digital Sky within **48 hours**
-(**Rule 30 — "Mandatory reporting of an accident"**, verified on `egazette.gov.in`; note some secondary summaries
-misnumber it as Rule 29); and (2) the **Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (under
-Bharatiya Vayuyan Adhiniyam, 2024) extend to unmanned aircraft, require **24-hour notification to AAIB and DGCA** when an
-event meets the statutory definition of an accident or serious incident, and explicitly enshrine a **no-blame,
-safety-prevention investigation principle** aligned with ICAO Annex 13. AeroFleet tracks those credentials in the signed
-record, enforces expired insurance/RPC/UIN (IST date) on *Today's fleet* (and shows a non-blocking record-age note if
-the last reviewed flight is older than 14 days), and generates a one-click printable **Accident Record prepared for
-Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows (with the explicit scope caveat that they apply
-only if the event meets the statutory definition), telemetry timeline, maintenance logbook, and Ed25519 hashes —
+frameworks apply — both verified directly against the downloaded Government of India Gazette PDFs on 28 Nov 2026: (1)
+**Drone Rules, 2021** (`G.S.R. 589(E)`, 25 Aug 2021, `egazette.gov.in/WriteReadData/2021/229221.pdf`, amended by
+`G.S.R. 108(E)` on 11 Feb 2022 and in 2023) require a verified UIN (**Rule 14(1)**, Gazette p. 29), Type Certificate
+(**Rule 8**, p. 28; exemptions **Rule 13**, p. 29), Remote Pilot Certificate (**Rule 31** / **Rule 34**, p. 31, renamed
+from "remote pilot licence" by `G.S.R. 108(E)`), third-party liability insurance (**Rule 44**, p. 33), and an accident
+report on Digital Sky within **48 hours** (**Rule 30 — "Mandatory reporting of an accident"**, Gazette p. 31; Rule 29 on
+the same page is *"Right of way"*, confirming Mondaq's summary misnumbered Rule 30 as Rule 29); and (2) the **Aircraft
+(Investigation of Accidents and Incidents) Rules, 2025** (`G.S.R. 829(E)`, 7 Nov 2025, under Bharatiya Vayuyan
+Adhiniyam, 2024, `civilaviation.gov.in/sites/default/files/2026-05/aaib-rules-2025.pdf`; preamble amended by
+`G.S.R. 647(E)`, 17 Jul 2026) explicitly cover unmanned aircraft with State design or operational approval (**Rule
+2(1)(a)(ii) & Explanation (2)**, Gazette pp. 24-25), require **24-hour notification to AAIB and DGCA** by the remote
+pilot-in-command (**Rule 4(1) & Proviso**, p. 28; Schedule Table 2 p. 42), and explicitly mandate that the sole
+objective is **accident prevention, not apportioning blame or liability** (**Rule 3**, p. 28, aligned with ICAO Annex
+13). AeroFleet tracks those credentials in the signed record, enforces expired insurance/RPC/UIN (IST date) on *Today's
+fleet* (and shows a non-blocking record-age note if the last reviewed flight is older than 14 days), and generates a
+one-click printable **Accident Record prepared for Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows
+with exact Gazette citations and the scope caveat that they apply only if the event meets the statutory definition —
 matching India's no-blame principle while never claiming to be an official DGCA/AAIB form.
 
 ## B. Data
@@ -434,8 +439,10 @@ corners of plans built from the track. Quote the spacing with the number.
 **Q47. Is the draft Civil Drone Bill law?**
 No. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* was released for public comment on 16 September 2025
 and remains at the draft stage (not yet introduced or passed in Parliament as of Nov 2026). The **Drone Rules, 2021**
-(as amended in 2022 and 2023) remain in force, alongside the **Aircraft (Investigation of Accidents and Incidents)
-Rules, 2025** under the Bharatiya Vayuyan Adhiniyam, 2024 (which extend 24-hour no-blame accident reporting to UAS).
+(`G.S.R. 589(E)`, 25 Aug 2021, as amended by `G.S.R. 108(E)` in 2022 and in 2023) remain in force, alongside the
+**Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (`G.S.R. 829(E)`, 7 Nov 2025, under the Bharatiya
+Vayuyan Adhiniyam, 2024; preamble amended by `G.S.R. 647(E)`, 17 Jul 2026), which extend 24-hour no-blame accident
+reporting (Rules 3 & 4(1), Gazette p. 28) to State-approved unmanned aircraft (Rule 2(1)(a)(ii) & Explanation (2), pp. 24-25).
 
 **Q48. A pilot describes a problem. How do you find similar flights, and is that a diagnosis?**
 Two ways, both shown as places to look. Words: BM25 against what uploaders wrote about their own flights in the public
