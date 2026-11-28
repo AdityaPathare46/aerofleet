@@ -312,7 +312,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
     from aerofleet.assurance import spray_form as sf
     from aerofleet.assurance.maintenance import is_grounded
-    from aerofleet.assurance.readiness import ORDER, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary, setting_notes
+    from aerofleet.assurance.readiness import ORDER, STALE_FLIGHT_DAYS, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary, setting_notes
     from aerofleet.assurance.vibration import drone_history
     from aerofleet.data.models.models import DroneCompliance, DroneRegistration, MaintenanceEntry, SprayForm
 
@@ -364,7 +364,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
         grounded = is_grounded(maint_by_drone.get(drone_id, []))
         row = assess(drone_id, settings, {"uin": reg.uin, "status": reg.status} if reg else None,
                      last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None,
-                     vib, grounded=grounded, compliance=comp)
+                     vib, grounded=grounded, compliance=comp, max_stale_days=STALE_FLIGHT_DAYS)
         row["settings_compared_with"] = settings and settings["compared_with"]
         row["overdue_spray_forms"] = overdue_by_drone.get(drone_id, 0)
         row["setting_notes"] = notes                     # firmware-default bypasses: shown, never a reason
@@ -372,12 +372,14 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
-            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record (Rule 14), expired third-party insurance "
+            "rules": "Records check only — not a physical airworthiness sign-off. "
+                     "Do not fly: an unapproved safety-critical setting change, no UIN on record (Rule 14), expired third-party insurance "
                      "(Rule 44) or pilot RPC (Rule 31), or grounded after a reported incident. "
-                     "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off, "
-                     "an unverified UIN, missing or expiring (<=14 d) insurance, settings never checked, a partial CSV/GPX log, or warnings in "
-                     "the air during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight "
-                     "critical battery drop; a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
+                     "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off "
+                     "(checked regardless of baseline), an unverified UIN, missing or expiring (<=14 d) insurance, settings never checked, "
+                     "a partial CSV/GPX log, a last reviewed flight older than 14 days, or warnings in the air during the last flight "
+                     "(a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop; "
+                     "a landing below 10% battery is a pilot note, not a reason). No rule fired: none of these."}
 
 
 def _accident_dossier(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:

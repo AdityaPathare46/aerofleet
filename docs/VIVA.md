@@ -45,11 +45,16 @@ and the figures are in the paper. Have the paper PDF open in a second window.
 ## A. The problem and the contribution
 
 **Q1. What is new here? People have analysed drone logs before.**
-Four things, all measured: (1) the first test, declared in advance, of whether public flight logs can attribute
-crashes to pilot or aircraft, and they cannot; (2) an audit showing how much of the apparent crash-detection skill
-comes from evaluation choices (AUC fell by 0.21 [0.06, 0.34] across 32 settings; a published detector fell from 0.94
-to 0.63 when whole days were held out); (3) a ten-item reporting checklist and a tool designed from those limits; (4) a normal-flight model trained on
-1,121 public flights of 401 vehicles, tested on unseen drones and on real injected faults, used as context only.
+Four things, all measured: (1) the first pre-declared test of whether pilot-vs-aircraft blame attribution can be shown
+with public flight logs and the labels that exist — it cannot (0.47 balanced accuracy on 112 held-out crashes; blind
+relabelling agreed with uploaders at κ = −0.10, and the rule failed against expert forum labels too at BA 0.38; note
+that 0.47 balanced accuracy and 53/112 wrong = 47% are two different metrics that happen to coincide, and we do not lean
+on the post-hoc rule v2 0.68 on 31 answered crashes); (2) an audit showing how much apparent crash-detection skill comes
+from evaluation choices (AUC fell by 0.21 [0.06, 0.34] across 32 settings; a published detector fell from 0.94 to 0.63
+when whole days were held out); (3) a ten-item reporting checklist and a records tool designed from those limits (whose
+green status explicitly reads **"No rule fired — records check only, not an airworthiness sign-off"** because it flags
+crash flights only ~1.35× as often as ordinary flights); (4) a normal-flight model trained on 1,121 public flights of
+401 vehicles, tested on unseen drones and on real injected faults, used as context only.
 *Show:* Overview ▸ findings; paper Table 1 (related work) and Section 6.
 
 **Q2. Isn't a negative result a failed project?**
@@ -74,20 +79,28 @@ It is where the drones are going in India now (government-funded, at scale), its
 experienced, it flies near people and crops with chemicals, and it has hard reporting and insurance obligations. The
 checks themselves are general: any PX4 or ArduPilot fleet can use them.
 
-**Q3. Who would use this?**
-Fleet operators (settings, flight reviews, records), maintenance engineers (which drone to look at first),
-investigators and insurers (a signed, time-ordered account and a clear statement of its limits), and anyone building
-log diagnostics (the checklist). *Honest limit:* no operator has used it yet; a prospective study is declared but not
-run (`research/protocols/prospective_and_user_study.md`).
+**Q3. Who would use this — and why haven't you tested it with real operators yet?**
+Fleet supervisors at Indian commercial DaaS operators, RPTO training academies, and Lead Fertiliser Company / agricultural
+drone aggregators (settings governance, morning records check, 7-day CIB&RC spray register, 24 h / 48 h accident records),
+plus maintenance engineers and insurers. *Honest limit & why it is defensible:* no paying operator has deployed it yet
+and `pune-agri` uses simulated ArduPilot SITL logs. In safety-critical software, offline empirical validation (590 real
+crash logs, SITL firmware fault injection, false-alarm calibration, and tamper-proofing — TRL 4–5) must come *before*
+putting unvalidated rules in front of pesticide-spraying pilots. Our pre-registered 6-month prospective field study and
+operator study protocol (`research/protocols/prospective_and_user_study.md`) is the immediate next stage once an RPTO or
+LFC partner approves field deployment.
 
 **Q4. Why should a regulator care?**
-EU and UK operators must keep operation and maintenance records for at least three years; India's Drone Rules 2021
-(G.S.R. 589(E)) require an accident report on Digital Sky within 48 hours (**Rule 30**), third-party liability insurance
-(**Rule 44**), a verified UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), and Remote Pilot
-Certificate (**Rule 31** / Rule 34). AeroFleet tracks all of those in the signed record, enforces expired insurance/RPC/UIN
-on *Today's fleet* (using IST dates), and generates a one-click printable **48-hour Accident Record prepared for Digital
-Sky (Rule 30)** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes — while never
-claiming to be an official DGCA form and never assigning blame.
+EU and UK operators must keep operation and maintenance records for at least three years. In India, two overlapping
+frameworks apply: (1) **Drone Rules, 2021** (G.S.R. 589(E), as amended in 2022 and 2023) require a verified UIN
+(**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), Remote Pilot Certificate (**Rule 31** / Rule 34),
+third-party liability insurance (**Rule 44**), and an accident report on Digital Sky within **48 hours** (**Rule 30**,
+verified against the Gazette text); and (2) the **Aircraft (Investigation of Accidents and Incidents) Rules, 2025**
+(under Bharatiya Vayuyan Adhiniyam, 2024) extend to unmanned aircraft, require **24-hour notification to AAIB and DGCA**,
+and explicitly enshrine a **no-blame, safety-prevention investigation principle** aligned with ICAO Annex 13. AeroFleet
+tracks those credentials in the signed record, enforces expired insurance/RPC/UIN (IST date) and stale unlogged reviews
+(> 14 days) on *Today's fleet*, and generates a one-click printable **Accident Record prepared for Digital Sky & AAIB**
+showing both the 24 h and 48 h countdowns, telemetry timeline, maintenance logbook, and Ed25519 hashes — matching India's
+no-blame statutory principle while never claiming to be an official DGCA/AAIB form.
 
 ## B. Data
 
@@ -187,10 +200,11 @@ What happened and when (mode changes, the pilot taking over, battery, GPS, the a
 whether the drone flew its plan, and how a drone compares with its own history. That is exactly what the tool shows.
 
 **Q17. Drones that later crashed vibrated more. Why not use that to predict crashes?**
-Because when we measured it as a screen against 412 non-crash drones, flagging the top 10% gave a lift of only 1.77
-[1.00, 2.60]: the interval reaches 1.00, which is random inspection. And within a drone, the crash flight showed no
-rise (mean rank 0.48, p = 0.67). So the tool shows the position as context, with no alarm line.
-*Show:* Fleet Assurance ▸ vibration table (no flags) and History; Proof ▸ results 2–4.
+Three reasons: (1) on the newer accelerometer metric the signal **did not replicate** (pooled rank 0.58, p = 0.25; new
+cases only 0.50, p = 0.58 — consistent with a metric or firmware-era artifact); (2) against 412 non-crash drones,
+flagging the top 10% gave a lift of only 1.77 [1.00, 2.60], spanning 1.00 (random inspection); and (3) within a drone,
+the crash flight showed no rise (mean rank 0.48, p = 0.67). So the tool shows vibration as context only, with no alarm
+line. *Show:* Fleet Assurance ▸ vibration table (no flags) and History; Proof ▸ results 2–4.
 
 **Q18. Your re-implemented detector didn't reach the published accuracy. Isn't the comparison unfair?**
 Fair point, and the paper says so. The published code and weights were not released, so we fixed the open choices
@@ -198,9 +212,12 @@ before training and declared them. The finding does not depend on matching their
 dropped by 0.33 [0.28, 0.38] between random windows and held-out days. The point is the drop, not the level.
 
 **Q19. What about the language models? Everyone is using them.**
-We tested four small local models as single reviewers and as voting panels. On 97 real crash cases with independent
-labels, no panel beat a fixed rule, and one compromised reviewer moved most of the panel's verdicts (between 16 and
-89 of the 97). That is why AeroFleet uses none. *Show:* Settings ▸ "Language models: none"; the no-AI test.
+Two reasons — one architectural and one empirical. Architecturally, safety-assurance records must be **deterministic,
+offline-auditable, reproducible across machines, and free of prompt-injection paths**; an LLM cannot guarantee any of
+those. Empirically, we tested **four small local models (3–4B parameters, not frontier cloud models)** as single
+reviewers and voting panels: on 97 real crash cases with independent labels, no panel beat a fixed rule, one compromised
+reviewer moved 16 to 89 of the 97 verdicts, and Mac vs RTX agreement was only 16/33. That is why AeroFleet uses zero AI
+in its decision path. *Show:* Settings ▸ "Language models: none"; the static no-AI import test.
 
 ## E. The tool
 
@@ -307,7 +324,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-774 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+775 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -410,8 +427,10 @@ Only with a waypoint every 5 s. With 10 s spacing the same check gave 9 of 40 fa
 corners of plans built from the track. Quote the spacing with the number.
 
 **Q47. Is the draft Civil Drone Bill law?**
-No. It was released for comment on 16 September 2025 (comments to 15 October 2025); we found no record of it being
-introduced in Parliament. The Drone Rules 2021 apply. Check again before the review.
+No. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* was released for public comment on 16 September 2025
+and remains at the draft stage (not yet introduced or passed in Parliament as of Nov 2026). The **Drone Rules, 2021**
+(as amended in 2022 and 2023) remain in force, alongside the **Aircraft (Investigation of Accidents and Incidents)
+Rules, 2025** under the Bharatiya Vayuyan Adhiniyam, 2024 (which extend 24-hour no-blame accident reporting to UAS).
 
 **Q48. A pilot describes a problem. How do you find similar flights, and is that a diagnosis?**
 Two ways, both shown as places to look. Words: BM25 against what uploaders wrote about their own flights in the public
@@ -482,13 +501,14 @@ commanded, which rises with weight and falls as a tank empties) and declared a t
 least 10%. It fell 6.2%, so by our own rule the model was not changed. Likely, public drones carry too little payload
 for it to matter; on sprayers it may, and the code is ready for that retrain once we have sprayer logs.
 
-**Q55. Some crashed drones show no flight-log warnings. Isn't that a failure?**
-It is the study on screen: crash flights often show no warning in their logs, and a log cannot say whether or why a drone
-crashed. On fleet `demo` (unrelated public logs with no baseline), un-baselined drones now show **Check first** (`no_baseline`)
-rather than silently passing as Ready. On fleet `pune-agri` (where a fleet baseline is set), an operator who knows a drone
-crashed records `"Incident / crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`),
-which immediately turns Today's fleet to **Do not fly** until a subsequent `"Post-incident inspection cleared"` entry is
-signed into the record.
+**Q55. Some crashed drones show no flight-log warnings. Why does the green badge say "No rule fired" instead of "Ready"?**
+Because calling it "Ready" would be unsafe: our own SA1 numbers show the board flags only 36.8% of archive crashes and
+19.8% of RflyMAD motor faults (about 1.35× as often as ordinary flights). It is a **records check, not an airworthiness
+sign-off**. So the UI explicitly labels the green state **"No rule fired"** and reminds the pilot to perform a physical
+pre-flight check. In addition, if a drone's last reviewed flight is older than 14 days (`stale_flight`), it automatically
+drops to **Check first** so a drone that flew unlogged cannot stay silently green. And when an operator knows a drone
+crashed, recording `"Incident / crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`)
+immediately turns Today's fleet to **Do not fly** until signed inspection clearance is logged.
 
 **Q56. Why didn't you turn the ML model into an onboard emergency-takeover controller?**
 Because our own study proved ML fault detectors fail on unseen flight days (LeNet-5 dropped from AUC 0.94 to 0.63) and

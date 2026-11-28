@@ -25,7 +25,8 @@ from html import escape as e
 from typing import Any, Dict, List, Optional
 
 IST = timezone(timedelta(hours=5, minutes=30))
-STATUTORY_HOURS = 48
+STATUTORY_HOURS = 48        # Drone Rules, 2021 (G.S.R. 589(E)), Rule 30: Digital Sky accident report within 48 hours
+AAIB_NOTIFY_HOURS = 24      # Aircraft (Investigation of Accidents and Incidents) Rules, 2025: AAIB/DGCA notice within 24 hours
 
 CSS = (
     "body{font:13.5px/1.45 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111;max-width:860px;"
@@ -89,7 +90,9 @@ def build_accident_dossier(
     )
     event_dt = _parse_utc(event_iso)
     deadline_dt = event_dt + timedelta(hours=STATUTORY_HOURS) if event_dt else None
+    aaib_dt = event_dt + timedelta(hours=AAIB_NOTIFY_HOURS) if event_dt else None
     hours_left = round((deadline_dt - now).total_seconds() / 3600.0, 1) if deadline_dt else None
+    aaib_hours_left = round((aaib_dt - now).total_seconds() / 3600.0, 1) if aaib_dt else None
     deadline_status = (
         "UNKNOWN" if hours_left is None else ("OVERDUE" if hours_left < 0 else ("URGENT" if hours_left <= 12 else "WITHIN_48H"))
     )
@@ -108,7 +111,10 @@ def build_accident_dossier(
     )
 
     return {
-        "rule": "Drone Rules 2021 (G.S.R. 589(E)), Rule 30 (Mandatory reporting of an accident within 48 hours on Digital Sky)",
+        "rule": (
+            "Drone Rules, 2021 (G.S.R. 589(E)), Rule 30 (48-hour Digital Sky accident report) & "
+            "Aircraft (Investigation of Accidents and Incidents) Rules, 2025 (24-hour AAIB/DGCA notification for UAS; no-blame safety investigation)"
+        ),
         "generated_at": _fmt_dt(now),
         "fleet": fleet,
         "simulated_fleet": fleet == "pune-agri",
@@ -119,6 +125,9 @@ def build_accident_dossier(
             "due": _fmt_dt(deadline_dt),
             "hours_remaining": hours_left,
             "status": deadline_status,
+            "aaib_2025_hours": AAIB_NOTIFY_HOURS,
+            "aaib_2025_due": _fmt_dt(aaib_dt),
+            "aaib_2025_hours_remaining": aaib_hours_left,
         },
         "aircraft": {
             "uin": (registration or {}).get("uin"),
@@ -158,9 +167,10 @@ def build_accident_dossier(
             "matches_record": matches_record,
         },
         "disclaimer": (
-            "Operator-prepared record generated locally by AeroFleet for Digital Sky Rule 30 filing and insurer review "
-            "(not an official DGCA form). AeroFleet lists deterministic telemetry facts only and never attributes pilot "
-            "or aircraft blame. Submit officially on digitalsky.dgca.gov.in within 48 hours of an accident."
+            "Operator-prepared record generated locally by AeroFleet for Digital Sky Rule 30 filing (48 h) and "
+            "AAIB/DGCA notification under the Aircraft (Investigation of Accidents and Incidents) Rules, 2025 (24 h; "
+            "explicitly a no-blame safety-prevention investigation aligned with ICAO Annex 13). Not an official DGCA/AAIB "
+            "form. AeroFleet lists deterministic telemetry facts only and never attributes pilot or aircraft blame."
         ),
     }
 
@@ -184,9 +194,16 @@ def accident_dossier_html(d: Dict[str, Any]) -> str:
         )
     elif dl["status"] in ("URGENT", "WITHIN_48H"):
         banner_cls = "banner-amber" if dl["status"] == "URGENT" else "banner-green"
+        aaib_part = (
+            f"<br><b>2025 Accident Investigation Rules (AAIB/DGCA 24 h notice):</b> "
+            + (f"<b>{abs(dl['aaib_2025_hours_remaining']):.1f} h overdue</b>" if dl["aaib_2025_hours_remaining"] < 0
+               else f"{dl['aaib_2025_hours_remaining']:.1f} h remaining")
+            + f" (due {e(dl['aaib_2025_due']['ist'] or '')})."
+            if dl.get("aaib_2025_hours_remaining") is not None else ""
+        )
         banner_txt = (
-            f"<b>Rule 30 filing window:</b> {dl['hours_remaining']:.1f} hours remaining — "
-            f"due by <b>{e(dl['due']['ist'] or '')}</b> ({e(dl['due']['utc'] or '')})."
+            f"<b>Drone Rules 2021 Rule 30 (Digital Sky 48 h report):</b> {dl['hours_remaining']:.1f} hours remaining — "
+            f"due by <b>{e(dl['due']['ist'] or '')}</b> ({e(dl['due']['utc'] or '')}).{aaib_part}"
         )
     else:
         banner_cls = "banner-amber"

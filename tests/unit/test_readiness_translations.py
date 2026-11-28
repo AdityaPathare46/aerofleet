@@ -32,9 +32,10 @@ def _all_codes():
             for settings in (None, {"verdict": "BLOCK", "critical": ["A"], "limits": []}, {"verdict": "REVIEW", "critical": [], "limits": ["B"]},
                              {"verdict": "NO_REFERENCE", "critical": [], "limits": []},
                              {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": [{"name": "NAV_RCL_ACT", "title": "t"}]}):
-                last = {"warnings": ["w1", "w2", "w3", "w4"], "critical_in_flight": 1, "deviated": True, "partial_log": True}
+                last = {"warnings": ["w1", "w2", "w3", "w4"], "critical_in_flight": 1, "deviated": True, "partial_log": True,
+                        "flown_at": "2026-10-01T00:00:00+00:00"}
                 codes |= {r["code"] for r in assess("D", settings, reg, last, grounded={"done_at": "2026-11-01T00:00:00"},
-                                                    compliance=comp, today=ref)["reasons"]}
+                                                    compliance=comp, today=ref, max_stale_days=14)["reasons"]}
     return codes
 
 
@@ -49,5 +50,5 @@ def test_every_reason_code_and_place_is_translated():
     assert codes == {"no_uin", "uin_unverified", "no_insurance", "insurance_expired", "insurance_expiring", "rpc_expired",
                      "settings_never", "no_baseline", "critical_changed", "limit_changed",
                      "critical_in_flight", "deviated", "warning", "more_warnings", "failsafe_off",
-                     "grounded_incident", "partial_log"}
+                     "grounded_incident", "partial_log", "stale_flight"}
     assert codes <= k and {"settings", "flight", "register", "READY", "CHECK_FIRST", "DO_NOT_FLY", "accidentDossier"} <= k

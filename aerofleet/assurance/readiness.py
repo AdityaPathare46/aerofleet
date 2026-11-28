@@ -30,6 +30,7 @@ from typing import Any, Dict, List, Optional
 
 IST = timezone(timedelta(hours=5, minutes=30))
 INSURANCE_WARN_DAYS = 14
+STALE_FLIGHT_DAYS = 14     # default age threshold in fleet_readiness(): confirm no unlogged flights occurred since
 
 READY, CHECK_FIRST, DO_NOT_FLY = "READY", "CHECK_FIRST", "DO_NOT_FLY"
 # ArduPilot: the compliance rules (aerofleet/hardware/compliance_rules.py, each with its ArduPilot source) that a
@@ -94,12 +95,16 @@ def _reason(level: str, text: str, where: str, code: str, **args: Any) -> Dict[s
 def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Optional[Dict[str, Any]],
            last_flight: Optional[Dict[str, Any]], vibration: Optional[Dict[str, Any]] = None,
            grounded: Optional[Dict[str, Any]] = None, compliance: Optional[Dict[str, Any]] = None,
-           today: Optional[date] = None) -> Dict[str, Any]:
+           today: Optional[date] = None, max_stale_days: Optional[int] = None) -> Dict[str, Any]:
     """`settings`: {"verdict", "critical": [names], "limits": [names]} from the drift check, or None if never uploaded.
     `registration`: {"uin", "status"} or None. `last_flight`: {"review_id", "flown_at", "warnings": [texts],
     "critical_in_flight": int, "deviated": bool, "partial_log": bool} or None. `vibration`: shown, not judged.
     `grounded`: unresolved incident/crash entry from maintenance.is_grounded(), or None.
-    `compliance`: optional DGCA Rule 44 insurance / Rule 34 pilot RPC dict; enforced when present."""
+    `compliance`: optional DGCA Rule 44 insurance / Rule 31 pilot RPC dict; enforced when present (IST date).
+    `max_stale_days`: if set, flags `CHECK_FIRST` (`stale_flight`) when `last_flight.flown_at` is older than this
+    many days so a drone that flew unlogged or sat unreviewed cannot quietly show 'No rule fired'.
+    Note: `failsafes_off` fires regardless of baseline by design (both ArduPilot and PX4 ship low-battery actions
+    off/warn-only by default, so copying a stock drone as baseline must not silently approve a disabled failsafe)."""
     reasons: List[Dict[str, Any]] = []
     if grounded is not None:
         reasons.append(_reason(DO_NOT_FLY, "Drone grounded after a reported incident or crash: inspect and log clearance before flying.",
@@ -153,6 +158,20 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
                                "failsafe_off", title=fs["title"], name=fs["name"]))
 
     if last_flight is not None:
+        if max_stale_days is not None and last_flight.get("flown_at"):
+            try:
+                ref = today or datetime.now(IST).date()
+                fdt = datetime.fromisoformat(str(last_flight["flown_at"]).replace("Z", "+00:00"))
+                fdate = fdt.astimezone(IST).date() if fdt.tzinfo else fdt.date()
+                age = (ref - fdate).days
+                if age > max_stale_days:
+                    reasons.append(_reason(
+                        CHECK_FIRST,
+                        f"Last reviewed flight was {age} day(s) ago ({fdate.isoformat()}): confirm no unlogged flights occurred since.",
+                        "flight", "stale_flight", days=age, date=fdate.isoformat(),
+                    ))
+            except ValueError:
+                pass
         if last_flight.get("partial_log"):
             reasons.append(_reason(CHECK_FIRST, "Last flight was read from a CSV/GPX export: autopilot health and settings could not be verified.",
                                    "flight", "partial_log"))

@@ -43,12 +43,16 @@ vertical built in (for example women's self-help groups under the Namo Drone Did
 Drones can fail quietly through changed settings or disabled failsafes; Indian law requires UIN registration, third-party
 liability insurance, a Remote Pilot Certificate, 48-hour accident reporting on Digital Sky, and a seven-day CIB&RC
 Annexure-I spray-monitoring report; after an accident someone asks *whose fault was it?* Meanwhile, many tools claim to
-read a flight log and name the cause of a crash. **Our study tested that claim on 590 real crash logs and found that logs
-cannot reliably tell pilot error from aircraft fault** (a rule declared in advance scored 0.47 balanced accuracy on 112
-held-out crashes, where chance is 0.50). **AeroFleet** is what we built from that result: a ground-side records and
-pre-flight assurance tool that never flies or commands a drone, **never names a cause** ("evidence, not verdicts"),
-decides only with fixed rules, and keeps an Ed25519-signed, tamper-evident record with optional DigiCert-pinned RFC 3161
-trusted timestamps.
+read a flight log and name the cause of a crash. **Our study tested that claim on 590 real crash logs and found that
+pilot-vs-aircraft blame attribution cannot be shown reliably with the public logs and labels that exist** (a pre-declared
+rule scored 0.47 balanced accuracy on 112 held-out crashes where chance is 0.50; blind relabelling agreed with uploaders
+at κ = −0.10; and the rule also failed against expert forum diagnoses at BA 0.38). Because attribution cannot be
+validated, a safety tool must not assert it. **AeroFleet** is what we built from that result: a ground-side records and
+pre-flight assurance tool that never flies or commands a drone, **never names a cause** ("evidence, not verdicts" —
+aligned with the statutory no-blame investigation principle in India's *Aircraft (Investigation of Accidents and
+Incidents) Rules, 2025*), decides only with fixed rules (labelling the green state **"No rule fired"** rather than
+"Ready" so pilots never mistake a records check for airworthiness), and keeps an Ed25519-signed, tamper-evident record
+with optional DigiCert-pinned RFC 3161 trusted timestamps.
 
 ---
 
@@ -106,15 +110,15 @@ selected), and forum threads (443 found; 161 diagnosed; 148 real crashes). Per q
 
 | Question | Result | Status |
 |---|---|---|
-| Can a log tell pilot error from aircraft fault? | Declared rule: **0.47** balanced accuracy on 112 held-out crashes (pass mark 0.70, chance 0.50); models near chance, also on multicopters; a published log checker (FlightMD) no better | Declared; failed |
+| Can a log tell pilot error from aircraft fault? | Cannot be shown with available labels/logs: declared rule **0.47** BA on 112 held-out crashes (pass mark 0.70, chance 0.50; 53/112 wrong = 47% is a separate metric that coincides); models near chance; FlightMD no better; expert labels BA 0.38 | Declared; failed |
 | Does evaluation design create apparent skill? | Across 32 settings, AUC fell by **0.21** [0.06, 0.34] (0.06 from grouping folds by vehicle); a re-implemented published fault detector (RflyMAD LeNet-5) fell from AUC **0.94 to 0.63** once whole days were held out | † exploratory |
 | Does a drone warn before it crashes (within drone)? | Vibration mean scaled rank **0.48** [0.38, 0.58], p = 0.67, 61 drones: no | Declared |
-| Do rougher drones crash more (between drones)? | Mean rank **0.67**, p = 0.0023 as declared; **p = 0.012** resampling airframes, **p = 0.076** with operator sites weighted equally: **suggestive** | Declared; dependence tests † |
+| Do rougher drones crash more (between drones)? | Mean rank **0.67**, p = 0.0023 (Holm 0.016) on older metric; p = 0.012 resampling airframes, p = 0.076 site-weighted; **not replicated on the newer accelerometer metric** (rank 0.58, p = 0.25; new cases only 0.50, p = 0.58) | Declared; dependence & replication † |
 | Can vibration pick drones to inspect? | Top-decile screen lift **1.77** [1.00, 2.60]: not shown to beat random inspection | † |
 | Are crash labels reliable? | Blind independent relabelling agreed with uploaders no better than chance (κ = −0.10); the usual crash-moment tilt rule misses about 7-50% of crashes depending on the rater | † |
 | What do experts blame? | Tuning or configuration **26 of 94** aircraft-caused crashes (forum coding agreement kappa 0.81) | Declared |
 | Can word matching guess the cause? | Best guess matched the expert 22% (21 of 96), below 27% for always guessing the commonest cause | Declared |
-| Do language-model review panels help? | On 97 crash cases none beat a plain rule; one compromised reviewer moved most verdicts (16-89 of 97) | Declared |
+| Do small local LLM review panels help? | Four **3-4B local models** (not frontier models) tested on 97 crash cases: none beat a plain rule; one compromised reviewer moved 16-89 of 97 verdicts; "No AI" is also architectural (determinism, auditability, zero prompt-injection path) | Declared |
 
 ### Figure 2: the paper at a glance
 
@@ -216,14 +220,14 @@ attribute blame.
 - **Assurance core**: `aerofleet/assurance/` (~4,500 lines): log readers, readiness rules, settings drift,
   planned-vs-flown reconciliation, evidence timeline, signed ledger, RFC 3161 TSA client/verifier + pinned DigiCert
   Trusted Root G4 (`data/tsa_roots.pem`), spray form + swath area estimator, DGCA 48-hour accident dossier generator
-  (`accident_report.py`), normal-flight model evaluator, airspace check (Pune/Mumbai + 36 Indian civil airports),
+  (`accident_report.py`), normal-flight model evaluator, airspace check (Pune/Mumbai + 37 Indian civil airports),
   deconfliction, wind (decoupled from legacy dispatch, with sprayer/survey airframe profiles), maintenance + grounding,
   trends + service intervals, archive search.
 - **No ML library and no LLM** in the decision path; the one trained model is exported to JSON and evaluated in plain
   Python. `tests/unit/test_no_ai_in_decision_path.py` follows every import from all 2.0 product routes (including
   `spray.py` and `vr_study.py`) and assurance modules and fails if it reaches any AI agent, LLM panel, or ML library.
 - **License**: MIT (`LICENSE` at repository root).
-- **Tests**: **774 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
+- **Tests**: **775 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
   typecheck clean; 30/30 paper-to-code number checks agree.
 - **Packaging**: the macOS app builds and starts its own backend (it still needs the project folder and its Python
   environment on the same machine).
@@ -276,13 +280,16 @@ parameters; 219 CRITICAL, 215 HIGH, 393 TUNING, 4,888 INFO, 84 IGNORED).
 
 An operator approves an exact value with a written reason, and the approval is signed.
 
-### 5.4 Today's fleet (`readiness.py`): the morning go / no-go
+### 5.4 Today's fleet (`readiness.py`): the morning records check
 
-| Verdict | When |
+*Records check only — not a physical airworthiness sign-off.* The green state is explicitly labelled **"No rule fired"**
+(not "Ready") because SA1 shows the rules flag crash flights ~1.35× as often as ordinary flights and miss most faults.
+
+| Display status | When |
 |---|---|
-| **Do not fly** | an unapproved safety-critical setting change; no UIN on record; drone grounded in maintenance logbook after a reported incident/crash without a subsequent clearance; expired third-party insurance (when recorded); expired assigned pilot RPC (when recorded) |
-| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **a failsafe or safety check switched off** (ArduPilot: low/critical battery failsafe, RC-loss failsafe, EKF failsafe, geofence, `ARMING_CHECK=0`; PX4: `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281`); an unverified UIN; third-party insurance expiring within 14 days; settings never checked; last flight from a partial CSV/GPX export; or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
-| **Ready** | none of these |
+| **Do not fly** | an unapproved safety-critical setting change; no UIN on record (Rule 14); drone grounded in maintenance logbook after a reported incident/crash without a subsequent clearance; expired third-party insurance (Rule 44, IST date); expired assigned pilot RPC (Rule 31, IST date) |
+| **Check first** | a flight-limit change; settings not yet compared against an approved baseline (`NO_REFERENCE`); **a failsafe or safety check switched off (checked regardless of baseline by design**, because stock ArduPilot and PX4 ship with low-battery actions off/warn-only: ArduPilot low/critical battery, RC-loss, EKF, geofence, `ARMING_CHECK=0`; PX4 `NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281`); an unverified UIN; missing or expiring (≤ 14 d) insurance; settings never checked; last flight from a partial CSV/GPX export; **last reviewed flight older than 14 days (`stale_flight`)**; or an in-air warning / route deviation / mid-air critical parameter change on the last flight (5.2) |
+| **No rule fired** | none of these (internal API enum `READY` retained for compatibility; UI explicitly warns to perform a physical pre-flight check) |
 
 - **Non-blocking context & notes**: low-battery landing (`pilot_notes`), PX4 firmware-default safety-switch bypass
   `CBRK_IO_SAFETY=22027` (`setting_notes`, fixed under C1; `CBRK_FLIGHTTERM` is not checked at all), overdue 7-day
@@ -340,13 +347,16 @@ ledger's payload hashes (see section 9 M1 for remaining swap/deletion hardening)
 
 ### 5.9 Other features
 
-- **DGCA compliance & 48-hour accident record (G.S.R. 589(E))**: `DroneCompliance` table (`GET/PUT /drones/{id}/compliance`,
+- **DGCA & AAIB compliance and 24 h / 48 h accident record**: `DroneCompliance` table (`GET/PUT /drones/{id}/compliance`,
   signed) stores Rule 44 third-party insurance, Rule 8 Type Certificate/DAN, and Rule 31 assigned pilot RPC inside
   `Drone register` (checked against **IST date**; missing insurance on a compliance record flags `CHECK_FIRST`, expired
   insurance/RPC grounds to `DO_NOT_FLY`). `accident_report.py` (`GET .../accident-dossier` HTML & `.json`) generates an
-  operator-prepared print-to-PDF **Accident Record for Digital Sky (Rule 30)** with a 48-hour IST/UTC filing countdown,
-  telemetry timeline (no blame), maintenance history, simulated-fleet banner when applicable, and Ed25519 verification
-  block.
+  operator-prepared print-to-PDF **Accident Record for Digital Sky & AAIB** showing both statutory Indian deadlines —
+  **48-hour Digital Sky filing (Drone Rules 2021, G.S.R. 589(E), Rule 30 — verified against `egazette.gov.in`)** and
+  **24-hour AAIB/DGCA notification under the Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (which
+  extend to UAS and mandate a no-blame safety investigation aligned with ICAO Annex 13) — plus telemetry timeline (no
+  blame), maintenance history, simulated-fleet banner when applicable, and Ed25519 verification block. The *Draft Civil
+  Drone (Promotion and Regulation) Bill, 2025* remains at draft stage; Drone Rules, 2021 (as amended 2022/2023) apply.
 - **Vibration history**: each drone flight by flight in GPS-time order against its own earlier flights, comparable fleet
   drones, and 292 public PX4 flights of 141 never-crashed vehicles; last 10 s left out.
 - **Maintenance logbook**: work recorded and signed (including `"Incident / crash reported (grounded for inspection)"`
@@ -487,7 +497,8 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 - `docs/paper/check_numbers.py`: **30 of 30** numbers in the paper and app Overview agree with the result files.
 - `docs/CRITICAL_REVIEW_2026-11-27.md` (included in Appendix H): independent line-by-line review of commits
-  `24c814f..8928782`; critical findings **C1** and **C2** fixed and live-verified in `fc73ec6` (**773 tests passing**).
+  `24c814f..8928782`; critical findings **C1** and **C2** fixed in `fc73ec6`, and **H1-H5, M1-M5, L2** + external
+  dossier review fixes completed on 28 Nov (**775 tests passing**).
 
 ---
 
@@ -531,9 +542,11 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    search A1, SITL S1, and `CRITICAL_REVIEW_2026-11-27.md` C1/C2 fixes).
 3. A **tamper-evident governance layer** (approved baseline with signed reasons, failsafe-off checks, Ed25519 ledger,
    offline auditor CLI, and DigiCert-pinned RFC 3161 trusted timestamps).
-4. **End-to-end Indian DGCA & CIB&RC operator workflow**: UIN, third-party insurance, Type Certificate, Pilot RPC,
-   nationwide 36-airport + Pune/Mumbai route check, 7-day Annexure-I spray register with swath acreage, maintenance
-   grounding + service intervals, 48-hour accident dossier, and English/Hindi/Marathi morning board.
+4. **End-to-end Indian DGCA, AAIB & CIB&RC operator workflow**: UIN (Rule 14), third-party insurance (Rule 44), Type
+   Certificate (Rule 8), Pilot RPC (Rule 31), nationwide 37-airport + Pune/Mumbai route check (with 60 m green floor in
+   the 8-12 km band), 7-day Annexure-I spray register with upper-bound swath acreage, maintenance grounding + service
+   intervals, 24 h / 48 h accident record (2025 Rules + Rule 30), stale-log detection (> 14 d), and English/Hindi/Marathi
+   morning records board ("No rule fired").
 5. **Works for a fleet of one** via 292 never-crashed public reference flights and a conformally calibrated
    normal-flight context model.
 

@@ -68,15 +68,28 @@ def test_rule30_accident_dossier_48h_deadline_and_html_escaping():
         matches_record=True,
         now_utc=now,
     )
-    # Grounded at 06:00 UTC -> deadline is +48h -> 39.0 hours left at 15:00 UTC
+    # Grounded at 06:00 UTC -> Rule 30 deadline is +48h (39.0 h left) and 2025 AAIB notice is +24h (15.0 h left)
     assert dossier["deadline"]["status"] == "WITHIN_48H"
     assert dossier["deadline"]["hours_remaining"] == 39.0
+    assert dossier["deadline"]["aaib_2025_hours_remaining"] == 15.0
     assert dossier["flight"]["takeoff"]["lat"] == 18.5201
     html = accident_dossier_html(dossier)
-    assert "Rule 30" in html and "UA00DEMO05" in html and "VERIFIED" in html
+    assert "Rule 30" in html and "2025 Accident Investigation Rules" in html and "UA00DEMO05" in html and "VERIFIED" in html
     assert "SIMULATED DEMO FLEET" in html
     assert "<script>bad</script>" not in html
     assert "&lt;script&gt;bad&lt;/script&gt;" in html
+
+
+def test_stale_flight_prevents_silent_green_when_review_is_old():
+    ref = date(2026, 11, 28)
+    ok_settings = {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": []}
+    ok_reg = {"uin": "UA001", "status": "VERIFIED"}
+    fresh = {"review_id": 1, "flown_at": "2026-11-26T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
+    old = {"review_id": 2, "flown_at": "2026-10-01T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
+    assert assess("D1", ok_settings, ok_reg, fresh, today=ref, max_stale_days=14)["status"] == READY
+    r_old = assess("D1", ok_settings, ok_reg, old, today=ref, max_stale_days=14)
+    assert r_old["status"] == CHECK_FIRST
+    assert any(x["code"] == "stale_flight" for x in r_old["reasons"])
 
 
 def test_m3_smoothed_airborne_speed_rejects_parked_gps_jitter():
