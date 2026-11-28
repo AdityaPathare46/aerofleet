@@ -2,7 +2,7 @@
 // 120 m height limit and conflicts with the other missions. Backed by POST /api/v1/assurance/plans/airspace
 // (aerofleet/assurance/airspace_check.py). The zones are approximations, not Digital Sky, and the page says so.
 import { useEffect, useRef, useState } from 'react'
-import * as maplibregl from 'maplibre-gl'
+import * as maplibregl from '../lib/maplibre'
 import type { Map as MLMap } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore } from '../store/appStore'

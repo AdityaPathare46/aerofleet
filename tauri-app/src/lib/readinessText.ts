@@ -37,7 +37,7 @@ const en: Dict = {
   deviated: 'The last flight left its planned route.',
   warning: 'Last flight: {warning}.',
   more_warnings: 'Last flight: {n} more warnings in its timeline.',
-  allClear: 'No rule fired on stored records (UIN, compliance, settings, and last reviewed flight within 14 days). Still perform a physical pre-flight check — logs miss most faults.',
+  allClear: 'No rule fired on stored records (UIN, compliance, settings, and last reviewed flight). Still perform a physical pre-flight check — logs miss most faults.',
   noUin: 'no UIN', lastFlight: 'Last flight', min: 'min', settingsLine: 'Settings', notChecked: 'not checked',
   OK: 'ok', REVIEW: 'review', BLOCK: 'block', NO_REFERENCE: 'nothing to compare with',
   vsBaseline: 'vs approved baseline', vsPrevious: 'vs previous upload',
@@ -47,7 +47,7 @@ const en: Dict = {
   vibOwn: 'above {x} of its {y} earlier flights', vibPublic: '; above {p}% of public flights', fewFlights: 'too few flights',
   empty: 'No drones in this fleet yet: upload a parameter file or a flight log on Fleet Assurance.',
   rulesTitle: 'Rules.',
-  rules: 'Do not fly: an unapproved safety-critical setting change, no UIN on record, or grounded after a reported incident. Check first: a flight-limit change, settings not compared with a baseline, a failsafe or safety check switched off, an unverified UIN, settings never checked, a partial CSV/GPX log, or warnings in the air during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop). Ready: none of these.',
+  rules: 'Do not fly: an unapproved safety-critical setting change, no UIN on record, expired insurance or pilot RPC, or grounded after a reported incident. Check first: a flight-limit change, settings not compared with a baseline, an unapproved failsafe switched off, an unverified UIN, missing insurance expiry, settings never checked, a partial CSV/GPX log, or warnings in the air during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical battery drop). No rule fired: none of these (reviews older than 14 days show a non-blocking age note).',
   vibNote: 'Context only: in the study behind AeroFleet, vibration did not warn of a crash within a drone and was not shown to beat random inspection, so it never changes the verdict.',
   unchecked: '',
 }
@@ -87,7 +87,7 @@ const hi: Dict = {
   vibOwn: 'अपनी पिछली {y} उड़ानों में से {x} से ज़्यादा', vibPublic: '; सार्वजनिक उड़ानों के {p}% से ज़्यादा', fewFlights: 'उड़ानें बहुत कम हैं',
   empty: 'इस बेड़े में अभी कोई ड्रोन नहीं है: Fleet Assurance पर पैरामीटर फ़ाइल या उड़ान लॉग अपलोड करें।',
   rulesTitle: 'नियम।',
-  rules: 'न उड़ाएँ: सुरक्षा से जुड़ी सेटिंग में बिना मंज़ूरी का बदलाव, कोई UIN दर्ज नहीं, या दुर्घटना के बाद रोका गया ड्रोन। पहले जाँचें: उड़ान-सीमा की सेटिंग में बदलाव, बेसलाइन से तुलना नहीं, बंद फ़ेलसेफ़, UIN सत्यापित नहीं, सेटिंग्स कभी जाँची नहीं गईं, आंशिक CSV/GPX लॉग, या पिछली उड़ान के दौरान हवा में चेतावनियाँ (3 सेकंड या उससे लंबी सेंसर या GPS शिकायत, ऑटोपायलट त्रुटि, या उड़ान के बीच बैटरी 10% से नीचे)। तैयार: इनमें से कुछ भी नहीं।',
+  rules: 'न उड़ाएँ: सुरक्षा से जुड़ी सेटिंग में बिना मंज़ूरी का बदलाव, कोई UIN दर्ज नहीं, समाप्त बीमा या RPC, या दुर्घटना के बाद रोका गया ड्रोन। पहले जाँचें: उड़ान-सीमा की सेटिंग में बदलाव, बेसलाइन से तुलना नहीं, बिना मंज़ूरी बंद फ़ेलसेफ़, UIN सत्यापित नहीं, बीमा तिथि दर्ज नहीं, सेटिंग्स कभी जाँची नहीं गईं, आंशिक CSV/GPX लॉग, या पिछली उड़ान के दौरान हवा में चेतावनियाँ (3 सेकंड या उससे लंबी सेंसर या GPS शिकायत, ऑटोपायलट त्रुटि, या उड़ान के बीच बैटरी 10% से नीचे)। कोई नियम नहीं टूटा: इनमें से कुछ भी नहीं।',
   vibNote: 'कंपन सिर्फ़ जानकारी के लिए है: AeroFleet जिस अध्ययन पर आधारित है, उसमें कंपन से किसी ड्रोन की दुर्घटना की पहले से चेतावनी नहीं मिली और यह बिना क्रम की (random) जाँच से बेहतर साबित नहीं हुआ, इसलिए यह फ़ैसले को कभी नहीं बदलता।',
   unchecked: 'इस अनुवाद की जाँच अभी किसी हिन्दी भाषी ने नहीं की है।',
 }
@@ -127,7 +127,7 @@ const mr: Dict = {
   vibOwn: 'आपल्या मागील {y} उड्डाणांपैकी {x} पेक्षा जास्त', vibPublic: '; सार्वजनिक उड्डाणांच्या {p}% पेक्षा जास्त', fewFlights: 'खूप कमी उड्डाणे',
   empty: 'या ताफ्यात अजून कोणताही ड्रोन नाही: Fleet Assurance वर पॅरामीटर फाइल किंवा उड्डाण लॉग अपलोड करा.',
   rulesTitle: 'नियम.',
-  rules: 'उडवू नका: सुरक्षेशी संबंधित सेटिंगमध्ये मंजुरीशिवाय बदल, UIN नोंदलेला नाही, किंवा अपघातानंतर थांबवलेला ड्रोन. आधी तपासा: उड्डाण-मर्यादेच्या सेटिंगमध्ये बदल, बेसलाइनशी तुलना नाही, बंद फेलसेफ, UIN पडताळलेला नाही, सेटिंग्ज कधीच तपासल्या नाहीत, आंशिक CSV/GPX लॉग, किंवा मागील उड्डाणात हवेत असताना इशारे (3 सेकंद किंवा जास्त सेन्सर किंवा GPS तक्रार, ऑटोपायलट त्रुटी, किंवा उड्डाणादरम्यान बॅटरी 10% खाली). तयार: यापैकी काहीही नाही.',
+  rules: 'उडवू नका: सुरक्षेशी संबंधित सेटिंगमध्ये मंजुरीशिवाय बदल, UIN नोंदलेला नाही, संपलेला विमा किंवा RPC, किंवा अपघातानंतर थांबवलेला ड्रोन. आधी तपासा: उड्डाण-मर्यादेच्या सेटिंगमध्ये बदल, बेसलाइनशी तुलना नाही, मंजुरीशिवाय बंद फेलसेफ, UIN पडताळलेला नाही, विम्याची तारीख नोंदलेली नाही, सेटिंग्ज कधीच तपासल्या नाहीत, आंशिक CSV/GPX लॉग, किंवा मागील उड्डाणात हवेत असताना इशारे (3 सेकंद किंवा जास्त सेन्सर किंवा GPS तक्रार, ऑटोपायलट त्रुटी, किंवा उड्डाणादरम्यान बॅटरी 10% खाली). कोणताही नियम मोडला नाही: यापैकी काहीही नाही.',
   vibNote: 'कंपन फक्त माहितीसाठी आहे: AeroFleet ज्या अभ्यासावर आधारित आहे, त्यात कंपनामुळे एखाद्या ड्रोनच्या अपघाताची आधी सूचना मिळाली नाही आणि ते यादृच्छिक (random) तपासणीपेक्षा चांगले असल्याचे सिद्ध झाले नाही, त्यामुळे ते निर्णय कधीही बदलत नाही.',
   unchecked: 'हा अनुवाद अजून मराठी भाषकाने तपासलेला नाही.',
 }

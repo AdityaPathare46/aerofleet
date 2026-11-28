@@ -25,8 +25,8 @@ function Tile({ big, label, sub }: { big: string; label: string; sub?: string })
 }
 
 function Bars({ periods, period }: { periods: Period[]; period: string }) {
-  const W = 760, H = 200, L = 36, B = 40, top = Math.max(1, ...periods.map((p) => p.flights))
-  const bw = Math.max(4, (W - L - 10) / Math.max(1, periods.length) - 6)
+  const W = 760, H = 216, L = 36, B = 54, top = Math.max(1, ...periods.map((p) => p.flights))
+  const bw = Math.min(64, Math.max(4, (W - L - 10) / Math.max(1, periods.length) - 6))
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%' }} role="img" aria-label={`Flights per ${period}`}>
       <line x1={L} y1={H - B} x2={W} y2={H - B} stroke="#94A3B8" />

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import * as maplibregl from 'maplibre-gl'
+import * as maplibregl from '../lib/maplibre'
 import type { Map as MLMap } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore } from '../store/appStore'

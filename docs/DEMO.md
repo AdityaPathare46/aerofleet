@@ -65,7 +65,7 @@ on expertise, and records that protect the pilot (third-party insurance is manda
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
 (26 of 94), which is exactly what the settings check covers.
 
-Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each with its reason, all from real
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 no rule fired, each with its reason, all from real
 public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed (and its
 low-battery failsafe only warns), PX4-06's autopilot rejected position data for 4 s in the air. PX4-05 has no UIN on
 record and PX4-07's is not verified (demo registrations, labelled DEMO). PX4-01 shows a **pilot note**: its last
@@ -85,8 +85,8 @@ only — not an airworthiness sign-off)** rather than *Ready*. An operator who k
 maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
-not change with the language, log messages stay in English, and the note under the buttons says the translation is
-not yet checked by a native speaker (remove it only after one of the team has read every line).
+not change with the language, log messages stay in English, and the translations were reviewed by the Marathi-speaking
+team member (an independent external operator review is still recommended before field deployment).
 
 ### Step 0b. Proof (2 minutes)
 
