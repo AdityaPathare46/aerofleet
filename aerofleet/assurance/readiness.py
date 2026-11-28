@@ -25,9 +25,10 @@ crash within a drone and was not shown to beat random inspection as a screen. Ea
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+IST = timezone(timedelta(hours=5, minutes=30))
 INSURANCE_WARN_DAYS = 14
 
 READY, CHECK_FIRST, DO_NOT_FLY = "READY", "CHECK_FIRST", "DO_NOT_FLY"
@@ -109,10 +110,13 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
         reasons.append(_reason(CHECK_FIRST, f"UIN {registration['uin']} is recorded but not yet verified on Digital Sky.", "register",
                                "uin_unverified", uin=registration["uin"]))
 
-    if compliance:
-        ref = today or datetime.now(timezone.utc).date()
+    if compliance is not None:
+        ref = today or datetime.now(IST).date()
         ins_end = compliance.get("insurance_valid_until")
-        if ins_end:
+        if not ins_end:
+            reasons.append(_reason(CHECK_FIRST, "No third-party insurance expiry on record (Drone Rules 2021 Rule 44).",
+                                   "register", "no_insurance"))
+        else:
             try:
                 exp = date.fromisoformat(str(ins_end)[:10])
                 days = (exp - ref).days
@@ -129,7 +133,7 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
             try:
                 exp = date.fromisoformat(str(rpc_end)[:10])
                 if (exp - ref).days < 0:
-                    reasons.append(_reason(DO_NOT_FLY, f"Assigned pilot RPC expired on {exp.isoformat()} (Drone Rules 2021 Rule 34).",
+                    reasons.append(_reason(DO_NOT_FLY, f"Assigned pilot RPC expired on {exp.isoformat()} (Drone Rules 2021 Rule 31).",
                                            "register", "rpc_expired", date=exp.isoformat()))
             except ValueError:
                 pass

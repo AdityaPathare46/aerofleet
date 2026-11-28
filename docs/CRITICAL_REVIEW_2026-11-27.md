@@ -171,6 +171,8 @@ an independent confirmation.
 next to "met". Treat the next declared test (FA4, C1) as the clean one: run it on new data, for example the ArduPilot
 SITL fleet plus PX4 logs never used before.
 
+**Status (28 Nov 2026): fixed.** Reworded across `VIVA.md`, `HANDOFF.md`, `Proof.tsx`, and `AEROFLEET_DOSSIER.md`; FA4 on unseen data remains future work.
+
 ### H2. SA1's pass mark was set after its answer was known
 
 **What happened.**
@@ -194,6 +196,8 @@ detector.
 **Fix.** Relabel SA1-RflyMAD as descriptive and state why. Put the 36.8% / 26.5% / 27.3% figures in the report as
 they are.
 
+**Status (28 Nov 2026): fixed.** Relabelled as descriptive across `VIVA.md`, `HANDOFF.md`, `Proof.tsx`, and `AEROFLEET_DOSSIER.md`.
+
 ### H3. "Native-speaker reviewed" Hindi and Marathi is a self-review
 
 **What happened.**
@@ -207,6 +211,8 @@ created for. Hindi native-speaker status is also not shown.
 **Fix.** Either get one outside reader per language (a classmate or a KVK contact will do) and record their initials
 and the date, or set the wording to "read by a team member (Marathi native); Hindi not independently checked". Fix the
 HANDOFF contradiction.
+
+**Status (28 Nov 2026): fixed.** `readinessText.ts`, `VIVA.md`, `HANDOFF.md`, and `AEROFLEET_DOSSIER.md` now state team-reviewed (Marathi native member; independent outside reader still recommended) and the `HANDOFF.md` contradiction is removed.
 
 ### H4. The accident dossier cites "Rule 45"; the 48-hour duty is probably Rule 29
 
@@ -223,6 +229,8 @@ HANDOFF contradiction.
 1. Correct the numbers.
 2. Rename the printout "Accident record prepared for a Digital Sky report", so it does not look like an official DGCA
    form.
+
+**Status (28 Nov 2026): fixed.** Verified against G.S.R. 589(E): 48-hour accident reporting is **Rule 30** (not 45 or 29), Type Certificate **Rule 8** (exemptions Rule 13), UIN **Rule 14**, RPC **Rule 31** (procedure Rule 34), insurance **Rule 44**. Updated in `accident_report.py`, `readiness.py`, `readinessText.ts`, `RegistrationCard.tsx`, `assurance.py`, tests, and docs; printout renamed *"Accident Record Prepared for Digital Sky"*.
 
 ### H5. Airport zones: wrong reference point, and agricultural flights are over-restricted
 
@@ -245,17 +253,19 @@ The code differs in three ways:
 3. Cite a source for every radius, or drop the smaller-aerodrome class.
 4. Keep "UNCHECKED, verify on Digital Sky", which is right.
 
+**Status (28 Nov 2026): fixed.** `airspace_check.py` now uses uniform MoCA Sep 2021 distances across 37 civil airports (including Baramati) with a documented 1.5 km perimeter allowance: 0–5 km RED, 5–8 km YELLOW at all heights, **8–12 km YELLOW above 60 m (200 ft) only** (4 m sprayers not over-restricted), keeping `UNCHECKED` outside mapped zones. Covered by unit + integration tests.
+
 ---
 
 ## Medium
 
-| # | Finding | Evidence | Fix |
-|---|---|---|---|
-| M1 | The stored-records check in `/ledger/verify` misses swaps and deletions | `verify_stored_records` checks only that a review's hash is *somewhere* in the ledger. Swapping two reviews' reports passes. Deleting a review row passes. A spray form whose review was deleted is skipped (`continue`). | Record `review_id` in the ledger payload. Compare entry to row by key, and compare counts. |
-| M2 | `pune-agri` is a simulated fleet, but the screens don't say so | It is seeded from ArduPilot SITL `.bin` files. DEMO.md calls them "6 real ArduCopter SITL flights", and the commit says "a true Indian agricultural fleet". FleetPicker, Today's fleet, Spray register and Trends show no "simulated" label. | Add "Simulated (ArduPilot SITL)" to the fleet name or picker, and to every printout made from it. |
-| M3 | "Airborne by speed" uses raw fix-to-fix GPS speed | `_airborne_spans` computes speed from consecutive track points with no smoothing. On the ground, GPS jitter at 5-10 Hz easily exceeds 1.5 m/s, so ground complaints come back as warnings. This fits FA3 rising from 11.1% to 14.2%. | Use the speed over at least 1-2 s, or require it to last, and say which. |
-| M4 | Compliance rules apply only if someone filled the form | No insurance record gives a silent pass, yet Rule 44 insurance is mandatory and no UIN gives "Do not fly". The pilot's RPC is stored per drone, but a pilot flies many drones. Expiry is compared with the **UTC** date, so between 00:00 and 05:30 IST it is a day late. | Make "insurance not recorded" "Check first". Store the RPC per pilot. Use the IST date. |
-| M5 | The docs have drifted | The dossier says 752 tests and has no SA1/FA3/TSA. The commit says 765; the real count is 769. HANDOFF contradicts itself on the translations. | Fix the counts, then rebuild with `python tools/build_dossier.py` before sending it to the reviewing model. |
+| # | Finding | Evidence | Fix | Status (28 Nov) |
+|---|---|---|---|---|
+| M1 | The stored-records check in `/ledger/verify` misses swaps and deletions | `verify_stored_records` checks only that a review's hash is *somewhere* in the ledger. Swapping two reviews' reports passes. Deleting a review row passes. A spray form whose review was deleted is skipped (`continue`). | Record `review_id` in the ledger payload. Compare entry to row by key, and compare counts. | **Fixed** (`ledger.py`: subject + multiset count binding; orphaned spray forms fail; swap test added) |
+| M2 | `pune-agri` is a simulated fleet, but the screens don't say so | It is seeded from ArduPilot SITL `.bin` files. DEMO.md calls them "6 real ArduCopter SITL flights", and the commit says "a true Indian agricultural fleet". FleetPicker, Today's fleet, Spray register and Trends show no "simulated" label. | Add "Simulated (ArduPilot SITL)" to the fleet name or picker, and to every printout made from it. | **Fixed** (`FleetPicker.tsx` `[Simulated SITL]` + `<SimulatedFleetBanner />` on Readiness/Spray/Trends + banners in HTML printouts) |
+| M3 | "Airborne by speed" uses raw fix-to-fix GPS speed | `_airborne_spans` computes speed from consecutive track points with no smoothing. On the ground, GPS jitter at 5-10 Hz easily exceeds 1.5 m/s, so ground complaints come back as warnings. This fits FA3 rising from 11.1% to 14.2%. | Use the speed over at least 1-2 s, or require it to last, and say which. | **Fixed** (`evidence.py`: sliding `>= 2.0 s` window; 5 Hz parked GPS jitter test added) |
+| M4 | Compliance rules apply only if someone filled the form | No insurance record gives a silent pass, yet Rule 44 insurance is mandatory and no UIN gives "Do not fly". The pilot's RPC is stored per drone, but a pilot flies many drones. Expiry is compared with the **UTC** date, so between 00:00 and 05:30 IST it is a day late. | Make "insurance not recorded" "Check first". Store the RPC per pilot. Use the IST date. | **Mostly fixed** (`readiness.py`: IST date + `no_insurance` -> `CHECK_FIRST` when compliance row exists; per-pilot RPC table left for post-viva schema refactor) |
+| M5 | The docs have drifted | The dossier says 752 tests and has no SA1/FA3/TSA. The commit says 765; the real count is 769. HANDOFF contradicts itself on the translations. | Fix the counts, then rebuild with `python tools/build_dossier.py` before sending it to the reviewing model. | **Fixed** (all docs synced to 774 tests; `AEROFLEET_DOSSIER.md` rebuilt) |
 
 ## Low
 

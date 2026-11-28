@@ -22,6 +22,15 @@ export function setSavedFleet(fleet: string) {
   try { localStorage.setItem('aerofleet_fleet', fleet) } catch { /* private window */ }
 }
 
+export function SimulatedFleetBanner({ fleet }: { fleet: string }) {
+  if (fleet !== 'pune-agri') return null
+  return (
+    <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 6, background: 'var(--status-amber-subtle)', color: '#92400E', borderLeft: '4px solid #D97706' }}>
+      <b>Simulated demo fleet (ArduPilot SITL):</b> <code>pune-agri</code> uses real ArduCopter firmware logs flown in SITL over Pune (4 m spraying passes) to demonstrate the Indian operator workflow — not field sprayer flights.
+    </div>
+  )
+}
+
 export default function FleetPicker({ apiUrl, fleet, onChange }: { apiUrl: string; fleet: string; onChange: (next: string) => void }) {
   const [fleets, setFleets] = useState<FleetItem[]>([])
 
@@ -53,11 +62,11 @@ export default function FleetPicker({ apiUrl, fleet, onChange }: { apiUrl: strin
       className="form-select"
       value={fleet}
       onChange={(e) => { setSavedFleet(e.target.value); onChange(e.target.value) }}
-      style={{ width: 'auto', minWidth: 150, padding: '4px 8px', fontSize: 13 }}
+      style={{ width: 'auto', minWidth: 180, padding: '4px 8px', fontSize: 13 }}
     >
       {options.map((f) => (
         <option key={f.fleet} value={f.fleet}>
-          {f.fleet}{f.drones > 0 ? ` (${f.drones} drones · ${f.flights} flights)` : ''}
+          {f.fleet === 'pune-agri' ? 'pune-agri [Simulated SITL]' : f.fleet}{f.drones > 0 ? ` (${f.drones} drones · ${f.flights} flights)` : ''}
         </option>
       ))}
     </select>

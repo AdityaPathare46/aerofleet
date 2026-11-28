@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
-import FleetPicker, { initialFleet } from '../components/FleetPicker'
+import FleetPicker, { SimulatedFleetBanner, initialFleet } from '../components/FleetPicker'
 
 interface Period { period: string; flights: number; hours: number; warnings: number }
 interface DroneTrend { drone_id: string; flights: number; hours: number; last_flown: string; warnings_per_flight: number; latest_vibration_vs_own_median: number | null; battery_vs_expected_median: number | null; flights_outside_expected: number; since_maintenance_flights?: number; since_maintenance_hours?: number; last_maintenance_action?: string | null }
@@ -90,6 +90,7 @@ export default function TrendsPage() {
         </div>
         <FleetPicker apiUrl={apiUrl} fleet={fleet} onChange={setFleet} />
       </div>
+      <SimulatedFleetBanner fleet={fleet} />
       {needsAuth && <SignInCard apiUrl={apiUrl} reason="Trends read this install's flight reviews." onSignedIn={load} />}
       {error && <div role="alert" style={{ color: 'var(--status-red)' }}>{error}</div>}
       {t && t.flights === 0 && <div className="card" style={{ padding: 16 }}>{t.message}</div>}

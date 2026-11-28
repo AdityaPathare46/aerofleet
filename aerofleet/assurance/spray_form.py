@@ -158,7 +158,7 @@ def area_estimate(log: Dict[str, Any], values: Dict[str, Any]) -> Optional[Dict[
         "spacing_m": round(spacing, 2),
         "hectares": round(area_m2 / 10_000.0, 3),
         "acres": round(area_m2 / 4_046.8564, 2),
-        "note": "Geometric swath estimate (moving airborne distance × track spacing 5-13); includes turns and does not measure spray flow.",
+        "note": "Geometric swath upper bound (moving airborne distance × track spacing 5-13); includes turns and does not measure spray flow.",
     }
 
 
@@ -297,10 +297,14 @@ def print_html(forms: List[Dict[str, Any]], fleet: str) -> str:
         rows.append(f"<tr><td class='code'>{e(code)}</td><td>{e(label)}</td>{''.join(cells)}</tr>")
     meta = "".join(f"<div class='muted'>{i + 1}: drone {e(f['drone_id'])}, UIN {e(f.get('uin') or 'none on record')}, "
                    f"review #{f['review_id']}"
-                   + (f", est. swath area {f['area']['acres']} acres ({f['area']['hectares']} ha)" if f.get("area") else "")
+                   + (f", est. swath upper bound {f['area']['acres']} acres ({f['area']['hectares']} ha; includes turns, no flow sensor)" if f.get("area") else "")
                    + f" (signed review SHA-256 {e(f.get('review_sha256', '')[:16])}…)</div>" for i, f in enumerate(forms))
+    sim_note = ("<div style='background:#fffbeb;border-left:4px solid #d97706;padding:6px 10px;margin:8px 0;font-size:12px'>"
+                "<b>SIMULATED DEMO FLEET (ArduPilot SITL):</b> Printed from simulated demonstration logs, not field spraying.</div>"
+                if fleet == "pune-agri" else "")
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>Spray Monitoring Form - {e(fleet)}</title>"
             f"<style>{css}</style></head><body><h1>SPRAY MONITORING FORM <span class='muted'>(Annexure-I)</span></h1>"
+            f"{sim_note}"
             f"<div class='muted'>{e(SOURCE)}. Filled from AeroFleet fleet {e(fleet)}; values marked (log) were read from "
             "the flight log. Submit within seven days of application, by email or the portal named in the CIB&RC "
             f"guidelines.</div>{meta}<table><thead><tr><th>Code</th><th>Field</th>{head}</tr></thead><tbody>{''.join(rows)}"

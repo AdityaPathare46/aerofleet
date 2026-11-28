@@ -205,31 +205,37 @@ def verify_chain(db: Session) -> Dict[str, Any]:
 
 
 def verify_stored_records(db: Session) -> Dict[str, Any]:
-    """Cross-check stored flight reviews and spray forms against the signed ledger's payload hashes.
+    """Cross-check stored flight reviews and spray forms against the signed ledger's payload hashes, bound by
+    subject and multiset count (M1: catches row edits, cross-drone swaps, duplicates, and orphaned spray forms
+    whose parent FlightReview was deleted from SQLite)."""
+    from collections import Counter
 
-    Without this, editing a FlightReview row directly in SQLite leaves the ledger chain intact.
-    """
     from aerofleet.data.models.models import FlightReview, SprayForm
 
     entries = db.query(AssuranceLedgerEntry).all()
-    review_hashes = {e.payload_sha256 for e in entries if e.kind == "flight_review"}
-    spray_hashes = {e.payload_sha256 for e in entries if e.kind == "spray_form"}
+    review_counts: Counter = Counter((e.subject, e.payload_sha256) for e in entries if e.kind == "flight_review")
+    spray_counts: Counter = Counter((e.subject, e.payload_sha256) for e in entries if e.kind == "spray_form")
     reviews = db.query(FlightReview).order_by(FlightReview.id).all()
     for r in reviews:
-        if payload_hash(r.report) not in review_hashes:
+        key = (f"{r.fleet}/{r.drone_id}", payload_hash(r.report))
+        if review_counts[key] <= 0:
             return {"ok": False, "reviews_checked": len(reviews),
-                    "problem": f"Stored flight review #{r.id} ({r.fleet}/{r.drone_id}) does not match any entry in the signed record."}
+                    "problem": f"Stored flight review #{r.id} ({r.fleet}/{r.drone_id}) does not match an unused signed ledger entry for that drone."}
+        review_counts[key] -= 1
     forms = db.query(SprayForm).order_by(SprayForm.review_id).all()
     by_rev = {r.id: r for r in reviews}
     for f in forms:
         r = by_rev.get(f.review_id)
         if r is None:
-            continue
+            return {"ok": False, "reviews_checked": len(reviews), "spray_forms_checked": len(forms),
+                    "problem": f"Stored spray form for flight #{f.review_id} references a deleted or missing flight review."}
         payload = {"review_id": r.id, "review_sha256": payload_hash(r.report), "values": f.values,
                    "not_spray": f.not_spray, "submitted_on": f.submitted_on, "submitted_via": f.submitted_via}
-        if payload_hash(payload) not in spray_hashes:
+        skey = (f"{f.fleet}/review/{f.review_id}", payload_hash(payload))
+        if spray_counts[skey] <= 0:
             return {"ok": False, "reviews_checked": len(reviews), "spray_forms_checked": len(forms),
-                    "problem": f"Stored spray form for flight #{f.review_id} does not match any entry in the signed record."}
+                    "problem": f"Stored spray form for flight #{f.review_id} does not match an unused signed ledger entry for that flight."}
+        spray_counts[skey] -= 1
     return {"ok": True, "reviews_checked": len(reviews), "spray_forms_checked": len(forms), "problem": None}
 
 

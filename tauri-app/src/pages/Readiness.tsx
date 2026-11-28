@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
-import FleetPicker, { initialFleet } from '../components/FleetPicker'
+import FleetPicker, { SimulatedFleetBanner, initialFleet } from '../components/FleetPicker'
 import { LANGS, LOCALE, REVIEWED, saveLang, savedLang, t, type Lang } from '../lib/readinessText'
 
 type Status = 'READY' | 'CHECK_FIRST' | 'DO_NOT_FLY'
@@ -92,6 +92,7 @@ export default function ReadinessPage() {
         </div>
         <button className="btn" disabled={loading} onClick={load}>{loading ? tr('checking') : tr('again')}</button>
       </div>
+      <SimulatedFleetBanner fleet={fleet} />
       {!REVIEWED[lang] && <div style={{ fontSize: 12, color: '#B45309' }} lang={lang}>{tr('unchecked')}</div>}
       {needsAuth && <SignInCard apiUrl={apiUrl} reason="The board reads this install's records, so it needs a signed-in user." onSignedIn={load} />}
       {error && <div role="alert" style={{ color: 'var(--status-red)' }}>{error}</div>}

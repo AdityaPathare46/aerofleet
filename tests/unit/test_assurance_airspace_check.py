@@ -46,13 +46,22 @@ def test_without_zone_data_a_route_is_unchecked_never_clear():
 def test_india_wide_airport_lookup_catches_red_yellow_and_never_claims_clear_outside_mapped_cities():
     from aerofleet.assurance.airspace_check import INDIA_AIRPORTS, india_airport_zone_at
 
-    assert len(INDIA_AIRPORTS) >= 35
-    # Inside Nagpur Airport 5 km RED zone
+    assert len(INDIA_AIRPORTS) >= 37
+    # Inside Nagpur Airport 0-5 km RED zone
     nag_red = check_route("NAG-RED", [(21.092, 79.055, 10), (21.100, 79.060, 10)], india_airport_zone_at, airports_only=True)
     assert nag_red["verdict"] == NOT_PERMITTED and nag_red["findings"][0]["color"] == "RED" and "Nagpur" in nag_red["findings"][0]["zone"]
-    # Inside Nashik Airport 5-12 km YELLOW band (~8 km south of Ozar)
-    isk_yel = check_route("ISK-YEL", [(20.045, 73.914, 10), (20.040, 73.914, 10)], india_airport_zone_at, airports_only=True)
+    # Inside Nashik Airport 5-8 km inner YELLOW band (~8.2 km from center -> ~6.7 km from perimeter): yellow at any height (4 m)
+    isk_yel = check_route("ISK-YEL", [(20.045, 73.914, 4), (20.044, 73.914, 4)], india_airport_zone_at, airports_only=True)
     assert isk_yel["verdict"] == NEEDS_PERMISSION and isk_yel["findings"][0]["color"] == "YELLOW" and "Nashik" in isk_yel["findings"][0]["zone"]
+    # H5: Inside Nashik Airport 8-12 km outer YELLOW band (~11.5 km from center -> ~10.0 km from perimeter):
+    # 4 m agricultural spraying is GREEN (<= 60 m floor) -> UNCHECKED (not over-restricted); 80 m mapping -> NEEDS_PERMISSION!
+    isk_outer_low = check_route("ISK-4M", [(20.016, 73.914, 4), (20.015, 73.914, 4)], india_airport_zone_at, airports_only=True)
+    isk_outer_high = check_route("ISK-80M", [(20.016, 73.914, 80), (20.015, 73.914, 80)], india_airport_zone_at, airports_only=True)
+    assert isk_outer_low["verdict"] == UNCHECKED
+    assert isk_outer_high["verdict"] == NEEDS_PERMISSION and ">60 m" in isk_outer_high["findings"][0]["zone"]
+    # Baramati farming-district aerodrome is covered
+    bar_red = check_route("BAR-RED", [(18.218, 74.580, 10), (18.220, 74.582, 10)], india_airport_zone_at, airports_only=True)
+    assert bar_red["verdict"] == NOT_PERMITTED and "Baramati" in bar_red["findings"][0]["zone"]
     # Rural Maharashtra far from any airport -> UNCHECKED (never CLEAR because military zones aren't mapped outside Pune/Mumbai)
     rural = check_route("RURAL", [(17.10, 74.90, 5), (17.105, 74.90, 5)], india_airport_zone_at, airports_only=True)
     assert rural["verdict"] == UNCHECKED and "Indian airport zones" in explain(rural) and "Digital Sky" in explain(rural)

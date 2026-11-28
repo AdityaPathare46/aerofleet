@@ -1,6 +1,6 @@
 # AeroFleet 2.0: complete project dossier for an external review
 
-*Generated from the project repository on 2026-11-28 (commit fc73ec6). Part I is written for you, the reviewer.
+*Generated from the project repository on 2026-11-28 (commit c34895f). Part I is written for you, the reviewer.
 Part II (the appendices) is copied from the repository's own files: every result write-up, every declared test with
 its commit, the full research paper and supplement, the viva notes, the 27 Nov critical review, and the code inventory.
 Personal names and contact details have been removed; "the team" means a two-person final-year student team, with a
@@ -20,9 +20,8 @@ We want a **hard, specific, technical critique** and an honest readiness assessm
    misleading, a test whose design does not test what it says, a wrong statutory citation, or an inconsistency between
    two numbers.
 2. Find what is **weak**: what an examiner (or a real drone operator, or an insurer, or a regulator) would attack first.
-3. Check whether our fixes after the 27 Nov critical review (C1/C2 committed in `fc73ec6`; H1-H5 and M1-M4 still open —
-   see Appendix H, `docs/CRITICAL_REVIEW_2026-11-27.md`) close the critical gaps cleanly and rank what remains before
-   writing the report.
+3. Check whether our complete critical-review remediation (C1/C2 in `fc73ec6` + H1-H5, M1-M5, and L2 on 28 Nov — see
+   Appendix H, `docs/CRITICAL_REVIEW_2026-11-27.md`) leaves any remaining safety, security, statistical, or regulatory flaws.
 4. Assess the project's **overall rating** across research rigour, safety/code engineering, product-domain fit, and
    viva defensibility.
 5. Answer the specific questions in section 12.
@@ -63,7 +62,7 @@ trusted timestamps.
 | Late Oct-Nov 2026 | Re-scope to AeroFleet 2.0, Indian commercial/agricultural use case, evidence-first |
 | 17 Nov 2026 | Paper submitted to *Accident Analysis & Prevention* (Elsevier); no reviews yet |
 | 20-27 Nov 2026 | Learned normal-flight model (H1-H6), spray register, Hindi/Marathi morning board, signed receipts, archive search (A1 failed), DJI CSV reader, ArduPilot SITL v1/v2 (8/8 × 3), FA1/FA2 false-alarm tests, VR study design, packaged Mac app |
-| 27 Nov 2026 (Audit & domain-fit sprint) | Safety-audit fixes (`dbc45d3`), `SA1+FA3` sensitivity & vehicle-clustered re-measurement (`e9c4ebc`/`ffd0f27`), RFC 3161 TSA timestamps (`bb50242`), 36-airport India airspace + spray acreage + simulated `pune-agri` ArduCopter fleet (`21def14`), DGCA compliance ledger + 48h printable accident dossier + 1-click multi-fleet switcher (`8928782`), independent critical review + **C1** (PX4 default circuit breakers) & **C2** (pinned DigiCert TSA verification & SSRF allow-list) fixes (`fc73ec6`) |
+| 27-28 Nov 2026 (Audit, domain-fit & critical-review fixes) | Safety-audit fixes (`dbc45d3`), `SA1+FA3` (`e9c4ebc`/`ffd0f27`), RFC 3161 TSA (`bb50242`), Indian airport airspace + spray acreage + simulated `pune-agri` fleet (`21def14`), DGCA compliance ledger + 48h accident record + fleet picker (`8928782`), critical review C1/C2 fixes (`fc73ec6`), and H1-H5 + M1-M5 + L2 remediation (Rule 30/8/14/31/44 citations, 60 m floor in 8-12 km airport band + Baramati, M1 subject/count ledger check, M2 simulated banners, M3 2 s smoothed groundspeed, M4 IST date & missing-insurance check) |
 
 Honesty notes: the git history starts on 10 August 2026 (about 3.5 months; nearly all commits by one team member). Code
 and text were written with help from AI coding assistants (Claude and Antigravity, recorded in commit co-author trailers
@@ -224,7 +223,7 @@ attribute blame.
   Python. `tests/unit/test_no_ai_in_decision_path.py` follows every import from all 2.0 product routes (including
   `spray.py` and `vr_study.py`) and assurance modules and fails if it reaches any AI agent, LLM panel, or ML library.
 - **License**: MIT (`LICENSE` at repository root).
-- **Tests**: **773 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
+- **Tests**: **774 unit and integration tests** passing (`pytest tests/unit tests/integration`); TypeScript strict
   typecheck clean; 30/30 paper-to-code number checks agree.
 - **Packaging**: the macOS app builds and starts its own backend (it still needs the project folder and its Python
   environment on the same machine).
@@ -259,9 +258,9 @@ Only numbers are read, never the free-text messages in logs.
 - Poor GPS (fewer than 6 satellites, no 3D fix, or HDOP above 2.5) for 2 s or more.
 - Autopilot health reports for 1 s or more (PX4 estimator rejections, faults, failsafe; ArduPilot items above).
 - **Warning vs notice**: a GPS or health complaint is a *warning* only for the part overlapping a contiguous airborne
-  span (`alt > 2.0 m` **or** horizontal ground speed `≥ 1.5 m/s`, added so low-altitude/downslope sprayers are not
-  blinded — see section 9 M3 regarding unsmoothed GPS fix jitter) lasting at least **3 s**; an ArduPilot ERR report
-  counts if it occurs while airborne; otherwise it is listed as a *notice*.
+  span (`alt > 2.0 m` **or** smoothed horizontal ground speed `≥ 1.5 m/s` measured over a sliding `≥ 2.0 s` window so
+  parked 5-10 Hz GPS jitter does not trigger airborne — M3) lasting at least **3 s**; an ArduPilot ERR report counts if
+  it occurs while airborne; otherwise it is listed as a *notice*.
 - Plan deviations: off the planned route (beyond 30 m), off the planned height (beyond 15 m), inside a no-fly zone, each
   for at least 3 s.
 
@@ -301,14 +300,14 @@ each episode.
 
 ### 5.6 Route check (`airspace_check.py`)
 
-India's Drone Rules 2021 zones, approximated from public distances:
+India's Drone Rules 2021 / MoCA Airspace Map (24 Sep 2021) zones, approximated from public distances:
 - **Pune & Mumbai**: full local approximations (airports + military/cantonment/strategic sites).
-- **Rest of India**: 36 major civil airport perimeters (`india-airports`: 5 km RED / 12 km YELLOW for major airports;
-  3 km / 8 km for smaller aerodromes). Routes hitting an airport return `NOT_PERMITTED` or `NEEDS_PERMISSION`; routes
-  outside airport circles return **`UNCHECKED`** (never `CLEAR`), with a banner instructing verification on Digital Sky.
+- **Rest of India**: **37 civil airports** (including Maharashtra farming-district aerodromes such as Baramati) with a
+  documented **1.5 km perimeter allowance** around each airport reference point: **0-5 km RED** (all heights),
+  **5-8 km YELLOW** (all heights), and **8-12 km YELLOW above 60 m / 200 ft only** (so 4 m agricultural spraying passes
+  in the 8-12 km band are not over-restricted — H5). Routes outside airport zones return **`UNCHECKED`** (never
+  `CLEAR`), with a banner instructing verification on Digital Sky.
 - Also checks the 120 m green-zone height limit and multi-mission conflicts.
-- *Known gap (section 9 H5)*: uses airport centre points rather than runway perimeters and marks 8-12 km yellow at all
-  heights rather than above 200 ft (60 m) only.
 
 ### 5.7 Spray register (`spray_form.py`)
 
@@ -341,12 +340,13 @@ ledger's payload hashes (see section 9 M1 for remaining swap/deletion hardening)
 
 ### 5.9 Other features
 
-- **DGCA compliance & 48-hour accident dossier**: `DroneCompliance` table (`GET/PUT /drones/{id}/compliance`, signed)
-  stores Rule 44 third-party insurance, Type Certificate/DAN, and assigned pilot RPC inside `Drone register`.
-  `accident_report.py` (`GET .../accident-dossier` HTML & `.json`) generates a print-to-PDF accident packet with a
-  48-hour IST/UTC filing countdown, telemetry timeline (no blame), maintenance history, and Ed25519 verification block
-  (see section 9 H4: statutory rule citations in code strings need correction from "Rule 45" to **Rule 30** per G.S.R.
-  589(E)).
+- **DGCA compliance & 48-hour accident record (G.S.R. 589(E))**: `DroneCompliance` table (`GET/PUT /drones/{id}/compliance`,
+  signed) stores Rule 44 third-party insurance, Rule 8 Type Certificate/DAN, and Rule 31 assigned pilot RPC inside
+  `Drone register` (checked against **IST date**; missing insurance on a compliance record flags `CHECK_FIRST`, expired
+  insurance/RPC grounds to `DO_NOT_FLY`). `accident_report.py` (`GET .../accident-dossier` HTML & `.json`) generates an
+  operator-prepared print-to-PDF **Accident Record for Digital Sky (Rule 30)** with a 48-hour IST/UTC filing countdown,
+  telemetry timeline (no blame), maintenance history, simulated-fleet banner when applicable, and Ed25519 verification
+  block.
 - **Vibration history**: each drone flight by flight in GPS-time order against its own earlier flights, comparable fleet
   drones, and 292 public PX4 flights of 141 never-crashed vehicles; last 10 s left out.
 - **Maintenance logbook**: work recorded and signed (including `"Incident / crash reported (grounded for inspection)"`
@@ -493,52 +493,33 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 ## 9. Known weak points (honest status as of 28 Nov 2026)
 
-1. **No real user or field sprayer logs.** No operator has used the tool; `pune-agri` is simulated ArduPilot SITL;
-   `demo` is public PX4 hobby/research flights.
-2. **Open high-priority items from `CRITICAL_REVIEW_2026-11-27.md` (H1-H5):**
-   - **H1 / H2 (wording):** FA3 re-used half H (not an untouched held-out test, and cluster CI reaches 20.7%), and
-     SA1-RflyMAD's 50% bar was set after 53.8% was already seen on D — must be stated as re-measurement / descriptive.
-   - **H3 (translations):** Hindi/Marathi `REVIEWED = true` was a team self-review, not an independent outside reader;
-     `settingNote` added in `fc73ec6` is unchecked by an outside reader.
-   - **H4 (statutory rule numbers):** `accident_report.py` cites "Rule 45" for 48-hour accident reporting, whereas
-     G.S.R. 589(E) puts 48-hour mandatory accident reporting in **Rule 30**, Type Certificate in **Rule 8** (exemptions
-     Rule 13), UIN in **Rule 14**, Remote Pilot Certificate mandate in **Rule 31** (procedure Rule 34), and third-party
-     insurance in **Rule 44**. Printout heading should also clarify it is an operator-prepared record for Digital Sky,
-     not an official DGCA form.
-   - **H5 (airspace geometry):** 36-airport circles use airport centres rather than runway perimeters, omit the 200 ft
-     (60 m) green floor in the 8-12 km band (over-restricting 4 m sprayers), and lack a cited source for the 3/8 km
-     smaller-aerodrome radii.
-3. **Open medium/low items (M1-M4, L1-L4):**
-   - **M1:** `verify_stored_records` checks hash membership rather than binding `review_id` and counts (misses swaps or
-     deleted rows).
-   - **M2:** `pune-agri` screens do not visibly display a "Simulated (ArduPilot SITL)" badge.
-   - **M3:** `_airborne_spans` uses unsmoothed fix-to-fix GPS speed (`≥ 1.5 m/s`), so ground GPS jitter can re-admit
-     ground warnings (likely explaining FA3 rising from 11.1% to 14.2%).
-   - **M4:** Missing insurance passes silently when no compliance row exists; RPC is stored per drone instead of per
-     pilot; expiry checks use UTC date rather than IST.
-   - **FA4** (whole-board false-alarm test including settings rules on fresh logs) has not yet been declared or run.
-4. **The normal-flight model** is PX4-only, not trained on sprayers (H5 failed), ranges are wide, and decision utility
+1. **No real user or field sprayer logs.** No operator has used the tool; `pune-agri [Simulated SITL]` is simulated
+   ArduPilot SITL (visibly badged on screens and printouts); `demo` is public PX4 hobby/research flights.
+2. **Remaining verification & governance limits (post-C1/C2/H1-H5/M1-M5 fixes):**
+   - **FA4 not yet run:** a fresh whole-board false-alarm test (combining flight rules with smoothed 2 s groundspeed +
+     settings rules after C1) on unseen logs has not been declared or run yet; FA3 (14.2%, cluster CI [8.5, 20.7%]) was
+     a re-measurement on H rather than an untouched held-out test, and SA1-RflyMAD (53.8%) is descriptive.
+   - **Translations (H3):** Hindi and Marathi lines were team-reviewed by a Marathi-native member; an independent outside
+     reader per language (especially Hindi) is still recommended before field deployment.
+   - **Per-pilot RPC schema (M4 remainder):** RPC is currently stored per drone (`DroneCompliance`) rather than in a
+     separate `pilots` table (a pilot often flies multiple drones); missing insurance passes only when no compliance row
+     exists at all (legacy/public logs).
+   - **RSA-PSS timestamps (L4):** `tsa.py` verifies PKCS#1 v1.5 and ECDSA signatures (failing closed on RSA-PSS).
+3. **The normal-flight model** is PX4-only, not trained on sprayers (H5 failed), ranges are wide, and decision utility
    is untested.
-5. **The research study**: unreliable self-reported labels; one self-uploaded archive; between-drone vibration is
+4. **The research study**: unreliable self-reported labels; one self-uploaded archive; between-drone vibration is
    suggestive only (p = 0.076 site-weighted); paper unreviewed.
-6. **Log coverage**: closed agricultural controllers and native encrypted DJI logs are unread; Airdata CSV untested.
-7. **Legacy code**: ~4,000 lines of AeroFleet 1 LLM agents and 8 hidden screens remain in the repo (isolated and
+5. **Log coverage**: closed agricultural controllers and native encrypted DJI logs are unread; Airdata CSV untested.
+6. **Legacy code**: ~4,000 lines of AeroFleet 1 LLM agents and 8 hidden screens remain in the repo (isolated and
    verified unreachable by the no-AI test).
 
 ---
 
 ## 10. Remaining work before the 1-5 December viva
 
-1. Fix **H4** (correct G.S.R. 589(E) rule numbers: Rule 30 / Rule 8 / Rule 14 / Rule 31 / Rule 44, neutral printout
-   header) and **H5** (60 m floor in 8-12 km yellow band, runway perimeter allowance, remove uncited 3/8 km class).
-2. Fix **M1** (bind `review_id` + counts in `verify_stored_records`), **M2** (visible "Simulated — ArduPilot SITL"
-   label on `pune-agri`), **M3** (smoothed 2 s groundspeed for airborne spans), and **M4** (IST date + missing-insurance
-   warning).
-3. Clean up **H1-H3** wording in `VIVA.md` / `HANDOFF.md` / `Proof.tsx` and get an independent Hindi/Marathi reader
-   sign-off (or label honestly as team-reviewed).
-4. Optional if time allows: declare and run **FA4** on fresh logs not used in FA1/FA2/FA3, and run the 12-participant
-   Quest 3 VR debrief study.
-5. Write and print the **7-chapter B.Tech final project report** with every number aligned to commit `HEAD`.
+1. Write and print the **7-chapter B.Tech final project report** with every number aligned to commit `HEAD`.
+2. Optional if time allows before 1 Dec: obtain one external Hindi/Marathi proof-reader sign-off, declare and run
+   **FA4** on fresh logs never used in FA1/FA2/FA3, and run the 12-participant Quest 3 VR debrief study.
 
 ---
 
@@ -8736,15 +8717,15 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | File | Lines | First line of its docstring |
 |---|---|---|
 | `aerofleet/assurance/__init__.py` | 4 | AeroFleet 2.0 ground-side assurance: deterministic checks on uploaded files (no drone, no LLM). |
-| `aerofleet/assurance/accident_report.py` | 289 | DGCA Drone Rules 2021 Rule 45 — 48-hour accident / incident reporting dossier (printable HTML + JSON). |
-| `aerofleet/assurance/airspace_check.py` | 157 | Pre-flight route check: does a planned mission stay out of restricted airspace and under the height limit? |
+| `aerofleet/assurance/accident_report.py` | 299 | Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier). |
+| `aerofleet/assurance/airspace_check.py` | 176 | Pre-flight route check: does a planned mission stay out of restricted airspace and under the height limit? |
 | `aerofleet/assurance/archive_search.py` | 167 | Search the public PX4 log archive for flights like the user's problem. |
 | `aerofleet/assurance/deconflict.py` | 203 | Fleet plan deconfliction: make a set of planned missions safe against each other before anyone flies. |
 | `aerofleet/assurance/drift.py` | 159 | Configuration drift: what changed on this drone's flight controller, and does it matter? |
-| `aerofleet/assurance/evidence.py` | 147 | Evidence timeline for a flight review: what the log shows, and when — for a person to judge. |
+| `aerofleet/assurance/evidence.py` | 151 | Evidence timeline for a flight review: what the log shows, and when — for a person to judge. |
 | `aerofleet/assurance/flightlog.py` | 417 | Read an uploaded flight log into one plain structure — the track flown, the parameters on board, |
 | `aerofleet/assurance/flightlog_text.py` | 225 | Flight logs from controllers whose own log format AeroFleet cannot read: a CSV export or a GPX track. |
-| `aerofleet/assurance/ledger.py` | 317 | A signed, hash-chained record of every assurance result — so later edits are detectable. |
+| `aerofleet/assurance/ledger.py` | 323 | A signed, hash-chained record of every assurance result — so later edits are detectable. |
 | `aerofleet/assurance/live_control.py` | 30 | One switch for commanding real aircraft — off by default. |
 | `aerofleet/assurance/log_signs.py` | 113 | What a flight log shows, as a small set of named signs, so flights can be compared with each other. |
 | `aerofleet/assurance/maintenance.py` | 91 | Maintenance logbook: did the fix work? |
@@ -8752,11 +8733,11 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `aerofleet/assurance/operations_log.py` | 76 | Operations log: one row per reviewed flight, as a CSV a service provider can keep and report from. |
 | `aerofleet/assurance/params.py` | 101 | Read a flight-controller parameter file into {NAME: value} — no hardware involved. |
 | `aerofleet/assurance/public_reference.py` | 66 | Compare a flight or a setting with ordinary public PX4 flights. |
-| `aerofleet/assurance/readiness.py` | 192 | Morning readiness: for each drone in a fleet, ready / check first / do not fly, and exactly why. |
+| `aerofleet/assurance/readiness.py` | 196 | Morning readiness: for each drone in a fleet, ready / check first / do not fly, and exactly why. |
 | `aerofleet/assurance/reconcile.py` | 222 | Planned versus flown: did the aircraft fly the mission that was approved? |
 | `aerofleet/assurance/report_html.py` | 116 | A self-contained, printable page for one flight review (print it to PDF from any browser). |
 | `aerofleet/assurance/review_panel.py` | 244 | A review panel that argues about the LIKELY CAUSE of a finding the code has already made. |
-| `aerofleet/assurance/spray_form.py` | 307 | Spray register: the crop-protection SOP's Spray Monitoring Form for each spraying flight, and its seven-day de |
+| `aerofleet/assurance/spray_form.py` | 311 | Spray register: the crop-protection SOP's Spray Monitoring Form for each spraying flight, and its seven-day de |
 | `aerofleet/assurance/static_checks.py` | 42 | Run the flight-controller compliance rules on an uploaded parameter file — no drone connected. |
 | `aerofleet/assurance/trends.py` | 87 | Fleet trends: the season view of a fleet, from its reviewed flights. |
 | `aerofleet/assurance/troubleshoot.py` | 232 | Troubleshooting search: match a description of a drone problem against past crashes diagnosed by PX4 experts. |
@@ -8807,17 +8788,17 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tauri-app/src/pages/Overview.tsx` | 260 | The opening page of a demonstration: what AeroFleet is for, what the study found, how the tool follows from it |
 | `tauri-app/src/pages/PolicyProposals.tsx` | 197 |  |
 | `tauri-app/src/pages/Proof.tsx` | 208 | Show me": answers to the hardest questions, run live. Recomputes the paper's headline results from the committ |
-| `tauri-app/src/pages/Readiness.tsx` | 154 | Today's fleet: the morning readiness board. One row per drone: ready / check first / do not fly, with every re |
-| `tauri-app/src/pages/RouteCheck.tsx` | 207 | Pre-flight route check: planned missions drawn over the airspace zones, each checked for red and yellow zones, |
+| `tauri-app/src/pages/Readiness.tsx` | 155 | Today's fleet: the morning readiness board. One row per drone: ready / check first / do not fly, with every re |
+| `tauri-app/src/pages/RouteCheck.tsx` | 208 | Pre-flight route check: planned missions drawn over the airspace zones, each checked for red and yellow zones, |
 | `tauri-app/src/pages/ScenarioRunner.tsx` | 296 |  |
 | `tauri-app/src/pages/Settings.tsx` | 557 |  |
-| `tauri-app/src/pages/SprayRegister.tsx` | 251 | Spray register: the crop-protection SOP's Spray Monitoring Form (Annexure-I) for each spraying flight, and the |
+| `tauri-app/src/pages/SprayRegister.tsx` | 252 | Spray register: the crop-protection SOP's Spray Monitoring Form (Annexure-I) for each spraying flight, and the |
 | `tauri-app/src/pages/TrajectoryViewer.tsx` | 475 |  |
-| `tauri-app/src/pages/Trends.tsx` | 148 | Fleet trends: the season view for a coordinator. Counts and medians over reviewed flights (aerofleet/assurance |
+| `tauri-app/src/pages/Trends.tsx` | 149 | Fleet trends: the season view for a coordinator. Counts and medians over reviewed flights (aerofleet/assurance |
 | `tauri-app/src/pages/VRSafetyView.tsx` | 401 |  |
 | `tauri-app/src/pages/VrStudy.tsx` | 276 | VR debrief study (research/vr_study/PROTOCOL.md): can a person tell whether a flight left its plan sideways, i |
 | `tauri-app/src/lib/policy.ts` | 43 |  |
-| `tauri-app/src/lib/readinessText.ts` | 138 | Today's fleet in English, Hindi and Marathi. The verdict and reasons come from the API in English with a `code |
+| `tauri-app/src/lib/readinessText.ts` | 142 | Today's fleet in English, Hindi and Marathi. The verdict and reasons come from the API in English with a `code |
 | `tauri-app/src/lib/rosterModels.ts` | 26 | The distinct Ollama model tags the 16-agent roster actually needs — |
 | `tauri-app/src/lib/session.ts` | 98 | Keeps the operator signed in while the app is in use. |
 | `tauri-app/src/lib/studyFacts.ts` | 194 | Every number the Overview page shows, with the exact text it comes from. |
@@ -8827,7 +8808,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tauri-app/src-tauri/src/ollama_installer.rs` | 479 | ! Ollama detection + Windows/macOS installer automation. |
 | `tauri-app/src-tauri/src/vr_headset.rs` | 245 | ! PC-VR headset support for the VR Safety View. |
 
-Total: 20,123 lines in these files.
+Total: 20,178 lines in these files.
 
 #### Numeric constants in the assurance core
 
@@ -8835,8 +8816,13 @@ Total: 20,123 lines in these files.
 accident_report.py: STATUTORY_HOURS = 48
 accident_report.py: CSS = (
 airspace_check.py: LEGAL_CEILING_M = 120.0           # Drone Rules 2021: green-zone limit without permission (400 ft)
+airspace_check.py: OUTER_YELLOW_FLOOR_M = 60.0       # Drone Rules 2021 (MoCA Airspace Map, Sep 2021): 8-12 km band is yellow only above 20
+airspace_check.py: AIRPORT_PERIMETER_ALLOWANCE_M = 1500.0  # Conservative half-runway/perimeter buffer from airport ARP center point
+airspace_check.py: AIRPORT_RED_M = 5000.0            # 0-5 km from airport perimeter: RED (all altitudes)
+airspace_check.py: AIRPORT_YELLOW_INNER_M = 8000.0   # 5-8 km from airport perimeter: YELLOW (all altitudes)
+airspace_check.py: AIRPORT_YELLOW_OUTER_M = 12000.0  # 8-12 km from airport perimeter: YELLOW above 60 m (200 ft); GREEN <= 60 m
 airspace_check.py: STEP_M = 25.0                     # spacing of the points checked along each leg
-airspace_check.py: NOTE = ("Zones are approximations from the public distances in India's Drone Rules 2021: 36 major Indian civil airports 
+airspace_check.py: NOTE = ("Zones are approximations from India's Drone Rules 2021 / MoCA Airspace Map (24 Sep 2021): 37 Indian civil airpo
 archive_search.py: WORDS_TESTED = ("Finding logs from your words alone was tested on 514 public flights and did not work: the signs a "
 archive_search.py: LOGS_NOTE = ("The public logs on this computer were downloaded for the crash study, so crashed flights are far more "
 archive_search.py: NOTE = ("These are other people's flights. Ratings and descriptions are the uploaders' own, not findings, and flights "
@@ -8956,7 +8942,7 @@ wind.py: HEIGHTS_M = (10, 80, 120, 180)
 | `tests/unit/test_conflict_forecast.py` | 6 |
 | `tests/unit/test_d2d_degradation_study.py` | 12 |
 | `tests/unit/test_d2d_mesh.py` | 21 |
-| `tests/unit/test_dgca_compliance_and_accident.py` | 3 |
+| `tests/unit/test_dgca_compliance_and_accident.py` | 4 |
 | `tests/unit/test_dispatch.py` | 11 |
 | `tests/unit/test_evidence.py` | 4 |
 | `tests/unit/test_exceptions.py` | 15 |
@@ -11155,12 +11141,13 @@ log diagnostics (the checklist). *Honest limit:* no operator has used it yet; a 
 run (`research/protocols/prospective_and_user_study.md`).
 
 **Q4. Why should a regulator care?**
-EU and UK operators must keep operation and maintenance records for at least three years; India requires an accident
-report on Digital Sky within 48 hours (Drone Rules 2021 Rule 45), third-party liability insurance (Rule 44), a verified
-UIN (Rule 14), Type Certificate (Rule 13), and Remote Pilot Certificate (Rule 34). AeroFleet tracks all of those in the
-signed record, enforces expired insurance/RPC/UIN on *Today's fleet*, and generates a one-click printable **48-hour DGCA
-Rule 45 Accident Dossier** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes —
-while never overclaiming blame.
+EU and UK operators must keep operation and maintenance records for at least three years; India's Drone Rules 2021
+(G.S.R. 589(E)) require an accident report on Digital Sky within 48 hours (**Rule 30**), third-party liability insurance
+(**Rule 44**), a verified UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), and Remote Pilot
+Certificate (**Rule 31** / Rule 34). AeroFleet tracks all of those in the signed record, enforces expired insurance/RPC/UIN
+on *Today's fleet* (using IST dates), and generates a one-click printable **48-hour Accident Record prepared for Digital
+Sky (Rule 30)** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes — while never
+claiming to be an official DGCA form and never assigning blame.
 
 #### B. Data
 
@@ -11304,22 +11291,27 @@ approve it with a written reason, and the approval is signed into the record.
 The delivery dispatcher was dropped when the project was re-scoped; its screens are hidden as legacy. The map is now a
 pre-flight **Route check**: load the missions planned for a period and each route is checked against red and yellow
 airspace, the 120 m limit, and the other planned routes, then signed into the record. *Honest limit:* full local zones
-(airports + military/restricted sites) are loaded for Pune and Mumbai; across the rest of India, 36 major civil airport
-perimeters are checked automatically using Drone Rules 2021 distances (5 km RED / 12 km YELLOW for major airports; 3 km /
-8 km for smaller aerodromes). Routes outside those mapped zones are reported "not checked" (`UNCHECKED`), never "clear",
-and the screen states plainly that this is an approximation, not the official Digital Sky map. *Show:* Route check ▸ *Try 5 demo jobs*.
+(airports + military/restricted sites) are loaded for Pune and Mumbai; across the rest of India, 37 civil airport
+perimeters (including Baramati) are checked using MoCA's September 2021 airspace map distances with a 1.5 km perimeter
+allowance around each airport reference point: **0–5 km RED**, **5–8 km YELLOW at any height**, and **8–12 km YELLOW
+only above 60 m (200 ft)** (so 4 m agricultural spraying passes in the 8–12 km band are not over-restricted). Routes
+outside mapped zones return "not checked" (`UNCHECKED`), never "clear", and the screen states plainly that this is an
+approximation, not the official Digital Sky map. *Show:* Route check ▸ *Try 5 demo jobs*.
 
 **Q23c. How does "Today's fleet" decide, and why trust it?**
 Fixed rules only, each shown with its reason: **Do not fly** if a safety-critical setting changed without approval, there
-is no UIN on record (Rule 14), third-party insurance has expired (Rule 44), the assigned pilot's RPC has expired (Rule 34),
-or the drone is grounded in the maintenance logbook after a reported incident/crash without a later inspection clearance.
-**Check first** if a flight-limit setting changed, settings have not been compared with an approved baseline (`NO_REFERENCE`),
-a failsafe or safety check is switched off (including PX4 `CBRK_*` circuit breakers and ArduPilot `ARMING_CHECK=0`), the
-UIN is unverified, third-party insurance expires within 14 days, settings were never checked, the last flight was a partial
+is no UIN on record (Rule 14), third-party insurance has expired (Rule 44, IST date), the assigned pilot's RPC has expired
+(Rule 31, IST date), or the drone is grounded in the maintenance logbook after a reported incident/crash without a later
+inspection clearance. **Check first** if a flight-limit setting changed, settings have not been compared with an approved
+baseline (`NO_REFERENCE`), a failsafe or safety check is switched off (ArduPilot failsafes & `ARMING_CHECK=0`; PX4
+`NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281`; PX4 firmware-default `CBRK_IO_SAFETY=22027`
+is shown as a non-blocking setting note and `CBRK_FLIGHTTERM` is not checked), the UIN is unverified, insurance expiry is
+missing on a compliance record or expires within 14 days, settings were never checked, the last flight was a partial
 CSV/GPX export, or the last flight's log shows sustained in-air warnings (sensor or GPS complaints lasting 3 s or more
-while airborne, an airborne autopilot error report, a mid-air critical battery drop > 15 s before touchdown, a safety-critical
-setting changed in flight, or leaving the plan). A low-battery landing (< 10% near touchdown) is shown as a pilot note,
-not a reason, and vibration / the learned model are context only. *Show:* Today's fleet ▸ fleet `pune-agri` (`AGRI-01..06`).
+while airborne — altitude > 2 m or smoothed 2 s groundspeed ≥ 1.5 m/s — an airborne autopilot error report, a mid-air
+critical battery drop > 15 s before touchdown, a safety-critical setting changed in flight, or leaving the plan). A
+low-battery landing (< 10% near touchdown) is shown as a pilot note, not a reason, and vibration / the learned model are
+context only. *Show:* Today's fleet ▸ fleet `pune-agri [Simulated SITL]`.
 
 **Q23d. What happens in a real season with this tool?**
 Morning: *Today's fleet* says which drones can fly. Evening: the operator selects all the day's logs at once; each is
@@ -11375,7 +11367,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 #### G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-773 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+774 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -11450,8 +11442,9 @@ operator correct it; if the entered value differs from the log by more than 1 m,
 The pilots are new operators, many more comfortable in Hindi or Marathi, and the industry review named "English only" as a
 weakness against Indian competitors. Only *Today's fleet* is translated, because it is the screen a pilot reads. The
 verdicts come with a code, so the rule never changes with the language. Every Hindi and Marathi line in `readinessText.ts`
-(all 16 rule codes + labels) was reviewed and approved by a native speaker on the team on 27 Nov 2026 (`REVIEWED` set to
-`true`), and `test_readiness_translations.py` verifies key parity across all three languages.
+(all 17 rule codes + labels) has verified key parity (`test_readiness_translations.py`) and was read by a Marathi-native
+team member on 27 Nov 2026; honest limit: an independent outside reader per language (especially for Hindi) has not yet
+signed off (`CRITICAL_REVIEW_2026-11-27.md`, H3).
 
 **Q44. You said the operator can rebuild the whole chain or fake the computer's clock. What did you do about it?**
 Two layers: (1) A **signed receipt** handed weekly to someone outside the operator's control (the fertiliser company,
@@ -11535,12 +11528,12 @@ Time. SITL runs the same flight code and lets us put faults in on purpose with a
 field flight cannot. It is the standard step before real flights; a bench session is in future work.
 
 **Q54. How often does Today's fleet cry wolf — and does it actually catch real faults?**
-We measured both in three pre-declared stages on the product's exact code:
-- **FA1** (`5f44b0b`, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
-- **FA2** (`481987a`, passed): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut held-out half H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
-- **SA1 + FA3** (`e9c4ebc`, passed both marks): after fixing two safety gaps (counting horizontal motion ≥ 1.5 m/s so low-altitude/downslope spraying passes are airborne, and keeping mid-air battery < 10% > 15 s before touchdown as a warning) and adding **vehicle-cluster bootstrap CIs** (matching our paper's Checklist Item #2):
-  - **Specificity (FA3, held-out H):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles); all H ordinary **27.3%** (unrated 33.8%); controlled RflyMAD fault-free flights **0.0%** (0/50).
-  - **Sensitivity (SA1):** RflyMAD injected sensor faults **53.8%** (106/197, pass mark ≥ 50% **met**), motor faults **19.8%** (48/242, most absorbed 15–20% losses); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H flights (27.3%), directly confirming our paper's within-drone null on the product's own readiness board. Not yet measured on real spraying drones.
+We measured both in three stages on the product's exact code, being transparent about what is held out vs re-measured:
+- **FA1** (`5f44b0b`, pre-declared, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
+- **FA2** (`481987a`, pre-declared, passed on untouched held-out half H): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
+- **SA1 + FA3** (`e9c4ebc`, re-measurement + descriptive sensitivity after adding airborne speed and mid-air battery rules, with **vehicle-cluster bootstrap CIs** matching Checklist Item #2):
+  - **FA3 (re-measured on H, NOT an untouched held-out test — H1):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]** — upper bound crosses 20%, so only the point estimate is under 20%); all H ordinary **27.3%** (unrated 33.8%); RflyMAD fault-free **0.0%** (0/50). *(Note: M3 smoothed the groundspeed window to 2 s afterwards to suppress parked GPS jitter; a fresh whole-board FA4 on unseen logs is future work.)*
+  - **SA1 (descriptive — H2, because RflyMAD 53.8% had already been observed during D development):** RflyMAD injected sensor faults **53.8%** (106/197), motor faults **19.8%** (48/242); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H (27.3%), meaning the board flags crash flights ~1.35× as often as ordinary flights and directly mirrors the paper's within-drone null. Not yet measured on real spraying drones.
 
 **Q54b. Why not train the model on spraying drones, with payload as an input?**
 There is no data for it: no public log records payload weight, and the public archive has about 20 flights from 4
@@ -11594,7 +11587,7 @@ flights, with the questions an examiner is likely to ask. About 10 minutes.
 Last checked 27 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
 
 > **Two seeded demo fleets:**
-> - **`pune-agri` (start here for the Indian operator workflow):** 6 real ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05`, active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres estimated swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
+> - **`pune-agri [Simulated SITL]` (start here for the Indian operator workflow):** 6 **simulated** ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`, visibly badged as simulated on screen and printouts) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05` (with 1-click Rule 30 48h Digital Sky Accident Record), active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres upper-bound swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
 > - **`demo` & `demo-settings` (empirical study evidence):** 64 real public PX4 flights of 8 unrelated airframes showing the within-drone vibration null, public reference comparison, maintenance logbook before/after, and settings drift.
 
 #### 1. Set up (once)
@@ -11781,7 +11774,7 @@ an upload (`tools/build_public_reference.py`). It is a description, not a limit,
    planned at 5 m above the take-off point, as crop spraying is flown just above the crop.
 3. Click a mission to zoom to it on the map.
 
-Say: full local zones are loaded for Pune and Mumbai, and 36 major Indian civil airport perimeters (Drone Rules 2021 5 km RED / 12 km YELLOW) are checked nationwide; routes outside mapped zones return "not checked", never "clear". Every check is signed.
+Say: full local zones are loaded for Pune and Mumbai, and 37 Indian civil airport perimeters (MoCA Sep 2021 distances with 1.5 km perimeter allowance: 0–5 km RED, 5–8 km YELLOW all heights, 8–12 km YELLOW above 60 m / 200 ft) are checked nationwide; routes outside mapped zones return "not checked", never "clear". Every check is signed.
 
 ##### Step 5. Mission conflict and wind (pre-flight checks)
 
@@ -11851,7 +11844,7 @@ database could rebuild the whole chain; a copy of the heads file kept by someone
 come from this computer's clock, and no trusted hardware is involved.
 
 **Has it been tested with real operators?**
-No. 773 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+No. 774 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
 has been done. The paper says so.
 
 **Does it work with ArduPilot?**
@@ -12503,6 +12496,8 @@ an independent confirmation.
 next to "met". Treat the next declared test (FA4, C1) as the clean one: run it on new data, for example the ArduPilot
 SITL fleet plus PX4 logs never used before.
 
+**Status (28 Nov 2026): fixed.** Reworded across `VIVA.md`, `HANDOFF.md`, `Proof.tsx`, and `AEROFLEET_DOSSIER.md`; FA4 on unseen data remains future work.
+
 ##### H2. SA1's pass mark was set after its answer was known
 
 **What happened.**
@@ -12526,6 +12521,8 @@ detector.
 **Fix.** Relabel SA1-RflyMAD as descriptive and state why. Put the 36.8% / 26.5% / 27.3% figures in the report as
 they are.
 
+**Status (28 Nov 2026): fixed.** Relabelled as descriptive across `VIVA.md`, `HANDOFF.md`, `Proof.tsx`, and `AEROFLEET_DOSSIER.md`.
+
 ##### H3. "Native-speaker reviewed" Hindi and Marathi is a self-review
 
 **What happened.**
@@ -12539,6 +12536,8 @@ created for. Hindi native-speaker status is also not shown.
 **Fix.** Either get one outside reader per language (a classmate or a KVK contact will do) and record their initials
 and the date, or set the wording to "read by a team member (Marathi native); Hindi not independently checked". Fix the
 HANDOFF contradiction.
+
+**Status (28 Nov 2026): fixed.** `readinessText.ts`, `VIVA.md`, `HANDOFF.md`, and `AEROFLEET_DOSSIER.md` now state team-reviewed (Marathi native member; independent outside reader still recommended) and the `HANDOFF.md` contradiction is removed.
 
 ##### H4. The accident dossier cites "Rule 45"; the 48-hour duty is probably Rule 29
 
@@ -12555,6 +12554,8 @@ HANDOFF contradiction.
 1. Correct the numbers.
 2. Rename the printout "Accident record prepared for a Digital Sky report", so it does not look like an official DGCA
    form.
+
+**Status (28 Nov 2026): fixed.** Verified against G.S.R. 589(E): 48-hour accident reporting is **Rule 30** (not 45 or 29), Type Certificate **Rule 8** (exemptions Rule 13), UIN **Rule 14**, RPC **Rule 31** (procedure Rule 34), insurance **Rule 44**. Updated in `accident_report.py`, `readiness.py`, `readinessText.ts`, `RegistrationCard.tsx`, `assurance.py`, tests, and docs; printout renamed *"Accident Record Prepared for Digital Sky"*.
 
 ##### H5. Airport zones: wrong reference point, and agricultural flights are over-restricted
 
@@ -12577,17 +12578,19 @@ The code differs in three ways:
 3. Cite a source for every radius, or drop the smaller-aerodrome class.
 4. Keep "UNCHECKED, verify on Digital Sky", which is right.
 
+**Status (28 Nov 2026): fixed.** `airspace_check.py` now uses uniform MoCA Sep 2021 distances across 37 civil airports (including Baramati) with a documented 1.5 km perimeter allowance: 0–5 km RED, 5–8 km YELLOW at all heights, **8–12 km YELLOW above 60 m (200 ft) only** (4 m sprayers not over-restricted), keeping `UNCHECKED` outside mapped zones. Covered by unit + integration tests.
+
 ---
 
 #### Medium
 
-| # | Finding | Evidence | Fix |
-|---|---|---|---|
-| M1 | The stored-records check in `/ledger/verify` misses swaps and deletions | `verify_stored_records` checks only that a review's hash is *somewhere* in the ledger. Swapping two reviews' reports passes. Deleting a review row passes. A spray form whose review was deleted is skipped (`continue`). | Record `review_id` in the ledger payload. Compare entry to row by key, and compare counts. |
-| M2 | `pune-agri` is a simulated fleet, but the screens don't say so | It is seeded from ArduPilot SITL `.bin` files. DEMO.md calls them "6 real ArduCopter SITL flights", and the commit says "a true Indian agricultural fleet". FleetPicker, Today's fleet, Spray register and Trends show no "simulated" label. | Add "Simulated (ArduPilot SITL)" to the fleet name or picker, and to every printout made from it. |
-| M3 | "Airborne by speed" uses raw fix-to-fix GPS speed | `_airborne_spans` computes speed from consecutive track points with no smoothing. On the ground, GPS jitter at 5-10 Hz easily exceeds 1.5 m/s, so ground complaints come back as warnings. This fits FA3 rising from 11.1% to 14.2%. | Use the speed over at least 1-2 s, or require it to last, and say which. |
-| M4 | Compliance rules apply only if someone filled the form | No insurance record gives a silent pass, yet Rule 44 insurance is mandatory and no UIN gives "Do not fly". The pilot's RPC is stored per drone, but a pilot flies many drones. Expiry is compared with the **UTC** date, so between 00:00 and 05:30 IST it is a day late. | Make "insurance not recorded" "Check first". Store the RPC per pilot. Use the IST date. |
-| M5 | The docs have drifted | The dossier says 752 tests and has no SA1/FA3/TSA. The commit says 765; the real count is 769. HANDOFF contradicts itself on the translations. | Fix the counts, then rebuild with `python tools/build_dossier.py` before sending it to the reviewing model. |
+| # | Finding | Evidence | Fix | Status (28 Nov) |
+|---|---|---|---|---|
+| M1 | The stored-records check in `/ledger/verify` misses swaps and deletions | `verify_stored_records` checks only that a review's hash is *somewhere* in the ledger. Swapping two reviews' reports passes. Deleting a review row passes. A spray form whose review was deleted is skipped (`continue`). | Record `review_id` in the ledger payload. Compare entry to row by key, and compare counts. | **Fixed** (`ledger.py`: subject + multiset count binding; orphaned spray forms fail; swap test added) |
+| M2 | `pune-agri` is a simulated fleet, but the screens don't say so | It is seeded from ArduPilot SITL `.bin` files. DEMO.md calls them "6 real ArduCopter SITL flights", and the commit says "a true Indian agricultural fleet". FleetPicker, Today's fleet, Spray register and Trends show no "simulated" label. | Add "Simulated (ArduPilot SITL)" to the fleet name or picker, and to every printout made from it. | **Fixed** (`FleetPicker.tsx` `[Simulated SITL]` + `<SimulatedFleetBanner />` on Readiness/Spray/Trends + banners in HTML printouts) |
+| M3 | "Airborne by speed" uses raw fix-to-fix GPS speed | `_airborne_spans` computes speed from consecutive track points with no smoothing. On the ground, GPS jitter at 5-10 Hz easily exceeds 1.5 m/s, so ground complaints come back as warnings. This fits FA3 rising from 11.1% to 14.2%. | Use the speed over at least 1-2 s, or require it to last, and say which. | **Fixed** (`evidence.py`: sliding `>= 2.0 s` window; 5 Hz parked GPS jitter test added) |
+| M4 | Compliance rules apply only if someone filled the form | No insurance record gives a silent pass, yet Rule 44 insurance is mandatory and no UIN gives "Do not fly". The pilot's RPC is stored per drone, but a pilot flies many drones. Expiry is compared with the **UTC** date, so between 00:00 and 05:30 IST it is a day late. | Make "insurance not recorded" "Check first". Store the RPC per pilot. Use the IST date. | **Mostly fixed** (`readiness.py`: IST date + `no_insurance` -> `CHECK_FIRST` when compliance row exists; per-pilot RPC table left for post-viva schema refactor) |
+| M5 | The docs have drifted | The dossier says 752 tests and has no SA1/FA3/TSA. The commit says 765; the real count is 769. HANDOFF contradicts itself on the translations. | Fix the counts, then rebuild with `python tools/build_dossier.py` before sending it to the reviewing model. | **Fixed** (all docs synced to 774 tests; `AEROFLEET_DOSSIER.md` rebuilt) |
 
 #### Low
 

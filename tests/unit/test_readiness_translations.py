@@ -23,6 +23,7 @@ def _all_codes():
     ref = date(2026, 11, 27)
     comps = (
         None,
+        {},
         {"insurance_valid_until": "2026-11-20", "pilot_rpc_valid_until": "2026-11-01"},
         {"insurance_valid_until": "2026-12-05"},
     )
@@ -45,7 +46,7 @@ def test_the_three_languages_have_the_same_keys():
 def test_every_reason_code_and_place_is_translated():
     k = _keys()["en"]
     codes = _all_codes()
-    assert codes == {"no_uin", "uin_unverified", "insurance_expired", "insurance_expiring", "rpc_expired",
+    assert codes == {"no_uin", "uin_unverified", "no_insurance", "insurance_expired", "insurance_expiring", "rpc_expired",
                      "settings_never", "no_baseline", "critical_changed", "limit_changed",
                      "critical_in_flight", "deviated", "warning", "more_warnings", "failsafe_off",
                      "grounded_incident", "partial_log"}

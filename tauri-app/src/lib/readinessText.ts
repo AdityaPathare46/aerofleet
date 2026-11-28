@@ -2,7 +2,8 @@
 // `args` (aerofleet/assurance/readiness.py); this file only changes how they are worded. Log warnings and setting names
 // stay in English, as the autopilot writes them.
 //
-// REVIEWED: native-speaker reviewed on 27 Nov 2026 (Aditya Pathare, COEP).
+// REVIEWED: team-reviewed on 27 Nov 2026 (Marathi native team member; an independent outside reader for Hindi &
+// Marathi is still recommended before field use — see docs/CRITICAL_REVIEW_2026-11-27.md, H3).
 export const REVIEWED: Record<Lang, boolean> = { en: true, hi: true, mr: true }
 
 export type Lang = 'en' | 'hi' | 'mr'
@@ -19,10 +20,11 @@ const en: Dict = {
   settings: 'Settings', flight: 'Last flight', register: 'Registration',
   no_uin: 'No UIN on record: the Drone Rules 2021 require one before the drone is operated.',
   uin_unverified: 'UIN {uin} is recorded but not yet verified on Digital Sky.',
+  no_insurance: 'No third-party insurance expiry on record (Drone Rules 2021 Rule 44).',
   insurance_expired: 'Third-party insurance expired on {date} (Drone Rules 2021 Rule 44).',
   insurance_expiring: 'Third-party insurance expires in {days} day(s) ({date}).',
-  rpc_expired: 'Assigned pilot RPC expired on {date} (Drone Rules 2021 Rule 34).',
-  accidentDossier: '48h DGCA Accident Dossier',
+  rpc_expired: 'Assigned pilot RPC expired on {date} (Drone Rules 2021 Rule 31).',
+  accidentDossier: '48h Digital Sky Accident Record',
   settings_never: 'Settings never checked: upload its parameter file or a flight log.',
   no_baseline: 'Settings have not been compared with an approved fleet baseline yet.',
   critical_changed: 'Safety-critical setting changed and not approved: {names}.',
@@ -57,10 +59,11 @@ const hi: Dict = {
   settings: 'सेटिंग्स', flight: 'पिछली उड़ान', register: 'पंजीकरण',
   no_uin: 'कोई UIN दर्ज नहीं है: ड्रोन नियम 2021 के अनुसार ड्रोन उड़ाने से पहले UIN ज़रूरी है।',
   uin_unverified: 'UIN {uin} दर्ज है, पर Digital Sky पर अभी सत्यापित नहीं हुआ है।',
+  no_insurance: 'थर्ड-पार्टी बीमा की अंतिम तिथि दर्ज नहीं है (ड्रोन नियम 2021, नियम 44)।',
   insurance_expired: 'थर्ड-पार्टी बीमा {date} को समाप्त हो चुका है (ड्रोन नियम 2021, नियम 44)।',
   insurance_expiring: 'थर्ड-पार्टी बीमा {days} दिन में ({date}) समाप्त हो रहा है।',
-  rpc_expired: 'पायलट का RPC प्रमाणपत्र {date} को समाप्त हो चुका है (ड्रोन नियम 2021, नियम 34)।',
-  accidentDossier: '48 घंटे DGCA दुर्घटना रिपोर्ट',
+  rpc_expired: 'पायलट का RPC प्रमाणपत्र {date} को समाप्त हो चुका है (ड्रोन नियम 2021, नियम 31)।',
+  accidentDossier: '48 घंटे Digital Sky दुर्घटना रिकॉर्ड',
   settings_never: 'सेटिंग्स कभी जाँची नहीं गईं: इसकी पैरामीटर फ़ाइल या उड़ान लॉग अपलोड करें।',
   no_baseline: 'सेटिंग्स की तुलना अभी तक मंज़ूर बेड़े की बेसलाइन से नहीं हुई है।',
   critical_changed: 'सुरक्षा से जुड़ी सेटिंग बदली गई है और उसे मंज़ूरी नहीं मिली: {names}।',
@@ -95,10 +98,11 @@ const mr: Dict = {
   settings: 'सेटिंग्ज', flight: 'मागील उड्डाण', register: 'नोंदणी',
   no_uin: 'UIN नोंदलेला नाही: ड्रोन नियम 2021 नुसार ड्रोन उडवण्यापूर्वी UIN आवश्यक आहे.',
   uin_unverified: 'UIN {uin} नोंदलेला आहे, पण Digital Sky वर अजून पडताळलेला नाही.',
+  no_insurance: 'थर्ड-पार्टी विम्याची अंतिम तारीख नोंदलेली नाही (ड्रोन नियम 2021, नियम 44).',
   insurance_expired: 'थर्ड-पार्टी विमा {date} रोजी संपला आहे (ड्रोन नियम 2021, नियम 44).',
   insurance_expiring: 'थर्ड-पार्टी विमा {days} दिवसांत ({date}) संपणार आहे.',
-  rpc_expired: 'पायलटचे RPC प्रमाणपत्र {date} रोजी संपले आहे (ड्रोन नियम 2021, नियम 34).',
-  accidentDossier: '48 तास DGCA अपघात अहवाल',
+  rpc_expired: 'पायलटचे RPC प्रमाणपत्र {date} रोजी संपले आहे (ड्रोन नियम 2021, नियम 31).',
+  accidentDossier: '48 तास Digital Sky अपघात नोंद',
   settings_never: 'सेटिंग्ज कधीच तपासल्या नाहीत: याची पॅरामीटर फाइल किंवा उड्डाण लॉग अपलोड करा.',
   no_baseline: 'सेटिंग्जची तुलना अजून मंजूर ताफ्याच्या बेसलाइनशी झालेली नाही.',
   critical_changed: 'सुरक्षेशी संबंधित सेटिंग बदलली आहे आणि तिला मंजुरी नाही: {names}.',

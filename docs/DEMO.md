@@ -6,7 +6,7 @@ flights, with the questions an examiner is likely to ask. About 10 minutes.
 Last checked 27 November 2026 on a desktop browser (macOS). Not checked on a headset or with a partner fleet's logs.
 
 > **Two seeded demo fleets:**
-> - **`pune-agri` (start here for the Indian operator workflow):** 6 real ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05`, active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres estimated swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
+> - **`pune-agri [Simulated SITL]` (start here for the Indian operator workflow):** 6 **simulated** ArduCopter SITL v2 4 m Pune spraying flights (`AGRI-01..06`, visibly badged as simulated on screen and printouts) with a shared approved baseline, reconciled `.waypoints` plans (playable in 3D/VR), grounded incident on `AGRI-05` (with 1-click Rule 30 48h Digital Sky Accident Record), active Nov 2026 CIB&RC Annexure-I spray forms (5.61 acres upper-bound swath), and every readiness outcome (`Ready`, `Check first`, `Do not fly`). Seed standalone with `--agri-only` or together via `--reset`.
 > - **`demo` & `demo-settings` (empirical study evidence):** 64 real public PX4 flights of 8 unrelated airframes showing the within-drone vibration null, public reference comparison, maintenance logbook before/after, and settings drift.
 
 ## 1. Set up (once)
@@ -193,7 +193,7 @@ an upload (`tools/build_public_reference.py`). It is a description, not a limit,
    planned at 5 m above the take-off point, as crop spraying is flown just above the crop.
 3. Click a mission to zoom to it on the map.
 
-Say: full local zones are loaded for Pune and Mumbai, and 36 major Indian civil airport perimeters (Drone Rules 2021 5 km RED / 12 km YELLOW) are checked nationwide; routes outside mapped zones return "not checked", never "clear". Every check is signed.
+Say: full local zones are loaded for Pune and Mumbai, and 37 Indian civil airport perimeters (MoCA Sep 2021 distances with 1.5 km perimeter allowance: 0–5 km RED, 5–8 km YELLOW all heights, 8–12 km YELLOW above 60 m / 200 ft) are checked nationwide; routes outside mapped zones return "not checked", never "clear". Every check is signed.
 
 ### Step 5. Mission conflict and wind (pre-flight checks)
 
@@ -263,7 +263,7 @@ database could rebuild the whole chain; a copy of the heads file kept by someone
 come from this computer's clock, and no trusted hardware is involved.
 
 **Has it been tested with real operators?**
-No. 773 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+No. 774 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
 has been done. The paper says so.
 
 **Does it work with ArduPilot?**

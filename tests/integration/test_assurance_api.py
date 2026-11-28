@@ -422,20 +422,23 @@ def test_route_check_against_the_real_pune_zones_the_ceiling_and_each_other(api_
 
     demo = Path(__file__).resolve().parents[2] / "tauri-app" / "public" / "demo" / "route_check"
     files = [("plans", (p.name, p.read_bytes(), "text/plain")) for p in sorted(demo.glob("[A-Z]*.waypoints"))]
-    delhi = build_waypoint_file({"origin_lat": 28.61, "origin_lon": 77.20, "dest_lat": 28.62, "dest_lon": 77.21, "altitude_m": 60.0})
+    delhi = build_waypoint_file({"origin_lat": 28.61, "origin_lon": 77.20, "dest_lat": 28.62, "dest_lon": 77.21, "altitude_m": 80.0})
+    delhi_low = build_waypoint_file({"origin_lat": 28.60, "origin_lon": 77.21, "dest_lat": 28.61, "dest_lon": 77.22, "altitude_m": 4.0})
     rural = build_waypoint_file({"origin_lat": 19.20, "origin_lon": 75.50, "dest_lat": 19.21, "dest_lon": 75.51, "altitude_m": 60.0})
     files.append(("plans", ("DELHI-TEST.waypoints", delhi.encode(), "text/plain")))
+    files.append(("plans", ("DELHI-SPRAY-4M.waypoints", delhi_low.encode(), "text/plain")))
     files.append(("plans", ("RURAL-MH.waypoints", rural.encode(), "text/plain")))
     r = api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers, files=files)
     assert r.status_code == 200, r.text
     out = r.json()
     v = {m["id"]: m["verdict"] for m in out["missions"]}
     assert v == {"SPRAY-NEAR-CANTONMENT": "NOT_PERMITTED", "CROP-MAP-150M": "NOT_PERMITTED", "SPRAY-NEAR-AIRPORT": "NEEDS_PERMISSION",
-                 "SPRAY-FIELD-A": "CLEAR", "SPRAY-FIELD-B": "CLEAR", "DELHI-TEST": "NEEDS_PERMISSION", "RURAL-MH": "UNCHECKED"}
+                 "SPRAY-FIELD-A": "CLEAR", "SPRAY-FIELD-B": "CLEAR", "DELHI-TEST": "NEEDS_PERMISSION",
+                 "DELHI-SPRAY-4M": "UNCHECKED", "RURAL-MH": "UNCHECKED"}
     cant = next(m for m in out["missions"] if m["id"] == "SPRAY-NEAR-CANTONMENT")
     assert "Pune Cantonment" in cant["summary"] and cant["city"] == "pune"
     assert {frozenset((c["a"], c["b"])) for c in out["conflicts"]} == {frozenset(("SPRAY-FIELD-A", "SPRAY-FIELD-B"))}
-    assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 7
+    assert "Digital Sky" in out["note"] and out["ledger_seq"] >= 1 and len(out["input_files"]) == 8
     assert api_client.post("/api/v1/assurance/plans/airspace", headers=auth_headers,
                            files=[("plans", ("bad name!.waypoints", delhi.encode(), "text/plain"))]).status_code == 422
 
@@ -523,11 +526,24 @@ def test_dgca_compliance_rule45_accident_dossier_and_fleet_list(api_client, auth
     fleets = api_client.get("/api/v1/assurance/fleets", headers=auth_headers).json()
     assert any(f["fleet"] == fleet_name and f["drones"] >= 1 for f in fleets["fleets"])
 
-    # Rule 45 48-hour accident dossier JSON & printable HTML both return complete verified data
+    # Rule 30 48-hour accident record JSON & printable HTML both return complete verified data
     dj = api_client.get(f"{URL}/drones/DG-1/accident-dossier.json", headers=auth_headers)
     assert dj.status_code == 200
     body = dj.json()
     assert body["aircraft"]["uin"] == "UA00DG1" and body["aircraft"]["insurance_policy"] == "POL-99"
     assert body["ledger"] and body["ledger"]["matches_record"] is True
     dh = api_client.get(f"{URL}/drones/DG-1/accident-dossier", headers=auth_headers)
-    assert dh.status_code == 200 and "DGCA Rule 45" in dh.text and "POL-99" in dh.text and "VERIFIED" in dh.text
+    assert dh.status_code == 200 and "Rule 30" in dh.text and "POL-99" in dh.text and "VERIFIED" in dh.text
+
+    # M1: cross-drone FlightReview report swap in SQLite is caught by verify_stored_records
+    from aerofleet.assurance import ledger
+    from aerofleet.data.models.models import FlightReview
+
+    api_client.post(f"{URL}/drones/DG-2/flights", headers=auth_headers, files={"log": _flight_files(tmp_path)["log"]})
+    assert ledger.verify_stored_records(db)["ok"] is True
+    r1 = db.query(FlightReview).filter(FlightReview.drone_id == "DG-1").first()
+    r2 = db.query(FlightReview).filter(FlightReview.drone_id == "DG-2").first()
+    assert r1.report != r2.report
+    r1.report, r2.report = r2.report, r1.report
+    db.commit()
+    assert ledger.verify_stored_records(db)["ok"] is False

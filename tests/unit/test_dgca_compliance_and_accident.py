@@ -29,14 +29,19 @@ def test_rule44_insurance_and_rule34_rpc_enforcement():
     assert r_exp["status"] == DO_NOT_FLY
     assert any(x["code"] == "insurance_expired" for x in r_exp["reasons"])
 
-    # Expired pilot RPC -> DO_NOT_FLY (Rule 34)
+    # Missing insurance expiry when compliance record exists -> CHECK_FIRST (M4)
+    r_miss = assess("D1", ok_settings, ok_reg, None, compliance={"pilot_name": "P1"}, today=ref)
+    assert r_miss["status"] == CHECK_FIRST
+    assert any(x["code"] == "no_insurance" for x in r_miss["reasons"])
+
+    # Expired pilot RPC -> DO_NOT_FLY (Rule 31)
     r_rpc = assess("D1", ok_settings, ok_reg, None,
                    compliance={"insurance_valid_until": "2027-06-01", "pilot_rpc_valid_until": "2026-10-01"}, today=ref)
     assert r_rpc["status"] == DO_NOT_FLY
     assert any(x["code"] == "rpc_expired" for x in r_rpc["reasons"])
 
 
-def test_rule45_accident_dossier_48h_deadline_and_html_escaping():
+def test_rule30_accident_dossier_48h_deadline_and_html_escaping():
     now = datetime(2026, 11, 27, 15, 0, tzinfo=timezone.utc)
     review = {
         "id": 42, "verdict": "DEVIATED", "log_name": "<script>bad</script>.bin", "plan_name": "spray.waypoints",
@@ -68,9 +73,27 @@ def test_rule45_accident_dossier_48h_deadline_and_html_escaping():
     assert dossier["deadline"]["hours_remaining"] == 39.0
     assert dossier["flight"]["takeoff"]["lat"] == 18.5201
     html = accident_dossier_html(dossier)
-    assert "Rule 45" in html and "UA00DEMO05" in html and "VERIFIED" in html
+    assert "Rule 30" in html and "UA00DEMO05" in html and "VERIFIED" in html
+    assert "SIMULATED DEMO FLEET" in html
     assert "<script>bad</script>" not in html
     assert "&lt;script&gt;bad&lt;/script&gt;" in html
+
+
+def test_m3_smoothed_airborne_speed_rejects_parked_gps_jitter():
+    from aerofleet.assurance.evidence import _airborne_spans
+
+    # Parked drone at 0.2 m altitude with 5 Hz +-0.6 m GPS jitter (raw point-to-point speed = 6 m/s!)
+    jitter_track = []
+    for k in range(50):
+        t = k * 0.2
+        dlat = (0.000005 if k % 2 == 0 else -0.000005)
+        jitter_track.append((t, 18.5200 + dlat, 73.8500, 0.2))
+    assert _airborne_spans(jitter_track, 0.0) == []
+
+    # Steady 3 m/s agricultural spraying pass at 1.2 m altitude over 10 s -> cleanly airborne
+    spray_track = [(k * 0.5, 18.5200 + (k * 1.5) / 111_320.0, 73.8500, 1.2) for k in range(20)]
+    spans = _airborne_spans(spray_track, 0.0)
+    assert spans and sum(hi - lo for lo, hi in spans) >= 7.0
 
 
 def test_fleet_trends_service_interval_since_maintenance():

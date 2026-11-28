@@ -140,7 +140,7 @@ export default function RegistrationCard({ apiUrl, droneId }: { apiUrl: string; 
             </div>
           )}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'grid', gap: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>DGCA Drone Rules 2021 — Insurance (Rule 44), Type Certificate (Rule 13) &amp; Pilot RPC (Rule 34)</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>DGCA Drone Rules 2021 — Insurance (Rule 44), Type Certificate (Rule 8) &amp; Pilot RPC (Rule 31)</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: 8 }}>
               <label style={{ fontSize: 12 }}>Policy No. (Rule 44)
                 <input className="form-input" value={comp.insurance_policy ?? ''} onChange={(e) => setComp({ ...comp, insurance_policy: e.target.value })} placeholder="e.g. NIA-UAS-2026-001" />
@@ -151,13 +151,13 @@ export default function RegistrationCard({ apiUrl, droneId }: { apiUrl: string; 
               <label style={{ fontSize: 12 }}>Insurance valid until
                 <input type="date" className="form-input" value={comp.insurance_valid_until ?? ''} onChange={(e) => setComp({ ...comp, insurance_valid_until: e.target.value })} />
               </label>
-              <label style={{ fontSize: 12 }}>Type Certificate / DAN (Rule 13)
+              <label style={{ fontSize: 12 }}>Type Certificate / DAN (Rule 8)
                 <input className="form-input mono" value={comp.type_certificate_no ?? ''} onChange={(e) => setComp({ ...comp, type_certificate_no: e.target.value })} placeholder="e.g. DAN-AGRI10L" />
               </label>
               <label style={{ fontSize: 12 }}>Assigned Pilot
                 <input className="form-input" value={comp.pilot_name ?? ''} onChange={(e) => setComp({ ...comp, pilot_name: e.target.value })} placeholder="Pilot full name" />
               </label>
-              <label style={{ fontSize: 12 }}>Pilot RPC No. (Rule 34)
+              <label style={{ fontSize: 12 }}>Pilot RPC No. (Rule 31)
                 <input className="form-input mono" value={comp.pilot_rpc_no ?? ''} onChange={(e) => setComp({ ...comp, pilot_rpc_no: e.target.value })} placeholder="e.g. RPC-MH-2026-041" />
               </label>
               <label style={{ fontSize: 12 }}>RPC valid until

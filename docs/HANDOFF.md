@@ -171,27 +171,32 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ## 6. Status
 
-**Now (28 Nov 2026, post-audit + C1/C2 fixes).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **773 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+**Now (28 Nov 2026, post-critical-review H1-H5 + M1-M4 + C1/C2 complete).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
+reviews yet). Product: **774 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
-cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
-timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`; chain checked against the pinned DigiCert root in
-`aerofleet/assurance/data/tsa_roots.pem`, only DigiCert's URL allowed; live-tested against DigiCert 27 Nov), and the Proof page recomputes the four headline results live and summarizes SITL v2, SA1+FA3, and RFC 3161 TSA.
-Domain-fit upgrades (27 Nov): (1) **Nationwide Indian airport airspace check** (`airspace_check.py`: 36 major civil airports,
-Drone Rules 2021 5 km RED / 12 km YELLOW and 3 km / 8 km smaller aerodromes, returning `UNCHECKED` — never `CLEAR` — outside
-mapped areas); (2) **Geometric spray swath area estimator** (`spray_form.py`, `spray.py`, `SprayRegister.tsx`: moving airborne
-distance × track spacing `5-13` in acres & hectares with turns/no-flow-sensor caveat) plus **overdue 7-day spray-form
-compliance link** surfaced on `Today's fleet` (`Readiness.tsx`, non-blocking); (3) **Cohesive Indian spraying demo fleet
-`pune-agri`** (`seed_demo_fleet.py --agri-only`: 6 ArduCopter 4 m Pune spraying flights from `sitl_v2` with shared baseline,
-reconciled `.waypoints` plans for 3D/VR replay, grounded incident on `AGRI-05`, and live Nov 2026 spray forms totaling 5.61
-acres); (4) **DGCA Drone Rules 2021 compliance ledger** (`DroneCompliance` table + `GET/PUT /drones/{id}/compliance`, signed:
-Rule 44 third-party insurance expiry grounds to `DO_NOT_FLY` and warns at ≤ 14 d, Rule 13 Type Certificate/DAN, Rule 34 pilot
-RPC expiry grounds to `DO_NOT_FLY`); (5) **DGCA Rule 45 printable 48-hour Accident / Incident Dossier** (`accident_report.py`,
-`GET .../accident-dossier` + `.json`: IST/UTC 48 h statutory deadline countdown, UIN/insurance/RPC, telemetry timeline with no
-blame attribution, maintenance logbook, Ed25519 ledger verification); (6) **1-click multi-fleet switcher** (`GET /fleets`,
-`FleetPicker.tsx` on Today's fleet, Spray register, Fleet trends), **maintenance service-interval counters** in `trends.py`,
-and **native-speaker approved Hindi & Marathi** (`REVIEWED = { en: true, hi: true, mr: true }`). Review 1-5 Dec 2026; the
-report is not yet written. Work is credited to Aditya Pathare and Atharv Waghmare only.
+subject- and count-bound cross-checking of stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify`, catching
+edits, cross-drone swaps, and orphaned spray forms — M1 — plus optional **RFC 3161 trusted timestamping** pinned to
+DigiCert Trusted Root G4 in `aerofleet/assurance/data/tsa_roots.pem` with allow-listed URL — C2), and the Proof page
+recomputes the four headline results live and summarizes SITL v2, FA2/SA1+FA3 (with honest H1/H2 framing), and RFC 3161 TSA.
+Domain-fit & critical-review fixes (27–28 Nov): (1) **Nationwide Indian airport airspace check** (`airspace_check.py`: 37
+civil airports including Baramati, MoCA Sep 2021 distances with 1.5 km perimeter allowance: 0–5 km RED, 5–8 km YELLOW at all
+heights, **8–12 km YELLOW above 60 m / 200 ft only** so 4 m sprayers are not over-restricted — H5 — returning `UNCHECKED`,
+never `CLEAR`, outside mapped areas); (2) **Geometric spray swath upper bound** (`spray_form.py`, `spray.py`,
+`SprayRegister.tsx`: moving airborne distance × track spacing `5-13` in acres & hectares, explicitly labelled *upper bound,
+includes turns, no flow sensor* — L2) plus **overdue 7-day spray-form compliance link** on `Today's fleet`; (3) **Simulated
+Indian spraying demo fleet `pune-agri`** (`seed_demo_fleet.py --agri-only`: 6 ArduCopter SITL v2 4 m Pune spraying flights
+with shared baseline, reconciled `.waypoints` plans for 3D/VR replay, grounded incident on `AGRI-05`, live Nov 2026 spray
+forms totaling 5.61 acres, and visible **"Simulated demo fleet (ArduPilot SITL)"** banners on every screen & printout — M2);
+(4) **DGCA Drone Rules 2021 (G.S.R. 589(E)) compliance ledger** (`DroneCompliance` table + `GET/PUT /drones/{id}/compliance`,
+signed, checked against **IST date** — M4: Rule 44 third-party insurance expiry grounds to `DO_NOT_FLY`, missing/expiring ≤ 14 d
+flags `CHECK_FIRST`; Rule 8 Type Certificate/DAN; Rule 31 pilot RPC expiry grounds to `DO_NOT_FLY`); (5) **Printable 48-hour
+Accident Record prepared for Digital Sky (Rule 30)** (`accident_report.py` — corrected from Rule 45 per H4 — IST/UTC 48 h
+countdown, UIN/insurance/RPC, telemetry timeline with no blame attribution, maintenance logbook, Ed25519 verification);
+(6) **1-click multi-fleet switcher** (`GET /fleets`, `FleetPicker.tsx`), **maintenance service-interval counters** (`trends.py`),
+**smoothed 2 s airborne groundspeed** in `evidence.py` (M3), **C1 PX4 default breaker fix** (`CBRK_FLIGHTTERM` dropped,
+`CBRK_IO_SAFETY` demoted to setting note), and **team-reviewed Hindi & Marathi** (`REVIEWED = { en: true, hi: true, mr: true }`,
+all 17 codes verified; independent outside reader still recommended — H3). Review 1-5 Dec 2026; the report is not yet
+written. Work is credited to Aditya Pathare and Atharv Waghmare only.
 Safety audit fixes (27 Nov, `dbc45d3`): fixed `reconcile.py` `ordered` variable-shadowing bug; upgraded `evidence.py` to
 contiguous airborne spans (`alt > 2 m OR speed >= 1.5 m/s`) for low-altitude/downslope sprayers and mid-air `<10%` battery
 detection (`>15 s` before touchdown); closed `readiness.py` silent passes (`NO_REFERENCE` -> `CHECK_FIRST`, partial CSV/GPX
@@ -200,11 +205,7 @@ ArduPilot EKF3 primary core switches (`ERR` subsys 24) in `flightlog.py`; decoup
 with realistic `agri_sprayer_10l/16l` and `light_survey` airframe profiles + UI selector; expanded no-AI import guard to
 `spray.py` & `vr_study.py`; refined product–domain positioning to Indian commercial/institutional PX4 & ArduPilot fleets
 (DaaS, RPTOs, LFC aggregators) with CIB&RC agricultural spraying compliance as a vertical module.
-False alarms & sensitivity (27 Nov): FA1 (`5f44b0b`) failed (28.8%); FA2 (`481987a`) passed on held-out H (11.1%); **SA1 + FA3**
-declared (`e9c4ebc`) and **passed both marks**: H good/great **14.2%** (27/190; Wilson [10.0, 19.9%], vehicle-cluster 95% CI
-[8.5, 20.7%]; H baseline was 25.3%), H all 27.3% (unrated 33.8%); RflyMAD sensor faults **53.8%** (106/197), motor faults
-**19.8%** (48/242), fault-free control **0.0%** (0/50); forum expert aircraft crashes 37.5% (12/32), archive crashes 36.8%
-(49/133) vs prior flights 26.5% (118/445). Demo fleet reloaded earlier; rebuild after any schema/seed changes. New: tools/backup.py. macOS app built with CARGO_TARGET_DIR on the internal disk; launcher fixed (unread
+False alarms & sensitivity (27 Nov): FA1 (`5f44b0b`) failed (28.8%); FA2 (`481987a`) passed on untouched held-out H (11.1%); **SA1 + FA3** (`e9c4ebc`) re-measured H after rule edits (not untouched held-out — H1): H good/great **14.2%** (27/190; Wilson [10.0, 19.9%], vehicle-cluster 95% CI [8.5, 20.7%], upper bound > 20%; H baseline 25.3%), H all 27.3% (unrated 33.8%); descriptive sensitivity (H2): RflyMAD sensor faults **53.8%** (106/197), motor faults **19.8%** (48/242), fault-free **0.0%** (0/50); forum expert aircraft crashes 37.5% (12/32), archive crashes 36.8% (49/133) vs prior flights 26.5% (118/445). Demo fleet reloaded earlier; rebuild after any schema/seed changes. New: tools/backup.py. macOS app built with CARGO_TARGET_DIR on the internal disk; launcher fixed (unread
 output pipe stalled the backend, forced DATABASE_URL pointed at an old data/aerofleet.db, a stale .venv in the repo was
 picked first; it now writes ~/Library/Application Support/AeroFleet/backend.log). The entries below are the history, oldest first.
 
@@ -247,7 +248,8 @@ view. "Live swarm" in the VR view is still from the earlier dispatch product (si
   `tools/seed_demo_fleet.py --spray-only` remakes the four DEMO forms. Source PDF: CropLife India copy of the
   434th RC minutes (30 Nov 2021) annexure; keep it out of the repository.
 - *Today's fleet* in English, Hindi and Marathi (`tauri-app/src/lib/readinessText.ts`); readiness reasons now carry
-  `code` and `args`. Translations unchecked by native speakers: set `REVIEWED` only after someone has read them.
+  `code` and `args`. Initially unchecked on 24 Nov; team-reviewed on 27 Nov (Marathi native member; independent outside
+  reader still recommended — see `CRITICAL_REVIEW_2026-11-27.md`, H3).
 - Signed receipts (`GET /ledger/receipt`, `POST /ledger/check-receipt`, `verify_ledger.py --receipt`) for someone
   outside the operator's control to keep; closes the "operator rebuilds the chain" gap only as often as receipts go out.
 - Scheme numbers corrected everywhere: 15,000 approved, about 500 delivered under the scheme (1,094 to SHGs in all) by

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import SignInCard from '../components/SignInCard'
-import FleetPicker, { initialFleet } from '../components/FleetPicker'
+import FleetPicker, { SimulatedFleetBanner, initialFleet } from '../components/FleetPicker'
 
 type State = 'OVERDUE' | 'DUE_SOON' | 'DRAFT' | 'READY' | 'SUBMITTED'
 interface AreaEst { moved_m: number; spacing_m: number; hectares: number; acres: number; note: string }
@@ -138,6 +138,7 @@ export default function SprayRegisterPage() {
         </div>
         <FleetPicker apiUrl={apiUrl} fleet={fleet} onChange={(next) => { setFleet(next); setForm(null); setPicked([]) }} />
       </div>
+      <SimulatedFleetBanner fleet={fleet} />
       {needsAuth && <SignInCard apiUrl={apiUrl} reason="The spray register reads this install's flight reviews." onSignedIn={load} />}
       {error && <div role="alert" style={{ color: 'var(--status-red)' }}>{error}</div>}
 

@@ -81,12 +81,13 @@ log diagnostics (the checklist). *Honest limit:* no operator has used it yet; a 
 run (`research/protocols/prospective_and_user_study.md`).
 
 **Q4. Why should a regulator care?**
-EU and UK operators must keep operation and maintenance records for at least three years; India requires an accident
-report on Digital Sky within 48 hours (Drone Rules 2021 Rule 45), third-party liability insurance (Rule 44), a verified
-UIN (Rule 14), Type Certificate (Rule 13), and Remote Pilot Certificate (Rule 34). AeroFleet tracks all of those in the
-signed record, enforces expired insurance/RPC/UIN on *Today's fleet*, and generates a one-click printable **48-hour DGCA
-Rule 45 Accident Dossier** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes —
-while never overclaiming blame.
+EU and UK operators must keep operation and maintenance records for at least three years; India's Drone Rules 2021
+(G.S.R. 589(E)) require an accident report on Digital Sky within 48 hours (**Rule 30**), third-party liability insurance
+(**Rule 44**), a verified UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), and Remote Pilot
+Certificate (**Rule 31** / Rule 34). AeroFleet tracks all of those in the signed record, enforces expired insurance/RPC/UIN
+on *Today's fleet* (using IST dates), and generates a one-click printable **48-hour Accident Record prepared for Digital
+Sky (Rule 30)** with IST/UTC filing countdown, telemetry timeline, maintenance logbook, and Ed25519 hashes — while never
+claiming to be an official DGCA form and never assigning blame.
 
 ## B. Data
 
@@ -230,22 +231,27 @@ approve it with a written reason, and the approval is signed into the record.
 The delivery dispatcher was dropped when the project was re-scoped; its screens are hidden as legacy. The map is now a
 pre-flight **Route check**: load the missions planned for a period and each route is checked against red and yellow
 airspace, the 120 m limit, and the other planned routes, then signed into the record. *Honest limit:* full local zones
-(airports + military/restricted sites) are loaded for Pune and Mumbai; across the rest of India, 36 major civil airport
-perimeters are checked automatically using Drone Rules 2021 distances (5 km RED / 12 km YELLOW for major airports; 3 km /
-8 km for smaller aerodromes). Routes outside those mapped zones are reported "not checked" (`UNCHECKED`), never "clear",
-and the screen states plainly that this is an approximation, not the official Digital Sky map. *Show:* Route check ▸ *Try 5 demo jobs*.
+(airports + military/restricted sites) are loaded for Pune and Mumbai; across the rest of India, 37 civil airport
+perimeters (including Baramati) are checked using MoCA's September 2021 airspace map distances with a 1.5 km perimeter
+allowance around each airport reference point: **0–5 km RED**, **5–8 km YELLOW at any height**, and **8–12 km YELLOW
+only above 60 m (200 ft)** (so 4 m agricultural spraying passes in the 8–12 km band are not over-restricted). Routes
+outside mapped zones return "not checked" (`UNCHECKED`), never "clear", and the screen states plainly that this is an
+approximation, not the official Digital Sky map. *Show:* Route check ▸ *Try 5 demo jobs*.
 
 **Q23c. How does "Today's fleet" decide, and why trust it?**
 Fixed rules only, each shown with its reason: **Do not fly** if a safety-critical setting changed without approval, there
-is no UIN on record (Rule 14), third-party insurance has expired (Rule 44), the assigned pilot's RPC has expired (Rule 34),
-or the drone is grounded in the maintenance logbook after a reported incident/crash without a later inspection clearance.
-**Check first** if a flight-limit setting changed, settings have not been compared with an approved baseline (`NO_REFERENCE`),
-a failsafe or safety check is switched off (including PX4 `CBRK_*` circuit breakers and ArduPilot `ARMING_CHECK=0`), the
-UIN is unverified, third-party insurance expires within 14 days, settings were never checked, the last flight was a partial
+is no UIN on record (Rule 14), third-party insurance has expired (Rule 44, IST date), the assigned pilot's RPC has expired
+(Rule 31, IST date), or the drone is grounded in the maintenance logbook after a reported incident/crash without a later
+inspection clearance. **Check first** if a flight-limit setting changed, settings have not been compared with an approved
+baseline (`NO_REFERENCE`), a failsafe or safety check is switched off (ArduPilot failsafes & `ARMING_CHECK=0`; PX4
+`NAV_RCL_ACT=0`, `COM_LOW_BAT_ACT=0`, `GF_ACTION=0`, `CBRK_SUPPLY_CHK=894281`; PX4 firmware-default `CBRK_IO_SAFETY=22027`
+is shown as a non-blocking setting note and `CBRK_FLIGHTTERM` is not checked), the UIN is unverified, insurance expiry is
+missing on a compliance record or expires within 14 days, settings were never checked, the last flight was a partial
 CSV/GPX export, or the last flight's log shows sustained in-air warnings (sensor or GPS complaints lasting 3 s or more
-while airborne, an airborne autopilot error report, a mid-air critical battery drop > 15 s before touchdown, a safety-critical
-setting changed in flight, or leaving the plan). A low-battery landing (< 10% near touchdown) is shown as a pilot note,
-not a reason, and vibration / the learned model are context only. *Show:* Today's fleet ▸ fleet `pune-agri` (`AGRI-01..06`).
+while airborne — altitude > 2 m or smoothed 2 s groundspeed ≥ 1.5 m/s — an airborne autopilot error report, a mid-air
+critical battery drop > 15 s before touchdown, a safety-critical setting changed in flight, or leaving the plan). A
+low-battery landing (< 10% near touchdown) is shown as a pilot note, not a reason, and vibration / the learned model are
+context only. *Show:* Today's fleet ▸ fleet `pune-agri [Simulated SITL]`.
 
 **Q23d. What happens in a real season with this tool?**
 Morning: *Today's fleet* says which drones can fly. Evening: the operator selects all the day's logs at once; each is
@@ -301,7 +307,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-773 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+774 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.
@@ -376,8 +382,9 @@ operator correct it; if the entered value differs from the log by more than 1 m,
 The pilots are new operators, many more comfortable in Hindi or Marathi, and the industry review named "English only" as a
 weakness against Indian competitors. Only *Today's fleet* is translated, because it is the screen a pilot reads. The
 verdicts come with a code, so the rule never changes with the language. Every Hindi and Marathi line in `readinessText.ts`
-(all 16 rule codes + labels) was reviewed and approved by a native speaker on the team on 27 Nov 2026 (`REVIEWED` set to
-`true`), and `test_readiness_translations.py` verifies key parity across all three languages.
+(all 17 rule codes + labels) has verified key parity (`test_readiness_translations.py`) and was read by a Marathi-native
+team member on 27 Nov 2026; honest limit: an independent outside reader per language (especially for Hindi) has not yet
+signed off (`CRITICAL_REVIEW_2026-11-27.md`, H3).
 
 **Q44. You said the operator can rebuild the whole chain or fake the computer's clock. What did you do about it?**
 Two layers: (1) A **signed receipt** handed weekly to someone outside the operator's control (the fertiliser company,
@@ -461,12 +468,12 @@ Time. SITL runs the same flight code and lets us put faults in on purpose with a
 field flight cannot. It is the standard step before real flights; a bench session is in future work.
 
 **Q54. How often does Today's fleet cry wolf — and does it actually catch real faults?**
-We measured both in three pre-declared stages on the product's exact code:
-- **FA1** (`5f44b0b`, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
-- **FA2** (`481987a`, passed): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut held-out half H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
-- **SA1 + FA3** (`e9c4ebc`, passed both marks): after fixing two safety gaps (counting horizontal motion ≥ 1.5 m/s so low-altitude/downslope spraying passes are airborne, and keeping mid-air battery < 10% > 15 s before touchdown as a warning) and adding **vehicle-cluster bootstrap CIs** (matching our paper's Checklist Item #2):
-  - **Specificity (FA3, held-out H):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles); all H ordinary **27.3%** (unrated 33.8%); controlled RflyMAD fault-free flights **0.0%** (0/50).
-  - **Sensitivity (SA1):** RflyMAD injected sensor faults **53.8%** (106/197, pass mark ≥ 50% **met**), motor faults **19.8%** (48/242, most absorbed 15–20% losses); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H flights (27.3%), directly confirming our paper's within-drone null on the product's own readiness board. Not yet measured on real spraying drones.
+We measured both in three stages on the product's exact code, being transparent about what is held out vs re-measured:
+- **FA1** (`5f44b0b`, pre-declared, failed): the original rule flagged **28.8%** [23.9, 34.1%] of good-or-great public flights (pass mark ≤ 20%).
+- **FA2** (`481987a`, pre-declared, passed on untouched held-out half H): restricting GPS/health complaints to ≥ 3 s in the air and demoting low-battery landings cut H good-or-great to **11.1%** [7.3, 16.3%] (from an H baseline of 25.3%).
+- **SA1 + FA3** (`e9c4ebc`, re-measurement + descriptive sensitivity after adding airborne speed and mid-air battery rules, with **vehicle-cluster bootstrap CIs** matching Checklist Item #2):
+  - **FA3 (re-measured on H, NOT an untouched held-out test — H1):** good-or-great **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]** — upper bound crosses 20%, so only the point estimate is under 20%); all H ordinary **27.3%** (unrated 33.8%); RflyMAD fault-free **0.0%** (0/50). *(Note: M3 smoothed the groundspeed window to 2 s afterwards to suppress parked GPS jitter; a fresh whole-board FA4 on unseen logs is future work.)*
+  - **SA1 (descriptive — H2, because RflyMAD 53.8% had already been observed during D development):** RflyMAD injected sensor faults **53.8%** (106/197), motor faults **19.8%** (48/242); expert-diagnosed forum aircraft crashes **37.5%** (12/32; pilot 2/4); archive real-hardware crashes **36.8%** (49/133), whereas crashed drones' *prior* ordinary flights flagged at **26.5%** (118/445) — virtually identical to ordinary H (27.3%), meaning the board flags crash flights ~1.35× as often as ordinary flights and directly mirrors the paper's within-drone null. Not yet measured on real spraying drones.
 
 **Q54b. Why not train the model on spraying drones, with payload as an input?**
 There is no data for it: no public log records payload weight, and the public archive has about 20 flights from 4

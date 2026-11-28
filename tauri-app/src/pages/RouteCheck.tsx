@@ -195,8 +195,9 @@ export default function RouteCheckPage() {
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             <b>Legend.</b> <span style={{ color: '#DC2626' }}>Red zone</span>: no flying without central government permission.{' '}
             <span style={{ color: '#B45309' }}>Yellow zone</span>: air traffic control permission needed. Full local zones are
-            loaded for Pune and Mumbai; across the rest of India, 36 major civil airport perimeters (Drone Rules 2021 5 km / 12 km
-            circles) are checked automatically and routes outside them return <i>Not checked</i> until verified on the official Digital Sky map.
+            loaded for Pune and Mumbai; across the rest of India, 37 civil airport perimeters (MoCA 2021 distances with a 1.5 km
+            perimeter allowance: 0–5 km red, 5–8 km yellow at all heights, 8–12 km yellow above 60 m / 200 ft) are checked
+            automatically and routes outside them return <i>Not checked</i> until verified on the official Digital Sky map.
           </div>)}
       </div>
       <div style={{ position: 'relative', background: 'var(--bg-void)' }}>

@@ -372,12 +372,12 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     out.sort(key=lambda r: (ORDER[r["status"]], r["drone_id"]))
     return {"fleet": fleet, "drones": out, "counts": {k: sum(r["status"] == k for r in out) for k in ORDER},
             "vibration_note": VIBRATION_NOTE,
-            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record, expired third-party insurance "
-                     "(Rule 44) or pilot RPC (Rule 34), or grounded after a reported incident. "
+            "rules": "Do not fly: an unapproved safety-critical setting change, no UIN on record (Rule 14), expired third-party insurance "
+                     "(Rule 44) or pilot RPC (Rule 31), or grounded after a reported incident. "
                      "Check first: a flight-limit change, settings not yet compared with a baseline, a failsafe or safety check switched off, "
-                     "an unverified UIN, insurance expiring within 14 days, settings never checked, a partial CSV/GPX log, or warnings in the air "
-                     "during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight critical "
-                     "battery drop; a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
+                     "an unverified UIN, missing or expiring (<=14 d) insurance, settings never checked, a partial CSV/GPX log, or warnings in "
+                     "the air during the last flight (a sensor or GPS complaint lasting 3 s or more, an autopilot error report, or an in-flight "
+                     "critical battery drop; a landing below 10% battery is a pilot note, not a reason). Ready: none of these."}
 
 
 def _accident_dossier(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:
@@ -409,14 +409,14 @@ def _accident_dossier(db: Session, fleet: str, drone_id: str) -> Dict[str, Any]:
 @router.get("/fleets/{fleet}/drones/{drone_id}/accident-dossier.json")
 async def accident_dossier_json(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
                                 db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Structured DGCA Drone Rules 2021 Rule 45 48-hour accident / incident reporting dossier."""
+    """Structured operator accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting)."""
     return _accident_dossier(db, fleet, drone_id)
 
 
 @router.get("/fleets/{fleet}/drones/{drone_id}/accident-dossier")
 async def accident_dossier_html_route(fleet: str, drone_id: str, user: User = Depends(get_current_active_user),
                                       db: Session = Depends(get_db)):
-    """Printable HTML DGCA Rule 45 48-hour accident / incident reporting dossier (print to PDF from browser)."""
+    """Printable HTML operator accident record prepared for Digital Sky (Drone Rules 2021, Rule 30)."""
     from fastapi.responses import HTMLResponse
 
     from aerofleet.assurance.accident_report import accident_dossier_html

@@ -25,7 +25,7 @@ MIN_HEALTH_S = 1.0         # shorter estimator complaints are common on healthy 
 # that happened in the air (track above AIRBORNE_M or moving horizontally at >= AIRBORNE_SPEED_MPS, so low-altitude
 # and downslope agricultural spraying passes are included) and only if that airborne part lasts SUSTAINED_S; otherwise
 # it is listed as a NOTICE. Chosen after FA1 failed (28.8% of healthy flights flagged) and tested in FA2/FA3.
-AIRBORNE_M, AIRBORNE_SPEED_MPS, SUSTAINED_S = 2.0, 1.5, 3.0
+AIRBORNE_M, AIRBORNE_SPEED_MPS, AIRBORNE_SPEED_WINDOW_S, SUSTAINED_S = 2.0, 1.5, 2.0, 3.0
 LANDING_MARGIN_S = 15.0    # battery < 10% more than this long before touchdown is flagged as in-flight, not a low landing
 LOOKBACK_S = 30.0          # events this long before an episode count as "around it"
 
@@ -50,14 +50,18 @@ def _spans(samples: Sequence[Tuple[float, bool]], t0: float) -> List[Tuple[float
 
 
 def _airborne_spans(track, t0: float) -> List[Tuple[float, float]]:
-    """Contiguous airborne intervals in track seconds: above AIRBORNE_M OR moving at >= AIRBORNE_SPEED_MPS."""
+    """Contiguous airborne intervals in track seconds: above AIRBORNE_M OR net ground speed >= AIRBORNE_SPEED_MPS
+    measured over at least AIRBORNE_SPEED_WINDOW_S (2 s) so parked 5-10 Hz GPS jitter does not trigger airborne."""
     flags: List[Tuple[float, bool]] = []
+    j = 0
     for i, p in enumerate(track):
         air = p[3] > AIRBORNE_M
+        while j + 1 < i and (p[0] - track[j + 1][0]) >= AIRBORNE_SPEED_WINDOW_S:
+            j += 1
         if not air and i > 0:
-            prev = track[i - 1]
+            prev = track[j]
             dt = p[0] - prev[0]
-            if dt > 0:
+            if dt >= AIRBORNE_SPEED_WINDOW_S or (j == 0 and dt >= 1.0):
                 dy = (p[1] - prev[1]) * 111_320.0
                 dx = (p[2] - prev[2]) * 111_320.0 * math.cos(math.radians(p[1]))
                 if math.hypot(dx, dy) / dt >= AIRBORNE_SPEED_MPS:

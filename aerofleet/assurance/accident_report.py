@@ -1,18 +1,20 @@
-"""DGCA Drone Rules 2021 Rule 45 — 48-hour accident / incident reporting dossier (printable HTML + JSON).
+"""Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier).
 
-Under Rule 45 of India's Drone Rules 2021, an unmanned aircraft system accident must be reported on the
-Digital Sky platform within 48 hours. AeroFleet cannot submit directly to Digital Sky, so this module
-assembles a self-contained, tamper-evident, print-to-PDF dossier from facts already recorded locally:
+Under Rule 30 of India's Drone Rules 2021 (G.S.R. 589(E)), an unmanned aircraft system accident must be
+reported to the Director General on the Digital Sky platform within 48 hours. AeroFleet is not an official
+DGCA form and cannot submit to Digital Sky; this module assembles a self-contained, tamper-evident,
+print-to-PDF operator record from facts already stored locally:
 
-  * Aircraft & legal identity: DGCA UIN & Digital Sky attestation (Rule 14), Type Certificate (Rule 13),
-    third-party liability insurance policy & validity (Rule 44), assigned pilot & RPC (Rule 34).
+  * Aircraft & legal identity: DGCA UIN & Digital Sky attestation (Rule 14), Type Certificate (Rule 8;
+    exemptions Rule 13), third-party liability insurance policy & validity (Rule 44), assigned pilot &
+    Remote Pilot Certificate (Rule 31 / Rule 34).
   * Statutory 48-hour deadline: UTC + IST event timestamp, exact 48 h filing deadline, and hours left/overdue.
   * Flight facts & deterministic evidence timeline: takeoff & last-known GPS coordinates, duration, max height,
     plan deviation (if reconciled), in-flight parameter changes, evidence quality, and timeline — with an
     explicit statement that AeroFleet never assigns blame or cause.
   * Maintenance & grounding logbook: recent maintenance entries and post-incident grounding status.
   * Cryptographic integrity block: Ed25519 ledger entry #, SHA-256 payload & entry hashes, live DB match,
-    and instructions for attaching an RFC 3161 TSA-timestamped receipt.
+    and instructions for attaching a DigiCert-pinned RFC 3161 TSA-timestamped receipt.
 
 Pure deterministic Python, zero AI, all user/file strings HTML-escaped.
 """
@@ -106,9 +108,10 @@ def build_accident_dossier(
     )
 
     return {
-        "rule": "Drone Rules 2021, Rule 45 (Report of accident within 48 hours on Digital Sky)",
+        "rule": "Drone Rules 2021 (G.S.R. 589(E)), Rule 30 (Mandatory reporting of an accident within 48 hours on Digital Sky)",
         "generated_at": _fmt_dt(now),
         "fleet": fleet,
+        "simulated_fleet": fleet == "pune-agri",
         "drone_id": drone_id,
         "event_time": _fmt_dt(event_dt),
         "deadline": {
@@ -155,9 +158,9 @@ def build_accident_dossier(
             "matches_record": matches_record,
         },
         "disclaimer": (
-            "Prepared locally by AeroFleet for Digital Sky Rule 45 filing and insurer review. "
-            "AeroFleet lists deterministic telemetry facts only and never attributes pilot or aircraft blame. "
-            "Submit officially on digitalsky.dgca.gov.in within 48 hours of an accident."
+            "Operator-prepared record generated locally by AeroFleet for Digital Sky Rule 30 filing and insurer review "
+            "(not an official DGCA form). AeroFleet lists deterministic telemetry facts only and never attributes pilot "
+            "or aircraft blame. Submit officially on digitalsky.dgca.gov.in within 48 hours of an accident."
         ),
     }
 
@@ -182,7 +185,7 @@ def accident_dossier_html(d: Dict[str, Any]) -> str:
     elif dl["status"] in ("URGENT", "WITHIN_48H"):
         banner_cls = "banner-amber" if dl["status"] == "URGENT" else "banner-green"
         banner_txt = (
-            f"<b>Rule 45 filing window:</b> {dl['hours_remaining']:.1f} hours remaining — "
+            f"<b>Rule 30 filing window:</b> {dl['hours_remaining']:.1f} hours remaining — "
             f"due by <b>{e(dl['due']['ist'] or '')}</b> ({e(dl['due']['utc'] or '')})."
         )
     else:
@@ -194,21 +197,28 @@ def accident_dossier_html(d: Dict[str, Any]) -> str:
     gr = d["grounded"]
     led = d["ledger"]
 
+    sim_banner = (
+        "<div class='banner banner-amber'><b>SIMULATED DEMO FLEET (ArduPilot SITL):</b> This record was generated from "
+        "simulated autopilot firmware logs for demonstration, not a real field accident.</div>"
+        if d.get("simulated_fleet") else ""
+    )
+
     parts = [
         f"<!doctype html><html lang='en'><head><meta charset='utf-8'>"
-        f"<title>DGCA Rule 45 Accident Dossier — {e(d['drone_id'])}</title><style>{CSS}</style></head><body>",
-        f"<h1>DGCA Rule 45 Accident / Incident Dossier: {e(d['drone_id'])}</h1>",
+        f"<title>Accident Record for Digital Sky (Rule 30) — {e(d['drone_id'])}</title><style>{CSS}</style></head><body>",
+        f"<h1>Accident Record Prepared for Digital Sky: {e(d['drone_id'])}</h1>",
         f"<div class='muted'>{e(d['rule'])} · Fleet {e(d['fleet'])} · Generated {e(d['generated_at']['ist'] or '')} ({e(d['generated_at']['utc'] or '')})</div>",
+        sim_banner,
         f"<div class='banner {banner_cls}'>{banner_txt}</div>",
         "<h2>1. Aircraft, Insurance &amp; Pilot Credentials</h2>",
         _kv_table([
             ["Drone ID / Fleet", f"{e(d['drone_id'])} ({e(d['fleet'])})"],
             ["DGCA UIN (Rule 14)", f"<span class='mono'>{e(ac['uin'] or 'NOT RECORDED')}</span> ({e(ac['uin_status'])})"],
-            ["Type Certificate / DAN (Rule 13)", e(ac["type_certificate_no"] or "Not recorded")],
+            ["Type Certificate / DAN (Rule 8; exemptions Rule 13)", e(ac["type_certificate_no"] or "Not recorded")],
             ["Third-Party Insurance (Rule 44)",
              e(f"{ac['insurance_policy']} — {ac['insurance_insurer'] or 'Insurer not recorded'} (valid until {ac['insurance_valid_until'] or 'not set'})")
              if ac["insurance_policy"] else "<span class='bad'>Not recorded</span>"],
-            ["Assigned Pilot &amp; RPC (Rule 34)",
+            ["Assigned Pilot &amp; RPC (Rule 31 / Rule 34)",
              e(f"{ac['pilot_name'] or 'Unnamed'} — RPC {ac['pilot_rpc_no']} (valid until {ac['pilot_rpc_valid_until'] or 'not set'})")
              if ac["pilot_rpc_no"] else e(ac["pilot_name"] or "Not recorded")],
             ["Grounding status",
