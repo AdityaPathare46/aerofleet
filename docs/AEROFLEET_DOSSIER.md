@@ -1,6 +1,6 @@
 # AeroFleet 2.0: complete project dossier for an external review
 
-*Generated from the project repository on 2026-11-28 (commit 79738eb). Part I is written for you, the reviewer.
+*Generated from the project repository on 2026-11-28 (commit 94c94cc). Part I is written for you, the reviewer.
 Part II (the appendices) is copied from the repository's own files: every result write-up, every declared test with
 its commit, the full research paper and supplement, the viva notes, the 27 Nov critical review, and the code inventory.
 Personal names and contact details have been removed; "the team" means a two-person final-year student team, with a
@@ -66,7 +66,7 @@ with optional DigiCert-pinned RFC 3161 trusted timestamps.
 | Late Oct-Nov 2026 | Re-scope to AeroFleet 2.0, Indian commercial/agricultural use case, evidence-first |
 | 17 Nov 2026 | Paper submitted to *Accident Analysis & Prevention* (Elsevier); no reviews yet |
 | 20-27 Nov 2026 | Learned normal-flight model (H1-H6), spray register, Hindi/Marathi morning board, signed receipts, archive search (A1 failed), DJI CSV reader, ArduPilot SITL v1/v2 (8/8 × 3), FA1/FA2 false-alarm tests, VR study design, packaged Mac app |
-| 27-28 Nov 2026 (Audit, domain-fit & critical-review fixes) | Safety-audit fixes (`dbc45d3`), `SA1+FA3` (`e9c4ebc`/`ffd0f27`), RFC 3161 TSA (`bb50242`), Indian airport airspace + spray acreage + simulated `pune-agri` fleet (`21def14`), DGCA compliance ledger + 48h accident record + fleet picker (`8928782`), critical review C1/C2 fixes (`fc73ec6`), and H1-H5 + M1-M5 + L2 remediation (Rule 30/8/14/31/44 citations, 60 m floor in 8-12 km airport band + Baramati, M1 subject/count ledger check, M2 simulated banners, M3 2 s smoothed groundspeed, M4 IST date & missing-insurance check) |
+| 27-28 Nov 2026 (Audit, domain-fit, critical-review & packaged-app dry-run) | Safety-audit fixes (`dbc45d3`), `SA1+FA3` (`e9c4ebc`/`ffd0f27`), RFC 3161 TSA (`bb50242`), Indian airport airspace + spray acreage + simulated `pune-agri` fleet (`21def14`), DGCA compliance ledger + 48 h accident record + fleet picker (`8928782`), critical review C1/C2 fixes (`fc73ec6`), H1-H5 + M1-M5 + L2 remediation (`8129e83`), "No rule fired" + 2025 AAIB Rules + non-blocking `stale_note` + signed failsafe approvals (`815bb53`, `79738eb`), and primary Gazette PDF page verification + packaged macOS `AeroFleet.app` rebuild/codesign/live dry-run + MapLibre v6 production worker fix (`12b93af`) |
 
 Honesty notes: the git history starts on 10 August 2026 (about 3.5 months; nearly all commits by one team member). Code
 and text were written with help from AI coding assistants (Claude and Antigravity, recorded in commit co-author trailers
@@ -348,15 +348,25 @@ ledger's payload hashes (see section 9 M1 for remaining swap/deletion hardening)
 ### 5.9 Other features
 
 - **DGCA & AAIB compliance and 24 h / 48 h accident record**: `DroneCompliance` table (`GET/PUT /drones/{id}/compliance`,
-  signed) stores Rule 44 third-party insurance, Rule 8 Type Certificate/DAN, and Rule 31 assigned pilot RPC inside
-  `Drone register` (checked against **IST date**; missing insurance on a compliance record flags `CHECK_FIRST`, expired
-  insurance/RPC grounds to `DO_NOT_FLY`). `accident_report.py` (`GET .../accident-dossier` HTML & `.json`) generates an
-  operator-prepared print-to-PDF **Accident Record for Digital Sky & AAIB** showing both statutory Indian deadlines —
-  **48-hour Digital Sky filing (Drone Rules 2021, G.S.R. 589(E), Rule 30 — verified against `egazette.gov.in`)** and
-  **24-hour AAIB/DGCA notification under the Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (which
-  extend to UAS and mandate a no-blame safety investigation aligned with ICAO Annex 13) — plus telemetry timeline (no
-  blame), maintenance history, simulated-fleet banner when applicable, and Ed25519 verification block. The *Draft Civil
-  Drone (Promotion and Regulation) Bill, 2025* remains at draft stage; Drone Rules, 2021 (as amended 2022/2023) apply.
+  signed) stores Rule 44 third-party insurance (**Gazette p. 33**), Rule 8 Type Certificate/DAN (**p. 28**; exemptions
+  Rule 13 **p. 29**), and Rule 31 assigned pilot RPC (**p. 31**, renamed from "remote pilot licence" by Drone
+  (Amendment) Rules, 2022, `G.S.R. 108(E)`, 11 Feb 2022) inside `Drone register` (checked against **IST date**; missing
+  insurance on a compliance record flags `CHECK_FIRST`, expired insurance/RPC grounds to `DO_NOT_FLY`).
+  `accident_report.py` (`GET .../accident-dossier` HTML & `.json`) generates an operator-prepared print-to-PDF
+  **Accident Record for Digital Sky & AAIB** citing both primary Gazette PDFs verified page-by-page on 28 Nov 2026:
+  - **48-hour Digital Sky filing:** **Drone Rules, 2021** (`G.S.R. 589(E)`, 25 Aug 2021, `egazette.gov.in/WriteReadData/2021/229221.pdf`,
+    43 pp.), **Rule 30 ("Mandatory reporting of an accident", Gazette p. 31)** and Rule 3(1)(b) accident definition
+    (**p. 25**). *(Direct Gazette check confirmed Rule 29 on p. 31 is "Right of way", resolving secondary-summary misnumbering.)*
+  - **24-hour AAIB/DGCA notification:** **Aircraft (Investigation of Accidents and Incidents) Rules, 2025**
+    (`G.S.R. 829(E)`, 7 Nov 2025, `civilaviation.gov.in/sites/default/files/2026-05/aaib-rules-2025.pdf`, 46 pp.;
+    preamble amended by `G.S.R. 647(E)`, 17 Jul 2026, `egazette.gov.in/WriteReadData/2026/274731.pdf`): **Rule 2(1)(a)(ii)
+    & Explanation (2) (Gazette pp. 24-25)** cover unmanned aircraft with State design or operational approval (e.g. DGCA
+    Type-Certified sprayers); **Rule 3 (p. 28)** mandates that the sole objective is accident prevention, not blame or
+    liability (ICAO Annex 13); **Rule 4(1) & Proviso (p. 28; Schedule Table 2 p. 42)** mandate 24 h notification to AAIB
+    (`[e-mail removed]`/portal) and DGCA by the remote pilot-in-command.
+  - Both active and `OVERDUE` banners state that deadlines apply only if the event meets the statutory definition,
+    alongside the telemetry timeline (no blame), maintenance history, simulated-fleet banner when applicable, and
+    Ed25519 verification block. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* remains at draft stage.
 - **Vibration history**: each drone flight by flight in GPS-time order against its own earlier flights, comparable fleet
   drones, and 292 public PX4 flights of 141 never-crashed vehicles; last 10 s left out.
 - **Maintenance logbook**: work recorded and signed (including `"Incident / crash reported (grounded for inspection)"`
@@ -494,12 +504,24 @@ matched each file's own maximum-height column exactly (120.2 m, 61.6 m, 119.8 m)
 12 students; 2D map + height profile vs 3D table in a Meta Quest 3; 15 real flights each way with known injected
 deviations; counterbalanced; trials, key, and analysis committed before any participant.
 
-### 8.8 Number checks & independent critical review
+### 8.8 Number checks, critical review & packaged-app live dry-run (28 Nov 2026)
 
 - `docs/paper/check_numbers.py`: **30 of 30** numbers in the paper and app Overview agree with the result files.
 - `docs/CRITICAL_REVIEW_2026-11-27.md` (included in Appendix H): independent line-by-line review of commits
   `24c814f..8928782`; critical findings **C1** and **C2** fixed in `fc73ec6`, and **H1-H5, M1-M5, L2** + external
-  dossier review fixes completed on 28 Nov (**776 tests passing**).
+  dossier review fixes completed on 28 Nov (**776 Python tests + 9 Tauri Rust tests passing**).
+- **Packaged macOS desktop app (`/Applications/AeroFleet.app`) rebuilt, codesigned, and live dry-run verified (`12b93af`):**
+  - Fresh `npx tauri build --bundles app` (ad-hoc `codesign --verify --deep --strict` passing); double-clicking
+    `/Applications/AeroFleet.app` auto-located the repo and `~/.venvs/aerofleet/bin/python`, opened the persistent
+    SQLite database (`449` ledger entries, `70` reviews + `10` spray forms intact), confirmed zero LLM workers, and
+    brought FastAPI up healthy on `127.0.0.1:8000` in 20 s.
+  - Full live UI walkthrough caught and fixed a **MapLibre GL v6 production worker 404** (now bundled via Vite
+    `?worker&url` + `maplibregl.setWorkerUrl()` in `tauri-app/src/lib/maplibre.ts`, verified with **0 console errors**
+    and Pune red/yellow airspace zones + 5 mission polylines rendering cleanly), remaining `en`/`hi`/`mr` rules-footer
+    copy mismatches, and single-week bar clipping in `Trends.tsx`.
+  - Live **DigiCert RFC 3161 TSA** receipt (`http://timestamp.digicert.com`) verified `ca_verified: True` against the
+    pinned DigiCert Trusted Root G4 via both `POST /ledger/check-receipt` and standalone `tools/verify_ledger.py`
+    (`OK: the record is intact`).
 
 ---
 
@@ -517,10 +539,11 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    - **Record staleness (`stale_note`):** reviews older than 14 days show a non-blocking record-age note (deliberately
      non-blocking so seasonal sprayers idle between crop cycles are not stuck on Check first, meaning unlogged flights
      within 14 days still rely on operator upload discipline).
-   - **Statutory citations:** Drone Rules 2021 Rule 30 ("Mandatory reporting of an accident") was verified on
-     `egazette.gov.in`, though some secondary summaries (e.g. Mondaq) misnumber it as Rule 29; verify page numbers
-     directly against the downloaded Gazette PDF before printing the final report. Both the 24 h (2025 AAIB Rules) and
-     48 h (Rule 30) countdowns apply only when an event meets the statutory definition of an accident/serious incident.
+   - **Statutory scope:** Primary Gazette PDFs are now verified page-by-page (`G.S.R. 589(E)` Rule 30 on p. 31 vs
+     Rule 29 "Right of way"; `G.S.R. 829(E)` Rules 2(1)(a)(ii), 3, 4(1) on pp. 24-28). Both the 24 h (2025 AAIB Rules,
+     limited by Explanation (2) to State-approved UAS) and 48 h (Rule 30) countdowns apply only when an event meets the
+     statutory definition of an accident or serious incident; AeroFleet is an operator record, not an official DGCA/AAIB
+     filing portal.
    - **Translations (H3):** Hindi and Marathi lines were team-reviewed by a Marathi-native member; an independent outside
      reader per language (especially Hindi) is still recommended before field deployment.
    - **Per-pilot RPC schema (M4 remainder):** RPC is currently stored per drone (`DroneCompliance`) rather than in a
@@ -539,11 +562,10 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 ## 10. Remaining work before the 1-5 December viva
 
-1. Write and print the **7-chapter B.Tech final project report** with every number aligned to commit `HEAD` (and verify
-   Gazette PDF page citations for G.S.R. 589(E) Rule 30 and the 2025 Accident Investigation Rules).
-2. Run a full dry-run of the live demonstration script in the packaged app today.
-3. Optional if time allows before 1 Dec: obtain one external Hindi/Marathi proof-reader sign-off, run a formative 20-min
-   walkthrough with 1–2 local RPTO/fleet practitioners, or declare and run FA4 on fresh logs never used in FA1–FA3.
+1. Write and print the **7-chapter B.Tech final project report** with every table, test count, and verified Gazette page
+   citation (`G.S.R. 589(E)` pp. 25-33; `G.S.R. 829(E)` pp. 24-28, 42) aligned strictly to `HEAD`.
+2. Optional if time allows before 1 Dec: obtain one external Hindi/Marathi proof-reader sign-off, run a formative 20-min
+   walkthrough with 1-2 local RPTO/fleet practitioners, or declare and run FA4 on fresh logs never used in FA1-FA3.
 
 ---
 
@@ -569,13 +591,14 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
 
 1. Is the core argument sound: *because logs cannot attribute blame, a fleet tool should not name causes*? What is the
    strongest counter-argument, and how should we answer it?
-2. After C1 and C2 were fixed in `fc73ec6`, are there any remaining critical safety, security, or statistical flaws
-   beyond H1-H5 and M1-M4?
+2. After C1/C2, H1-H5, M1-M5, L2, primary Gazette PDF verification, and the live packaged-app dry-run (`12b93af`), are
+   there any remaining critical safety, security, legal, or statistical flaws?
 3. How should we present FA2 (11.1%, held out), FA3 (14.2%, cluster CI up to 20.7%, re-measured on H), and SA1 (36.8%
    archive crashes vs 26.5% prior flights vs 53.8% RflyMAD sensor faults) in the B.Tech report without overclaiming?
 4. Is the normal-flight model worth keeping given H1/H5 failed and usefulness is untested?
-5. With 3 days until the 1-5 December review, which of H4, H5, M1-M4, and FA4 must be done before writing the report,
-   and which should be left as documented limits?
+5. With the codebase, packaged app, and Gazette citations frozen for the 1-5 December review, which remaining documented
+   limits (FA4, external Hindi/Marathi proof-reader, per-pilot RPC table, field operator logs) should be stated upfront
+   in the report's Limitations chapter?
 6. What will a hostile viva panel attack first now that the major engineering gaps are closed?
 7. How should the 7-chapter B.Tech report unify the negative research study and the Indian operator product cleanly?
 8. Is anything in the current product still unsafe (false clear or chronic alarm fatigue)?
@@ -8743,7 +8766,7 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | File | Lines | First line of its docstring |
 |---|---|---|
 | `aerofleet/assurance/__init__.py` | 4 | AeroFleet 2.0 ground-side assurance: deterministic checks on uploaded files (no drone, no LLM). |
-| `aerofleet/assurance/accident_report.py` | 319 | Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier). |
+| `aerofleet/assurance/accident_report.py` | 323 | Accident record prepared for Digital Sky (Drone Rules 2021, Rule 30 — 48-hour reporting dossier). |
 | `aerofleet/assurance/airspace_check.py` | 176 | Pre-flight route check: does a planned mission stay out of restricted airspace and under the height limit? |
 | `aerofleet/assurance/archive_search.py` | 167 | Search the public PX4 log archive for flights like the user's problem. |
 | `aerofleet/assurance/deconflict.py` | 203 | Fleet plan deconfliction: make a set of planned missions safe against each other before anyone flies. |
@@ -8823,6 +8846,8 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tauri-app/src/pages/Trends.tsx` | 149 | Fleet trends: the season view for a coordinator. Counts and medians over reviewed flights (aerofleet/assurance |
 | `tauri-app/src/pages/VRSafetyView.tsx` | 401 |  |
 | `tauri-app/src/pages/VrStudy.tsx` | 276 | VR debrief study (research/vr_study/PROTOCOL.md): can a person tell whether a flight left its plan sideways, i |
+| `tauri-app/src/lib/maplibre-worker.d.ts` | 6 | <reference types="vite/client" /> |
+| `tauri-app/src/lib/maplibre.ts` | 10 | MapLibre GL v6 loader that pins the ESM worker URL via Vite's native worker bundler |
 | `tauri-app/src/lib/policy.ts` | 43 |  |
 | `tauri-app/src/lib/readinessText.ts` | 145 | Today's fleet in English, Hindi and Marathi. The verdict and reasons come from the API in English with a `code |
 | `tauri-app/src/lib/rosterModels.ts` | 26 | The distinct Ollama model tags the 16-agent roster actually needs — |
@@ -8834,13 +8859,13 @@ Images cannot be uploaded with this file; Part I section 3 gives each figure's d
 | `tauri-app/src-tauri/src/ollama_installer.rs` | 479 | ! Ollama detection + Windows/macOS installer automation. |
 | `tauri-app/src-tauri/src/vr_headset.rs` | 245 | ! PC-VR headset support for the VR Safety View. |
 
-Total: 20,248 lines in these files.
+Total: 20,268 lines in these files.
 
 #### Numeric constants in the assurance core
 
 ```
-accident_report.py: STATUTORY_HOURS = 48        # Drone Rules, 2021 (G.S.R. 589(E)), Rule 30: Digital Sky accident report within 48 hours
-accident_report.py: AAIB_NOTIFY_HOURS = 24      # Aircraft (Investigation of Accidents and Incidents) Rules, 2025: AAIB/DGCA notice within 2
+accident_report.py: STATUTORY_HOURS = 48        # Drone Rules, 2021 (G.S.R. 589(E), Gazette p. 31), Rule 30: Digital Sky accident report wit
+accident_report.py: AAIB_NOTIFY_HOURS = 24      # Aircraft (Investigation of Accidents and Incidents) Rules, 2025 (G.S.R. 829(E), Gazette p.
 accident_report.py: CSS = (
 airspace_check.py: LEGAL_CEILING_M = 120.0           # Drone Rules 2021: green-zone limit without permission (400 ft)
 airspace_check.py: OUTER_YELLOW_FLOOR_M = 60.0       # Drone Rules 2021 (MoCA Airspace Map, Sep 2021): 8-12 km band is yellow only above 20
@@ -11180,18 +11205,23 @@ stage once an RPTO or LFC partner approves field deployment.
 
 **Q4. Why should a regulator care?**
 EU and UK operators must keep operation and maintenance records for at least three years. In India, two overlapping
-frameworks apply: (1) **Drone Rules, 2021** (G.S.R. 589(E), 25 Aug 2021, as amended in 2022 and 2023) require a verified
-UIN (**Rule 14**), Type Certificate (**Rule 8**; exemptions Rule 13), Remote Pilot Certificate (**Rule 31**; procedure
-Rule 34), third-party liability insurance (**Rule 44**), and an accident report on Digital Sky within **48 hours**
-(**Rule 30 — "Mandatory reporting of an accident"**, verified on `egazette.gov.in`; note some secondary summaries
-misnumber it as Rule 29); and (2) the **Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (under
-Bharatiya Vayuyan Adhiniyam, 2024) extend to unmanned aircraft, require **24-hour notification to AAIB and DGCA** when an
-event meets the statutory definition of an accident or serious incident, and explicitly enshrine a **no-blame,
-safety-prevention investigation principle** aligned with ICAO Annex 13. AeroFleet tracks those credentials in the signed
-record, enforces expired insurance/RPC/UIN (IST date) on *Today's fleet* (and shows a non-blocking record-age note if
-the last reviewed flight is older than 14 days), and generates a one-click printable **Accident Record prepared for
-Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows (with the explicit scope caveat that they apply
-only if the event meets the statutory definition), telemetry timeline, maintenance logbook, and Ed25519 hashes —
+frameworks apply — both verified directly against the downloaded Government of India Gazette PDFs on 28 Nov 2026: (1)
+**Drone Rules, 2021** (`G.S.R. 589(E)`, 25 Aug 2021, `egazette.gov.in/WriteReadData/2021/229221.pdf`, amended by
+`G.S.R. 108(E)` on 11 Feb 2022 and in 2023) require a verified UIN (**Rule 14(1)**, Gazette p. 29), Type Certificate
+(**Rule 8**, p. 28; exemptions **Rule 13**, p. 29), Remote Pilot Certificate (**Rule 31** / **Rule 34**, p. 31, renamed
+from "remote pilot licence" by `G.S.R. 108(E)`), third-party liability insurance (**Rule 44**, p. 33), and an accident
+report on Digital Sky within **48 hours** (**Rule 30 — "Mandatory reporting of an accident"**, Gazette p. 31; Rule 29 on
+the same page is *"Right of way"*, confirming Mondaq's summary misnumbered Rule 30 as Rule 29); and (2) the **Aircraft
+(Investigation of Accidents and Incidents) Rules, 2025** (`G.S.R. 829(E)`, 7 Nov 2025, under Bharatiya Vayuyan
+Adhiniyam, 2024, `civilaviation.gov.in/sites/default/files/2026-05/aaib-rules-2025.pdf`; preamble amended by
+`G.S.R. 647(E)`, 17 Jul 2026) explicitly cover unmanned aircraft with State design or operational approval (**Rule
+2(1)(a)(ii) & Explanation (2)**, Gazette pp. 24-25), require **24-hour notification to AAIB and DGCA** by the remote
+pilot-in-command (**Rule 4(1) & Proviso**, p. 28; Schedule Table 2 p. 42), and explicitly mandate that the sole
+objective is **accident prevention, not apportioning blame or liability** (**Rule 3**, p. 28, aligned with ICAO Annex
+13). AeroFleet tracks those credentials in the signed record, enforces expired insurance/RPC/UIN (IST date) on *Today's
+fleet* (and shows a non-blocking record-age note if the last reviewed flight is older than 14 days), and generates a
+one-click printable **Accident Record prepared for Digital Sky & AAIB** showing both the 24 h and 48 h statutory windows
+with exact Gazette citations and the scope caveat that they apply only if the event meets the statutory definition —
 matching India's no-blame principle while never claiming to be an official DGCA/AAIB form.
 
 #### B. Data
@@ -11522,8 +11552,10 @@ corners of plans built from the track. Quote the spacing with the number.
 **Q47. Is the draft Civil Drone Bill law?**
 No. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* was released for public comment on 16 September 2025
 and remains at the draft stage (not yet introduced or passed in Parliament as of Nov 2026). The **Drone Rules, 2021**
-(as amended in 2022 and 2023) remain in force, alongside the **Aircraft (Investigation of Accidents and Incidents)
-Rules, 2025** under the Bharatiya Vayuyan Adhiniyam, 2024 (which extend 24-hour no-blame accident reporting to UAS).
+(`G.S.R. 589(E)`, 25 Aug 2021, as amended by `G.S.R. 108(E)` in 2022 and in 2023) remain in force, alongside the
+**Aircraft (Investigation of Accidents and Incidents) Rules, 2025** (`G.S.R. 829(E)`, 7 Nov 2025, under the Bharatiya
+Vayuyan Adhiniyam, 2024; preamble amended by `G.S.R. 647(E)`, 17 Jul 2026), which extend 24-hour no-blame accident
+reporting (Rules 3 & 4(1), Gazette p. 28) to State-approved unmanned aircraft (Rule 2(1)(a)(ii) & Explanation (2), pp. 24-25).
 
 **Q48. A pilot describes a problem. How do you find similar flights, and is that a diagnosis?**
 Two ways, both shown as places to look. Words: BM25 against what uploaders wrote about their own flights in the public
@@ -11700,7 +11732,7 @@ on expertise, and records that protect the pilot (third-party insurance is manda
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
 (26 of 94), which is exactly what the settings check covers.
 
-Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each with its reason, all from real
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 no rule fired, each with its reason, all from real
 public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed (and its
 low-battery failsafe only warns), PX4-06's autopilot rejected position data for 4 s in the air. PX4-05 has no UIN on
 record and PX4-07's is not verified (demo registrations, labelled DEMO). PX4-01 shows a **pilot note**: its last
@@ -11720,8 +11752,8 @@ only — not an airworthiness sign-off)** rather than *Ready*. An operator who k
 maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
-not change with the language, log messages stay in English, and the note under the buttons says the translation is
-not yet checked by a native speaker (remove it only after one of the team has read every line).
+not change with the language, log messages stay in English, and the translations were reviewed by the Marathi-speaking
+team member (an independent external operator review is still recommended before field deployment).
 
 ##### Step 0b. Proof (2 minutes)
 
