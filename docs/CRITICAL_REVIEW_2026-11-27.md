@@ -69,7 +69,7 @@ medium or low.
 
 Effort: half a day.
 
-**Status: fixed the same day, not yet committed.**
+**Status: fixed and committed in `fc73ec6` (27 Nov 2026).**
 
 What changed in `readiness.py`:
 - `CBRK_FLIGHTTERM` is no longer checked at all.
@@ -120,7 +120,7 @@ an allow-list.
 
 Effort: half a day.
 
-**Status: fixed the same day, not yet committed.**
+**Status: fixed and committed in `fc73ec6` (27 Nov 2026).**
 
 What `tsa.py` now requires before it accepts a token:
 1. The chain reaches the **pinned root** `aerofleet/assurance/data/tsa_roots.pem` (DigiCert Trusted Root G4, copied

@@ -263,7 +263,7 @@ database could rebuild the whole chain; a copy of the heads file kept by someone
 come from this computer's clock, and no trusted hardware is involved.
 
 **Has it been tested with real operators?**
-No. 769 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
+No. 773 automated tests pass and it was checked by hand on a desktop. No operator has used it, and no headset test
 has been done. The paper says so.
 
 **Does it work with ArduPilot?**

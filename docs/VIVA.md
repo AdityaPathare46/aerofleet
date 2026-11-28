@@ -301,7 +301,7 @@ Yes: *Export for an auditor*, then `python tools/verify_ledger.py export.json` n
 ## G. Engineering quality
 
 **Q31. How do you know the code is correct?**
-769 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
+773 automated unit and integration tests, run before every commit, plus TypeScript strict typechecking. Beyond unit tests:
 the numbers in the paper are checked against the result files (`check_numbers.py`, 30 checks), the paper's headline
 results are recomputed and compared in a test, and the "no AI" claim is enforced statically across all 2.0 routes and
 assurance modules. *Show:* `python -m pytest -q --no-cov tests/unit tests/integration`.

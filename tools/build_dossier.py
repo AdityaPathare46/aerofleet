@@ -154,6 +154,7 @@ def main() -> None:
                 "research/normal_flight/README.md"]:
         parts.append(block(rel, rel))
     for rel in ["research/false_alarms/measure.py", "research/false_alarms/measure_fa2.py",
+                "research/false_alarms/measure_sa1_fa3.py",
                 "research/normal_flight/train_eval_v2.py", "research/archive_search/eval_archive_search.py"]:
         if os.path.exists(os.path.join(ROOT, rel)):
             src = read(rel)
@@ -169,7 +170,7 @@ def main() -> None:
                        strip_authors(read("docs/paper/latex/supplement.tex")), "latex"))
     parts.append("\n## Appendix H. Project documents\n")
     for rel in ["README.md", "docs/PROJECT_GUIDE.md", "docs/VIVA.md", "docs/DEMO.md", "docs/VR_PURPOSE.md",
-                "docs/FC_COMPLIANCE.md"]:
+                "docs/FC_COMPLIANCE.md", "docs/CRITICAL_REVIEW_2026-11-27.md"]:
         parts.append(block(rel, rel))
 
     text = redact("\n".join(parts))

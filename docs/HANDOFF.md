@@ -171,8 +171,8 @@ Show legacy screens), and the tests that cover them. Removing it fully is a sepa
 
 ## 6. Status
 
-**Now (27 Nov 2026, post-audit + domain-fit upgrades).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
-reviews yet). Product: **769 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
+**Now (28 Nov 2026, post-audit + C1/C2 fixes).** Paper submitted to *Accident Analysis & Prevention* on 17 Nov 2026 (awaiting the editor; no
+reviews yet). Product: **773 tests pass** (`tests/unit` and `tests/integration`), **30 of 30** number checks agree, the app
 typechecks cleanly, MIT `LICENSE` added, every screen loads without errors, the signed record verifies (including
 cross-checking stored `FlightReview` and `SprayForm` rows inside `GET /ledger/verify` and optional **RFC 3161 trusted
 timestamping** on receipts via `aerofleet/assurance/tsa.py` + `verify_ledger.py --tsa-ca`; chain checked against the pinned DigiCert root in
