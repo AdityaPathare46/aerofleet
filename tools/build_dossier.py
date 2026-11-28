@@ -25,8 +25,11 @@ MIS = re.compile(r"\b(MIS[^\n]{0,20}?)\d{6,12}\b")
 TEST_SECRETS = re.compile(r"(?i)(password|passwd|token|api[_-]?key)\s*[:=]\s*\S+")
 
 
+PUBLIC_EMAILS = {"aaib.moca@nic.in"}
+
+
 def redact(text: str) -> str:
-    text = EMAIL.sub("[e-mail removed]", text)
+    text = EMAIL.sub(lambda m: m.group(0) if m.group(0).lower() in PUBLIC_EMAILS else "[e-mail removed]", text)
     text = re.sub(r"github\.com/[A-Za-z0-9_-]+/", "github.com/[owner]/", text)
     text = MIS.sub(r"\1[number removed]", text)
     text = TEST_SECRETS.sub(r"\1: [removed]", text)
@@ -139,7 +142,11 @@ def main() -> None:
 
     parts.append("\n## Appendix A. Declared-test registry (from git)\n\n" + registry())
 
-    parts.append("\n## Appendix B. Every result write-up\n\nCopied verbatim from `research/results/`.")
+    parts.append(
+        "\n## Appendix B. Every result write-up\n\n"
+        "Copied verbatim from `research/results/`. *Historical note: pre-28-Nov result logs (such as SITL v2) refer to "
+        "the green readiness state by its earlier UI label \"Ready\"; on 28 Nov the UI label was renamed to \"No rule fired\".*"
+    )
     for p in sorted(glob.glob(os.path.join(ROOT, "research/results/**/*.md"), recursive=True)):
         if os.path.basename(p).startswith("._"):
             continue
@@ -171,7 +178,14 @@ def main() -> None:
     parts.append("\n## Appendix H. Project documents\n")
     for rel in ["README.md", "docs/PROJECT_GUIDE.md", "docs/VIVA.md", "docs/DEMO.md", "docs/VR_PURPOSE.md",
                 "docs/FC_COMPLIANCE.md", "docs/CRITICAL_REVIEW_2026-11-27.md"]:
-        parts.append(block(rel, rel))
+        body = read(rel)
+        if rel == "docs/CRITICAL_REVIEW_2026-11-27.md":
+            body = (
+                "> *Historical snapshot (27 November 2026, pre-remediation): preserved verbatim to show every finding "
+                "prior to the C1/C2 fixes (`fc73ec6`), H1-H5/M1-M5/L2 remediation (`8129e83`), 37-airport update, and "
+                "the \"Ready\" -> \"No rule fired\" UI rename.*\n\n" + body
+            )
+        parts.append(block(rel, rel, body))
 
     text = redact("\n".join(parts))
     with open(OUT, "w", encoding="utf-8") as fh:

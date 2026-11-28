@@ -75,21 +75,35 @@ def test_rule30_accident_dossier_48h_deadline_and_html_escaping():
     assert dossier["flight"]["takeoff"]["lat"] == 18.5201
     html = accident_dossier_html(dossier)
     assert "Rule 30" in html and "2025 Accident Investigation Rules" in html and "UA00DEMO05" in html and "VERIFIED" in html
+    assert "State-approved UAS" in html
     assert "SIMULATED DEMO FLEET" in html
     assert "<script>bad</script>" not in html
     assert "&lt;script&gt;bad&lt;/script&gt;" in html
 
+    # Without Type Certificate / State approval, 24 h AAIB banner must state "may not apply" (Rule 2(1)(a)(ii) Explanation (2))
+    no_tc = build_accident_dossier(
+        fleet="demo", drone_id="PX4-01",
+        registration={"uin": "UA001", "status": "VERIFIED"},
+        compliance={"insurance_policy": "POL-1"},
+        review=review, maintenance_entries=[], grounded=None, ledger_entry=None, matches_record=None, now_utc=now,
+    )
+    assert "may not apply" in accident_dossier_html(no_tc)
 
-def test_stale_flight_surfaces_non_blocking_note_without_seasonal_false_alarm():
+
+def test_stale_flight_two_tier_note_15_to_90d_and_check_first_over_90d():
     ref = date(2026, 11, 28)
     ok_settings = {"verdict": "OK", "critical": [], "limits": [], "failsafes_off": []}
     ok_reg = {"uin": "UA001", "status": "VERIFIED"}
     fresh = {"review_id": 1, "flown_at": "2026-11-26T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
-    old = {"review_id": 2, "flown_at": "2026-10-01T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
-    r_fresh = assess("D1", ok_settings, ok_reg, fresh, today=ref, max_stale_days=14)
+    seasonal = {"review_id": 2, "flown_at": "2026-10-01T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
+    ancient = {"review_id": 3, "flown_at": "2026-07-01T06:00:00+00:00", "warnings": [], "critical_in_flight": 0, "deviated": False}
+    r_fresh = assess("D1", ok_settings, ok_reg, fresh, today=ref, max_stale_days=14, stale_check_days=90)
     assert r_fresh["status"] == READY and r_fresh["stale_note"] is None
-    r_old = assess("D1", ok_settings, ok_reg, old, today=ref, max_stale_days=14)
-    assert r_old["status"] == READY and r_old["stale_note"] is not None and r_old["stale_note"]["days"] == 58
+    r_seasonal = assess("D1", ok_settings, ok_reg, seasonal, today=ref, max_stale_days=14, stale_check_days=90)
+    assert r_seasonal["status"] == READY and r_seasonal["stale_note"] is not None and r_seasonal["stale_note"]["days"] == 58
+    r_ancient = assess("D1", ok_settings, ok_reg, ancient, today=ref, max_stale_days=14, stale_check_days=90)
+    assert r_ancient["status"] == CHECK_FIRST and r_ancient["stale_note"] is None
+    assert any(r["code"] == "stale_flight" for r in r_ancient["reasons"])
 
 
 def test_signed_operator_approval_clears_deliberate_failsafe_off():

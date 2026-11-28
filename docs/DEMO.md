@@ -65,7 +65,7 @@ on expertise, and records that protect the pilot (third-party insurance is manda
 within 7 days). In our study, the cause experts named most often for aircraft crashes was tuning or configuration
 (26 of 94), which is exactly what the settings check covers.
 
-Open **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 no rule fired, each with its reason, all from real
+Open **Today's fleet** (fleet `demo`): 3 do not fly, 5 check first, 0 no rule fired (because the public PX4 logs are years old, crossing the 90-day record-age check), each with its reason, all from real
 public logs: PX4-04's critical-battery threshold changed between flights, PX4-08's geofence distance changed (and its
 low-battery failsafe only warns), PX4-06's autopilot rejected position data for 4 s in the air. PX4-05 has no UIN on
 record and PX4-07's is not verified (demo registrations, labelled DEMO). PX4-01 shows a **pilot note**: its last
@@ -78,11 +78,13 @@ lasts 3 s: with the earlier 1 s rule, 28.8% of healthy public flights were flagg
 of held-out healthy flights (FA2, passed).
 
 **Be ready for this question:** the uploaders rated every demo drone's last flight a crash, yet three (`PX4-01`,
-`PX4-02`, `PX4-03`) show **No rule fired** (with a non-blocking record-age note showing their logs are years old). That
-is the study's own finding on screen: crash flights often show no warning in their logs (SA1: 36.8% of archive crashes
-flagged vs 27.3% of ordinary flights, ~1.35×), which is exactly why the green state reads **No rule fired (records check
-only — not an airworthiness sign-off)** rather than *Ready*. An operator who knows a drone crashed records it in the
-maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
+`PX4-02`, `PX4-03`) fired **zero** flight-telemetry or settings rules — they are on *Check first* solely because their
+2017–2018 public logs are more than 90 days old (15–90 days shows a non-blocking age note so seasonal sprayers idle
+between crop cycles are not flooded with alarms; past 90 days escalates to *Check first* so a years-old log never stays
+green). At the time those flights ran, no telemetry rule fired: that is the study's own finding on screen (SA1: ~37% of
+archive crashes flagged vs 27.1% of ordinary flights, 1.36× — descriptive re-measurement on shipped HEAD), which is why the green state on `pune-agri` (`AGRI-01`,
+`AGRI-02`) reads **No rule fired (records check only — not an airworthiness sign-off)** rather than *Ready*. An operator
+who knows a drone crashed records it in the maintenance logbook to ground it to *Do not fly* (as on `AGRI-05`).
 
 Press **मराठी** (or **हिन्दी**) at the top: the same verdicts and reasons, worded for the pilot. Say that the rule does
 not change with the language, log messages stay in English, and the translations were reviewed by the Marathi-speaking

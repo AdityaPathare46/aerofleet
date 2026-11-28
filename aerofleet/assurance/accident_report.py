@@ -188,11 +188,19 @@ def _kv_table(rows: List[List[str]]) -> str:
 def accident_dossier_html(d: Dict[str, Any]) -> str:
     """Render a self-contained, print-to-PDF HTML dossier for DGCA Rule 30 / AAIB Rule 4 / insurer submission."""
     dl = d["deadline"]
+    ac = d["aircraft"]
+    has_tc = bool(ac.get("type_certificate_no"))
+    aaib_tc_note = (
+        f" (Type Certificate / DAN on record: <code>{e(str(ac['type_certificate_no']))}</code> — State-approved UAS within Rule 2(1)(a)(ii) Explanation (2))"
+        if has_tc else
+        " — <b>may not apply: no Type Certificate / State design or operational approval is recorded for this drone</b> "
+        "(Rule 2(1)(a)(ii) Explanation (2) limits the 2025 Rules to State-approved unmanned aircraft); verify applicability before filing"
+    )
     aaib_part = (
         f"<br><b>2025 Accident Investigation Rules (G.S.R. 829(E), Rule 4(1) — AAIB/DGCA 24 h notice):</b> "
         + (f"<b>{abs(dl['aaib_2025_hours_remaining']):.1f} h overdue</b>" if dl["aaib_2025_hours_remaining"] < 0
            else f"{dl['aaib_2025_hours_remaining']:.1f} h remaining")
-        + f" (due {e(dl['aaib_2025_due']['ist'] or '')})."
+        + f" (due {e(dl['aaib_2025_due']['ist'] or '')}){aaib_tc_note}."
         if dl.get("aaib_2025_hours_remaining") is not None else ""
     )
     scope_note = (
@@ -216,7 +224,6 @@ def accident_dossier_html(d: Dict[str, Any]) -> str:
         banner_cls = "banner-amber"
         banner_txt = "<b>Event time not recorded</b> — verify exact UTC/IST occurrence time before filing on Digital Sky."
 
-    ac = d["aircraft"]
     fl = d["flight"]
     gr = d["grounded"]
     led = d["ledger"]

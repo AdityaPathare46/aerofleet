@@ -283,7 +283,7 @@ An operator approves an exact value with a written reason, and the approval is s
 ### 5.4 Today's fleet (`readiness.py`): the morning records check
 
 *Records check only — not a physical airworthiness sign-off.* The green state is explicitly labelled **"No rule fired"**
-(not "Ready") because SA1 shows the rules flag crash flights ~1.35× as often as ordinary flights and miss most faults.
+(not "Ready") because SA1 (re-measured on shipped HEAD, descriptive) shows the flight-log rules flag crash flights 1.36× as often as ordinary flights and miss most faults.
 
 | Display status | When |
 |---|---|
@@ -364,9 +364,12 @@ ledger's payload hashes (see section 9 M1 for remaining swap/deletion hardening)
     Type-Certified sprayers); **Rule 3 (p. 28)** mandates that the sole objective is accident prevention, not blame or
     liability (ICAO Annex 13); **Rule 4(1) & Proviso (p. 28; Schedule Table 2 p. 42)** mandate 24 h notification to AAIB
     (`aaib.moca@nic.in`/portal) and DGCA by the remote pilot-in-command.
-  - Both active and `OVERDUE` banners state that deadlines apply only if the event meets the statutory definition,
-    alongside the telemetry timeline (no blame), maintenance history, simulated-fleet banner when applicable, and
-    Ed25519 verification block. The *Draft Civil Drone (Promotion and Regulation) Bill, 2025* remains at draft stage.
+  - Both active and `OVERDUE` banners state that deadlines apply only if the event meets the statutory definition, and
+    the 24 h AAIB line is dynamically conditioned on `type_certificate_no` in the drone's compliance record (flagging
+    **"may not apply — no Type Certificate / State design or operational approval recorded"** per Rule 2(1)(a)(ii)
+    Explanation (2) when empty), alongside the telemetry timeline (no blame), maintenance history, simulated-fleet
+    banner when applicable, and Ed25519 verification block. The *Draft Civil Drone (Promotion and Regulation) Bill,
+    2025* remains at draft stage.
 - **Vibration history**: each drone flight by flight in GPS-time order against its own earlier flights, comparable fleet
   drones, and 292 public PX4 flights of 141 never-crashed vehicles; last 10 s left out.
 - **Maintenance logbook**: work recorded and signed (including `"Incident / crash reported (grounded for inspection)"`
@@ -427,10 +430,11 @@ Two seeded fleets serve distinct demonstration roles (1-click switchable via `<F
    `AGRI-04` Do not fly for mid-flight geofence disable; `AGRI-05` Do not fly grounded after motor failure with a live
    24 h / 48 h accident record). *Note (M2): screens and printouts explicitly label this fleet as simulated (ArduPilot SITL).*
 2. **`demo` & `demo-settings` (real public PX4 study evidence):** 64 real public PX4 flights of 8 unrelated airframes
-   (each with one crash-rated flight and earlier flights; `3 Do not fly, 2 Check first, 3 No rule fired`, each showing a
-   non-blocking record-age note because the public logs are years old — illustrating on screen why the green badge reads
-   *No rule fired*, never *Ready*), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray forms,
-   and `demo-settings` showing a blocked RC-loss failsafe (`NAV_RCL_ACT` 2 → 0).
+   (each with one crash-rated flight and earlier flights; `3 Do not fly, 5 Check first, 0 No rule fired` — `PX4-01`,
+   `PX4-02`, and `PX4-03` fired zero telemetry or settings rules and sit on *Check first* solely because their 2017–2018
+   public logs exceed the 90-day record-age limit, demonstrating both that years-old logs cannot stay green and that
+   crash logs often fire no telemetry rule), DEMO registrations, one maintenance entry (`PX4-06`), four DEMO spray
+   forms, and `demo-settings` showing a blocked RC-loss failsafe (`NAV_RCL_ACT` 2 → 0).
 
 ---
 
@@ -472,15 +476,19 @@ A spraying-style mission (passes 8 m apart at 4 m over an 80 × 40 m field near 
 - **FA2** (declared `481987a`): rule revised on development half D only (airborne > 2 m, ≥ 3 s, landing battery as
   pilot note), tested on untouched held-out half H: **11.1%** [7.3, 16.3%] of 190 good-or-great flights, 19.8% of all
   572; **passed**.
-- **SA1 + FA3** (`e9c4ebc` / `ffd0f27`, after adding `speed ≥ 1.5 m/s` airborne spans and mid-air `< 10%` battery):
-  - **FA3 (re-measured on H, NOT an independent held-out test — see H1):** good-or-great **14.2%** (27/190; flight
-    Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles; upper bound crosses 20%); all H
-    ordinary **27.3%** (unrated 33.8%).
-  - **SA1 (descriptive — see H2, RflyMAD 53.8% was already observed during D development):** RflyMAD injected sensor
-    faults **53.8%** (106/197), fault-free control **0.0%** (0/50), motor faults **19.8%** (48/242); forum expert
-    aircraft crashes **37.5%** (12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133) vs crashed
-    drones' *prior* ordinary flights **26.5%** (118/445) — virtually identical to ordinary H (27.3%), showing the board
-    flags crash flights ~1.35× as often as normal flights and confirms the within-drone null on the product itself.
+- **SA1 + FA3** (`e9c4ebc` / `ffd0f27`, and **re-measured descriptively on shipped `HEAD` post-M3** 2 s smoothed
+  groundspeed in `sa1_fa3_head_remeasure.json`):
+  - **FA3 (descriptive, re-measured on shipped `HEAD` on H — NOT an independent held-out test, H1):** good-or-great
+    **14.2%** (27/190; flight Wilson [10.0, 19.9%], **vehicle-cluster 95% CI [8.5, 20.7%]**, 20/55 vehicles; unchanged
+    from `ffd0f27`, upper bound crosses 20%); all H ordinary **27.1%** (155/572; unrated 33.5%, down 1 flight from
+    pre-M3 27.3%).
+  - **SA1 (descriptive, re-measured on shipped `HEAD` — H2, RflyMAD 53.8% was already observed during D development):**
+    RflyMAD injected sensor faults **53.8%** (106/197), fault-free control **0.0%** (0/50), motor faults **19.8%**
+    (48/242) — all unchanged on `HEAD`; forum expert aircraft crashes **34.4%** (11/32, down 1 flight from pre-M3
+    12/32; pilot crashes 2/4); archive real-hardware crashes **36.8%** (49/133) vs crashed drones' *prior* ordinary
+    flights **27.0%** (120/445, vs pre-M3 26.5%) — virtually identical to ordinary H (27.1%), showing the shipped
+    flight-log rules flag crash flights **1.36×** as often as normal flights and confirming the within-drone null on the
+    product itself.
 - **Settings-rule check on 200 random public PX4 logs (C1, 27 Nov):** before C1 fix, `CBRK_FLIGHTTERM` (199/200) and
   `CBRK_IO_SAFETY` (142/200) flagged **199/200** stock PX4 drones. After dropping `CBRK_FLIGHTTERM` and moving
   `CBRK_IO_SAFETY` to a setting note (`fc73ec6`), **152/200** flag — of which **145** are `COM_LOW_BAT_ACT = 0`
@@ -531,14 +539,16 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    `pune-agri [Simulated SITL]` is simulated ArduPilot SITL (visibly badged on screens and printouts); `demo` is public
    PX4 hobby/research flights. The 6-month prospective study is a declared (git-committed) protocol document, not yet run.
 2. **Remaining verification & governance limits (post-C1/C2/H1-H5/M1-M5 + external review fixes):**
-   - **Whole-board false-alarm rate (FA4) unmeasured:** FA1–FA3 measured flight-log rules only, before the 2 s smoothed
-     groundspeed (M3) and before C1 settings checks (where 152/200 unconfigured stock PX4 logs flag, 145 for
-     `COM_LOW_BAT_ACT = 0` unless an approved baseline sets it to 2/3 or an operator signs a written exception). FA3
-     (14.2%, cluster CI [8.5, 20.7%]) was a re-measurement on H rather than an untouched held-out test, and SA1-RflyMAD
-     (53.8%) is descriptive. A fresh whole-board FA4 on unseen logs is future work.
-   - **Record staleness (`stale_note`):** reviews older than 14 days show a non-blocking record-age note (deliberately
-     non-blocking so seasonal sprayers idle between crop cycles are not stuck on Check first, meaning unlogged flights
-     within 14 days still rely on operator upload discipline).
+   - **Whole-board false-alarm rate (FA4) unmeasured:** FA3 + SA1 were re-measured descriptively on shipped `HEAD`
+     (post-M3 2 s smoothed groundspeed: FA3 H good/great 14.2% [cluster 8.5, 20.7%], H all 27.1%, SA1 archive crashes
+     36.8% = 1.36×), so the flight-log numbers match shipped code; however, **board-level false-alarm rate is
+     unmeasured** because two board-level rule changes came after FA3 (C1 settings checks, where 152/200 unconfigured
+     stock PX4 logs flag, 145 for `COM_LOW_BAT_ACT = 0` unless baseline/signed approval overrides it, and the 90-day
+     staleness escalation). A fresh whole-board FA4 on unseen logs is declared future work.
+   - **Record staleness (two-tier 14 d / 90 d rule):** reviews 15–90 days old show a non-blocking `stale_note` (so
+     seasonal sprayers idle for weeks between crop cycles are not stuck on Check first), while reviews **older than
+     90 days** escalate to `CHECK_FIRST` (`stale_flight`) so a drone idle for months or years cannot stay green.
+     Unlogged flights within 14–90 days still rely on operator upload discipline.
    - **Statutory scope:** Primary Gazette PDFs are now verified page-by-page (`G.S.R. 589(E)` Rule 30 on p. 31 vs
      Rule 29 "Right of way"; `G.S.R. 829(E)` Rules 2(1)(a)(ii), 3, 4(1) on pp. 24-28). Both the 24 h (2025 AAIB Rules,
      limited by Explanation (2) to State-approved UAS) and 48 h (Rule 30) countdowns apply only when an event meets the
@@ -593,8 +603,9 @@ deviations; counterbalanced; trials, key, and analysis committed before any part
    strongest counter-argument, and how should we answer it?
 2. After C1/C2, H1-H5, M1-M5, L2, primary Gazette PDF verification, and the live packaged-app dry-run (`12b93af`), are
    there any remaining critical safety, security, legal, or statistical flaws?
-3. How should we present FA2 (11.1%, held out), FA3 (14.2%, cluster CI up to 20.7%, re-measured on H), and SA1 (36.8%
-   archive crashes vs 26.5% prior flights vs 53.8% RflyMAD sensor faults) in the B.Tech report without overclaiming?
+3. How should we present FA2 (11.1%, held out), FA3 (14.2%, cluster CI up to 20.7%, descriptive re-measurement on
+   shipped HEAD), and SA1 (36.8% archive crashes vs 27.0% prior flights vs 53.8% RflyMAD sensor faults) in the B.Tech
+   report without overclaiming?
 4. Is the normal-flight model worth keeping given H1/H5 failed and usefulness is untested?
 5. With the codebase, packaged app, and Gazette citations frozen for the 1-5 December review, which remaining documented
    limits (FA4, external Hindi/Marathi proof-reader, per-pilot RPC table, field operator logs) should be stated upfront

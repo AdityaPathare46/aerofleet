@@ -312,7 +312,7 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
     (see aerofleet/assurance/readiness.py). Uses only stored records: settings, registration, the last reviewed flight."""
     from aerofleet.assurance import spray_form as sf
     from aerofleet.assurance.maintenance import is_grounded
-    from aerofleet.assurance.readiness import ORDER, STALE_FLIGHT_DAYS, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary, setting_notes
+    from aerofleet.assurance.readiness import ORDER, STALE_BLOCK_DAYS, STALE_FLIGHT_DAYS, VIBRATION_NOTE, assess, failsafes_off, last_flight_summary, setting_notes
     from aerofleet.assurance.vibration import drone_history
     from aerofleet.data.models.models import DroneCompliance, DroneRegistration, MaintenanceEntry, SprayForm
 
@@ -366,7 +366,8 @@ async def fleet_readiness(fleet: str, user: User = Depends(get_current_active_us
         grounded = is_grounded(maint_by_drone.get(drone_id, []))
         row = assess(drone_id, settings, {"uin": reg.uin, "status": reg.status} if reg else None,
                      last_flight_summary(last.id, last.report or {}, last.created_at.isoformat()) if last else None,
-                     vib, grounded=grounded, compliance=comp, max_stale_days=STALE_FLIGHT_DAYS)
+                     vib, grounded=grounded, compliance=comp, max_stale_days=STALE_FLIGHT_DAYS,
+                     stale_check_days=STALE_BLOCK_DAYS)
         row["settings_compared_with"] = settings and settings["compared_with"]
         row["overdue_spray_forms"] = overdue_by_drone.get(drone_id, 0)
         row["setting_notes"] = notes                     # firmware-default bypasses: shown, never a reason

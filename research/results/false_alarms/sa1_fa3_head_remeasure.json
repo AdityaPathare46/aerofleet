@@ -1,0 +1,460 @@
+{
+ "declared": "research/false_alarms/measure_sa1_fa3.py",
+ "FA3": {
+  "read": 1121,
+  "unreadable": 0,
+  "fa1_baselines": {
+   "H_good_or_great_FA1": [
+    0.2526,
+    0.1962,
+    0.3189
+   ],
+   "D_good_or_great_FA1": [
+    0.3486,
+    0.2657,
+    0.4419
+   ],
+   "H_good_n": 190,
+   "D_good_n": 109
+  },
+  "H_good_or_great": {
+   "flights": 190,
+   "flagged": 27,
+   "wilson": [
+    0.1421,
+    0.0995,
+    0.1989
+   ],
+   "cluster_ci": [
+    0.1421,
+    0.085,
+    0.2074
+   ],
+   "vehicles": 55,
+   "vehicles_flagged": 20,
+   "vehicle_share": [
+    0.3636,
+    0.2493,
+    0.4958
+   ],
+   "in_flight_battery_flights": 7,
+   "pilot_notes": 9,
+   "by_reason": {
+    "Estimator rejected position data": 12,
+    "Estimator rejected velocity data": 11,
+    "Estimator rejected height data": 8,
+    "Battery below": 7,
+    "Estimator rejected compass data": 6,
+    "Autopilot in failsafe": 6,
+    "Setting COM_RC_LOSS_T changed 0.5 \u2192 2 in flight": 1,
+    "Estimator reported an internal fault": 1
+   }
+  },
+  "H_unrated": {
+   "flights": 382,
+   "flagged": 128,
+   "wilson": [
+    0.3351,
+    0.2896,
+    0.3838
+   ],
+   "cluster_ci": [
+    0.3351,
+    0.2627,
+    0.4055
+   ],
+   "vehicles": 148,
+   "vehicles_flagged": 59,
+   "vehicle_share": [
+    0.3986,
+    0.3233,
+    0.4791
+   ],
+   "in_flight_battery_flights": 41,
+   "pilot_notes": 37,
+   "by_reason": {
+    "Estimator rejected compass data": 48,
+    "Autopilot in failsafe": 43,
+    "Battery below": 41,
+    "Estimator rejected velocity data": 39,
+    "Estimator rejected position data": 37,
+    "Estimator reported an internal fault": 20,
+    "Estimator rejected height data": 18,
+    "Poor GPS": 6,
+    "Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight": 2,
+    "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight": 2,
+    "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight": 2,
+    "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight": 2
+   }
+  },
+  "H_all": {
+   "flights": 572,
+   "flagged": 155,
+   "wilson": [
+    0.271,
+    0.2362,
+    0.3088
+   ],
+   "cluster_ci": [
+    0.271,
+    0.2194,
+    0.3272
+   ],
+   "vehicles": 200,
+   "vehicles_flagged": 79,
+   "vehicle_share": [
+    0.395,
+    0.3298,
+    0.4641
+   ],
+   "in_flight_battery_flights": 48,
+   "pilot_notes": 46,
+   "by_reason": {
+    "Estimator rejected compass data": 54,
+    "Estimator rejected velocity data": 50,
+    "Autopilot in failsafe": 49,
+    "Estimator rejected position data": 49,
+    "Battery below": 48,
+    "Estimator rejected height data": 26,
+    "Estimator reported an internal fault": 21,
+    "Poor GPS": 6,
+    "Setting RTL_DESCEND_ALT changed 119.819 \u2192 119.595 in flight": 2,
+    "Setting RTL_DESCEND_ALT changed 99.917 \u2192 119.819 in flight": 2,
+    "Setting RTL_RETURN_ALT changed 119.819 \u2192 119.595 in flight": 2,
+    "Setting RTL_RETURN_ALT changed 99.917 \u2192 119.819 in flight": 2
+   }
+  },
+  "D_good_or_great": {
+   "flights": 109,
+   "flagged": 23,
+   "wilson": [
+    0.211,
+    0.1449,
+    0.2968
+   ],
+   "cluster_ci": [
+    0.211,
+    0.1066,
+    0.3371
+   ],
+   "vehicles": 37,
+   "vehicles_flagged": 13,
+   "vehicle_share": [
+    0.3514,
+    0.2183,
+    0.5124
+   ],
+   "in_flight_battery_flights": 3,
+   "pilot_notes": 8,
+   "by_reason": {
+    "Estimator rejected compass data": 10,
+    "Autopilot in failsafe": 8,
+    "Estimator rejected position data": 4,
+    "Estimator rejected velocity data": 4,
+    "Battery below": 3,
+    "Estimator reported an internal fault": 1,
+    "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": 1,
+    "Poor GPS": 1
+   }
+  },
+  "D_all": {
+   "flights": 549,
+   "flagged": 136,
+   "wilson": [
+    0.2477,
+    0.2134,
+    0.2855
+   ],
+   "cluster_ci": [
+    0.2477,
+    0.195,
+    0.3042
+   ],
+   "vehicles": 201,
+   "vehicles_flagged": 74,
+   "vehicle_share": [
+    0.3682,
+    0.3045,
+    0.4367
+   ],
+   "in_flight_battery_flights": 34,
+   "pilot_notes": 54,
+   "by_reason": {
+    "Estimator rejected compass data": 54,
+    "Autopilot in failsafe": 37,
+    "Battery below": 34,
+    "Estimator rejected velocity data": 29,
+    "Estimator rejected position data": 27,
+    "Estimator reported an internal fault": 26,
+    "Estimator rejected height data": 11,
+    "Poor GPS": 9,
+    "Setting COM_DL_LOSS_T changed 190 \u2192 60 in flight": 1,
+    "Setting RTL_RETURN_ALT changed 90 \u2192 100 in flight": 1,
+    "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": 1,
+    "Setting NAV_DLL_ACT changed 7 \u2192 8 in flight": 1
+   }
+  },
+  "pass_mark": "H good-or-great flight flag rate <= 20% (point estimate)",
+  "FA3_met": true
+ },
+ "SA1_RflyMAD": {
+  "Real-Motor": {
+   "flights": 242,
+   "flagged": 48,
+   "wilson": [
+    0.1983,
+    0.153,
+    0.2531
+   ],
+   "cluster_ci": [
+    0.1983,
+    0.0872,
+    0.3974
+   ],
+   "vehicles": 3,
+   "vehicles_flagged": 3,
+   "vehicle_share": [
+    1.0,
+    0.4385,
+    1.0
+   ],
+   "in_flight_battery_flights": 0,
+   "pilot_notes": 0,
+   "by_reason": {
+    "Estimator rejected height data": 36,
+    "Estimator reported an internal fault": 19,
+    "Autopilot in failsafe": 1,
+    "Estimator rejected position data": 1,
+    "Estimator rejected velocity data": 1
+   },
+   "unreadable": 3
+  },
+  "Real-Sensors": {
+   "flights": 197,
+   "flagged": 106,
+   "wilson": [
+    0.5381,
+    0.4684,
+    0.6063
+   ],
+   "cluster_ci": [
+    0.5381,
+    0.4848,
+    0.6462
+   ],
+   "vehicles": 2,
+   "vehicles_flagged": 2,
+   "vehicle_share": [
+    1.0,
+    0.3424,
+    1.0
+   ],
+   "in_flight_battery_flights": 0,
+   "pilot_notes": 0,
+   "by_reason": {
+    "Estimator reported an internal fault": 58,
+    "Estimator rejected height data": 53,
+    "Estimator rejected position data": 31,
+    "Estimator rejected velocity data": 7,
+    "Estimator rejected compass data": 7
+   },
+   "unreadable": 0
+  },
+  "Real-No_Fault": {
+   "flights": 50,
+   "flagged": 0,
+   "wilson": [
+    0.0,
+    0.0,
+    0.0714
+   ],
+   "cluster_ci": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vehicles": 2,
+   "vehicles_flagged": 0,
+   "vehicle_share": [
+    0.0,
+    0.0,
+    0.6576
+   ],
+   "in_flight_battery_flights": 0,
+   "pilot_notes": 0,
+   "by_reason": {},
+   "unreadable": 1
+  },
+  "pass_mark": "Real-Sensors >= 50% AND Real-No_Fault <= 5%",
+  "SA1_RflyMAD_met": true
+ },
+ "SA1_Forum": {
+  "read": 36,
+  "unreadable": 7,
+  "expert_drone": {
+   "flights": 32,
+   "flagged": 11,
+   "wilson": [
+    0.3438,
+    0.2041,
+    0.5169
+   ],
+   "cluster_ci": [
+    0.3438,
+    0.1875,
+    0.5
+   ],
+   "vehicles": 32,
+   "vehicles_flagged": 11,
+   "vehicle_share": [
+    0.3438,
+    0.2041,
+    0.5169
+   ],
+   "in_flight_battery_flights": 1,
+   "pilot_notes": 1,
+   "by_reason": {
+    "Estimator reported an internal fault": 8,
+    "Estimator rejected position data": 7,
+    "Estimator rejected velocity data": 7,
+    "Autopilot in failsafe": 3,
+    "Estimator rejected compass data": 2,
+    "Setting COM_RC_LOSS_T changed 1 \u2192 10 in flight": 1,
+    "Estimator rejected height data": 1,
+    "Battery below": 1
+   }
+  },
+  "expert_pilot": {
+   "flights": 4,
+   "flagged": 2,
+   "wilson": [
+    0.5,
+    0.15,
+    0.85
+   ],
+   "cluster_ci": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "vehicles": 4,
+   "vehicles_flagged": 2,
+   "vehicle_share": [
+    0.5,
+    0.15,
+    0.85
+   ],
+   "in_flight_battery_flights": 0,
+   "pilot_notes": 0,
+   "by_reason": {
+    "Estimator reported an internal fault": 2,
+    "Autopilot in failsafe": 1,
+    "Estimator rejected height data": 1
+   }
+  },
+  "all_forum_logs": {
+   "flights": 36,
+   "flagged": 13,
+   "wilson": [
+    0.3611,
+    0.2248,
+    0.5243
+   ],
+   "cluster_ci": [
+    0.3611,
+    0.1944,
+    0.5278
+   ],
+   "vehicles": 36,
+   "vehicles_flagged": 13,
+   "vehicle_share": [
+    0.3611,
+    0.2248,
+    0.5243
+   ],
+   "in_flight_battery_flights": 1,
+   "pilot_notes": 1,
+   "by_reason": {
+    "Estimator reported an internal fault": 10,
+    "Estimator rejected position data": 7,
+    "Estimator rejected velocity data": 7,
+    "Autopilot in failsafe": 4,
+    "Estimator rejected height data": 2,
+    "Estimator rejected compass data": 2,
+    "Setting COM_RC_LOSS_T changed 1 \u2192 10 in flight": 1,
+    "Battery below": 1
+   }
+  }
+ },
+ "SA1_Archive": {
+  "archive_crash_flights": {
+   "flights": 133,
+   "flagged": 49,
+   "wilson": [
+    0.3684,
+    0.2912,
+    0.453
+   ],
+   "cluster_ci": [
+    0.3684,
+    0.2791,
+    0.4559
+   ],
+   "vehicles": 112,
+   "vehicles_flagged": 41,
+   "vehicle_share": [
+    0.3661,
+    0.2827,
+    0.4584
+   ],
+   "in_flight_battery_flights": 4,
+   "pilot_notes": 20,
+   "by_reason": {
+    "Estimator rejected compass data": 28,
+    "Estimator rejected velocity data": 28,
+    "Estimator rejected position data": 22,
+    "Autopilot in failsafe": 16,
+    "Estimator rejected height data": 8,
+    "Estimator reported an internal fault": 6,
+    "Battery below": 4,
+    "Poor GPS": 4
+   },
+   "unreadable": 79
+  },
+  "within_prior_flights": {
+   "flights": 445,
+   "flagged": 120,
+   "wilson": [
+    0.2697,
+    0.2305,
+    0.3127
+   ],
+   "cluster_ci": [
+    0.2697,
+    0.18,
+    0.3571
+   ],
+   "vehicles": 50,
+   "vehicles_flagged": 32,
+   "vehicle_share": [
+    0.64,
+    0.5014,
+    0.7586
+   ],
+   "in_flight_battery_flights": 30,
+   "pilot_notes": 12,
+   "by_reason": {
+    "Estimator rejected position data": 54,
+    "Estimator rejected velocity data": 52,
+    "Estimator rejected compass data": 52,
+    "Autopilot in failsafe": 33,
+    "Battery below": 30,
+    "Poor GPS": 10,
+    "Estimator rejected height data": 9,
+    "Estimator reported an internal fault": 4,
+    "Setting RTL_RETURN_ALT changed 30 \u2192 100 in flight": 1
+   },
+   "unreadable": 27
+  }
+ }
+}

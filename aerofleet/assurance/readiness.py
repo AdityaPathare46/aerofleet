@@ -30,7 +30,8 @@ from typing import Any, Dict, List, Optional
 
 IST = timezone(timedelta(hours=5, minutes=30))
 INSURANCE_WARN_DAYS = 14
-STALE_FLIGHT_DAYS = 14     # default age threshold in fleet_readiness(): confirm no unlogged flights occurred since
+STALE_FLIGHT_DAYS = 14     # 15–90 d: non-blocking record-age note (avoids seasonal false alarms on idle sprayers)
+STALE_BLOCK_DAYS = 90      # > 90 d: escalates to CHECK_FIRST so a drone idle for months/years cannot stay green
 
 READY, CHECK_FIRST, DO_NOT_FLY = "READY", "CHECK_FIRST", "DO_NOT_FLY"
 # ArduPilot: the compliance rules (aerofleet/hardware/compliance_rules.py, each with its ArduPilot source) that a
@@ -115,16 +116,17 @@ def _reason(level: str, text: str, where: str, code: str, **args: Any) -> Dict[s
 def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Optional[Dict[str, Any]],
            last_flight: Optional[Dict[str, Any]], vibration: Optional[Dict[str, Any]] = None,
            grounded: Optional[Dict[str, Any]] = None, compliance: Optional[Dict[str, Any]] = None,
-           today: Optional[date] = None, max_stale_days: Optional[int] = None) -> Dict[str, Any]:
+           today: Optional[date] = None, max_stale_days: Optional[int] = None,
+           stale_check_days: Optional[int] = None) -> Dict[str, Any]:
     """`settings`: {"verdict", "critical": [names], "limits": [names]} from the drift check, or None if never uploaded.
     `registration`: {"uin", "status"} or None. `last_flight`: {"review_id", "flown_at", "warnings": [texts],
     "critical_in_flight": int, "deviated": bool, "partial_log": bool} or None. `vibration`: shown, not judged.
     `grounded`: unresolved incident/crash entry from maintenance.is_grounded(), or None.
     `compliance`: optional DGCA Rule 44 insurance / Rule 31 pilot RPC dict; enforced when present (IST date).
-    `max_stale_days`: if set, flags `CHECK_FIRST` (`stale_flight`) when `last_flight.flown_at` is older than this
-    many days so a drone that flew unlogged or sat unreviewed cannot quietly show 'No rule fired'.
-    Note: `failsafes_off` fires regardless of baseline by design (both ArduPilot and PX4 ship low-battery actions
-    off/warn-only by default, so copying a stock drone as baseline must not silently approve a disabled failsafe)."""
+    `max_stale_days`: if set (default 14 in API), surfaces a non-blocking `stale_note` for seasonal idle gaps.
+    `stale_check_days`: if set (default 90 in API), escalates to `CHECK_FIRST` (`stale_flight`) so a months- or
+    years-old log cannot quietly show 'No rule fired'.
+    Note: `failsafes_off` fires unless explicitly signed off in `FleetBaseline.approved`."""
     reasons: List[Dict[str, Any]] = []
     if grounded is not None:
         reasons.append(_reason(DO_NOT_FLY, "Drone grounded after a reported incident or crash: inspect and log clearance before flying.",
@@ -179,13 +181,19 @@ def assess(drone_id: str, settings: Optional[Dict[str, Any]], registration: Opti
 
     stale_note: Optional[Dict[str, Any]] = None
     if last_flight is not None:
-        if max_stale_days is not None and last_flight.get("flown_at"):
+        if (max_stale_days is not None or stale_check_days is not None) and last_flight.get("flown_at"):
             try:
                 ref = today or datetime.now(IST).date()
                 fdt = datetime.fromisoformat(str(last_flight["flown_at"]).replace("Z", "+00:00"))
                 fdate = fdt.astimezone(IST).date() if fdt.tzinfo else fdt.date()
                 age = (ref - fdate).days
-                if age > max_stale_days:
+                if stale_check_days is not None and age > stale_check_days:
+                    reasons.append(_reason(
+                        CHECK_FIRST,
+                        f"Last reviewed flight was {age} day(s) ago ({fdate.isoformat()}): confirm no unlogged flights occurred since.",
+                        "flight", "stale_flight", days=age, date=fdate.isoformat(),
+                    ))
+                elif max_stale_days is not None and age > max_stale_days:
                     stale_note = {
                         "days": age,
                         "date": fdate.isoformat(),
