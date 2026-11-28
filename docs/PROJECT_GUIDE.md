@@ -246,7 +246,7 @@ repo, hence `AEROFLEET_VENV`. Create a user from the sign-in card, or use the lo
 Step by step in `docs/DEMO.md`. The 10-minute version:
 
 1. **Overview**: the use case and the study in one screen.
-2. **Today's fleet** (fleet `demo`): 3 do not fly, 2 check first, 3 ready, each reason with a button to its evidence;
+2. **Today's fleet** (`pune-agri`: 3 do not fly, 1 check first, 2 no rule fired; `demo`: 3 do not fly, 5 check first, 0 no rule fired because the 2017–2018 public logs exceed the 90-day record-age limit), each reason with a button to its evidence;
    switch to मराठी.
 3. **Fleet Assurance**: open a flight review (events, evidence quality, expected range); a drone's vibration history;
    the signed record ▸ *Check the record*.

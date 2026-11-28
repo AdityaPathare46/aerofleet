@@ -41,7 +41,7 @@ Re-run of `measure_sa1_fa3.py` on shipped `HEAD` after adding the M3 2 s smoothe
 | FA3 D good/great (ref) | 23/109 (21.1%) | **23/109 (21.1%)** | 21.1% [10.7, 33.7] |
 | SA1 RflyMAD sensor faults | 106/197 (53.8%) | **106/197 (53.8%)** | 53.8% [48.5, 64.6] |
 | SA1 RflyMAD motor faults | 48/242 (19.8%) | **48/242 (19.8%)** | 19.8% [8.7, 39.7] |
-| SA1 RflyMAD fault-free (control) | 0/50 (0.0%) | **0/50 (0.0%)** | 0.0% [0.0, 0.0] |
+| SA1 RflyMAD fault-free (control) | 0/50 (0.0%) | **0/50 (0.0%)** | 0/50 (Wilson 95% upper bound 7.1%; bootstrap degenerate at 0) |
 | SA1 Forum expert: aircraft-caused | 12/32 (37.5%) | **11/32 (34.4%)** | 34.4% [18.8, 50.0] |
 | SA1 Forum expert: pilot-caused | 2/4 (50.0%) | **2/4 (50.0%)** | 50.0% [0.0, 100.0] |
 | SA1 Archive real-hardware crashes | 49/133 (36.8%) | **49/133 (36.8%)** | 36.8% [27.9, 45.6] |

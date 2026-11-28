@@ -520,9 +520,10 @@ Because calling it "Ready" would be unsafe: our own SA1 numbers (re-measured on 
 flight-log rules flag only 36.8% of archive crashes and 19.8% of RflyMAD motor faults (about 1.36× as often as ordinary
 flights). It is a **records check, not an airworthiness
 sign-off**. So the UI explicitly labels the green state **"No rule fired"** and reminds the pilot to perform a physical
-pre-flight check. If a drone's last reviewed flight is older than 14 days, a non-blocking **record-age note** warns the
-pilot to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle between crop
-cycles are not stuck on false-alarm Check first). And when an operator knows a drone crashed, recording `"Incident /
+pre-flight check. If a drone's last reviewed flight is 15–90 days old, a non-blocking **record-age note** warns the pilot
+to confirm no unlogged flights occurred since (kept non-blocking so seasonal sprayers sitting idle for weeks between crop
+cycles are not stuck on false-alarm Check first), and **over 90 days it escalates to Check first** so a months- or
+years-old log can never stay green. And when an operator knows a drone crashed, recording `"Incident /
 crash reported (grounded for inspection)"` in the maintenance logbook (as on `AGRI-05`) immediately turns Today's fleet
 to **Do not fly** until signed inspection clearance is logged.
 
